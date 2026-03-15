@@ -1,3 +1,35 @@
-.idea
-.vscode
-*.log
+# Mantra CMS - Git Ignore
+
+# Content (user data)
+/content/pages/*
+/content/posts/*
+/content/users/*
+/content/settings/*
+!/content/languages/
+
+# Storage (cache, logs, sessions)
+/storage/cache/*
+/storage/logs/*
+/storage/sessions/*
+
+# Uploads
+/uploads/*
+
+# Keep directory structure
+!.gitkeep
+
+# IDE
+.vscode/
+.idea/
+*.sublime-*
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*~

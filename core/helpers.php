@@ -62,11 +62,31 @@ function json_response($data, $code = 200) {
 }
 
 /**
+ * Get config instance or value
+ */
+function config($key = null, $default = null) {
+    static $config = null;
+    if ($config === null) {
+        $config = new Config();
+    }
+    
+    if ($key === null) {
+        return $config;
+    }
+    
+    return $config->get($key, $default);
+}
+
+/**
  * Get base URL
  */
 function base_url($path = '') {
-    $app = Application::getInstance();
-    return rtrim($app->config('site_url'), '/') . '/' . ltrim($path, '/');
+    $siteUrl = config('site_url');
+    if (!$siteUrl) {
+        $app = Application::getInstance();
+        $siteUrl = $app->config('site_url');
+    }
+    return rtrim($siteUrl, '/') . '/' . ltrim($path, '/');
 }
 
 /**

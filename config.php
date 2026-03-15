@@ -1,12 +1,20 @@
 <?php
 /**
- * Mantra CMS Configuration
+ * Mantra CMS Configuration Bootstrap
+ * This file loads configuration from content/settings/config.json
  */
 
-return array(
+// Auto-detect base URL
+$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+$host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'localhost';
+$scriptPath = dirname($_SERVER['SCRIPT_NAME']);
+$baseUrl = $protocol . '://' . $host . ($scriptPath !== '/' ? $scriptPath : '');
+
+// Default configuration
+$defaultConfig = array(
     // General settings
     'site_name' => 'Mantra CMS',
-    'site_url' => 'http://localhost',
+    'site_url' => $baseUrl,
     'timezone' => 'UTC',
     'default_language' => 'en',
     
@@ -15,7 +23,7 @@ return array(
     
     // Cache settings
     'cache_enabled' => true,
-    'cache_lifetime' => 3600, // seconds
+    'cache_lifetime' => 3600,
     
     // Session settings
     'session_name' => 'mantra_session',
@@ -26,7 +34,7 @@ return array(
     'csrf_token_name' => 'mantra_csrf',
     
     // Content settings
-    'content_format' => 'json', // json, yaml, md
+    'content_format' => 'json',
     'posts_per_page' => 10,
     
     // Theme
@@ -41,3 +49,14 @@ return array(
         'editor'
     )
 );
+
+// Load configuration from JSON file if exists
+$configFile = __DIR__ . '/content/settings/config.json';
+if (file_exists($configFile)) {
+    $jsonConfig = json_decode(file_get_contents($configFile), true);
+    if ($jsonConfig) {
+        $defaultConfig = array_merge($defaultConfig, $jsonConfig);
+    }
+}
+
+return $defaultConfig;

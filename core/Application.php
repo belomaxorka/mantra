@@ -56,7 +56,7 @@ class Application {
         }
         
         // Start session
-        if (session_status() == PHP_STATUS_NONE) {
+        if (session_status() == PHP_SESSION_NONE) {
             session_name($this->config['session_name']);
             session_start();
         }

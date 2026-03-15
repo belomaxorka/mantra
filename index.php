@@ -15,8 +15,24 @@ define('MANTRA_STORAGE', MANTRA_ROOT . '/storage');
 define('MANTRA_THEMES', MANTRA_ROOT . '/themes');
 define('MANTRA_UPLOADS', MANTRA_ROOT . '/uploads');
 
+// Check if system is installed
+$isInstalled = file_exists(MANTRA_CONTENT . '/users') && 
+               count(glob(MANTRA_CONTENT . '/users/*.json')) > 0;
+
+// Redirect to installer if not installed
+if (!$isInstalled) {
+    $currentUri = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
+    if (strpos($currentUri, 'install.php') === false) {
+        header('Location: install.php');
+        exit;
+    }
+}
+
 // Load configuration
 require_once MANTRA_ROOT . '/config.php';
+
+// Load helper functions
+require_once MANTRA_CORE . '/helpers.php';
 
 // Autoloader for core classes
 spl_autoload_register(function($class) {
@@ -32,12 +48,9 @@ try {
     $app->run();
 } catch (Exception $e) {
     // Simple error handling
-    if (MANTRA_DEBUG) {
+    if (defined('MANTRA_DEBUG') && MANTRA_DEBUG) {
         echo '<h1>Error</h1><pre>' . $e->getMessage() . '</pre>';
     } else {
         echo '<h1>Something went wrong</h1>';
     }
 }
-
-// Load helper functions
-require_once MANTRA_CORE . '/helpers.php';

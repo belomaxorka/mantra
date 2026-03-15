@@ -27,6 +27,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = trim($_POST['username']);
     $password = $_POST['password'];
     $email = trim($_POST['email']);
+    $siteName = isset($_POST['site_name']) ? trim($_POST['site_name']) : 'Mantra CMS';
+    $language = isset($_POST['language']) ? $_POST['language'] : 'en';
     
     if (empty($username) || empty($password)) {
         $error = 'Username and password are required';
@@ -48,6 +50,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
         
+        // Auto-detect base URL
+        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        $host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'localhost';
+        $scriptPath = dirname($_SERVER['SCRIPT_NAME']);
+        $baseUrl = $protocol . '://' . $host . ($scriptPath !== '/' ? $scriptPath : '');
+        
+        // Create configuration file
+        $config = array(
+            'site_name' => $siteName,
+            'site_url' => $baseUrl,
+            'timezone' => 'UTC',
+            'default_language' => $language,
+            'debug' => true,
+            'cache_enabled' => true,
+            'cache_lifetime' => 3600,
+            'session_name' => 'mantra_session',
+            'session_lifetime' => 7200,
+            'content_format' => 'json',
+            'posts_per_page' => 10,
+            'active_theme' => 'default',
+            'enabled_modules' => array('admin', 'pages', 'media', 'users', 'editor')
+        );
+        
+        $configPath = MANTRA_CONTENT . '/settings/config.json';
+        $configJson = json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        file_put_contents($configPath, $configJson);
+        
         // Create admin user
         $db = new Database();
         $auth = new Auth();
@@ -62,6 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         if ($db->write('users', $userId, $userData)) {
             $success = true;
+            $adminUrl = rtrim($baseUrl, '/') . '/admin';
         } else {
             $error = 'Failed to create user';
         }
@@ -84,20 +114,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <h1>Install Mantra CMS</h1>
     
     <?php if (isset($success)): ?>
-        <p class="success">Installation successful! <a href="/admin">Go to admin panel</a></p>
+        <p class="success">Installation successful! <a href="<?php echo isset($adminUrl) ? $adminUrl : '/admin'; ?>">Go to admin panel</a></p>
     <?php else: ?>
         <?php if (isset($error)): ?>
             <p class="error"><?php echo $error; ?></p>
         <?php endif; ?>
         
         <form method="POST">
-            <label>Username:</label>
+            <label>Site Name:</label>
+            <input type="text" name="site_name" value="Mantra CMS" required>
+            
+            <label>Language:</label>
+            <select name="language" style="width: 100%; padding: 10px; margin: 10px 0;">
+                <option value="en">English</option>
+                <option value="ru">Русский</option>
+            </select>
+            
+            <label>Admin Username:</label>
             <input type="text" name="username" required>
             
-            <label>Email:</label>
+            <label>Admin Email:</label>
             <input type="email" name="email" required>
             
-            <label>Password:</label>
+            <label>Admin Password:</label>
             <input type="password" name="password" required>
             
             <button type="submit">Install</button>
