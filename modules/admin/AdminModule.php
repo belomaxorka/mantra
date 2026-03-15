@@ -263,8 +263,15 @@ class AdminModule extends Module {
         // Also consider explicit URL match (best-effort)
         if (!$selfMatch && $url !== '' && $url !== '#') {
             $parsed = parse_url($url, PHP_URL_PATH);
-            if (is_string($parsed) && $parsed !== '' && strpos($path, $parsed) === 0) {
-                $selfMatch = true;
+            if (is_string($parsed) && $parsed !== '') {
+                // Special case: /admin should only match the dashboard itself, not every /admin/* route.
+                if ($parsed === '/admin') {
+                    if ($path === '/admin' || $path === '/admin/') {
+                        $selfMatch = true;
+                    }
+                } elseif (strpos($path, $parsed) === 0) {
+                    $selfMatch = true;
+                }
             }
         }
 
