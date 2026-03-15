@@ -125,7 +125,9 @@ function base_url($path = '') {
         $app = Application::getInstance();
         $siteUrl = $app->config('site_url');
     }
-    return rtrim($siteUrl, '/') . '/' . ltrim($path, '/');
+
+    // Normalize both forward and back slashes to avoid URLs like "//admin" or "\\admin".
+    return rtrim($siteUrl, "/\\") . '/' . ltrim($path, "/\\");
 }
 
 /**
