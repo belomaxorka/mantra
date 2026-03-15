@@ -50,6 +50,7 @@ class Config {
             'site_url' => $baseUrl,
             'timezone' => 'UTC',
             'default_language' => 'en',
+            'fallback_locale' => 'en',
 
             // Debug mode
             'debug' => true,
@@ -96,10 +97,11 @@ class Config {
     /**
      * Create install-time config (full defaults with specific overrides).
      */
-    public static function buildInstallConfig($siteName, $language, $siteUrl) {
+    public static function buildInstallConfig($siteName, $language, $fallbackLocale, $siteUrl) {
         $config = self::defaults();
         $config['site_name'] = $siteName;
         $config['default_language'] = $language;
+        $config['fallback_locale'] = $fallbackLocale;
         $config['site_url'] = $siteUrl;
         return $config;
     }

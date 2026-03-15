@@ -357,3 +357,59 @@ function dd($var) {
     echo '</pre>';
     exit;
 }
+
+/**
+ * Translation helper.
+ */
+function t($key, $params = array()) {
+    static $lang = null;
+    if ($lang === null) {
+        $lang = new Language();
+    }
+    return $lang->translate($key, $params);
+}
+
+/**
+ * Backward-compatible translation alias.
+ */
+function __($key, $params = array()) {
+    return t($key, $params);
+}
+
+/**
+ * Resolve theme.json description with locale fallbacks.
+ *
+ * Variant A support: "description" may be an object of translations.
+ */
+function theme_description($themeMeta) {
+    if (!is_array($themeMeta) || !isset($themeMeta['description'])) {
+        return '';
+    }
+
+    $desc = $themeMeta['description'];
+    if (is_string($desc)) {
+        return $desc;
+    }
+
+    if (!is_array($desc)) {
+        return '';
+    }
+
+    if (function_exists('config')) {
+        $locale = (string)config('default_language', 'en');
+        $fallback = (string)config('fallback_locale', 'en');
+    } else {
+        $cfg = (isset($GLOBALS['MANTRA_CONFIG']) && is_array($GLOBALS['MANTRA_CONFIG'])) ? $GLOBALS['MANTRA_CONFIG'] : array();
+        $locale = isset($cfg['default_language']) ? (string)$cfg['default_language'] : 'en';
+        $fallback = isset($cfg['fallback_locale']) ? (string)$cfg['fallback_locale'] : 'en';
+    }
+
+    if ($locale !== '' && isset($desc[$locale]) && is_string($desc[$locale])) {
+        return $desc[$locale];
+    }
+    if ($fallback !== '' && isset($desc[$fallback]) && is_string($desc[$fallback])) {
+        return $desc[$fallback];
+    }
+
+    return '';
+}

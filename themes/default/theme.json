@@ -1,6 +1,9 @@
 {
     "name": "default",
     "version": "1.0.0",
-    "description": "Default Mantra theme",
+    "description": {
+        "en": "Default Mantra theme",
+        "ru": "Тема Mantra по умолчанию"
+    },
     "author": "Mantra CMS"
 }

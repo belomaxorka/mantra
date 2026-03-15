@@ -80,6 +80,20 @@ class ModuleManager {
             $module->init();
         }
         
+        // Load translated manifest description if present (Variant A).
+        if (isset($manifest['description']) && is_array($manifest['description'])) {
+            $locale = isset($this->config['default_language']) ? (string)$this->config['default_language'] : 'en';
+            $fallback = isset($this->config['fallback_locale']) ? (string)$this->config['fallback_locale'] : 'en';
+
+            if ($locale !== '' && isset($manifest['description'][$locale]) && is_string($manifest['description'][$locale])) {
+                $manifest['description'] = $manifest['description'][$locale];
+            } elseif ($fallback !== '' && isset($manifest['description'][$fallback]) && is_string($manifest['description'][$fallback])) {
+                $manifest['description'] = $manifest['description'][$fallback];
+            } else {
+                $manifest['description'] = '';
+            }
+        }
+
         $this->modules[$moduleName] = array(
             'instance' => $module,
             'manifest' => $manifest,
