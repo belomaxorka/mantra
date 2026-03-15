@@ -247,7 +247,8 @@ class AdminModule extends Module {
     }
 
     private function computeSidebarActive(&$item, $path) {
-        $active = false;
+        $selfMatch = false;
+        $childMatch = false;
 
         $id = isset($item['id']) ? (string)$item['id'] : '';
         $url = isset($item['url']) ? (string)$item['url'] : '';
@@ -255,15 +256,15 @@ class AdminModule extends Module {
         if ($id !== '') {
             $prefix = '/admin/' . $id;
             if (strpos($path, $prefix) === 0) {
-                $active = true;
+                $selfMatch = true;
             }
         }
 
         // Also consider explicit URL match (best-effort)
-        if (!$active && $url !== '' && $url !== '#') {
+        if (!$selfMatch && $url !== '' && $url !== '#') {
             $parsed = parse_url($url, PHP_URL_PATH);
             if (is_string($parsed) && $parsed !== '' && strpos($path, $parsed) === 0) {
-                $active = true;
+                $selfMatch = true;
             }
         }
 
@@ -271,14 +272,20 @@ class AdminModule extends Module {
             foreach ($item['children'] as &$child) {
                 $childActive = $this->computeSidebarActive($child, $path);
                 if ($childActive) {
-                    $active = true;
+                    $childMatch = true;
                 }
             }
             unset($child);
         }
 
-        $item['active'] = $active;
-        return $active;
+        // If this item has children, don't mark it as "active".
+        // Instead, mark it as "expanded" when any child is active.
+        $hasChildren = !empty($item['children']) && is_array($item['children']);
+
+        $item['expanded'] = $hasChildren ? $childMatch : false;
+        $item['active'] = $hasChildren ? false : $selfMatch;
+
+        return $item['active'] || $item['expanded'];
     }
 
     private function buildSidebarItems() {

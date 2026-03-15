@@ -15,6 +15,14 @@
     .admin-sidebar .nav-link.level-1 { padding-left: 1.5rem; }
     .admin-sidebar .nav-link.level-2 { padding-left: 2.5rem; }
     .admin-sidebar .nav-link.level-3 { padding-left: 3.5rem; }
+
+    .admin-sidebar .nav-link.is-parent {
+      font-weight: 600;
+      color: var(--bs-body-color);
+    }
+    .admin-sidebar .nav-link.is-parent.expanded {
+      background: rgba(13, 110, 253, 0.08);
+    }
     @media (max-width: 991.98px) {
       .admin-sidebar { width: 100%; }
     }
@@ -51,12 +59,29 @@
           $title = $item['title'] ?? ($item['id'] ?? '');
           $icon = $item['icon'] ?? '';
           $active = !empty($item['active']);
+          $expanded = !empty($item['expanded']);
           $children = isset($item['children']) && is_array($item['children']) ? $item['children'] : array();
+          $hasChildren = !empty($children);
 
           $levelClass = 'level-' . (int)$level;
 
           echo '<li class="nav-item">';
-          echo '<a class="nav-link ' . ($active ? 'active ' : '') . e($levelClass) . '" href="' . e($url) . '">';
+          $classes = 'nav-link ';
+          if ($active) {
+            $classes .= 'active ';
+          }
+          if ($hasChildren) {
+            $classes .= 'is-parent ';
+            if ($expanded) {
+              $classes .= 'expanded ';
+            }
+          }
+          $classes .= e($levelClass);
+
+          // Parent items act as headers (no navigation) by default.
+          $href = $hasChildren ? '#' : $url;
+
+          echo '<a class="' . $classes . '" href="' . e($href) . '">';
           if (!empty($icon)) {
             echo '<i class="bi ' . e($icon) . ' me-2"></i>';
           }
