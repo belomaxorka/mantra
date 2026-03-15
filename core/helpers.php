@@ -295,12 +295,30 @@ function config($key = null, $default = null) {
     if ($config === null) {
         $config = new Config();
     }
-    
+
     if ($key === null) {
         return $config;
     }
-    
+
     return $config->get($key, $default);
+}
+
+/**
+ * Get module settings instance or a specific value.
+ */
+function module_settings($module, $key = null, $default = null) {
+    static $stores = array();
+
+    $module = (string)$module;
+    if (!isset($stores[$module])) {
+        $stores[$module] = new ModuleSettings($module);
+    }
+
+    if ($key === null) {
+        return $stores[$module];
+    }
+
+    return $stores[$module]->get($key, $default);
 }
 
 /**

@@ -8,6 +8,35 @@ class PagesModule extends Module {
     public function init() {
         // Register hooks
         $this->hook('routes.register', array($this, 'registerRoutes'));
+
+        // Contribute admin sidebar item
+        $this->hook('admin.sidebar', array($this, 'registerAdminSidebar'));
+    }
+
+    public function registerAdminSidebar($items) {
+        if (!is_array($items)) {
+            $items = array();
+        }
+
+        $items[] = array(
+            'id' => 'pages',
+            'title' => array('key' => 'pages.admin.title', 'fallback' => 'Pages'),
+            'icon' => 'bi-file-earmark-text',
+            'url' => base_url('/admin/pages'),
+            'group' => array('key' => 'admin.sidebar.group.content', 'fallback' => 'Content'),
+            'order' => 10,
+        );
+
+        return $items;
+    }
+
+    public function adminIndex() {
+        redirect(base_url('/admin/pages'));
+    }
+
+    public function adminRoutes($router) {
+        // Future: register /admin/pages/* routes owned by PagesModule.
+        return;
     }
     
     /**
