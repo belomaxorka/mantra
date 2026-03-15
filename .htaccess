@@ -1,0 +1,31 @@
+# Mantra CMS - Apache configuration
+# Redirect all requests to index.php
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+    
+    # Redirect to HTTPS (optional, uncomment if needed)
+    # RewriteCond %{HTTPS} off
+    # RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+    
+    # Protect sensitive directories
+    RewriteRule ^(core|modules|content|storage)/ - [F,L]
+    
+    # Allow access to uploads and themes
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} !^/(uploads|themes)/
+    
+    # Route everything else to index.php
+    RewriteRule ^(.*)$ index.php [QSA,L]
+</IfModule>
+
+# Disable directory browsing
+Options -Indexes
+
+# Protect config files
+<FilesMatch "^(config\.php|\.gitignore|\.htaccess)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>

@@ -1,0 +1,21 @@
+{
+    "site.title": "Mantra CMS",
+    "site.description": "A modern flat-file CMS",
+    "nav.home": "Home",
+    "nav.admin": "Admin",
+    "admin.login": "Login",
+    "admin.logout": "Logout",
+    "admin.dashboard": "Dashboard",
+    "admin.pages": "Pages",
+    "admin.posts": "Posts",
+    "admin.media": "Media",
+    "admin.users": "Users",
+    "admin.settings": "Settings",
+    "form.username": "Username",
+    "form.password": "Password",
+    "form.submit": "Submit",
+    "form.save": "Save",
+    "form.cancel": "Cancel",
+    "message.success": "Operation successful",
+    "message.error": "An error occurred"
+}

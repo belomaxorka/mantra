@@ -1,0 +1,7 @@
+{
+    "name": "media",
+    "version": "1.0.0",
+    "description": "Media management module",
+    "author": "Mantra CMS",
+    "dependencies": []
+}
