@@ -27,8 +27,26 @@ Flat-File Content Management System with modular architecture.
    chmod -R 755 content storage uploads
    ```
 3. Configure your web server to point to the project root
-4. Copy `config.php` and adjust settings
+4. Configure the CMS via `content/settings/config.json`
 5. Access `/admin` to set up your first user
+
+### Proxy / CDN (real client IP)
+
+If you run Mantra behind a reverse proxy or CDN (Nginx, Cloudflare, Fastly, etc.), the web server will often pass the *proxy IP* as `REMOTE_ADDR`.
+
+Mantra provides the `client_ip()` helper (see `core/helpers.php`) to obtain the real client IP. For security, Mantra only trusts proxy headers (like `X-Forwarded-For`) when the request comes from a **trusted proxy**.
+
+Configure trusted proxies in `content/settings/config.json`:
+
+```json
+{
+  "trusted_proxies": ["127.0.0.1", "::1", "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"]
+}
+```
+
+- Entries can be IPs or CIDRs (IPv4/IPv6).
+- If `trusted_proxies` is empty, `client_ip()` will fall back to `REMOTE_ADDR`.
+- For Cloudflare/Fastly, add their published IP ranges (see your provider documentation).
 
 ## Directory Structure
 
@@ -41,7 +59,7 @@ Flat-File Content Management System with modular architecture.
   /storage        - Cache and logs
   /uploads        - User uploaded files
   index.php       - Entry point
-  config.php      - Configuration
+  content/settings/config.json - Configuration
 ```
 
 ## Creating a Module
@@ -78,7 +96,7 @@ class YourModuleModule extends Module {
 }
 ```
 
-4. Enable module in `config.php`
+4. Enable the module in `content/settings/config.json` under `enabled_modules`
 
 ## Available Hooks
 

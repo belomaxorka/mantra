@@ -65,6 +65,11 @@ class Config {
             'password_hash_algo' => PASSWORD_DEFAULT,
             'csrf_token_name' => 'mantra_csrf',
 
+            // Proxy/CDN settings
+            // Only trust proxy headers (X-Forwarded-For, etc.) when REMOTE_ADDR matches one of these entries.
+            // Entries can be IPs or CIDRs (IPv4/IPv6). Example: array('127.0.0.1', '10.0.0.0/8')
+            'trusted_proxies' => array(),
+
             // Content settings
             'content_format' => 'json',
             'posts_per_page' => 10,
