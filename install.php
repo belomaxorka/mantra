@@ -4,10 +4,7 @@
  * Creates initial admin user and required directories
  */
 
-// Check PHP version requirement
-if (version_compare(PHP_VERSION, '5.5.0', '<')) {
-    die('Mantra CMS requires PHP 5.5.0 or higher. Your version: ' . PHP_VERSION);
-}
+require_once __DIR__ . '/core/bootstrap.php';
 
 // Check required extensions
 $requiredExtensions = array('json', 'session', 'openssl');
@@ -23,19 +20,7 @@ if (!empty($missingExtensions)) {
     die('Missing required PHP extensions: ' . implode(', ', $missingExtensions));
 }
 
-define('MANTRA_ROOT', __DIR__);
-define('MANTRA_CORE', MANTRA_ROOT . '/core');
-define('MANTRA_CONTENT', MANTRA_ROOT . '/content');
-define('MANTRA_STORAGE', MANTRA_ROOT . '/storage');
-define('MANTRA_UPLOADS', MANTRA_ROOT . '/uploads');
-
-// Load logging + helpers (Database uses logger())
-require_once MANTRA_CORE . '/Psr/Log/LoggerInterface.php';
-require_once MANTRA_CORE . '/Psr/Log/LogLevel.php';
-require_once MANTRA_CORE . '/Logger.php';
-require_once MANTRA_CORE . '/helpers.php';
-
-// Load core classes
+// Load core classes (explicit for installer clarity)
 require_once MANTRA_CORE . '/Database.php';
 require_once MANTRA_CORE . '/Auth.php';
 require_once MANTRA_CORE . '/Config.php';

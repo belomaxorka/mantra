@@ -2,23 +2,16 @@
 /**
  * Mantra CMS - Flat-File Content Management System
  * Entry Point
- * 
- * PHP 5.5+ required
  */
 
-// Check PHP version requirement
-if (version_compare(PHP_VERSION, '5.5.0', '<')) {
-    die('Mantra CMS requires PHP 5.5.0 or higher. Your version: ' . PHP_VERSION);
-}
+require_once __DIR__ . '/core/bootstrap.php';
 
-// Define base paths
-define('MANTRA_ROOT', __DIR__);
-define('MANTRA_CORE', MANTRA_ROOT . '/core');
-define('MANTRA_MODULES', MANTRA_ROOT . '/modules');
-define('MANTRA_CONTENT', MANTRA_ROOT . '/content');
-define('MANTRA_STORAGE', MANTRA_ROOT . '/storage');
-define('MANTRA_THEMES', MANTRA_ROOT . '/themes');
-define('MANTRA_UPLOADS', MANTRA_ROOT . '/uploads');
+// Define MANTRA_ROOT for legacy code expecting it from index.php
+// (bootstrap defines it as well, but keep it explicit for entrypoint clarity)
+// Note: constants cannot be redefined, so this is safe.
+if (!defined('MANTRA_ROOT')) {
+    define('MANTRA_ROOT', __DIR__);
+}
 
 // Check if system is installed
 $isInstalled = file_exists(MANTRA_CONTENT . '/users') && 
@@ -33,37 +26,10 @@ if (!$isInstalled) {
     }
 }
 
-// Load configuration (single source of truth: content/settings/config.json)
-require_once MANTRA_CORE . '/Config.php';
-$config = Config::bootstrap();
-$GLOBALS['MANTRA_CONFIG'] = $config;
+// bootstrap.php already loaded config/logger/helpers/autoload/error handler
+// so entrypoint stays minimal here.
 
-// Define debug constant as early as possible (used by logger/error handler)
-if (!defined('MANTRA_DEBUG')) {
-    define('MANTRA_DEBUG', !empty($config['debug']));
-}
 
-// Load vendored PSR-3 interfaces (no Composer)
-require_once MANTRA_CORE . '/Psr/Log/LoggerInterface.php';
-require_once MANTRA_CORE . '/Psr/Log/LogLevel.php';
-
-// Load helper functions
-require_once MANTRA_CORE . '/helpers.php';
-
-// Autoloader for core classes
-spl_autoload_register(function($class) {
-    $relative = str_replace("\0", '', $class);
-    $relative = str_replace('\\', '/', $relative);
-    $coreFile = MANTRA_CORE . '/' . $relative . '.php';
-    if (file_exists($coreFile)) {
-        require_once $coreFile;
-    }
-});
-
-// Register centralized PHP error handling (logs to channel "php")
-ErrorHandler::register(new Logger('php', array(
-    'minLevel' => MANTRA_DEBUG ? Logger::DEBUG : Logger::NOTICE
-)));
 
 // Initialize application
 $app = Application::getInstance();
