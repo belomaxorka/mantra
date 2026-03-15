@@ -10,6 +10,24 @@ class ErrorHandler
     private static $registered = false;
     private static $logger = null;
 
+    private static function isCli()
+    {
+        if (defined('MANTRA_CLI')) {
+            return MANTRA_CLI;
+        }
+        return (PHP_SAPI === 'cli');
+    }
+
+    private static function writeCli($text)
+    {
+        if (defined('STDERR')) {
+            fwrite(STDERR, $text);
+        } else {
+            // Fallback (should be rare).
+            echo $text;
+        }
+    }
+
     /**
      * Register handlers.
      *
@@ -70,6 +88,15 @@ class ErrorHandler
             'method' => isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : null
         ));
 
+        if (self::isCli()) {
+            // CLI-friendly output
+            self::writeCli("Uncaught exception: " . $exception->getMessage() . "\n");
+            if (defined('MANTRA_DEBUG') && MANTRA_DEBUG) {
+                self::writeCli($exception->getTraceAsString() . "\n");
+            }
+            exit(1);
+        }
+
         // Preserve existing application behavior: show a generic 500 if not in debug.
         http_response_code(500);
 
@@ -102,6 +129,14 @@ class ErrorHandler
             'url' => isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : null,
             'method' => isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : null
         ));
+
+        if (self::isCli()) {
+            $msg = isset($error['message']) ? $error['message'] : 'unknown error';
+            $file = isset($error['file']) ? $error['file'] : 'unknown file';
+            $line = isset($error['line']) ? $error['line'] : 0;
+            self::writeCli("Fatal error: {$msg} in {$file}:{$line}\n");
+            exit(1);
+        }
 
         // Ensure a 500 response for fatals.
         if (!headers_sent()) {

@@ -6,12 +6,6 @@
 
 require_once __DIR__ . '/core/bootstrap.php';
 
-// Define MANTRA_ROOT for legacy code expecting it from index.php
-// (bootstrap defines it as well, but keep it explicit for entrypoint clarity)
-// Note: constants cannot be redefined, so this is safe.
-if (!defined('MANTRA_ROOT')) {
-    define('MANTRA_ROOT', __DIR__);
-}
 
 // Check if system is installed
 $isInstalled = file_exists(MANTRA_CONTENT . '/users') && 
