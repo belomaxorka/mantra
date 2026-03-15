@@ -4,6 +4,25 @@
  * Creates initial admin user and required directories
  */
 
+// Check PHP version requirement
+if (version_compare(PHP_VERSION, '5.5.0', '<')) {
+    die('Mantra CMS requires PHP 5.5.0 or higher. Your version: ' . PHP_VERSION);
+}
+
+// Check required extensions
+$requiredExtensions = array('json', 'session', 'openssl');
+$missingExtensions = array();
+
+foreach ($requiredExtensions as $ext) {
+    if (!extension_loaded($ext)) {
+        $missingExtensions[] = $ext;
+    }
+}
+
+if (!empty($missingExtensions)) {
+    die('Missing required PHP extensions: ' . implode(', ', $missingExtensions));
+}
+
 define('MANTRA_ROOT', __DIR__);
 define('MANTRA_CORE', MANTRA_ROOT . '/core');
 define('MANTRA_CONTENT', MANTRA_ROOT . '/content');

@@ -66,27 +66,73 @@ class Application {
      * Run application
      */
     public function run() {
-        // Initialize hook manager first (modules will register hooks)
-        $this->hookManager = new HookManager();
+        try {
+            // Initialize hook manager first (modules will register hooks)
+            $this->hookManager = new HookManager();
+            
+            // Initialize module manager
+            $this->moduleManager = new ModuleManager($this->config);
+            $this->moduleManager->loadModules();
+            
+            // Fire init hook
+            $this->hookManager->fire('system.init');
+            
+            // Initialize router
+            $this->router = new Router();
+            
+            // Let modules register routes
+            $this->hookManager->fire('routes.register', array('router' => $this->router));
+            
+            // Dispatch request
+            $this->router->dispatch();
+            
+            // Fire shutdown hook
+            $this->hookManager->fire('system.shutdown');
+        } catch (Exception $e) {
+            $this->handleError($e);
+        }
+    }
+    
+    /**
+     * Handle application errors
+     */
+    private function handleError($exception) {
+        // Log error
+        $this->logError($exception);
         
-        // Initialize module manager
-        $this->moduleManager = new ModuleManager($this->config);
-        $this->moduleManager->loadModules();
+        // Show error page
+        http_response_code(500);
         
-        // Fire init hook
-        $this->hookManager->fire('system.init');
+        if (MANTRA_DEBUG) {
+            echo '<h1>Error</h1>';
+            echo '<p>' . htmlspecialchars($exception->getMessage()) . '</p>';
+            echo '<pre>' . htmlspecialchars($exception->getTraceAsString()) . '</pre>';
+        } else {
+            echo '<h1>Something went wrong</h1>';
+            echo '<p>Please try again later.</p>';
+        }
+    }
+    
+    /**
+     * Log error to file
+     */
+    private function logError($exception) {
+        $logDir = MANTRA_STORAGE . '/logs';
+        if (!is_dir($logDir)) {
+            mkdir($logDir, 0755, true);
+        }
         
-        // Initialize router
-        $this->router = new Router();
+        $logFile = $logDir . '/error-' . date('Y-m-d') . '.log';
+        $message = sprintf(
+            "[%s] %s in %s:%d\nStack trace:\n%s\n\n",
+            date('Y-m-d H:i:s'),
+            $exception->getMessage(),
+            $exception->getFile(),
+            $exception->getLine(),
+            $exception->getTraceAsString()
+        );
         
-        // Let modules register routes
-        $this->hookManager->fire('routes.register', array('router' => $this->router));
-        
-        // Dispatch request
-        $this->router->dispatch();
-        
-        // Fire shutdown hook
-        $this->hookManager->fire('system.shutdown');
+        file_put_contents($logFile, $message, FILE_APPEND);
     }
     
     /**

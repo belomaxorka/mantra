@@ -90,10 +90,20 @@ function base_url($path = '') {
 }
 
 /**
- * Sanitize string
+ * Sanitize string for output (XSS protection)
  */
 function sanitize($value) {
+    if (is_array($value)) {
+        return array_map('sanitize', $value);
+    }
     return htmlspecialchars(strip_tags($value), ENT_QUOTES, 'UTF-8');
+}
+
+/**
+ * Escape output (alias for sanitize)
+ */
+function e($value) {
+    return sanitize($value);
 }
 
 /**

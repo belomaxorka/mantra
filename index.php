@@ -3,8 +3,13 @@
  * Mantra CMS - Flat-File Content Management System
  * Entry Point
  * 
- * PHP 5.6+ compatible
+ * PHP 5.5+ required
  */
+
+// Check PHP version requirement
+if (version_compare(PHP_VERSION, '5.5.0', '<')) {
+    die('Mantra CMS requires PHP 5.5.0 or higher. Your version: ' . PHP_VERSION);
+}
 
 // Define base paths
 define('MANTRA_ROOT', __DIR__);
@@ -43,14 +48,5 @@ spl_autoload_register(function($class) {
 });
 
 // Initialize application
-try {
-    $app = Application::getInstance();
-    $app->run();
-} catch (Exception $e) {
-    // Simple error handling
-    if (defined('MANTRA_DEBUG') && MANTRA_DEBUG) {
-        echo '<h1>Error</h1><pre>' . $e->getMessage() . '</pre>';
-    } else {
-        echo '<h1>Something went wrong</h1>';
-    }
-}
+$app = Application::getInstance();
+$app->run();

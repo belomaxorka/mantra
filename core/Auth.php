@@ -29,6 +29,9 @@ class Auth {
             return false;
         }
         
+        // Regenerate session ID to prevent session fixation
+        session_regenerate_id(true);
+        
         // Set session
         $_SESSION['user_id'] = $user['_id'];
         $_SESSION['user_role'] = $user['role'];
@@ -86,26 +89,14 @@ class Auth {
      * Hash password
      */
     public function hashPassword($password) {
-        // PHP 5.5+ has password_hash
-        if (function_exists('password_hash')) {
-            return password_hash($password, PASSWORD_DEFAULT);
-        }
-        
-        // Fallback for older PHP
-        return hash('sha256', $password);
+        return password_hash($password, PASSWORD_DEFAULT);
     }
     
     /**
      * Verify password
      */
     private function verifyPassword($password, $hash) {
-        // PHP 5.5+ has password_verify
-        if (function_exists('password_verify')) {
-            return password_verify($password, $hash);
-        }
-        
-        // Fallback for older PHP
-        return hash('sha256', $password) === $hash;
+        return password_verify($password, $hash);
     }
     
     /**
@@ -121,6 +112,10 @@ class Auth {
      * Verify CSRF token
      */
     public function verifyCsrfToken($token) {
-        return isset($_SESSION['csrf_token']) && $_SESSION['csrf_token'] === $token;
+        if (!isset($_SESSION['csrf_token'])) {
+            return false;
+        }
+        // Use hash_equals to prevent timing attacks
+        return hash_equals($_SESSION['csrf_token'], $token);
     }
 }

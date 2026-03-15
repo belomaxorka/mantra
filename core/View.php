@@ -65,10 +65,20 @@ class View {
     }
     
     /**
-     * Escape HTML
+     * Escape HTML (alias: e)
      */
     public function escape($value) {
+        if (is_array($value)) {
+            return array_map(array($this, 'escape'), $value);
+        }
         return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
+    }
+    
+    /**
+     * Short alias for escape
+     */
+    public function e($value) {
+        return $this->escape($value);
     }
     
     /**

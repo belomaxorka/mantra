@@ -34,6 +34,16 @@ class Database {
      * Write data to file
      */
     public function write($collection, $id, $data) {
+        // Validate collection name (prevent directory traversal)
+        if (!$this->isValidCollectionName($collection)) {
+            throw new Exception('Invalid collection name');
+        }
+        
+        // Validate ID (prevent directory traversal)
+        if (!$this->isValidId($id)) {
+            throw new Exception('Invalid ID');
+        }
+        
         $path = $this->getPath($collection, $id);
         $dir = dirname($path);
         
@@ -48,9 +58,32 @@ class Database {
         }
         $data['updated_at'] = date('Y-m-d H:i:s');
         
-        // Write file
+        // Write file atomically
         $json = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-        return file_put_contents($path, $json) !== false;
+        if ($json === false) {
+            throw new Exception('Failed to encode JSON');
+        }
+        
+        $tempFile = $path . '.tmp';
+        if (file_put_contents($tempFile, $json) === false) {
+            return false;
+        }
+        
+        return rename($tempFile, $path);
+    }
+    
+    /**
+     * Validate collection name
+     */
+    private function isValidCollectionName($name) {
+        return preg_match('/^[a-zA-Z0-9_-]+$/', $name) === 1;
+    }
+    
+    /**
+     * Validate ID
+     */
+    private function isValidId($id) {
+        return preg_match('/^[a-zA-Z0-9_-]+$/', $id) === 1;
     }
     
     /**

@@ -24,8 +24,22 @@
 # Disable directory browsing
 Options -Indexes
 
-# Protect config files
-<FilesMatch "^(config\.php|\.gitignore|\.htaccess)$">
+# Protect config and sensitive files
+<FilesMatch "^(config\.php|\.gitignore|\.htaccess|\.git)$">
     Order allow,deny
     Deny from all
 </FilesMatch>
+
+# Protect JSON data files
+<FilesMatch "\.json$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Protect PHP files in content directory
+<DirectoryMatch "^.*/content/.*">
+    <FilesMatch "\.php$">
+        Order allow,deny
+        Deny from all
+    </FilesMatch>
+</DirectoryMatch>
