@@ -89,8 +89,14 @@ class Router {
             }
             
             // Execute callback
+            // NOTE: $params is an associative array (named params). Passing it to call_user_func_array()
+            // would be treated as PHP 8 named arguments and can break handlers expecting a single $params array.
             if (is_callable($route['callback'])) {
-                call_user_func_array($route['callback'], $params);
+                if (empty($params)) {
+                    call_user_func($route['callback']);
+                } else {
+                    call_user_func($route['callback'], $params);
+                }
             } elseif (is_string($route['callback'])) {
                 // Format: "ModuleName:method"
                 $this->executeControllerAction($route['callback'], $params);
@@ -160,7 +166,11 @@ class Router {
         $module = $app->modules()->getModule($moduleName);
         
         if ($module && method_exists($module, $method)) {
-            call_user_func_array(array($module, $method), $params);
+            if (empty($params)) {
+                call_user_func(array($module, $method));
+            } else {
+                call_user_func(array($module, $method), $params);
+            }
         } else {
             throw new Exception('Controller action not found: ' . $action);
         }
