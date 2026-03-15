@@ -1,0 +1,7 @@
+{
+  "id": "example",
+  "name": "Example",
+  "version": "1.0.0",
+  "main": "ExampleAdminModule.php",
+  "class": "ExampleAdminModule"
+}

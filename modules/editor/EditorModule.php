@@ -9,26 +9,6 @@ class EditorModule extends Module {
     public function init() {
         // Register hook to inject editor scripts
         $this->hook('view.render', array($this, 'injectEditorScripts'));
-
-        // Contribute admin sidebar item
-        $this->hook('admin.sidebar', array($this, 'registerAdminSidebar'));
-    }
-
-    public function registerAdminSidebar($items) {
-        if (!is_array($items)) {
-            $items = array();
-        }
-
-        $items[] = array(
-            'id' => 'editor',
-            'title' => array('key' => 'editor.admin.title', 'fallback' => 'Editor'),
-            'icon' => 'bi-pencil-square',
-            'url' => base_url('/admin/editor'),
-            'group' => array('key' => 'admin.sidebar.group.content', 'fallback' => 'Content'),
-            'order' => 60,
-        );
-
-        return $items;
     }
 
     public function adminIndex() {

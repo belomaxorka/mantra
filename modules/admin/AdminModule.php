@@ -5,8 +5,130 @@
 
 class AdminModule extends Module {
 
+    private $adminSubmodules = array();
+
     public function init() {
         $this->hook('routes.register', array($this, 'registerRoutes'));
+    }
+
+    private function isAdminRequest() {
+        $path = request()->path();
+        return strpos($path, '/admin') === 0;
+    }
+
+    /**
+     * Validate admin-submodule name to prevent path traversal.
+     */
+    private function assertValidAdminSubmoduleName($name) {
+        $name = (string)$name;
+        if ($name === '' || !preg_match('/^[a-z0-9_-]+$/', $name)) {
+            throw new Exception("Invalid admin submodule name: '{$name}'");
+        }
+    }
+
+    /**
+     * Load admin-only submodules from modules/admin-modules/*
+     */
+    private function loadAdminSubmodules($router) {
+        if (!$this->isAdminRequest()) {
+            return;
+        }
+
+        $baseDir = MANTRA_MODULES . '/admin-modules';
+        if (!is_dir($baseDir)) {
+            return;
+        }
+
+        foreach (glob($baseDir . '/*/module.json') as $manifestPath) {
+            $dir = basename(dirname($manifestPath));
+            $this->assertValidAdminSubmoduleName($dir);
+
+            $manifest = json_decode((string)file_get_contents($manifestPath), true);
+            if (!is_array($manifest)) {
+                logger()->warning('Invalid admin submodule manifest', array('path' => $manifestPath));
+                continue;
+            }
+
+            $id = isset($manifest['id']) ? (string)$manifest['id'] : $dir;
+            $this->assertValidAdminSubmoduleName($id);
+
+            if (!empty($this->adminSubmodules[$id])) {
+                continue;
+            }
+
+            $mainFile = isset($manifest['main']) && is_string($manifest['main'])
+                ? $manifest['main']
+                : (ucfirst($id) . 'AdminModule.php');
+
+            $mainPath = dirname($manifestPath) . '/' . $mainFile;
+            if (!file_exists($mainPath)) {
+                logger()->warning('Admin submodule main file not found', array('id' => $id, 'path' => $mainPath));
+                continue;
+            }
+
+            require_once MANTRA_MODULES . '/admin/AdminSubmodule.php';
+            require_once $mainPath;
+
+            $className = isset($manifest['class']) && is_string($manifest['class'])
+                ? $manifest['class']
+                : (ucfirst($id) . 'AdminModule');
+
+            if (!class_exists($className)) {
+                logger()->warning('Admin submodule class not found', array('id' => $id, 'class' => $className));
+                continue;
+            }
+
+            $instance = null;
+            try {
+                $ref = new ReflectionClass($className);
+                $ctor = $ref->getConstructor();
+                if ($ctor === null) {
+                    $instance = $ref->newInstance();
+                } else {
+                    $argc = $ctor->getNumberOfParameters();
+                    if ($argc >= 2) {
+                        $instance = $ref->newInstanceArgs(array($manifest, $this));
+                    } elseif ($argc === 1) {
+                        $instance = $ref->newInstanceArgs(array($manifest));
+                    } else {
+                        $instance = $ref->newInstance();
+                    }
+                }
+            } catch (Exception $e) {
+                logger()->warning('Failed to instantiate admin submodule', array('id' => $id, 'class' => $className, 'error' => $e->getMessage()));
+                continue;
+            }
+
+            if (!($instance instanceof AdminSubmodule)) {
+                logger()->warning('Admin submodule does not implement AdminSubmodule', array('id' => $id, 'class' => $className));
+                continue;
+            }
+
+            $instance->init($this);
+
+            $this->adminSubmodules[$id] = array(
+                'instance' => $instance,
+                'manifest' => $manifest,
+                'path' => dirname($manifestPath),
+            );
+        }
+    }
+
+    public function getAdminSubmodule($id) {
+        return isset($this->adminSubmodules[$id]) ? $this->adminSubmodules[$id]['instance'] : null;
+    }
+
+    public function adminRoute($method, $pattern, $callback) {
+        $router = $this->app->router();
+        $pattern = '/admin' . ($pattern === '' ? '' : ('/' . ltrim($pattern, '/')));
+
+        if ($method === 'GET') {
+            return $router->get($pattern, $callback)->middleware(array($this, 'requireAuth'));
+        }
+        if ($method === 'POST') {
+            return $router->post($pattern, $callback)->middleware(array($this, 'requireAuth'));
+        }
+        return $router->any($pattern, $callback)->middleware(array($this, 'requireAuth'));
     }
 
     /**
@@ -14,6 +136,9 @@ class AdminModule extends Module {
      */
     public function registerRoutes($data) {
         $router = $data['router'];
+
+        // Admin-only submodules (admin -> its modules)
+        $this->loadAdminSubmodules($router);
 
         // Auth
         $router->get('/admin/login', array($this, 'loginForm'));
@@ -58,6 +183,104 @@ class AdminModule extends Module {
         return '';
     }
 
+    private function normalizeSidebarItem($item) {
+        if (!is_array($item)) {
+            $item = array();
+        }
+
+        $id = isset($item['id']) ? (string)$item['id'] : '';
+        $item['id'] = $id;
+
+        if (isset($item['title'])) {
+            $item['title'] = $this->resolveAdminString($item['title']);
+        }
+        if (isset($item['group'])) {
+            $item['group'] = $this->resolveAdminString($item['group']);
+        }
+
+        if (!isset($item['order'])) {
+            $item['order'] = 100;
+        }
+
+        if (!isset($item['url']) || !is_string($item['url'])) {
+            if ($id !== '') {
+                $item['url'] = base_url('/admin/' . $id);
+            } else {
+                $item['url'] = '#';
+            }
+        }
+
+        $children = isset($item['children']) && is_array($item['children']) ? $item['children'] : array();
+        $normalizedChildren = array();
+        foreach ($children as $child) {
+            $normalizedChildren[] = $this->normalizeSidebarItem($child);
+        }
+        $item['children'] = $normalizedChildren;
+
+        return $item;
+    }
+
+    private function sortSidebarTree(&$items) {
+        if (!is_array($items)) {
+            $items = array();
+            return;
+        }
+
+        usort($items, function ($a, $b) {
+            $oa = isset($a['order']) ? (int)$a['order'] : 100;
+            $ob = isset($b['order']) ? (int)$b['order'] : 100;
+            if ($oa !== $ob) {
+                return $oa - $ob;
+            }
+
+            $ta = isset($a['title']) ? (string)$a['title'] : '';
+            $tb = isset($b['title']) ? (string)$b['title'] : '';
+            return strcmp($ta, $tb);
+        });
+
+        foreach ($items as &$item) {
+            if (isset($item['children']) && is_array($item['children'])) {
+                $this->sortSidebarTree($item['children']);
+            }
+        }
+        unset($item);
+    }
+
+    private function computeSidebarActive(&$item, $path) {
+        $active = false;
+
+        $id = isset($item['id']) ? (string)$item['id'] : '';
+        $url = isset($item['url']) ? (string)$item['url'] : '';
+
+        if ($id !== '') {
+            $prefix = '/admin/' . $id;
+            if (strpos($path, $prefix) === 0) {
+                $active = true;
+            }
+        }
+
+        // Also consider explicit URL match (best-effort)
+        if (!$active && $url !== '' && $url !== '#') {
+            $parsed = parse_url($url, PHP_URL_PATH);
+            if (is_string($parsed) && $parsed !== '' && strpos($path, $parsed) === 0) {
+                $active = true;
+            }
+        }
+
+        if (!empty($item['children']) && is_array($item['children'])) {
+            foreach ($item['children'] as &$child) {
+                $childActive = $this->computeSidebarActive($child, $path);
+                if ($childActive) {
+                    $active = true;
+                }
+            }
+            unset($child);
+        }
+
+        $item['active'] = $active;
+        return $active;
+    }
+
     private function buildSidebarItems() {
         $items = $this->fireHook('admin.sidebar', array());
         if (!is_array($items)) {
@@ -66,37 +289,13 @@ class AdminModule extends Module {
 
         $path = request()->path();
 
-        foreach ($items as &$item) {
-            if (!is_array($item)) {
-                $item = array();
-            }
-
-            $id = isset($item['id']) ? (string)$item['id'] : '';
-            $item['id'] = $id;
-
-            // Resolve i18n title/group
-            if (isset($item['title'])) {
-                $item['title'] = $this->resolveAdminString($item['title']);
-            }
-            if (isset($item['group'])) {
-                $item['group'] = $this->resolveAdminString($item['group']);
-            }
-
-            // Active state: /admin/<id>...
-            $prefix = '/admin/' . $id;
-            $item['active'] = ($id !== '' && strpos($path, $prefix) === 0);
-
-            // Defaults
-            if (!isset($item['order'])) {
-                $item['order'] = 100;
-            }
-            if (!isset($item['url']) || !is_string($item['url'])) {
-                $item['url'] = base_url('/admin/' . $id);
-            }
+        $normalized = array();
+        foreach ($items as $item) {
+            $normalized[] = $this->normalizeSidebarItem($item);
         }
-        unset($item);
 
-        usort($items, function ($a, $b) {
+        // Sort groups at top-level, then sort each group's subtree.
+        usort($normalized, function ($a, $b) {
             $ga = isset($a['group']) ? (string)$a['group'] : '';
             $gb = isset($b['group']) ? (string)$b['group'] : '';
             if ($ga !== $gb) {
@@ -114,7 +313,23 @@ class AdminModule extends Module {
             return strcmp($ta, $tb);
         });
 
-        return $items;
+        foreach ($normalized as &$item) {
+            if (isset($item['children']) && is_array($item['children'])) {
+                $this->sortSidebarTree($item['children']);
+            }
+            $this->computeSidebarActive($item, $path);
+        }
+        unset($item);
+
+        return $normalized;
+    }
+
+    public function render($title, $content, $extra = array()) {
+        return $this->renderAdminLayout($title, $content, $extra);
+    }
+
+    public function getSidebarItems() {
+        return $this->buildSidebarItems();
     }
 
     private function renderAdminLayout($title, $content, $extra = array()) {

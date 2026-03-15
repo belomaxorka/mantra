@@ -10,25 +10,6 @@ class MediaModule extends Module {
     
     public function init() {
         $this->hook('routes.register', array($this, 'registerRoutes'));
-
-        $this->hook('admin.sidebar', array($this, 'registerAdminSidebar'));
-    }
-
-    public function registerAdminSidebar($items) {
-        if (!is_array($items)) {
-            $items = array();
-        }
-
-        $items[] = array(
-            'id' => 'media',
-            'title' => array('key' => 'media.admin.title', 'fallback' => 'Media'),
-            'icon' => 'bi-images',
-            'url' => base_url('/admin/media'),
-            'group' => array('key' => 'admin.sidebar.group.content', 'fallback' => 'Content'),
-            'order' => 20,
-        );
-
-        return $items;
     }
 
     public function adminIndex() {
