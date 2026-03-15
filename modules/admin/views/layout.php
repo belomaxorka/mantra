@@ -23,6 +23,35 @@
     .admin-sidebar .nav-link.is-parent.expanded {
       background: rgba(13, 110, 253, 0.08);
     }
+
+    .admin-sidebar .nav-link.is-parent {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .admin-sidebar .nav-link.is-parent .caret {
+      opacity: 0.7;
+      font-size: 0.9em;
+      margin-left: 0.5rem;
+    }
+    .admin-sidebar .nav-link.is-parent.expanded .caret {
+      transform: rotate(90deg);
+    }
+    .admin-sidebar .nav-subtree {
+      margin-top: 0.15rem;
+      margin-bottom: 0.15rem;
+      border-left: 1px solid rgba(0,0,0,0.08);
+      margin-left: 0.5rem;
+      padding-left: 0.25rem;
+    }
+    .admin-sidebar .nav-subtree.collapsed {
+      display: none;
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      .admin-sidebar .nav-link.is-parent.expanded .caret {
+        transition: transform 0.15s ease-in-out;
+      }
+    }
     @media (max-width: 991.98px) {
       .admin-sidebar { width: 100%; }
     }
@@ -78,18 +107,31 @@
           }
           $classes .= e($levelClass);
 
-          // Parent items act as headers (no navigation) by default.
-          $href = $hasChildren ? '#' : $url;
+          $nodeId = $item['id'] ?? '';
+          $collapseId = 'admin-nav-' . preg_replace('/[^a-z0-9_-]/i', '-', (string)$nodeId) . '-' . (int)$level;
 
-          echo '<a class="' . $classes . '" href="' . e($href) . '">';
-          if (!empty($icon)) {
-            echo '<i class="bi ' . e($icon) . ' me-2"></i>';
-          }
-          echo e($title);
-          echo '</a>';
+          if ($hasChildren) {
+            // Parent acts as collapsible toggle.
+            echo '<a class="' . $classes . '" href="#" role="button" data-admin-collapse="' . e($collapseId) . '">';
+            echo '<span>';
+            if (!empty($icon)) {
+              echo '<i class="bi ' . e($icon) . ' me-2"></i>';
+            }
+            echo e($title);
+            echo '</span>';
+            echo '<span class="caret">›</span>';
+            echo '</a>';
 
-          if (!empty($children)) {
+            echo '<div class="nav-subtree ' . (!$expanded ? 'collapsed' : '') . '" id="' . e($collapseId) . '">';
             $renderSidebarItems($children, $level + 1);
+            echo '</div>';
+          } else {
+            echo '<a class="' . $classes . '" href="' . e($url) . '">';
+            if (!empty($icon)) {
+              echo '<i class="bi ' . e($icon) . ' me-2"></i>';
+            }
+            echo e($title);
+            echo '</a>';
           }
 
           echo '</li>';
@@ -136,6 +178,27 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  (function () {
+    function toggle(id) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.classList.toggle('collapsed');
+
+      var toggles = document.querySelectorAll('[data-admin-collapse="' + CSS.escape(id) + '"]');
+      toggles.forEach(function (a) {
+        a.classList.toggle('expanded', !el.classList.contains('collapsed'));
+      });
+    }
+
+    document.addEventListener('click', function (e) {
+      var a = e.target.closest && e.target.closest('[data-admin-collapse]');
+      if (!a) return;
+      e.preventDefault();
+      toggle(a.getAttribute('data-admin-collapse'));
+    });
+  })();
+</script>
 <?php
   $adminFooter = app()->hooks()->fire('admin.footer', '');
   if (is_array($adminFooter)) {
