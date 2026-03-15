@@ -24,18 +24,20 @@ class AdminModule extends Module {
         $router->get('/admin', array($this, 'dashboard'))
                ->middleware(array($this, 'requireAuth'));
 
-        // New dispatcher routes
-        $router->get('/admin/{module}', array($this, 'dispatchModuleIndex'))
-               ->middleware(array($this, 'requireAuth'));
-        $router->any('/admin/{module}/settings', array($this, 'dispatchModuleSettings'))
-               ->middleware(array($this, 'requireAuth'));
-
         // Legacy routes (keep during transition)
+        // IMPORTANT: keep these before the generic /admin/{module} dispatcher
+        // so that explicit routes like /admin/pages do not get captured and redirected in a loop.
         $router->get('/admin/pages', array($this, 'listPages'))
                ->middleware(array($this, 'requireAuth'));
         $router->get('/admin/pages/create', array($this, 'createPage'))
                ->middleware(array($this, 'requireAuth'));
         $router->post('/admin/pages/save', array($this, 'savePage'))
+               ->middleware(array($this, 'requireAuth'));
+
+        // New dispatcher routes
+        $router->get('/admin/{module}', array($this, 'dispatchModuleIndex'))
+               ->middleware(array($this, 'requireAuth'));
+        $router->any('/admin/{module}/settings', array($this, 'dispatchModuleSettings'))
                ->middleware(array($this, 'requireAuth'));
 
         return $data;
