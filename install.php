@@ -29,6 +29,12 @@ define('MANTRA_CONTENT', MANTRA_ROOT . '/content');
 define('MANTRA_STORAGE', MANTRA_ROOT . '/storage');
 define('MANTRA_UPLOADS', MANTRA_ROOT . '/uploads');
 
+// Load logging + helpers (Database uses logger())
+require_once MANTRA_CORE . '/Psr/Log/LoggerInterface.php';
+require_once MANTRA_CORE . '/Psr/Log/LogLevel.php';
+require_once MANTRA_CORE . '/Logger.php';
+require_once MANTRA_CORE . '/helpers.php';
+
 // Load core classes
 require_once MANTRA_CORE . '/Database.php';
 require_once MANTRA_CORE . '/Auth.php';
