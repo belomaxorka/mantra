@@ -33,8 +33,9 @@ if (!$isInstalled) {
     }
 }
 
-// Load configuration
-$config = require MANTRA_ROOT . '/config.php';
+// Load configuration (single source of truth: content/settings/config.json)
+require_once MANTRA_CORE . '/Config.php';
+$config = Config::bootstrap();
 $GLOBALS['MANTRA_CONFIG'] = $config;
 
 // Define debug constant as early as possible (used by logger/error handler)

@@ -32,6 +32,7 @@ define('MANTRA_UPLOADS', MANTRA_ROOT . '/uploads');
 // Load core classes
 require_once MANTRA_CORE . '/Database.php';
 require_once MANTRA_CORE . '/Auth.php';
+require_once MANTRA_CORE . '/Config.php';
 
 // Check if already installed
 if (file_exists(MANTRA_CONTENT . '/users')) {
@@ -75,23 +76,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $scriptPath = dirname($_SERVER['SCRIPT_NAME']);
         $baseUrl = $protocol . '://' . $host . ($scriptPath !== '/' ? $scriptPath : '');
         
-        // Create configuration file
-        $config = array(
-            'site_name' => $siteName,
-            'site_url' => $baseUrl,
-            'timezone' => 'UTC',
-            'default_language' => $language,
-            'debug' => true,
-            'cache_enabled' => true,
-            'cache_lifetime' => 3600,
-            'session_name' => 'mantra_session',
-            'session_lifetime' => 7200,
-            'content_format' => 'json',
-            'posts_per_page' => 10,
-            'active_theme' => 'default',
-            'enabled_modules' => array('admin', 'pages', 'media', 'users', 'editor')
-        );
-        
+        // Create configuration file (single source of truth)
+        $config = Config::buildInstallConfig($siteName, $language, $baseUrl);
+
         $configPath = MANTRA_CONTENT . '/settings/config.json';
         $configJson = json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
         file_put_contents($configPath, $configJson);

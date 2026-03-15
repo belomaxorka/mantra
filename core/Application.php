@@ -34,7 +34,9 @@ class Application {
         if (isset($GLOBALS['MANTRA_CONFIG']) && is_array($GLOBALS['MANTRA_CONFIG'])) {
             $config = $GLOBALS['MANTRA_CONFIG'];
         } else {
-            $config = require MANTRA_ROOT . '/config.php';
+            // Fallback for non-standard entrypoints
+            require_once MANTRA_CORE . '/Config.php';
+            $config = Config::bootstrap();
         }
         $this->config = $config;
         
