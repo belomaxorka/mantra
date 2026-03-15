@@ -97,11 +97,11 @@ class Config {
     /**
      * Create install-time config (full defaults with specific overrides).
      */
-    public static function buildInstallConfig($siteName, $language, $fallbackLocale, $siteUrl) {
+    public static function buildInstallConfig($siteName, $language, $siteUrl) {
         $config = self::defaults();
         $config['site_name'] = $siteName;
         $config['default_language'] = $language;
-        $config['fallback_locale'] = $fallbackLocale;
+        $config['fallback_locale'] = 'en';
         $config['site_url'] = $siteUrl;
         return $config;
     }

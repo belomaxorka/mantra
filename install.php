@@ -40,7 +40,6 @@ if (request()->method() === 'POST') {
     $email = trim((string)request()->post('email', ''));
     $siteName = trim((string)request()->post('site_name', 'Mantra CMS'));
     $language = (string)request()->post('language', 'en');
-    $fallbackLocale = (string)request()->post('fallback_language', 'en');
 
     if (empty($username) || empty($password)) {
         $error = 'Username and password are required';
@@ -69,7 +68,7 @@ if (request()->method() === 'POST') {
         $baseUrl = $protocol . '://' . $host . ($scriptPath !== '/' ? $scriptPath : '');
         
         // Create configuration file (single source of truth)
-        $config = Config::buildInstallConfig($siteName, $language, $fallbackLocale, $baseUrl);
+        $config = Config::buildInstallConfig($siteName, $language, $baseUrl);
 
         $configPath = MANTRA_CONTENT . '/settings/config.json';
         JsonFile::write($configPath, $config);
@@ -123,12 +122,6 @@ if (request()->method() === 'POST') {
             
             <label>Language:</label>
             <select name="language" style="width: 100%; padding: 10px; margin: 10px 0;">
-                <option value="en">English</option>
-                <option value="ru">Русский</option>
-            </select>
-
-            <label>Fallback language:</label>
-            <select name="fallback_language" style="width: 100%; padding: 10px; margin: 10px 0;">
                 <option value="en">English</option>
                 <option value="ru">Русский</option>
             </select>
