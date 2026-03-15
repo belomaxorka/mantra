@@ -69,7 +69,8 @@ If you add tooling, prefer documenting the exact command(s) here.
 
 ### Bootstrap & configuration
 
-- `core/bootstrap.php` defines path constants (e.g. `MANTRA_ROOT`, `MANTRA_CORE`, `MANTRA_CONTENT`, ...), loads config early, registers an autoloader, loads helpers, and registers the `ErrorHandler`.
+- `core/bootstrap.php` is **required for all entry points** (web, install, CLI). Do not call core classes directly without bootstrapping.
+- It defines path constants (e.g. `MANTRA_ROOT`, `MANTRA_CORE`, `MANTRA_CONTENT`, ...), loads config early, registers an autoloader, loads helpers, and registers the `ErrorHandler`.
 - **Single source of truth** for settings is `content/settings/config.json` (see `core/Config.php`).
   - `Config::bootstrap()` is used during early bootstrap to avoid needing `Application`.
   - `config()` helper returns a `Config` instance for runtime reads/writes.
