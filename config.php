@@ -21,6 +21,10 @@ $defaultConfig = array(
     // Debug mode
     'debug' => true,
     
+    // Logging settings
+    'log_level' => 'debug', // emergency, alert, critical, error, warning, notice, info, debug
+    'log_retention_days' => 30, // Auto-delete logs older than X days
+    
     // Cache settings
     'cache_enabled' => true,
     'cache_lifetime' => 3600,

@@ -67,12 +67,21 @@ class Application {
      */
     public function run() {
         try {
+            logger()->info('Application started');
+            
+            // Clean old logs periodically (once per day)
+            $this->cleanOldLogsIfNeeded();
+            
             // Initialize hook manager first (modules will register hooks)
             $this->hookManager = new HookManager();
             
             // Initialize module manager
             $this->moduleManager = new ModuleManager($this->config);
             $this->moduleManager->loadModules();
+            
+            logger()->debug('Modules loaded', array(
+                'count' => count($this->moduleManager->getModules())
+            ));
             
             // Fire init hook
             $this->hookManager->fire('system.init');
@@ -88,9 +97,38 @@ class Application {
             
             // Fire shutdown hook
             $this->hookManager->fire('system.shutdown');
+            
+            logger()->debug('Application finished');
         } catch (Exception $e) {
             $this->handleError($e);
         }
+    }
+    
+    /**
+     * Clean old logs if needed (once per day)
+     */
+    private function cleanOldLogsIfNeeded() {
+        $markerFile = MANTRA_STORAGE . '/logs/.last_cleanup';
+        $now = time();
+        
+        // Check if cleanup was done today
+        if (file_exists($markerFile)) {
+            $lastCleanup = (int)file_get_contents($markerFile);
+            if ($now - $lastCleanup < 86400) { // 24 hours
+                return;
+            }
+        }
+        
+        // Perform cleanup
+        $retentionDays = $this->config('log_retention_days', 30);
+        $deleted = logger()->clearOldLogs($retentionDays);
+        
+        if ($deleted > 0) {
+            logger()->info('Old logs cleaned', array('deleted' => $deleted, 'days' => $retentionDays));
+        }
+        
+        // Update marker
+        file_put_contents($markerFile, $now);
     }
     
     /**
@@ -98,7 +136,11 @@ class Application {
      */
     private function handleError($exception) {
         // Log error
-        $this->logError($exception);
+        logger()->error('Application error', array(
+            'exception' => $exception,
+            'url' => isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : 'unknown',
+            'method' => isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : 'unknown'
+        ));
         
         // Show error page
         http_response_code(500);
@@ -115,24 +157,11 @@ class Application {
     
     /**
      * Log error to file
+     * @deprecated Use logger() instead
      */
     private function logError($exception) {
-        $logDir = MANTRA_STORAGE . '/logs';
-        if (!is_dir($logDir)) {
-            mkdir($logDir, 0755, true);
-        }
-        
-        $logFile = $logDir . '/error-' . date('Y-m-d') . '.log';
-        $message = sprintf(
-            "[%s] %s in %s:%d\nStack trace:\n%s\n\n",
-            date('Y-m-d H:i:s'),
-            $exception->getMessage(),
-            $exception->getFile(),
-            $exception->getLine(),
-            $exception->getTraceAsString()
-        );
-        
-        file_put_contents($logFile, $message, FILE_APPEND);
+        // Kept for backward compatibility, but now uses Logger class
+        logger()->error('Application error', array('exception' => $exception));
     }
     
     /**

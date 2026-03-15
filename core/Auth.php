@@ -16,9 +16,12 @@ class Auth {
      * Login user
      */
     public function login($username, $password) {
+        logger()->info('Login attempt', array('username' => $username));
+        
         $users = $this->db->query('users', array('username' => $username));
         
         if (empty($users)) {
+            logger()->warning('Login failed: user not found', array('username' => $username));
             return false;
         }
         
@@ -26,6 +29,7 @@ class Auth {
         
         // Verify password
         if (!$this->verifyPassword($password, $user['password'])) {
+            logger()->warning('Login failed: invalid password', array('username' => $username));
             return false;
         }
         
@@ -38,6 +42,12 @@ class Auth {
         
         $this->currentUser = $user;
         
+        logger()->info('Login successful', array(
+            'username' => $username,
+            'user_id' => $user['_id'],
+            'role' => $user['role']
+        ));
+        
         return true;
     }
     
@@ -45,6 +55,13 @@ class Auth {
      * Logout user
      */
     public function logout() {
+        if ($this->currentUser) {
+            logger()->info('User logged out', array(
+                'username' => $this->currentUser['username'],
+                'user_id' => $this->currentUser['_id']
+            ));
+        }
+        
         unset($_SESSION['user_id']);
         unset($_SESSION['user_role']);
         $this->currentUser = null;

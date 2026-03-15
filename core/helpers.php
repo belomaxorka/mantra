@@ -44,6 +44,34 @@ function auth() {
 }
 
 /**
+ * Get logger instance
+ */
+function logger($channel = 'app') {
+    static $loggers = array();
+    if (!isset($loggers[$channel])) {
+        $loggers[$channel] = new Logger($channel);
+    }
+    return $loggers[$channel];
+}
+
+/**
+ * Quick log helper
+ */
+function log_message($level, $message, $context = array()) {
+    return logger()->log($level, $message, $context);
+}
+
+/**
+ * Debug log helper (only in debug mode)
+ */
+function log_debug($message, $context = array()) {
+    if (defined('MANTRA_DEBUG') && MANTRA_DEBUG) {
+        return logger()->debug($message, $context);
+    }
+    return false;
+}
+
+/**
  * Redirect helper
  */
 function redirect($url, $code = 302) {

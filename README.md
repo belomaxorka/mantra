@@ -89,6 +89,43 @@ class YourModuleModule extends Module {
 - `content.save` - Before content is saved
 - `content.delete` - Before content is deleted
 
+## Logging
+
+The system includes a centralized logging system with PSR-3 compatible log levels:
+
+```php
+// Using logger helper
+logger()->info('User action', array('user_id' => 123));
+logger()->error('Something went wrong', array('exception' => $e));
+logger()->debug('Debug information');
+
+// Using specific channel
+logger('security')->warning('Suspicious activity detected');
+
+// Quick helpers
+log_debug('This only logs in debug mode');
+log_message('error', 'Error message', array('context' => 'data'));
+```
+
+Log levels (from highest to lowest priority):
+- `emergency` - System is unusable
+- `alert` - Action must be taken immediately
+- `critical` - Critical conditions
+- `error` - Runtime errors
+- `warning` - Warning messages
+- `notice` - Normal but significant events
+- `info` - Informational messages
+- `debug` - Detailed debug information (only in debug mode)
+
+Logs are stored in `storage/logs/` with daily rotation:
+- Error logs: `error-YYYY-MM-DD.log`
+- Channel logs: `{channel}-YYYY-MM-DD.log`
+
+Clean old logs:
+```php
+logger()->clearOldLogs(30); // Delete logs older than 30 days
+```
+
 ## License
 
 MIT License

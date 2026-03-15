@@ -40,12 +40,14 @@ class ModuleManager {
         
         // Check if module exists
         if (!file_exists($manifestPath) || !file_exists($mainFile)) {
+            logger()->warning('Module not found', array('module' => $moduleName));
             return false;
         }
         
         // Load manifest
         $manifest = json_decode(file_get_contents($manifestPath), true);
         if (!$manifest) {
+            logger()->error('Invalid module manifest', array('module' => $moduleName));
             return false;
         }
         
@@ -53,7 +55,9 @@ class ModuleManager {
         if (isset($manifest['dependencies'])) {
             foreach ($manifest['dependencies'] as $dependency) {
                 if (!$this->loadModule($dependency)) {
-                    throw new Exception("Module '$moduleName' requires '$dependency'");
+                    $error = "Module '$moduleName' requires '$dependency'";
+                    logger()->error($error, array('module' => $moduleName, 'dependency' => $dependency));
+                    throw new Exception($error);
                 }
             }
         }
@@ -63,7 +67,9 @@ class ModuleManager {
         
         $className = ucfirst($moduleName) . 'Module';
         if (!class_exists($className)) {
-            throw new Exception("Module class '$className' not found");
+            $error = "Module class '$className' not found";
+            logger()->error($error, array('module' => $moduleName));
+            throw new Exception($error);
         }
         
         // Instantiate module
@@ -81,6 +87,11 @@ class ModuleManager {
         );
         
         $this->loadedModules[$moduleName] = true;
+        
+        logger()->debug('Module loaded', array(
+            'module' => $moduleName,
+            'version' => isset($manifest['version']) ? $manifest['version'] : 'unknown'
+        ));
         
         return true;
     }

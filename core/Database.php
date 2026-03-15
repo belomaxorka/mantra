@@ -36,11 +36,13 @@ class Database {
     public function write($collection, $id, $data) {
         // Validate collection name (prevent directory traversal)
         if (!$this->isValidCollectionName($collection)) {
+            logger()->error('Invalid collection name', array('collection' => $collection));
             throw new Exception('Invalid collection name');
         }
         
         // Validate ID (prevent directory traversal)
         if (!$this->isValidId($id)) {
+            logger()->error('Invalid ID', array('id' => $id));
             throw new Exception('Invalid ID');
         }
         
@@ -61,15 +63,25 @@ class Database {
         // Write file atomically
         $json = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
         if ($json === false) {
+            logger()->error('Failed to encode JSON', array('collection' => $collection, 'id' => $id));
             throw new Exception('Failed to encode JSON');
         }
         
         $tempFile = $path . '.tmp';
         if (file_put_contents($tempFile, $json) === false) {
+            logger()->error('Failed to write temp file', array('path' => $tempFile));
             return false;
         }
         
-        return rename($tempFile, $path);
+        $result = rename($tempFile, $path);
+        
+        if ($result) {
+            logger()->debug('Data written', array('collection' => $collection, 'id' => $id));
+        } else {
+            logger()->error('Failed to rename temp file', array('temp' => $tempFile, 'target' => $path));
+        }
+        
+        return $result;
     }
     
     /**
