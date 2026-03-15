@@ -72,8 +72,8 @@ class ErrorHandler
             'severity' => $severity,
             'file' => $file,
             'line' => $line,
-            'url' => isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : null,
-            'method' => isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : null
+            'url' => request()->server('REQUEST_URI'),
+            'method' => request()->server('REQUEST_METHOD')
         ));
 
         // Let PHP continue with its internal handler as well.
@@ -84,8 +84,8 @@ class ErrorHandler
     {
         self::getLogger()->error('Uncaught exception', array(
             'exception' => $exception,
-            'url' => isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : null,
-            'method' => isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : null
+            'url' => request()->server('REQUEST_URI'),
+            'method' => request()->server('REQUEST_METHOD')
         ));
 
         if (self::isCli()) {
@@ -126,8 +126,8 @@ class ErrorHandler
             'severity' => isset($error['type']) ? $error['type'] : null,
             'file' => isset($error['file']) ? $error['file'] : null,
             'line' => isset($error['line']) ? $error['line'] : null,
-            'url' => isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : null,
-            'method' => isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : null
+            'url' => request()->server('REQUEST_URI'),
+            'method' => request()->server('REQUEST_METHOD')
         ));
 
         if (self::isCli()) {

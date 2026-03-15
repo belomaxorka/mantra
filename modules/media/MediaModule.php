@@ -50,12 +50,11 @@ class MediaModule extends Module {
             return;
         }
         
-        if (!isset($_FILES['file'])) {
+        $file = request()->file('file');
+        if (!$file) {
             json_response(array('error' => 'No file uploaded'), 400);
             return;
         }
-        
-        $file = $_FILES['file'];
         $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
         
         // Validate
@@ -93,7 +92,7 @@ class MediaModule extends Module {
             return;
         }
         
-        $filename = isset($_POST['filename']) ? $_POST['filename'] : '';
+        $filename = (string)request()->post('filename', '');
         $path = MANTRA_UPLOADS . '/' . basename($filename);
         
         if (file_exists($path) && unlink($path)) {

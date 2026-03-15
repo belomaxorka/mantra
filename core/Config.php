@@ -100,9 +100,9 @@ class Config {
     }
 
     private static function detectBaseUrl() {
-        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-        $host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'localhost';
-        $scriptPath = isset($_SERVER['SCRIPT_NAME']) ? dirname($_SERVER['SCRIPT_NAME']) : '';
+        $protocol = is_https() ? 'https' : 'http';
+        $host = (string)request()->header('Host', 'localhost');
+        $scriptPath = dirname((string)request()->server('SCRIPT_NAME', ''));
         $baseUrl = $protocol . '://' . $host . (($scriptPath && $scriptPath !== '/') ? $scriptPath : '');
         return $baseUrl;
     }

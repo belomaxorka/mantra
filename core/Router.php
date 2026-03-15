@@ -60,9 +60,9 @@ class Router {
      * Dispatch current request
      */
     public function dispatch() {
-        $method = $_SERVER['REQUEST_METHOD'];
+        $method = request()->method();
         $uri = $this->getUri();
-        
+
         foreach ($this->routes as $route) {
             // Check method
             if ($route['method'] !== 'ANY' && $route['method'] !== $method) {
@@ -107,7 +107,7 @@ class Router {
      * Get clean URI
      */
     private function getUri() {
-        $uri = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '/';
+        $uri = request()->uri();
         
         // Remove query string
         if (($pos = strpos($uri, '?')) !== false) {
@@ -115,7 +115,7 @@ class Router {
         }
         
         // Remove base path if in subdirectory
-        $scriptName = dirname($_SERVER['SCRIPT_NAME']);
+        $scriptName = dirname((string)request()->server('SCRIPT_NAME', ''));
         if ($scriptName !== '/' && strpos($uri, $scriptName) === 0) {
             $uri = substr($uri, strlen($scriptName));
         }

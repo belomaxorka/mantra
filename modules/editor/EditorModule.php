@@ -16,7 +16,7 @@ class EditorModule extends Module {
      */
     public function injectEditorScripts($content) {
         // Only inject in admin pages
-        $uri = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
+        $uri = request()->uri();
         
         if (strpos($uri, '/admin') === false) {
             return $content;

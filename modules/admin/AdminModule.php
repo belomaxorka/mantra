@@ -70,8 +70,8 @@ class AdminModule extends Module {
      * Process login
      */
     public function loginProcess() {
-        $username = isset($_POST['username']) ? $_POST['username'] : '';
-        $password = isset($_POST['password']) ? $_POST['password'] : '';
+        $username = (string)request()->post('username', '');
+        $password = (string)request()->post('password', '');
         
         if (auth()->login($username, $password)) {
             redirect(base_url('/admin'));
@@ -117,14 +117,20 @@ class AdminModule extends Module {
     public function savePage() {
         $db = new Database();
         
-        $id = isset($_POST['id']) ? $_POST['id'] : $db->generateId();
+        $id = (string)request()->post('id', '');
+        if ($id === '') {
+            $id = $db->generateId();
+        }
+
+        $title = (string)request()->post('title', '');
+
         $data = array(
-            'title' => $_POST['title'],
-            'slug' => slugify($_POST['title']),
-            'content_html' => $_POST['content'],
+            'title' => $title,
+            'slug' => slugify($title),
+            'content_html' => (string)request()->post('content', ''),
             'content_type' => 'html',
-            'status' => isset($_POST['status']) ? $_POST['status'] : 'draft',
-            'lang' => isset($_POST['lang']) ? $_POST['lang'] : 'en'
+            'status' => (string)request()->post('status', 'draft'),
+            'lang' => (string)request()->post('lang', 'en')
         );
         
         if ($db->write('pages', $id, $data)) {

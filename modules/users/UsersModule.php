@@ -51,7 +51,7 @@ class UsersModule extends Module {
         // Update user data
         $userData = array(
             'username' => $user['username'],
-            'email' => isset($_POST['email']) ? $_POST['email'] : $user['email'],
+            'email' => (string)request()->post('email', $user['email']),
             'password' => $user['password'],
             'role' => $user['role']
         );

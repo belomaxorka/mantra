@@ -34,12 +34,12 @@ if (file_exists(MANTRA_CONTENT . '/users')) {
 }
 
 // Handle form submission
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = trim($_POST['username']);
-    $password = $_POST['password'];
-    $email = trim($_POST['email']);
-    $siteName = isset($_POST['site_name']) ? trim($_POST['site_name']) : 'Mantra CMS';
-    $language = isset($_POST['language']) ? $_POST['language'] : 'en';
+if (request()->method() === 'POST') {
+    $username = trim((string)request()->post('username', ''));
+    $password = (string)request()->post('password', '');
+    $email = trim((string)request()->post('email', ''));
+    $siteName = trim((string)request()->post('site_name', 'Mantra CMS'));
+    $language = (string)request()->post('language', 'en');
     
     if (empty($username) || empty($password)) {
         $error = 'Username and password are required';
@@ -62,9 +62,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         // Auto-detect base URL
-        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-        $host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'localhost';
-        $scriptPath = dirname($_SERVER['SCRIPT_NAME']);
+        $protocol = is_https() ? 'https' : 'http';
+        $host = (string)request()->header('Host', 'localhost');
+        $scriptPath = dirname((string)request()->server('SCRIPT_NAME', ''));
         $baseUrl = $protocol . '://' . $host . ($scriptPath !== '/' ? $scriptPath : '');
         
         // Create configuration file (single source of truth)

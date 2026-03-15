@@ -129,6 +129,7 @@ class Request {
     }
 
     public function ip() {
-        return function_exists('client_ip') ? client_ip() : (isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : null);
+        $ip = client_ip();
+        return $ip ? $ip : (isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : null);
     }
 }

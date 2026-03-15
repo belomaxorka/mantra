@@ -144,8 +144,8 @@ class Application {
         // Log error
         logger()->error('Application error', array(
             'exception' => $exception,
-            'url' => isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : 'unknown',
-            'method' => isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : 'unknown'
+            'url' => (string)request()->server('REQUEST_URI', 'unknown'),
+            'method' => (string)request()->server('REQUEST_METHOD', 'unknown')
         ));
         
         // Show error page
