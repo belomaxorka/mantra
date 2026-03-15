@@ -4,19 +4,19 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
     RewriteBase /
-    
+
     # Redirect to HTTPS (optional, uncomment if needed)
     # RewriteCond %{HTTPS} off
     # RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
-    
+
     # Protect sensitive directories
     RewriteRule ^(core|modules|content|storage)/ - [F,L]
-    
+
     # Allow access to uploads and themes
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_URI} !^/(uploads|themes)/
-    
+
     # Route everything else to index.php
     RewriteRule ^(.*)$ index.php [QSA,L]
 </IfModule>
@@ -24,22 +24,18 @@
 # Disable directory browsing
 Options -Indexes
 
-# Protect config and sensitive files
+# Protect config and sensitive files (Apache 2.4+)
 <FilesMatch "^(config\.php|\.gitignore|\.htaccess|\.git)$">
-    Order allow,deny
-    Deny from all
+    Require all denied
 </FilesMatch>
 
-# Protect JSON data files
+# Protect JSON data files (Apache 2.4+)
 <FilesMatch "\.json$">
-    Order allow,deny
-    Deny from all
+    Require all denied
 </FilesMatch>
 
-# Protect PHP files in content directory
-<DirectoryMatch "^.*/content/.*">
-    <FilesMatch "\.php$">
-        Order allow,deny
-        Deny from all
-    </FilesMatch>
-</DirectoryMatch>
+# Protect PHP files under /content (Apache 2.4+)
+# Note: <Directory>/<DirectoryMatch> directives are not allowed in .htaccess.
+<FilesMatch "^content/.*\.php$">
+    Require all denied
+</FilesMatch>

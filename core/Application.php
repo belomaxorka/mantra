@@ -30,11 +30,18 @@ class Application {
      * Load configuration
      */
     private function loadConfig() {
-        $config = require MANTRA_ROOT . '/config.php';
+        // Prefer config loaded in index.php (avoids re-reading config file)
+        if (isset($GLOBALS['MANTRA_CONFIG']) && is_array($GLOBALS['MANTRA_CONFIG'])) {
+            $config = $GLOBALS['MANTRA_CONFIG'];
+        } else {
+            $config = require MANTRA_ROOT . '/config.php';
+        }
         $this->config = $config;
         
-        // Define debug constant
-        define('MANTRA_DEBUG', isset($config['debug']) ? $config['debug'] : false);
+        // Define debug constant (may already be defined in index.php)
+        if (!defined('MANTRA_DEBUG')) {
+            define('MANTRA_DEBUG', isset($config['debug']) ? $config['debug'] : false);
+        }
     }
     
     /**
@@ -47,11 +54,11 @@ class Application {
         }
         
         // Error reporting
+        // Variant C: collect everything to logs, but show details only in debug.
+        error_reporting(E_ALL);
         if (MANTRA_DEBUG) {
-            error_reporting(E_ALL);
             ini_set('display_errors', 1);
         } else {
-            error_reporting(0);
             ini_set('display_errors', 0);
         }
         

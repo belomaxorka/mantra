@@ -34,18 +34,35 @@ if (!$isInstalled) {
 }
 
 // Load configuration
-require_once MANTRA_ROOT . '/config.php';
+$config = require MANTRA_ROOT . '/config.php';
+$GLOBALS['MANTRA_CONFIG'] = $config;
+
+// Define debug constant as early as possible (used by logger/error handler)
+if (!defined('MANTRA_DEBUG')) {
+    define('MANTRA_DEBUG', !empty($config['debug']));
+}
+
+// Load vendored PSR-3 interfaces (no Composer)
+require_once MANTRA_CORE . '/Psr/Log/LoggerInterface.php';
+require_once MANTRA_CORE . '/Psr/Log/LogLevel.php';
 
 // Load helper functions
 require_once MANTRA_CORE . '/helpers.php';
 
 // Autoloader for core classes
 spl_autoload_register(function($class) {
-    $coreFile = MANTRA_CORE . '/' . $class . '.php';
+    $relative = str_replace("\0", '', $class);
+    $relative = str_replace('\\', '/', $relative);
+    $coreFile = MANTRA_CORE . '/' . $relative . '.php';
     if (file_exists($coreFile)) {
         require_once $coreFile;
     }
 });
+
+// Register centralized PHP error handling (logs to channel "php")
+ErrorHandler::register(new Logger('php', array(
+    'minLevel' => MANTRA_DEBUG ? Logger::DEBUG : Logger::NOTICE
+)));
 
 // Initialize application
 $app = Application::getInstance();

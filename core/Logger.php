@@ -4,7 +4,8 @@
  * Supports multiple log levels and channels
  */
 
-class Logger {
+class Logger implements \Psr\Log\LoggerInterface
+{
     // Log levels (PSR-3 compatible)
     const EMERGENCY = 'emergency';
     const ALERT     = 'alert';
@@ -14,11 +15,13 @@ class Logger {
     const NOTICE    = 'notice';
     const INFO      = 'info';
     const DEBUG     = 'debug';
-    
+
     private $logPath = '';
     private $channel = 'app';
     private $minLevel = self::INFO;
-    
+    private $includeContext = true;
+    private $dateFormat = 'Y-m-d H:i:s';
+
     private static $levels = array(
         self::EMERGENCY => 800,
         self::ALERT     => 700,
@@ -29,166 +32,149 @@ class Logger {
         self::INFO      => 200,
         self::DEBUG     => 100
     );
-    
-    public function __construct($channel = 'app') {
-        $this->logPath = MANTRA_STORAGE . '/logs';
+
+    /**
+     * @param string $channel
+     * @param array  $options Supported: logPath, minLevel, includeContext, dateFormat
+     */
+    public function __construct($channel = 'app', $options = array())
+    {
         $this->channel = $channel;
-        
-        // Set minimum level from config or debug mode
-        if (defined('MANTRA_DEBUG') && MANTRA_DEBUG) {
-            $this->minLevel = self::DEBUG;
-        } else {
-            $this->minLevel = self::INFO;
+
+        $this->logPath = isset($options['logPath'])
+            ? $options['logPath']
+            : (defined('MANTRA_STORAGE') ? (MANTRA_STORAGE . '/logs') : (__DIR__ . '/../storage/logs'));
+
+        if (isset($options['minLevel']) && isset(self::$levels[$options['minLevel']])) {
+            $this->minLevel = $options['minLevel'];
         }
-        
-        // Override with config if available
-        $app = Application::getInstance();
-        if ($app) {
-            $configLevel = $app->config('log_level');
-            if ($configLevel && isset(self::$levels[$configLevel])) {
-                $this->minLevel = $configLevel;
-            }
+
+        if (isset($options['includeContext'])) {
+            $this->includeContext = (bool) $options['includeContext'];
         }
-        
+
+        if (!empty($options['dateFormat'])) {
+            $this->dateFormat = $options['dateFormat'];
+        }
+
         // Create logs directory if not exists
         if (!is_dir($this->logPath)) {
             mkdir($this->logPath, 0755, true);
         }
     }
-    
-    /**
-     * Log emergency message
-     */
-    public function emergency($message, $context = array()) {
+
+    public function emergency($message, array $context = array())
+    {
         return $this->log(self::EMERGENCY, $message, $context);
     }
-    
-    /**
-     * Log alert message
-     */
-    public function alert($message, $context = array()) {
+
+    public function alert($message, array $context = array())
+    {
         return $this->log(self::ALERT, $message, $context);
     }
-    
-    /**
-     * Log critical message
-     */
-    public function critical($message, $context = array()) {
+
+    public function critical($message, array $context = array())
+    {
         return $this->log(self::CRITICAL, $message, $context);
     }
-    
-    /**
-     * Log error message
-     */
-    public function error($message, $context = array()) {
+
+    public function error($message, array $context = array())
+    {
         return $this->log(self::ERROR, $message, $context);
     }
-    
-    /**
-     * Log warning message
-     */
-    public function warning($message, $context = array()) {
+
+    public function warning($message, array $context = array())
+    {
         return $this->log(self::WARNING, $message, $context);
     }
-    
-    /**
-     * Log notice message
-     */
-    public function notice($message, $context = array()) {
+
+    public function notice($message, array $context = array())
+    {
         return $this->log(self::NOTICE, $message, $context);
     }
-    
-    /**
-     * Log info message
-     */
-    public function info($message, $context = array()) {
+
+    public function info($message, array $context = array())
+    {
         return $this->log(self::INFO, $message, $context);
     }
-    
-    /**
-     * Log debug message
-     */
-    public function debug($message, $context = array()) {
+
+    public function debug($message, array $context = array())
+    {
         return $this->log(self::DEBUG, $message, $context);
     }
-    
-    /**
-     * Main log method
-     */
-    public function log($level, $message, $context = array()) {
-        // Check if level should be logged
+
+    public function log($level, $message, array $context = array())
+    {
         if (!$this->shouldLog($level)) {
             return false;
         }
-        
-        // Format message
+
         $formattedMessage = $this->formatMessage($level, $message, $context);
-        
-        // Write to file
         return $this->writeLog($level, $formattedMessage);
     }
-    
-    /**
-     * Check if level should be logged
-     */
-    private function shouldLog($level) {
+
+    private function shouldLog($level)
+    {
         if (!isset(self::$levels[$level]) || !isset(self::$levels[$this->minLevel])) {
             return false;
         }
-        
+
         return self::$levels[$level] >= self::$levels[$this->minLevel];
     }
-    
-    /**
-     * Format log message
-     */
-    private function formatMessage($level, $message, $context) {
-        // Replace placeholders in message
+
+    private function formatMessage($level, $message, $context)
+    {
         $message = $this->interpolate($message, $context);
-        
-        // Build log entry
+
         $entry = sprintf(
             "[%s] %s.%s: %s",
-            date('Y-m-d H:i:s'),
+            date($this->dateFormat),
             $this->channel,
             strtoupper($level),
             $message
         );
-        
-        // Add context if present
-        if (!empty($context)) {
-            $entry .= ' ' . json_encode($context, JSON_UNESCAPED_UNICODE);
+
+        if ($this->includeContext && !empty($context)) {
+            $entry .= ' ' . json_encode($this->normalizeContext($context), JSON_UNESCAPED_UNICODE);
         }
-        
-        // Add stack trace for errors
-        if (in_array($level, array(self::ERROR, self::CRITICAL, self::ALERT, self::EMERGENCY))) {
-            if (isset($context['exception']) && $context['exception'] instanceof Exception) {
+
+        if (in_array($level, array(self::ERROR, self::CRITICAL, self::ALERT, self::EMERGENCY), true)) {
+            if (isset($context['exception']) && $this->isThrowable($context['exception'])) {
                 $entry .= "\n" . $this->formatException($context['exception']);
             }
         }
-        
+
         return $entry;
     }
-    
-    /**
-     * Interpolate context values into message placeholders
-     */
-    private function interpolate($message, $context) {
+
+    private function interpolate($message, $context)
+    {
         $replace = array();
-        
+
         foreach ($context as $key => $val) {
             if (is_scalar($val) || (is_object($val) && method_exists($val, '__toString'))) {
                 $replace['{' . $key . '}'] = $val;
             }
         }
-        
+
         return strtr($message, $replace);
     }
-    
-    /**
-     * Format exception for logging
-     */
-    private function formatException($exception) {
+
+    private function isThrowable($value)
+    {
+        if ($value instanceof Exception) {
+            return true;
+        }
+
+        if (interface_exists('Throwable') && $value instanceof Throwable) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private function formatException($exception)
+    {
         return sprintf(
             "Exception: %s in %s:%d\nStack trace:\n%s",
             $exception->getMessage(),
@@ -197,48 +183,73 @@ class Logger {
             $exception->getTraceAsString()
         );
     }
-    
-    /**
-     * Write log to file
-     */
-    private function writeLog($level, $message) {
+
+    private function normalizeContext($context)
+    {
+        if (!is_array($context)) {
+            return $context;
+        }
+
+        $out = array();
+        foreach ($context as $key => $val) {
+            if ($key === 'exception' && $this->isThrowable($val)) {
+                $out[$key] = array(
+                    'class' => get_class($val),
+                    'message' => $val->getMessage(),
+                    'file' => $val->getFile(),
+                    'line' => $val->getLine()
+                );
+                continue;
+            }
+
+            if (is_resource($val)) {
+                $out[$key] = 'resource';
+                continue;
+            }
+
+            if (is_object($val) && !method_exists($val, '__toString')) {
+                $out[$key] = array('object' => get_class($val));
+                continue;
+            }
+
+            $out[$key] = $val;
+        }
+
+        return $out;
+    }
+
+    private function writeLog($level, $message)
+    {
         // Determine log file based on level
-        if (in_array($level, array(self::ERROR, self::CRITICAL, self::ALERT, self::EMERGENCY))) {
+        if (in_array($level, array(self::ERROR, self::CRITICAL, self::ALERT, self::EMERGENCY), true)) {
             $filename = 'error-' . date('Y-m-d') . '.log';
         } else {
             $filename = $this->channel . '-' . date('Y-m-d') . '.log';
         }
-        
+
         $logFile = $this->logPath . '/' . $filename;
-        
         return file_put_contents($logFile, $message . "\n", FILE_APPEND | LOCK_EX) !== false;
     }
-    
-    /**
-     * Set minimum log level
-     */
-    public function setMinLevel($level) {
+
+    public function setMinLevel($level)
+    {
         if (isset(self::$levels[$level])) {
             $this->minLevel = $level;
         }
         return $this;
     }
-    
-    /**
-     * Get log file path
-     */
-    public function getLogPath() {
+
+    public function getLogPath()
+    {
         return $this->logPath;
     }
-    
-    /**
-     * Clear old log files
-     */
-    public function clearOldLogs($days = 30) {
+
+    public function clearOldLogs($days = 30)
+    {
         $files = glob($this->logPath . '/*.log');
         $now = time();
         $deleted = 0;
-        
+
         foreach ($files as $file) {
             if (is_file($file)) {
                 if ($now - filemtime($file) >= 60 * 60 * 24 * $days) {
@@ -248,7 +259,7 @@ class Logger {
                 }
             }
         }
-        
+
         return $deleted;
     }
 }

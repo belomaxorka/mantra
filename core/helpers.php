@@ -49,7 +49,18 @@ function auth() {
 function logger($channel = 'app') {
     static $loggers = array();
     if (!isset($loggers[$channel])) {
-        $loggers[$channel] = new Logger($channel);
+        $minLevel = (defined('MANTRA_DEBUG') && MANTRA_DEBUG) ? Logger::DEBUG : Logger::INFO;
+
+        // Prefer early-loaded config (no Application dependency).
+        if (isset($GLOBALS['MANTRA_CONFIG']) && is_array($GLOBALS['MANTRA_CONFIG'])) {
+            if (!empty($GLOBALS['MANTRA_CONFIG']['log_level'])) {
+                $minLevel = $GLOBALS['MANTRA_CONFIG']['log_level'];
+            }
+        }
+
+        $loggers[$channel] = new Logger($channel, array(
+            'minLevel' => $minLevel
+        ));
     }
     return $loggers[$channel];
 }
