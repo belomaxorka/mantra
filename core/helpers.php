@@ -130,6 +130,32 @@ function json_response($data, $code = 200) {
 }
 
 /**
+ * Determine whether the current request is HTTPS.
+ *
+ * Uses request headers first (HTTPS / X-Forwarded-Proto), with a fallback to site_url scheme.
+ */
+function is_https() {
+    if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
+        return true;
+    }
+
+    if (!empty($_SERVER['HTTP_X_FORWARDED_PROTO'])) {
+        $proto = strtolower(trim(explode(',', $_SERVER['HTTP_X_FORWARDED_PROTO'])[0]));
+        if ($proto === 'https') {
+            return true;
+        }
+    }
+
+    $siteUrl = config('site_url');
+    if ($siteUrl) {
+        $scheme = parse_url($siteUrl, PHP_URL_SCHEME);
+        return strtolower((string)$scheme) === 'https';
+    }
+
+    return false;
+}
+
+/**
  * Get config instance or value
  */
 function config($key = null, $default = null) {

@@ -29,7 +29,7 @@ class Session {
 
         // Configure session cookie params before start
         $lifetime = (int)config('session_lifetime', 0);
-        $secure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
+        $secure = is_https();
 
         if (defined('PHP_VERSION_ID') && PHP_VERSION_ID >= 70300) {
             session_set_cookie_params(array(

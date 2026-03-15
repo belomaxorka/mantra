@@ -3,9 +3,6 @@
 namespace Http;
 
 class Cookie {
-    private function isHttps() {
-        return (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
-    }
 
     public function get($name, $default = null) {
         return isset($_COOKIE[$name]) ? $_COOKIE[$name] : $default;
@@ -39,7 +36,7 @@ class Cookie {
         if (array_key_exists('secure', $options)) {
             $secure = (bool)$options['secure'];
         } else {
-            $secure = $this->isHttps();
+            $secure = is_https();
         }
 
         // PHP 7.3+ supports options array with SameSite
