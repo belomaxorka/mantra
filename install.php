@@ -71,8 +71,7 @@ if (request()->method() === 'POST') {
         $config = Config::buildInstallConfig($siteName, $language, $baseUrl);
 
         $configPath = MANTRA_CONTENT . '/settings/config.json';
-        $configJson = json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-        file_put_contents($configPath, $configJson);
+        JsonFile::write($configPath, $config);
         
         // Create admin user
         $db = new Database();

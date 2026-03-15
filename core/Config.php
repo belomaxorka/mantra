@@ -23,9 +23,14 @@ class Config {
         $json = array();
 
         if ($path && file_exists($path)) {
-            $decoded = json_decode(file_get_contents($path), true);
-            if (is_array($decoded)) {
-                $json = $decoded;
+            try {
+                $decoded = JsonFile::read($path, array('recover' => true));
+                if (is_array($decoded)) {
+                    $json = $decoded;
+                }
+            } catch (Exception $e) {
+                // Don't fail bootstrap on config JSON issues; ErrorHandler/logger may not be ready yet.
+                error_log('Failed to read config.json: ' . $e->getMessage());
             }
         }
 
@@ -121,10 +126,16 @@ class Config {
         $this->config = self::defaults();
 
         if (file_exists($this->configPath)) {
-            $content = file_get_contents($this->configPath);
-            $decoded = json_decode($content, true);
-            if (is_array($decoded)) {
-                $this->config = array_merge($this->config, $decoded);
+            try {
+                $decoded = JsonFile::read($this->configPath, array('recover' => true));
+                if (is_array($decoded)) {
+                    $this->config = array_merge($this->config, $decoded);
+                }
+            } catch (Exception $e) {
+                logger('app')->warning('Failed to read config.json, using defaults', array(
+                    'path' => $this->configPath,
+                    'error' => $e->getMessage()
+                ));
             }
         }
     }
@@ -169,8 +180,15 @@ class Config {
             mkdir($dir, 0755, true);
         }
 
-        $json = json_encode($this->config, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-        return file_put_contents($this->configPath, $json) !== false;
+        try {
+            return JsonFile::write($this->configPath, $this->config);
+        } catch (Exception $e) {
+            logger('app')->error('Failed to write config.json', array(
+                'path' => $this->configPath,
+                'error' => $e->getMessage()
+            ));
+            return false;
+        }
     }
 
     /**

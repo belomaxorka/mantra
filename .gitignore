@@ -19,6 +19,7 @@
 !.gitkeep
 
 # IDE
+.claude/
 .vscode/
 .idea/
 *.sublime-*
@@ -30,6 +31,6 @@ desktop.ini
 
 # Temporary files
 *.tmp
-*.bak
+*.bak*
 *.swp
 *~

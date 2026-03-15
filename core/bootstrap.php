@@ -43,6 +43,7 @@ require_once MANTRA_CORE . '/Psr/Log/LoggerInterface.php';
 require_once MANTRA_CORE . '/Psr/Log/LogLevel.php';
 
 // Load config and compute debug mode as early as possible
+require_once MANTRA_CORE . '/JsonFile.php';
 require_once MANTRA_CORE . '/Config.php';
 $config = Config::bootstrap();
 $GLOBALS['MANTRA_CONFIG'] = $config;

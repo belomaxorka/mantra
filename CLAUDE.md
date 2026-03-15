@@ -142,6 +142,103 @@ Included modules (enabled by default in `core/Config.php`):
   - `content/<collection>/<id>.json`
 - Provides CRUD + `query()` over the in-memory collection read.
 
+#### JSON storage safety
+
+- Low-level JSON file I/O goes through `core/JsonFile.php`.
+  - Uses per-document lock files (`<file>.lock`) to support parallel reads/writes.
+  - Writes are atomic (tmp + rename) and create rotating backups (`.bak.1..bak.N`).
+  - On corrupted JSON reads, it will try to recover from backups and log a warning.
+
+#### Document schemas & migrations (`core/schemas/*.php`)
+
+This CMS intentionally stores *dynamic* JSON documents. "Schemas" here are **compatibility rules** used to:
+
+- add missing fields with defaults when new options are introduced
+- migrate older document formats forward without deleting user data
+
+Schemas are stored per-collection in:
+
+- `core/schemas/<collection>.php` (e.g. `core/schemas/users.php`, `core/schemas/posts.php`)
+
+Each schema file returns an array:
+
+- `version` (int): current document schema version
+- `defaults` (array): missing keys are added on read
+- `migrate` (callable, optional): `function(array $doc, int $from, int $to): array`
+
+**How upgrades work (lazy migration):**
+
+- When `Database` reads a document (`read()` or `query()`), it loads the schema for that collection.
+- If the document is missing keys from `defaults`, they are added.
+- If `schema_version` is missing or less than `version`, `migrate()` is called (if present) and `schema_version` is bumped.
+- If any changes were made, the document is written back using `JsonFile` (atomic + backup).
+
+**How to change JSON structure safely:**
+
+1. Update code to support both the old and new fields temporarily (if needed).
+2. Edit `core/schemas/<collection>.php`:
+   - bump `version`
+   - update `defaults`
+   - add/extend `migrate()` to transform old docs into the new structure
+3. Once deployed, documents will be upgraded automatically the next time they are read.
+
+**Guidelines:**
+
+- Prefer **additive changes**:
+  - Adding a new optional field: usually only update code.
+  - Adding a new required field with a safe default: add it to `defaults`.
+- Only **bump `version`** when you need to transform existing documents (rename/move/change meaning).
+  - If you only add defaults and do not need transformations, you *can* keep the same version.
+- Keep `defaults` backward-compatible:
+  - choose defaults that won’t break existing behavior
+  - avoid expensive computed defaults during read (do that at write time instead)
+- Migrations should be **idempotent** (safe if run more than once).
+- Never delete unknown keys in migrations (modules/user extensions may store extra fields).
+- Keep migrations small and targeted: rename keys, fill defaults, move nested fields.
+- If a migration cannot safely proceed, throw an exception to surface the problem.
+
+**Recommended versioning pattern:**
+
+- Start schemas at `version: 1`.
+- When introducing a structural change, bump to `version: N+1` and implement a `migrate()` that upgrades from older versions.
+- `migrate()` should handle *all* prior versions (`$from < N`) or step through versions internally.
+- Do not rely on manual scripts: upgrades happen automatically when documents are read.
+
+**When to use `defaults` vs `migrate`:**
+
+- Use `defaults` for: new fields with a simple default (e.g. `status: 'draft'`).
+- Use `migrate` for: renames (`login`->`username`), moving nested fields, splitting/merging fields, changing types.
+- If a field can’t be safely defaulted (needs computed data), consider making it optional and populating it on next write.
+
+**Pre-alpha note:** until the first public release, prefer `defaults` (additive) and avoid breaking migrations unless necessary.
+
+**Troubleshooting:**
+
+- If a JSON file is corrupted, `JsonFile` will try to recover from `.bak.*` and log a warning.
+- If recovery and migration both fail, an exception will be logged by `ErrorHandler`.
+
+
+Example (rename `login` -> `username`):
+
+```php
+<?php
+return array(
+  'version' => 2,
+  'defaults' => array('status' => 'active'),
+  'migrate' => function ($doc, $from, $to) {
+    if ($from < 2 && isset($doc['login']) && !isset($doc['username'])) {
+      $doc['username'] = $doc['login'];
+      unset($doc['login']);
+    }
+    $doc['schema_version'] = 2;
+    return $doc;
+  }
+);
+```
+
+> Note: the CMS is pre-alpha; schemas are still evolving. Prefer additive changes (defaults) until the first stable release.
+
+
 ### Auth
 
 - `core/Auth.php` implements session-based login/logout.
