@@ -178,7 +178,6 @@ class Router {
      * Redirect helper
      */
     public function redirect($url, $code = 302) {
-        header('Location: ' . $url, true, $code);
-        exit;
+        redirect($url, $code);
     }
 }

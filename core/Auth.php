@@ -34,11 +34,11 @@ class Auth {
         }
         
         // Regenerate session ID to prevent session fixation
-        session_regenerate_id(true);
-        
+        session()->regenerate(true);
+
         // Set session
-        $_SESSION['user_id'] = $user['_id'];
-        $_SESSION['user_role'] = $user['role'];
+        session()->set('user_id', $user['_id']);
+        session()->set('user_role', $user['role']);
         
         $this->currentUser = $user;
         
@@ -62,10 +62,10 @@ class Auth {
             ));
         }
         
-        unset($_SESSION['user_id']);
-        unset($_SESSION['user_role']);
+        session()->delete('user_id');
+        session()->delete('user_role');
         $this->currentUser = null;
-        session_destroy();
+        session()->destroy();
     }
     
     /**
@@ -86,8 +86,8 @@ class Auth {
      * Load current user from session
      */
     private function loadCurrentUser() {
-        if (isset($_SESSION['user_id'])) {
-            $this->currentUser = $this->db->read('users', $_SESSION['user_id']);
+        if (session()->has('user_id')) {
+            $this->currentUser = $this->db->read('users', session()->get('user_id'));
         }
     }
     
@@ -121,7 +121,7 @@ class Auth {
      */
     public function generateCsrfToken() {
         $token = bin2hex(openssl_random_pseudo_bytes(32));
-        $_SESSION['csrf_token'] = $token;
+        session()->set('csrf_token', $token);
         return $token;
     }
     
@@ -129,10 +129,10 @@ class Auth {
      * Verify CSRF token
      */
     public function verifyCsrfToken($token) {
-        if (!isset($_SESSION['csrf_token'])) {
+        if (!session()->has('csrf_token')) {
             return false;
         }
         // Use hash_equals to prevent timing attacks
-        return hash_equals($_SESSION['csrf_token'], $token);
+        return hash_equals(session()->get('csrf_token'), $token);
     }
 }

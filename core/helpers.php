@@ -83,21 +83,50 @@ function log_debug($message, $context = array()) {
 }
 
 /**
+ * Get session wrapper instance
+ */
+function session() {
+    static $session = null;
+    if ($session === null) {
+        $session = new Http\Session();
+    }
+    return $session;
+}
+
+/**
+ * Get cookie wrapper instance
+ */
+function cookie() {
+    static $cookie = null;
+    if ($cookie === null) {
+        $cookie = new Http\Cookie();
+    }
+    return $cookie;
+}
+
+/**
+ * Get response wrapper instance
+ */
+function response() {
+    static $response = null;
+    if ($response === null) {
+        $response = new Http\Response();
+    }
+    return $response;
+}
+
+/**
  * Redirect helper
  */
 function redirect($url, $code = 302) {
-    header('Location: ' . $url, true, $code);
-    exit;
+    response()->redirect($url, $code);
 }
 
 /**
  * JSON response helper
  */
 function json_response($data, $code = 200) {
-    http_response_code($code);
-    header('Content-Type: application/json');
-    echo json_encode($data);
-    exit;
+    response()->json($data, $code);
 }
 
 /**

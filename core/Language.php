@@ -20,13 +20,13 @@ class Language {
      */
     private function detectLanguage() {
         // From session
-        if (isset($_SESSION['language'])) {
-            return $_SESSION['language'];
+        if (session()->has('language')) {
+            return session()->get('language');
         }
-        
+
         // From cookie
-        if (isset($_COOKIE['language'])) {
-            return $_COOKIE['language'];
+        if (cookie()->has('language')) {
+            return cookie()->get('language');
         }
         
         return $this->fallbackLang;
@@ -74,7 +74,7 @@ class Language {
      */
     public function setLanguage($lang) {
         $this->currentLang = $lang;
-        $_SESSION['language'] = $lang;
+        session()->set('language', $lang);
         $this->loadTranslations();
     }
     
