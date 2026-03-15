@@ -116,6 +116,17 @@ function response() {
 }
 
 /**
+ * Get request wrapper instance
+ */
+function request() {
+    static $request = null;
+    if ($request === null) {
+        $request = new Http\Request();
+    }
+    return $request;
+}
+
+/**
  * Redirect helper
  */
 function redirect($url, $code = 302) {
