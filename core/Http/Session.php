@@ -17,20 +17,18 @@ class Session {
         }
 
         if (headers_sent($file, $line)) {
-            if (function_exists('logger')) {
-                logger()->warning('Cannot start session: headers already sent', array(
-                    'file' => $file,
-                    'line' => $line
-                ));
-            }
+            logger()->warning('Cannot start session: headers already sent', array(
+                'file' => $file,
+                'line' => $line
+            ));
             return;
         }
 
-        $sessionName = function_exists('config') ? config('session_name', 'mantra_session') : 'mantra_session';
+        $sessionName = config('session_name', 'mantra_session');
         session_name($sessionName);
 
         // Configure session cookie params before start
-        $lifetime = function_exists('config') ? (int)config('session_lifetime', 0) : 0;
+        $lifetime = (int)config('session_lifetime', 0);
         $secure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
 
         if (defined('PHP_VERSION_ID') && PHP_VERSION_ID >= 70300) {

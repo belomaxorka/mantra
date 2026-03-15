@@ -21,13 +21,11 @@ class Cookie {
         }
 
         if (headers_sent($file, $line)) {
-            if (function_exists('logger')) {
-                logger()->warning('Cannot set cookie: headers already sent', array(
-                    'cookie' => $name,
-                    'file' => $file,
-                    'line' => $line
-                ));
-            }
+            logger()->warning('Cannot set cookie: headers already sent', array(
+                'cookie' => $name,
+                'file' => $file,
+                'line' => $line
+            ));
             return false;
         }
 

@@ -16,9 +16,7 @@ class Response {
     }
 
     public function redirect($url, $code = 302) {
-        if (function_exists('logger')) {
-            logger()->debug('Redirect', array('url' => $url, 'code' => $code));
-        }
+        logger()->debug('Redirect', array('url' => $url, 'code' => $code));
         header('Location: ' . $url, true, (int)$code);
         exit;
     }
