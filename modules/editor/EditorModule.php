@@ -12,8 +12,8 @@ class EditorModule extends Module {
     }
 
     public function adminIndex() {
-        // Settings-only module (AdminModule will redirect to /settings).
-        redirect(base_url('/admin/editor/settings'));
+        // Settings-only module (unified admin settings page)
+        redirect(base_url('/admin/settings?tab=editor'));
     }
 
     public function adminRoutes($router) {

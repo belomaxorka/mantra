@@ -42,7 +42,7 @@ class ContentAdminModule implements AdminSubmodule {
                         'id' => 'editor',
                         'title' => array('key' => 'editor.admin.title', 'fallback' => 'Editor'),
                         'icon' => 'bi-pencil-square',
-                        'url' => base_url('/admin/editor/settings'),
+                        'url' => base_url('/admin/settings?tab=editor'),
                         'order' => 60,
                     ),
                 ),

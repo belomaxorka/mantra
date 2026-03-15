@@ -5,6 +5,191 @@
 
 class AdminModule extends Module {
 
+    private function humanizeKey($key) {
+        $key = (string)$key;
+        $key = str_replace(array('-', '_'), ' ', $key);
+        $key = preg_replace('/\s+/', ' ', $key);
+        $key = trim($key);
+        if ($key === '') {
+            return '';
+        }
+        return ucwords($key);
+    }
+
+    private function translateOrFallback($key, $fallback) {
+        $key = (string)$key;
+        $translated = t($key);
+        if ($translated === $key) {
+            return (string)$fallback;
+        }
+        return $translated;
+    }
+
+    private function configGroupForKey($key) {
+        $key = (string)$key;
+        $map = array(
+            // Site
+            'site_name' => 'site',
+            'site_url' => 'site',
+
+            // Locale
+            'timezone' => 'locale',
+            'default_language' => 'locale',
+            'fallback_locale' => 'locale',
+
+            // Debug
+            'debug' => 'debug',
+
+            // Logging
+            'log_level' => 'logging',
+            'log_retention_days' => 'logging',
+
+            // Cache
+            'cache_enabled' => 'cache',
+            'cache_lifetime' => 'cache',
+
+            // Session
+            'session_name' => 'session',
+            'session_lifetime' => 'session',
+
+            // Security
+            'password_hash_algo' => 'security',
+            'csrf_token_name' => 'security',
+
+            // Proxy
+            'trusted_proxies' => 'proxy',
+
+            // Content
+            'content_format' => 'content',
+            'posts_per_page' => 'content',
+
+            // Theme
+            'active_theme' => 'theme',
+
+            // Modules
+            'enabled_modules' => 'modules',
+        );
+
+        return isset($map[$key]) ? $map[$key] : 'advanced';
+    }
+
+    private function buildGeneralFields() {
+        $defaults = Config::defaults();
+        $values = config()->all();
+
+        $groups = array();
+
+        foreach ($defaults as $key => $defaultVal) {
+            $groupId = $this->configGroupForKey($key);
+            if (!isset($groups[$groupId])) {
+                $groups[$groupId] = array(
+                    'id' => $groupId,
+                    'title' => $this->translateOrFallback('admin.settings.group.' . $groupId, $this->humanizeKey($groupId)),
+                    'fields' => array(),
+                );
+            }
+
+            $currentVal = array_key_exists($key, $values) ? $values[$key] : $defaultVal;
+
+            $type = 'text';
+            if (is_bool($defaultVal)) {
+                $type = 'toggle';
+            } elseif (is_int($defaultVal) || is_float($defaultVal)) {
+                $type = 'number';
+            } elseif (is_array($defaultVal)) {
+                $type = 'list';
+            }
+
+            $labelKey = 'admin.settings.' . $key;
+            $helpKey = $labelKey . '.help';
+
+            $field = array(
+                'key' => $key,
+                'name' => $key,
+                'type' => $type,
+                'title' => $this->translateOrFallback($labelKey, $this->humanizeKey($key)),
+                'help' => $this->translateOrFallback($helpKey, ''),
+                'value' => $currentVal,
+                'default' => $defaultVal,
+            );
+
+            // If help key not translated, keep empty.
+            if ($field['help'] === $helpKey) {
+                $field['help'] = '';
+            }
+
+            $groups[$groupId]['fields'][] = $field;
+        }
+
+        $order = array('site', 'locale', 'theme', 'content', 'modules', 'security', 'session', 'cache', 'logging', 'proxy', 'debug', 'advanced');
+        $sorted = array();
+        foreach ($order as $gid) {
+            if (isset($groups[$gid])) {
+                $sorted[] = $groups[$gid];
+                unset($groups[$gid]);
+            }
+        }
+        foreach ($groups as $g) {
+            $sorted[] = $g;
+        }
+
+        return $sorted;
+    }
+
+    private function handleGeneralPost(&$notice, &$error) {
+        $token = (string)request()->post('csrf_token', '');
+        if (!auth()->verifyCsrfToken($token)) {
+            $error = 'Invalid CSRF token';
+            return;
+        }
+
+        $defaults = Config::defaults();
+        $updates = array();
+
+        foreach ($defaults as $key => $defaultVal) {
+            $posted = request()->post($key, null);
+
+            if (is_bool($defaultVal)) {
+                $updates[$key] = $posted ? true : false;
+                continue;
+            }
+
+            if ($posted === null) {
+                continue;
+            }
+
+            if (is_int($defaultVal)) {
+                $updates[$key] = (int)$posted;
+                continue;
+            }
+
+            if (is_float($defaultVal)) {
+                $updates[$key] = (float)$posted;
+                continue;
+            }
+
+            if (is_array($defaultVal)) {
+                $raw = (string)$posted;
+                $lines = preg_split('/\r\n|\r|\n/', $raw);
+                $lines = is_array($lines) ? $lines : array();
+                $items = array();
+                foreach ($lines as $line) {
+                    $line = trim((string)$line);
+                    if ($line !== '') {
+                        $items[] = $line;
+                    }
+                }
+                $updates[$key] = $items;
+                continue;
+            }
+
+            $updates[$key] = (string)$posted;
+        }
+
+        config()->setMultiple($updates);
+        $notice = 'Settings saved';
+    }
+
     private $adminSubmodules = array();
 
     public function init() {
@@ -147,6 +332,12 @@ class AdminModule extends Module {
 
         // Admin shell
         $router->get('/admin', array($this, 'dashboard'))
+               ->middleware(array($this, 'requireAuth'));
+
+        // Unified settings
+        $router->get('/admin/settings', array($this, 'settings'))
+               ->middleware(array($this, 'requireAuth'));
+        $router->post('/admin/settings', array($this, 'settings'))
                ->middleware(array($this, 'requireAuth'));
 
         // Legacy routes (keep during transition)
@@ -364,59 +555,17 @@ class AdminModule extends Module {
         return $this->renderAdminLayout('Not found', $html);
     }
 
-    public function dispatchModuleIndex($params) {
-        $module = isset($params['module']) ? (string)$params['module'] : '';
-        if ($module === '' || $module === 'admin') {
-            redirect(base_url('/admin'));
-            return;
-        }
-
-        $instance = app()->modules()->getModule($module);
-        if (!$instance) {
-            return $this->admin404('Module not found');
-        }
-
-        if (method_exists($instance, 'adminIndex')) {
-            return $instance->adminIndex();
-        }
-
-        $schema = module_settings($module)->schema();
-        if (is_array($schema)) {
-            redirect(base_url('/admin/' . $module . '/settings'));
-            return;
-        }
-
-        return $this->admin404('No admin screen available for this module');
-    }
-
-    public function dispatchModuleSettings($params) {
-        $module = isset($params['module']) ? (string)$params['module'] : '';
-        if ($module === '' || $module === 'admin') {
-            return $this->admin404('Invalid module');
-        }
-
-        $instance = app()->modules()->getModule($module);
-        if (!$instance) {
-            return $this->admin404('Module not found');
-        }
-
-        // Allow module to register additional admin routes.
-        if (method_exists($instance, 'adminRoutes')) {
-            // Modules can optionally register more /admin/<module>/* routes.
-            // We call this lazily here; the route table is already built.
-            // (No-op for now.)
-        }
+    private function buildModuleSettingsContent($module, $actionUrl, &$notice, &$error) {
+        $module = (string)$module;
 
         $store = module_settings($module);
         $schema = $store->schema();
         if (!is_array($schema)) {
-            return $this->admin404('This module has no settings');
+            $error = 'This module has no settings';
+            return null;
         }
 
         $store->load(); // materialize defaults
-
-        $notice = null;
-        $error = null;
 
         if (request()->method() === 'POST') {
             $token = (string)request()->post('csrf_token', '');
@@ -512,16 +661,128 @@ class AdminModule extends Module {
         }
 
         $view = new View();
-        $content = $view->fetch('admin:module-settings', array(
-            'title' => ucfirst($module) . ' Settings',
+        return $view->fetch('admin:module-settings', array(
+            'title' => '',
             'tabs' => $tabs,
-            'action' => base_url('/admin/' . $module . '/settings'),
+            'action' => $actionUrl,
             'csrf_token' => auth()->generateCsrfToken(),
             'notice' => $notice,
             'error' => $error,
         ));
+    }
 
-        return $this->renderAdminLayout(ucfirst($module) . ' Settings', $content);
+    private function buildGeneralSettingsContent(&$notice, &$error) {
+        if (request()->method() === 'POST') {
+            $this->handleGeneralPost($notice, $error);
+        }
+
+        $groups = $this->buildGeneralFields();
+
+        $view = new View();
+        return $view->fetch('admin:settings-general', array(
+            'groups' => $groups,
+            'action' => base_url('/admin/settings?tab=general'),
+            'csrf_token' => auth()->generateCsrfToken(),
+        ));
+    }
+
+    public function settings() {
+        $activeTab = (string)request()->query('tab', 'general');
+        if ($activeTab === '') {
+            $activeTab = 'general';
+        }
+
+        $enabled = config('enabled_modules', array());
+        if (!is_array($enabled)) {
+            $enabled = array();
+        }
+
+        $tabs = array();
+        $tabs[] = array(
+            'id' => 'general',
+            'title' => $this->translateOrFallback('admin.settings.general', 'General'),
+            'url' => base_url('/admin/settings?tab=general'),
+            'active' => ($activeTab === 'general'),
+        );
+
+        foreach ($enabled as $module) {
+            $module = (string)$module;
+            if ($module === '' || $module === 'admin') {
+                continue;
+            }
+
+            $schema = module_settings($module)->schema();
+            if (!is_array($schema)) {
+                continue;
+            }
+
+            $tabs[] = array(
+                'id' => $module,
+                'title' => ucfirst($module),
+                'url' => base_url('/admin/settings?tab=' . $module),
+                'active' => ($activeTab === $module),
+            );
+        }
+
+        $notice = null;
+        $error = null;
+
+        $contentHtml = '';
+        if ($activeTab === 'general') {
+            $contentHtml = $this->buildGeneralSettingsContent($notice, $error);
+        } else {
+            $contentHtml = $this->buildModuleSettingsContent($activeTab, base_url('/admin/settings?tab=' . $activeTab), $notice, $error);
+            if ($contentHtml === null) {
+                return $this->admin404('This module has no settings');
+            }
+        }
+
+        $view = new View();
+        $page = $view->fetch('admin:settings', array(
+            'pageTitle' => $this->translateOrFallback('admin.settings.title', 'Settings'),
+            'tabs' => $tabs,
+            'contentHtml' => $contentHtml,
+            'notice' => $notice,
+            'error' => $error,
+        ));
+
+        return $this->renderAdminLayout('Settings', $page);
+    }
+
+    public function dispatchModuleIndex($params) {
+        $module = isset($params['module']) ? (string)$params['module'] : '';
+        if ($module === '' || $module === 'admin') {
+            redirect(base_url('/admin'));
+            return;
+        }
+
+        $instance = app()->modules()->getModule($module);
+        if (!$instance) {
+            return $this->admin404('Module not found');
+        }
+
+        if (method_exists($instance, 'adminIndex')) {
+            return $instance->adminIndex();
+        }
+
+        $schema = module_settings($module)->schema();
+        if (is_array($schema)) {
+            redirect(base_url('/admin/settings?tab=' . $module));
+            return;
+        }
+
+        return $this->admin404('No admin screen available for this module');
+    }
+
+    public function dispatchModuleSettings($params) {
+        $module = isset($params['module']) ? (string)$params['module'] : '';
+        if ($module === '' || $module === 'admin') {
+            return $this->admin404('Invalid module');
+        }
+
+        // Unified settings page (legacy redirect)
+        redirect(base_url('/admin/settings?tab=' . $module));
+        return;
     }
 
     /**

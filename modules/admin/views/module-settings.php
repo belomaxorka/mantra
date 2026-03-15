@@ -1,6 +1,8 @@
-<div class="d-flex align-items-center justify-content-between mb-4">
-  <h1 class="h3 mb-0"><?php echo e($title ?? 'Settings'); ?></h1>
-</div>
+<?php if (!empty($title)): ?>
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0"><?php echo e($title); ?></h1>
+  </div>
+<?php endif; ?>
 
 <?php if (!empty($error)): ?>
   <div class="alert alert-danger"><?php echo e($error); ?></div>
