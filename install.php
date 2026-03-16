@@ -68,10 +68,25 @@ if (request()->method() === 'POST') {
         $baseUrl = $protocol . '://' . $host . ($scriptPath !== '/' ? $scriptPath : '');
         
         // Create configuration file (single source of truth)
+        // Persist as overrides-only (diff from Config::defaults()) to match admin settings behavior.
         $config = Config::buildInstallConfig($siteName, $language, $baseUrl);
 
+        $defaults = Config::defaults();
+        $overrides = Config::diffOverrides($defaults, $config);
+        if (!is_array($overrides)) {
+            $overrides = array();
+        }
+
+        $schemaPath = MANTRA_CORE . '/settings/config.settings.schema.php';
+        if (file_exists($schemaPath)) {
+            $schema = require $schemaPath;
+            if (is_array($schema) && isset($schema['version'])) {
+                $overrides['schema_version'] = (int)$schema['version'];
+            }
+        }
+
         $configPath = MANTRA_CONTENT . '/settings/config.json';
-        JsonFile::write($configPath, $config);
+        JsonFile::write($configPath, $overrides);
         
         // Create admin user
         $db = new Database();

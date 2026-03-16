@@ -139,7 +139,7 @@ class ConfigSettings
         $schema = $this->schema();
         $schemaVersion = is_array($schema) && isset($schema['version']) ? (int)$schema['version'] : 0;
 
-        $overrides = $this->diffOverrides($this->defaults, $this->data);
+        $overrides = Config::diffOverrides($this->defaults, $this->data);
         if (!is_array($overrides)) {
             $overrides = array();
         }
@@ -213,48 +213,4 @@ class ConfigSettings
         return $dirty;
     }
 
-    private function diffOverrides($defaults, $current)
-    {
-        // For scalar/array type mismatches, keep current value.
-        if (!is_array($defaults) || !is_array($current)) {
-            if ($defaults === $current) {
-                return null;
-            }
-            return $current;
-        }
-
-        $isAssocDefaults = Config::isAssoc($defaults);
-        $isAssocCurrent = Config::isAssoc($current);
-
-        // For list arrays, treat as atomic.
-        if (!$isAssocDefaults || !$isAssocCurrent) {
-            if ($defaults === $current) {
-                return null;
-            }
-            return $current;
-        }
-
-        $out = array();
-        $hasAny = false;
-
-        // Only consider keys from defaults; ignore unknown keys in current.
-        foreach ($defaults as $k => $defVal) {
-            if (!array_key_exists($k, $current)) {
-                continue;
-            }
-
-            $curVal = $current[$k];
-            $child = $this->diffOverrides($defVal, $curVal);
-            if ($child !== null) {
-                $out[$k] = $child;
-                $hasAny = true;
-            }
-        }
-
-        if (!$hasAny) {
-            return null;
-        }
-
-        return $out;
-    }
 }

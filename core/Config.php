@@ -203,6 +203,10 @@ class Config {
 
     /**
      * Save configuration to file.
+     *
+     * config.json is persisted as overrides-only (diff from Config::defaults()).
+     * This matches the admin Settings store (ConfigSettings) and prevents writing
+     * a huge merged config back to disk.
      */
     public function save() {
         $dir = dirname($this->configPath);
@@ -212,7 +216,18 @@ class Config {
         }
 
         try {
-            return JsonFile::write($this->configPath, $this->config);
+            $defaults = self::defaults();
+            $overrides = self::diffOverrides($defaults, $this->config);
+            if (!is_array($overrides)) {
+                $overrides = array();
+            }
+
+            // Preserve schema_version if present in the in-memory config.
+            if (isset($this->config['schema_version'])) {
+                $overrides['schema_version'] = (int)$this->config['schema_version'];
+            }
+
+            return JsonFile::write($this->configPath, $overrides);
         } catch (Exception $e) {
             logger('app')->error('Failed to write config.json', array(
                 'path' => $this->configPath,
@@ -387,5 +402,49 @@ class Config {
             return;
         }
         $cur[$last] = $value;
+    }
+
+    /**
+     * Diff current config against defaults and return overrides-only structure.
+     *
+     * - For scalar/array mismatches: keep current value.
+     * - For list arrays: treat as atomic.
+     * - Only keys present in defaults are considered; unknown keys are ignored.
+     */
+    public static function diffOverrides($defaults, $current) {
+        if (!is_array($defaults) || !is_array($current)) {
+            if ($defaults === $current) {
+                return null;
+            }
+            return $current;
+        }
+
+        $isAssocDefaults = self::isAssoc($defaults);
+        $isAssocCurrent = self::isAssoc($current);
+
+        if (!$isAssocDefaults || !$isAssocCurrent) {
+            if ($defaults === $current) {
+                return null;
+            }
+            return $current;
+        }
+
+        $out = array();
+        $hasAny = false;
+
+        foreach ($defaults as $k => $defVal) {
+            if (!array_key_exists($k, $current)) {
+                continue;
+            }
+
+            $curVal = $current[$k];
+            $child = self::diffOverrides($defVal, $curVal);
+            if ($child !== null) {
+                $out[$k] = $child;
+                $hasAny = true;
+            }
+        }
+
+        return $hasAny ? $out : null;
     }
 }
