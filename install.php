@@ -110,49 +110,139 @@ if (request()->method() === 'POST') {
 }
 ?>
 <!DOCTYPE html>
-<html>
+<html lang="en" id="html-root">
 <head>
-    <title>Install Mantra CMS</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="page_title">Install Mantra CMS</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body { font-family: sans-serif; max-width: 500px; margin: 50px auto; padding: 20px; }
-        input { width: 100%; padding: 10px; margin: 10px 0; }
-        button { background: #2c3e50; color: white; padding: 10px 20px; border: none; cursor: pointer; }
-        .error { color: red; }
-        .success { color: green; }
+        body {
+            background: #f8f9fa;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            padding: 20px;
+        }
+        .install-card {
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
     </style>
 </head>
 <body>
-    <h1>Install Mantra CMS</h1>
-    
-    <?php if (isset($success)): ?>
-        <p class="success">Installation successful! <a href="<?php echo isset($adminUrl) ? $adminUrl : '/admin'; ?>">Go to admin panel</a></p>
-    <?php else: ?>
-        <?php if (isset($error)): ?>
-            <p class="error"><?php echo $error; ?></p>
-        <?php endif; ?>
-        
-        <form method="POST">
-            <label>Site Name:</label>
-            <input type="text" name="site_name" value="Mantra CMS" required>
-            
-            <label>Language:</label>
-            <select name="language" style="width: 100%; padding: 10px; margin: 10px 0;">
-                <option value="en">English</option>
-                <option value="ru">Русский</option>
-            </select>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-5">
+                <div class="card install-card">
+                    <div class="card-body p-4">
+                        <h1 class="card-title text-center mb-4" data-i18n="title">Install Mantra CMS</h1>
 
-            
-            <label>Admin Username:</label>
-            <input type="text" name="username" required>
-            
-            <label>Admin Email:</label>
-            <input type="email" name="email" required>
-            
-            <label>Admin Password:</label>
-            <input type="password" name="password" required>
-            
-            <button type="submit">Install</button>
-        </form>
-    <?php endif; ?>
+                        <?php if (isset($success)): ?>
+                            <div class="alert alert-success" role="alert">
+                                <h5 class="alert-heading" data-i18n="success_heading">Installation successful!</h5>
+                                <p class="mb-0" data-i18n="success_message">Your CMS is ready to use.</p>
+                                <hr>
+                                <a href="<?php echo isset($adminUrl) ? htmlspecialchars($adminUrl) : '/admin'; ?>" class="btn btn-success" data-i18n="success_button">Go to admin panel</a>
+                            </div>
+                        <?php else: ?>
+                            <?php if (isset($error)): ?>
+                                <div class="alert alert-danger" role="alert">
+                                    <?php echo htmlspecialchars($error); ?>
+                                </div>
+                            <?php endif; ?>
+
+                            <form method="POST">
+                                <div class="mb-3">
+                                    <label for="site_name" class="form-label" data-i18n="label_site_name">Site Name</label>
+                                    <input type="text" class="form-control" id="site_name" name="site_name" value="Mantra CMS" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="language" class="form-label" data-i18n="label_language">Language</label>
+                                    <select class="form-select" id="language" name="language">
+                                        <option value="en">English</option>
+                                        <option value="ru">Русский</option>
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="username" class="form-label" data-i18n="label_username">Admin Username</label>
+                                    <input type="text" class="form-control" id="username" name="username" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="email" class="form-label" data-i18n="label_email">Admin Email</label>
+                                    <input type="email" class="form-control" id="email" name="email" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="password" class="form-label" data-i18n="label_password">Admin Password</label>
+                                    <input type="password" class="form-control" id="password" name="password" required>
+                                </div>
+
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-primary btn-lg" data-i18n="button_install">Install</button>
+                                </div>
+                            </form>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const translations = {
+            en: {
+                page_title: 'Install Mantra CMS',
+                title: 'Install Mantra CMS',
+                success_heading: 'Installation successful!',
+                success_message: 'Your CMS is ready to use.',
+                success_button: 'Go to admin panel',
+                label_site_name: 'Site Name',
+                label_language: 'Language',
+                label_username: 'Admin Username',
+                label_email: 'Admin Email',
+                label_password: 'Admin Password',
+                button_install: 'Install'
+            },
+            ru: {
+                page_title: 'Установка Mantra CMS',
+                title: 'Установка Mantra CMS',
+                success_heading: 'Установка завершена!',
+                success_message: 'Ваша CMS готова к использованию.',
+                success_button: 'Перейти в админ-панель',
+                label_site_name: 'Название сайта',
+                label_language: 'Язык',
+                label_username: 'Имя администратора',
+                label_email: 'Email администратора',
+                label_password: 'Пароль администратора',
+                button_install: 'Установить'
+            }
+        };
+
+        function setLanguage(lang) {
+            document.querySelectorAll('[data-i18n]').forEach(function(el) {
+                const key = el.getAttribute('data-i18n');
+                if (translations[lang] && translations[lang][key]) {
+                    if (el.tagName === 'TITLE') {
+                        el.textContent = translations[lang][key];
+                    } else {
+                        el.textContent = translations[lang][key];
+                    }
+                }
+            });
+            document.getElementById('html-root').setAttribute('lang', lang);
+        }
+
+        document.getElementById('language').addEventListener('change', function() {
+            setLanguage(this.value);
+        });
+
+        // Set initial language on page load
+        const initialLang = document.getElementById('language').value || 'en';
+        setLanguage(initialLang);
+    </script>
 </body>
 </html>
