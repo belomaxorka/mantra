@@ -75,23 +75,17 @@ class PagesAdminModule implements AdminSubmodule {
     public function newPage() {
         $admin = app()->modules()->getModule('admin');
 
-        $page = array(
-            'title' => '',
-            'slug' => '',
-            'content' => '',
-            'status' => 'draft',
-            'image' => ''
-        );
-
-        // Add navigation fields only if pages module is enabled
-        if (module_enabled('pages')) {
-            $page['show_in_navigation'] = false;
-            $page['navigation_order'] = 50;
-        }
-
         $view = new View();
         $content = $view->fetch('admin-modules/pages:edit', array(
-            'page' => $page,
+            'page' => array(
+                'title' => '',
+                'slug' => '',
+                'content' => '',
+                'status' => 'draft',
+                'image' => '',
+                'show_in_navigation' => false,
+                'navigation_order' => 50
+            ),
             'isNew' => true,
             'csrf_token' => auth()->generateCsrfToken()
         ));
@@ -115,6 +109,8 @@ class PagesAdminModule implements AdminSubmodule {
         $content = (string)request()->post('content', '');
         $status = (string)request()->post('status', 'draft');
         $image = trim((string)request()->post('image', ''));
+        $showInNav = (bool)request()->post('show_in_navigation', false);
+        $navOrder = (int)request()->post('navigation_order', 50);
 
         if (empty($title)) {
             http_response_code(400);
@@ -137,16 +133,10 @@ class PagesAdminModule implements AdminSubmodule {
             'content' => $content,
             'status' => in_array($status, array('draft', 'published')) ? $status : 'draft',
             'image' => $image,
+            'show_in_navigation' => $showInNav,
+            'navigation_order' => $navOrder,
             'author' => isset($user['username']) ? $user['username'] : 'Unknown'
         );
-
-        // Add navigation fields only if pages module is enabled
-        if (module_enabled('pages')) {
-            $showInNav = (bool)request()->post('show_in_navigation', false);
-            $navOrder = (int)request()->post('navigation_order', 50);
-            $pageData['show_in_navigation'] = $showInNav;
-            $pageData['navigation_order'] = $navOrder;
-        }
 
         $db->write('pages', $id, $pageData);
 
@@ -198,6 +188,8 @@ class PagesAdminModule implements AdminSubmodule {
         $content = (string)request()->post('content', '');
         $status = (string)request()->post('status', 'draft');
         $image = trim((string)request()->post('image', ''));
+        $showInNav = (bool)request()->post('show_in_navigation', false);
+        $navOrder = (int)request()->post('navigation_order', 50);
 
         if (empty($title)) {
             http_response_code(400);
@@ -214,14 +206,8 @@ class PagesAdminModule implements AdminSubmodule {
         $page['content'] = $content;
         $page['status'] = in_array($status, array('draft', 'published')) ? $status : 'draft';
         $page['image'] = $image;
-
-        // Update navigation fields only if pages module is enabled
-        if (module_enabled('pages')) {
-            $showInNav = (bool)request()->post('show_in_navigation', false);
-            $navOrder = (int)request()->post('navigation_order', 50);
-            $page['show_in_navigation'] = $showInNav;
-            $page['navigation_order'] = $navOrder;
-        }
+        $page['show_in_navigation'] = $showInNav;
+        $page['navigation_order'] = $navOrder;
 
         $db->write('pages', $id, $page);
 

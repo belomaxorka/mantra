@@ -10,6 +10,8 @@ return array(
         'slug' => '',
         'content' => '',
         'image' => '',
-        'author' => ''
+        'show_in_navigation' => false,
+        'author' => '',
+        'navigation_order' => 50
     )
 );
