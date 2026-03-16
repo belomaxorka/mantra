@@ -138,6 +138,13 @@ class AdminModule extends Module {
                 'type' => 'select',
                 'options' => $this->availableThemeOptions(),
             ),
+            'content.format' => array(
+                'type' => 'select',
+                'options' => array(
+                    'json' => 'JSON',
+                    'markdown' => 'Markdown',
+                ),
+            ),
             'security.password_hash_algo' => array(
                 'type' => 'select',
                 'options' => array(
