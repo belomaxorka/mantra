@@ -23,6 +23,8 @@
 !.gitkeep
 
 # IDE
+.cursor/
+.kiro/
 .claude/
 .vscode/
 .idea/

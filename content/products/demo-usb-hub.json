@@ -12,5 +12,6 @@
         "/uploads/products/usb-hub-1.jpg"
     ],
     "created_at": "2026-03-12T16:45:00Z",
-    "updated_at": "2026-03-12T16:45:00Z"
+    "updated_at": "2026-03-16 17:53:31",
+    "schema_version": 1
 }
