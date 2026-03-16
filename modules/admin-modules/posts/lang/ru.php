@@ -1,0 +1,31 @@
+<?php
+
+return array(
+    'admin.posts.title' => 'Посты',
+    'admin.posts.list_title' => 'Посты',
+    'admin.posts.new_post' => 'Новый пост',
+    'admin.posts.edit_post' => 'Редактировать пост',
+    'admin.posts.create' => 'Создать пост',
+    'admin.posts.update' => 'Обновить пост',
+    'admin.posts.delete' => 'Удалить',
+    'admin.posts.delete_confirm' => 'Вы уверены, что хотите удалить этот пост?',
+    'admin.posts.no_posts' => 'Постов пока нет. Создайте свой первый пост!',
+
+    'admin.posts.title' => 'Заголовок',
+    'admin.posts.slug' => 'Slug',
+    'admin.posts.slug_help' => 'Оставьте пустым для автоматической генерации из заголовка',
+    'admin.posts.content' => 'Содержание',
+    'admin.posts.excerpt' => 'Краткое описание',
+    'admin.posts.excerpt_help' => 'Краткое описание для списка постов',
+    'admin.posts.author' => 'Автор',
+    'admin.posts.category' => 'Категория',
+    'admin.posts.status' => 'Статус',
+    'admin.posts.status_draft' => 'Черновик',
+    'admin.posts.status_published' => 'Опубликовано',
+    'admin.posts.updated' => 'Обновлено',
+    'admin.posts.actions' => 'Действия',
+    'admin.posts.edit' => 'Редактировать',
+    'admin.posts.cancel' => 'Отмена',
+    'admin.posts.publish' => 'Публикация',
+    'admin.posts.metadata' => 'Метаданные',
+);

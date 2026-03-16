@@ -1,0 +1,31 @@
+<?php
+
+return array(
+    'admin.posts.title' => 'Posts',
+    'admin.posts.list_title' => 'Posts',
+    'admin.posts.new_post' => 'New Post',
+    'admin.posts.edit_post' => 'Edit Post',
+    'admin.posts.create' => 'Create Post',
+    'admin.posts.update' => 'Update Post',
+    'admin.posts.delete' => 'Delete',
+    'admin.posts.delete_confirm' => 'Are you sure you want to delete this post?',
+    'admin.posts.no_posts' => 'No posts yet. Create your first post!',
+
+    'admin.posts.title' => 'Title',
+    'admin.posts.slug' => 'Slug',
+    'admin.posts.slug_help' => 'Leave empty to auto-generate from title',
+    'admin.posts.content' => 'Content',
+    'admin.posts.excerpt' => 'Excerpt',
+    'admin.posts.excerpt_help' => 'Short description for post listings',
+    'admin.posts.author' => 'Author',
+    'admin.posts.category' => 'Category',
+    'admin.posts.status' => 'Status',
+    'admin.posts.status_draft' => 'Draft',
+    'admin.posts.status_published' => 'Published',
+    'admin.posts.updated' => 'Updated',
+    'admin.posts.actions' => 'Actions',
+    'admin.posts.edit' => 'Edit',
+    'admin.posts.cancel' => 'Cancel',
+    'admin.posts.publish' => 'Publish',
+    'admin.posts.metadata' => 'Metadata',
+);

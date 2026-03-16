@@ -8,6 +8,9 @@ return array(
         'status' => 'draft',
         'title' => '',
         'slug' => '',
-        'content' => ''
+        'content' => '',
+        'author' => '',
+        'category' => '',
+        'excerpt' => ''
     )
 );
