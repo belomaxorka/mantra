@@ -4,5 +4,9 @@
   "version": "1.0.0",
   "main": "SettingsAdminModule.php",
   "class": "SettingsAdminModule",
-  "requires": ["admin"]
+  "requires": ["admin"],
+  "admin": {
+    "disableable": false,
+    "deletable": false
+  }
 }
