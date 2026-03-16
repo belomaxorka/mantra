@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "description": "System settings and configuration management",
   "author": "Mantra CMS",
+  "homepage": "https://github.com/mantra-cms/mantra",
   "main": "SettingsAdminModule.php",
   "class": "SettingsAdminModule",
   "requires": ["admin"],
