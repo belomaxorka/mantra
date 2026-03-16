@@ -2,6 +2,8 @@
   "id": "dashboard",
   "name": "Dashboard",
   "version": "1.0.0",
+  "description": "Admin dashboard with system overview",
+  "author": "Mantra CMS",
   "main": "DashboardAdminModule.php",
   "class": "DashboardAdminModule",
   "requires": ["admin"],
