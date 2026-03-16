@@ -22,4 +22,59 @@ return array(
     'admin-settings.modules.available' => 'Available Modules',
     'admin-settings.modules.enable' => 'Enable',
     'admin-settings.modules.disable' => 'Disable',
+
+    // Settings groups
+    'admin-settings.group.site' => 'Site',
+    'admin-settings.group.locale' => 'Locale',
+    'admin-settings.group.theme' => 'Theme',
+    'admin-settings.group.content' => 'Content',
+    'admin-settings.group.modules' => 'Modules',
+    'admin-settings.group.security' => 'Security',
+    'admin-settings.group.session' => 'Session',
+    'admin-settings.group.cache' => 'Cache',
+    'admin-settings.group.logging' => 'Logging',
+    'admin-settings.group.proxy' => 'Proxy',
+    'admin-settings.group.debug' => 'Debug',
+
+    // Site settings
+    'admin-settings.site.name' => 'Site name',
+    'admin-settings.site.url' => 'Site URL',
+
+    // Locale settings
+    'admin-settings.locale.timezone' => 'Timezone',
+    'admin-settings.locale.default_language' => 'Default language',
+    'admin-settings.locale.fallback_locale' => 'Fallback locale',
+
+    // Theme settings
+    'admin-settings.theme.active' => 'Active theme',
+
+    // Content settings
+    'admin-settings.content.format' => 'Content format',
+    'admin-settings.content.posts_per_page' => 'Posts per page',
+
+    // Modules settings
+    'admin-settings.modules.enabled_modules' => 'Enabled modules',
+
+    // Security settings
+    'admin-settings.security.password_hash_algo' => 'Password hash algorithm',
+    'admin-settings.security.csrf_token_name' => 'CSRF token name',
+
+    // Session settings
+    'admin-settings.session.name' => 'Session name',
+    'admin-settings.session.lifetime' => 'Session lifetime',
+
+    // Cache settings
+    'admin-settings.cache.enabled' => 'Enable cache',
+    'admin-settings.cache.lifetime' => 'Cache lifetime',
+
+    // Logging settings
+    'admin-settings.logging.level' => 'Log level',
+    'admin-settings.logging.retention_days' => 'Retention days',
+
+    // Proxy settings
+    'admin-settings.proxy.trusted_proxies' => 'Trusted proxies',
+    'admin-settings.proxy.trusted_proxies.help' => 'One IP or CIDR per line.',
+
+    // Debug settings
+    'admin-settings.debug.enabled' => 'Enable debug mode',
 );
