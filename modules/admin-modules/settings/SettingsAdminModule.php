@@ -196,7 +196,13 @@ class SettingsAdminModule implements AdminSubmodule
             return $cards;
         }
 
-        $enabled = array('admin');
+        $enabled = config_settings()->get('modules.enabled', array('admin'));
+        if (!is_array($enabled)) {
+            $enabled = array('admin');
+        }
+
+        // Build dependency graph to check which modules are required by others
+        $graph = $this->collectModuleDependencyGraph();
 
         // Regular modules
         foreach (glob($base . '/*/module.json') as $path) {
@@ -237,6 +243,23 @@ class SettingsAdminModule implements AdminSubmodule
                 $description = (string)$meta['description'];
             }
 
+            $isEnabled = in_array($dir, $enabled, true);
+
+            // Check if any enabled module depends on this one
+            $requiredByEnabled = false;
+            foreach ($enabled as $enabledMod) {
+                if ($enabledMod !== $dir && $this->dependsOnTransitive($enabledMod, $dir, $graph)) {
+                    $requiredByEnabled = true;
+                    break;
+                }
+            }
+
+            // Module can't be disabled if: manifest says so OR it's required by an enabled module
+            $canDisable = !empty($policy['disableable']) && !$requiredByEnabled;
+
+            // Module can't be deleted if: manifest says so OR it's currently enabled OR it's required by any enabled module
+            $canDelete = !empty($policy['deletable']) && !$isEnabled && !$requiredByEnabled;
+
             $cards[] = array(
                 'id' => $dir,
                 'title' => $title,
@@ -244,14 +267,14 @@ class SettingsAdminModule implements AdminSubmodule
                 'author' => $author,
                 'homepage' => $homepage,
                 'description' => $description,
-                'enabled' => in_array($dir, $enabled, true),
+                'enabled' => $isEnabled,
                 'has_settings' => false,
-                'disableable' => !empty($policy['disableable']),
-                'deletable' => !empty($policy['deletable']),
+                'disableable' => $canDisable,
+                'deletable' => $canDelete,
             );
         }
 
-        // Admin submodules
+        // Admin submodules (always enabled, but respect manifest policies)
         $adminModulesBase = $base . '/admin-modules';
         if (is_dir($adminModulesBase)) {
             foreach (glob($adminModulesBase . '/*/module.json') as $path) {
@@ -292,6 +315,8 @@ class SettingsAdminModule implements AdminSubmodule
                     $description = (string)$meta['description'];
                 }
 
+                // Admin submodules are always enabled and can't be disabled
+                // (they're loaded on-demand when accessing /admin)
                 $cards[] = array(
                     'id' => 'admin-modules/' . $dir,
                     'title' => $title . ' (Admin)',
@@ -504,7 +529,10 @@ class SettingsAdminModule implements AdminSubmodule
             return true;
         }
 
-        $enabled = array('admin');
+        $enabled = config_settings()->get('modules.enabled', array('admin'));
+        if (!is_array($enabled)) {
+            $enabled = array('admin');
+        }
 
         if (in_array($deleteId, $enabled, true)) {
             $error = 'Disable the module before deleting it';
