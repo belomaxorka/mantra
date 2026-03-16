@@ -323,6 +323,17 @@ function module_settings($module, $key = null, $default = null) {
 }
 
 /**
+ * Get config settings store (schema-driven admin settings for config.json).
+ */
+function config_settings() {
+    static $store = null;
+    if ($store === null) {
+        $store = new ConfigSettings();
+    }
+    return $store;
+}
+
+/**
  * Get base URL
  */
 function base_url($path = '') {

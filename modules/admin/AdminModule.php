@@ -294,271 +294,6 @@ class AdminModule extends Module {
         return $locales;
     }
 
-    private function generalSchema() {
-        // Minimal schema to drive admin UI widgets for core config.
-        return array(
-            'locale.default_language' => array(
-                'type' => 'select',
-                'options' => $this->availableLocaleOptions(),
-            ),
-            'locale.fallback_locale' => array(
-                'type' => 'select',
-                'options' => $this->availableLocaleOptions(),
-            ),
-            'theme.active' => array(
-                'type' => 'select',
-                'options' => $this->availableThemeOptions(),
-            ),
-            'content.format' => array(
-                'type' => 'select',
-                'options' => array(
-                    'json' => 'JSON',
-                    'markdown' => 'Markdown',
-                ),
-            ),
-            'security.password_hash_algo' => array(
-                'type' => 'select',
-                'options' => array(
-                    'PASSWORD_DEFAULT' => 'PASSWORD_DEFAULT',
-                    'PASSWORD_BCRYPT' => 'PASSWORD_BCRYPT',
-                    'PASSWORD_ARGON2I' => 'PASSWORD_ARGON2I',
-                    'PASSWORD_ARGON2ID' => 'PASSWORD_ARGON2ID',
-                ),
-            ),
-            'logging.level' => array(
-                'type' => 'select',
-                'options' => array(
-                    Logger::DEBUG => 'debug',
-                    Logger::INFO => 'info',
-                    Logger::NOTICE => 'notice',
-                    Logger::WARNING => 'warning',
-                    Logger::ERROR => 'error',
-                    Logger::CRITICAL => 'critical',
-                    Logger::ALERT => 'alert',
-                    Logger::EMERGENCY => 'emergency',
-                ),
-            ),
-            'modules.enabled' => array(
-                // Custom widget: rich module list with metadata + enable/disable + delete.
-                'type' => 'module_cards',
-                'options' => $this->availableModuleCards(),
-            ),
-        );
-    }
-
-    private function buildGeneralFields() {
-        $defaultsNested = Config::defaults();
-        $defaults = Config::flattenPaths($defaultsNested);
-        $values = config()->all();
-        $schema = $this->generalSchema();
-
-        $groups = array();
-
-        foreach ($defaults as $path => $defaultVal) {
-            $groupId = $this->configGroupForKey($path);
-            if (!isset($groups[$groupId])) {
-                $groups[$groupId] = array(
-                    'id' => $groupId,
-                    'title' => $this->translateOrFallback('admin.settings.group.' . $groupId, $this->humanizeKey($groupId)),
-                    'fields' => array(),
-                );
-            }
-
-            $currentVal = Config::getNested($values, $path, $defaultVal);
-
-            $type = 'text';
-            $options = null;
-            if (isset($schema[$path]) && is_array($schema[$path]) && !empty($schema[$path]['type'])) {
-                $type = (string)$schema[$path]['type'];
-                if (!empty($schema[$path]['options']) && is_array($schema[$path]['options'])) {
-                    $options = $schema[$path]['options'];
-                }
-            } else {
-                if (is_bool($defaultVal)) {
-                    $type = 'toggle';
-                } elseif (is_int($defaultVal) || is_float($defaultVal)) {
-                    $type = 'number';
-                } elseif (is_array($defaultVal)) {
-                    $type = 'list';
-                }
-            }
-
-            $labelKey = 'admin.settings.' . $path;
-            $helpKey = $labelKey . '.help';
-
-            $field = array(
-                'key' => $path,
-                'name' => $path,
-                'type' => $type,
-                'title' => $this->translateOrFallback($labelKey, $this->humanizeKey($path)),
-                'help' => $this->translateOrFallback($helpKey, ''),
-                'value' => $currentVal,
-                'default' => $defaultVal,
-            );
-
-            if (is_array($options)) {
-                $field['options'] = $options;
-            }
-
-            // If help key not translated, keep empty.
-            if ($field['help'] === $helpKey) {
-                $field['help'] = '';
-            }
-
-            $groups[$groupId]['fields'][] = $field;
-        }
-
-        $order = array('site', 'locale', 'theme', 'content', 'modules', 'security', 'session', 'cache', 'logging', 'proxy', 'debug', 'advanced');
-        $sorted = array();
-        foreach ($order as $gid) {
-            if (isset($groups[$gid])) {
-                $sorted[] = $groups[$gid];
-                unset($groups[$gid]);
-            }
-        }
-        foreach ($groups as $g) {
-            $sorted[] = $g;
-        }
-
-        return $sorted;
-    }
-
-    private function handleGeneralPost(&$notice, &$error) {
-        $token = (string)request()->post('csrf_token', '');
-        if (!auth()->verifyCsrfToken($token)) {
-            $error = 'Invalid CSRF token';
-            return;
-        }
-
-        // Module delete action from the General settings page.
-        $deleteId = (string)request()->post('module_delete', '');
-        if ($deleteId !== '') {
-            if (!$this->isValidModuleName($deleteId)) {
-                $error = 'Invalid module name';
-                return;
-            }
-
-            $manifestPath = MANTRA_MODULES . '/' . $deleteId . '/module.json';
-            $manifest = array();
-            if (file_exists($manifestPath)) {
-                $tmp = json_decode((string)file_get_contents($manifestPath), true);
-                if (is_array($tmp)) {
-                    $manifest = $tmp;
-                }
-            }
-
-            $policy = $this->adminModulePolicy($manifest);
-            if (empty($policy['deletable'])) {
-                $error = 'This module cannot be deleted';
-                return;
-            }
-
-            $enabled = config('modules.enabled', array());
-            if (!is_array($enabled)) {
-                $enabled = array();
-            }
-            $enabled = array_map('strval', $enabled);
-
-            if (in_array($deleteId, $enabled, true)) {
-                $error = 'Disable the module before deleting it';
-                return;
-            }
-
-            // Block deletion if any enabled module depends on this one (transitively).
-            $graph = $this->collectModuleDependencyGraph();
-            foreach ($enabled as $m) {
-                if ($m === '' || $m === $deleteId) {
-                    continue;
-                }
-                if ($this->dependsOnTransitive($m, $deleteId, $graph)) {
-                    $error = "Cannot delete module '{$deleteId}': required by '{$m}'";
-                    return;
-                }
-            }
-
-            // Delete module settings config if present.
-            $settingsPath = MANTRA_CONTENT . '/settings/' . $deleteId . '.json';
-            if (file_exists($settingsPath)) {
-                @unlink($settingsPath);
-            }
-
-            // Delete module folder (defense-in-depth: ensure it stays under MANTRA_MODULES).
-            $moduleDir = MANTRA_MODULES . '/' . $deleteId;
-            $realModules = realpath(MANTRA_MODULES);
-            $realModuleDir = realpath($moduleDir);
-            if ($realModules && $realModuleDir && strpos($realModuleDir, $realModules) === 0) {
-                $this->rrmdirSafe($realModuleDir);
-            }
-
-            // Ensure it's pruned from enabled list if it was present.
-            $newEnabled = array_values(array_diff($enabled, array($deleteId)));
-            config()->set('modules.enabled', $newEnabled);
-
-            $notice = "Module '{$deleteId}' deleted";
-            return;
-        }
-
-        $defaultsNested = Config::defaults();
-        $defaults = Config::flattenPaths($defaultsNested);
-        $updates = array();
-
-        foreach ($defaults as $path => $defaultVal) {
-            $posted = request()->post($path, null);
-
-            if (is_bool($defaultVal)) {
-                $updates[$path] = $posted ? true : false;
-                continue;
-            }
-
-            if ($posted === null) {
-                continue;
-            }
-
-            if (is_int($defaultVal)) {
-                $updates[$path] = (int)$posted;
-                continue;
-            }
-
-            if (is_float($defaultVal)) {
-                $updates[$path] = (float)$posted;
-                continue;
-            }
-
-            if (is_array($defaultVal)) {
-                // Support checklist/widgets that post arrays (e.g. modules.enabled[])
-                if (is_array($posted)) {
-                    $items = array();
-                    foreach ($posted as $item) {
-                        $item = trim((string)$item);
-                        if ($item !== '') {
-                            $items[] = $item;
-                        }
-                    }
-                    $updates[$path] = array_values(array_unique($items));
-                    continue;
-                }
-
-                // Default list widget posts textarea lines.
-                $raw = (string)$posted;
-                $lines = preg_split('/\r\n|\r|\n/', $raw);
-                $lines = is_array($lines) ? $lines : array();
-                $items = array();
-                foreach ($lines as $line) {
-                    $line = trim((string)$line);
-                    if ($line !== '') {
-                        $items[] = $line;
-                    }
-                }
-                $updates[$path] = $items;
-                continue;
-            }
-
-            $updates[$path] = (string)$posted;
-        }
-
-        config()->setMultiple($updates);
-        $notice = 'Settings saved';
-    }
 
     private $adminSubmodules = array();
 
@@ -925,64 +660,255 @@ class AdminModule extends Module {
         return $this->renderAdminLayout('Not found', $html);
     }
 
-    private function buildModuleSettingsContent($module, $actionUrl, &$notice, &$error) {
-        $module = (string)$module;
+    private function applyConfigSchemaRuntimeOptions($schema) {
+        if (!is_array($schema)) {
+            return $schema;
+        }
 
-        $store = module_settings($module);
-        $schema = $store->schema();
+        if (empty($schema['tabs']) || !is_array($schema['tabs'])) {
+            return $schema;
+        }
+
+        foreach ($schema['tabs'] as &$tab) {
+            if (empty($tab['fields']) || !is_array($tab['fields'])) {
+                continue;
+            }
+
+            foreach ($tab['fields'] as &$field) {
+                if (!is_array($field) || empty($field['path']) || empty($field['type'])) {
+                    continue;
+                }
+
+                $path = (string)$field['path'];
+
+                if ($path === 'locale.default_language' && (string)$field['type'] === 'select') {
+                    $field['options'] = $this->availableLocaleOptions();
+                }
+
+                if ($path === 'locale.fallback_locale' && (string)$field['type'] === 'select') {
+                    $field['options'] = $this->availableLocaleOptions();
+                }
+
+                if ($path === 'theme.active' && (string)$field['type'] === 'select') {
+                    $field['options'] = $this->availableThemeOptions();
+                }
+
+                if ($path === 'logging.level' && (string)$field['type'] === 'select') {
+                    $field['options'] = array(
+                        Logger::DEBUG => 'debug',
+                        Logger::INFO => 'info',
+                        Logger::NOTICE => 'notice',
+                        Logger::WARNING => 'warning',
+                        Logger::ERROR => 'error',
+                        Logger::CRITICAL => 'critical',
+                        Logger::ALERT => 'alert',
+                        Logger::EMERGENCY => 'emergency',
+                    );
+                }
+
+                if ($path === 'modules.enabled' && (string)$field['type'] === 'module_cards') {
+                    $field['options'] = $this->availableModuleCards();
+                }
+            }
+            unset($field);
+        }
+        unset($tab);
+
+        return $schema;
+    }
+
+    private function handleConfigDeleteModuleAction(&$notice, &$error) {
+        $deleteId = (string)request()->post('module_delete', '');
+        if ($deleteId === '') {
+            return false;
+        }
+
+        if (!$this->isValidModuleName($deleteId)) {
+            $error = 'Invalid module name';
+            return true;
+        }
+
+        $manifestPath = MANTRA_MODULES . '/' . $deleteId . '/module.json';
+        $manifest = array();
+        if (file_exists($manifestPath)) {
+            $tmp = json_decode((string)file_get_contents($manifestPath), true);
+            if (is_array($tmp)) {
+                $manifest = $tmp;
+            }
+        }
+
+        $policy = $this->adminModulePolicy($manifest);
+        if (empty($policy['deletable'])) {
+            $error = 'This module cannot be deleted';
+            return true;
+        }
+
+        $enabled = config('modules.enabled', array());
+        if (!is_array($enabled)) {
+            $enabled = array();
+        }
+        $enabled = array_map('strval', $enabled);
+
+        if (in_array($deleteId, $enabled, true)) {
+            $error = 'Disable the module before deleting it';
+            return true;
+        }
+
+        // Block deletion if any enabled module depends on this one (transitively).
+        $graph = $this->collectModuleDependencyGraph();
+        foreach ($enabled as $m) {
+            if ($m === '' || $m === $deleteId) {
+                continue;
+            }
+            if ($this->dependsOnTransitive($m, $deleteId, $graph)) {
+                $error = "Cannot delete module '{$deleteId}': required by '{$m}'";
+                return true;
+            }
+        }
+
+        // Delete module settings config if present.
+        $settingsPath = MANTRA_CONTENT . '/settings/' . $deleteId . '.json';
+        if (file_exists($settingsPath)) {
+            @unlink($settingsPath);
+        }
+
+        // Delete module folder (defense-in-depth: ensure it stays under MANTRA_MODULES).
+        $moduleDir = MANTRA_MODULES . '/' . $deleteId;
+        $realModules = realpath(MANTRA_MODULES);
+        $realModuleDir = realpath($moduleDir);
+        if ($realModules && $realModuleDir && strpos($realModuleDir, $realModules) === 0) {
+            $this->rrmdirSafe($realModuleDir);
+        }
+
+        // Ensure it's pruned from enabled list if it was present.
+        $newEnabled = array_values(array_diff($enabled, array($deleteId)));
+        config_settings()->set('modules.enabled', $newEnabled);
+        config_settings()->save();
+
+        $notice = "Module '{$deleteId}' deleted";
+        return true;
+    }
+
+    private function buildSchemaSettingsContent($store, $schema, $actionUrl, &$notice, &$error, $context = array()) {
         if (!is_array($schema)) {
             $error = 'This module has no settings';
             return null;
         }
 
-        $store->load(); // materialize defaults
+        if (is_array($context) && !empty($context['schema_mutator']) && is_callable($context['schema_mutator'])) {
+            $schema = call_user_func($context['schema_mutator'], $schema);
+        }
+
+        if (method_exists($store, 'load')) {
+            $store->load();
+        }
 
         if (request()->method() === 'POST') {
             $token = (string)request()->post('csrf_token', '');
             if (!auth()->verifyCsrfToken($token)) {
                 $error = 'Invalid CSRF token';
             } else {
-                $updates = array();
-
-                foreach (($schema['tabs'] ?? array()) as $tab) {
-                    foreach (($tab['fields'] ?? array()) as $field) {
-                        if (!is_array($field) || empty($field['path']) || empty($field['type'])) {
-                            continue;
-                        }
-
-                        $path = (string)$field['path'];
-                        $name = str_replace('.', '__', $path);
-                        $type = (string)$field['type'];
-
-                        if ($type === 'toggle') {
-                            $updates[$path] = request()->post($name) ? true : false;
-                            continue;
-                        }
-
-                        $raw = request()->post($name, null);
-                        if ($raw === null) {
-                            continue;
-                        }
-
-                        if ($type === 'number') {
-                            $updates[$path] = (int)$raw;
-                        } elseif ($type === 'select') {
-                            $val = (string)$raw;
-                            $options = isset($field['options']) && is_array($field['options']) ? $field['options'] : array();
-                            if (array_key_exists($val, $options)) {
-                                $updates[$path] = $val;
-                            }
-                        } else {
-                            // text / textarea
-                            $updates[$path] = (string)$raw;
-                        }
-                    }
+                $handledAction = false;
+                if (is_array($context) && !empty($context['on_post']) && is_callable($context['on_post'])) {
+                    // Need call_user_func_array to preserve &reference parameters.
+                    $args = array(&$notice, &$error);
+                    $handledAction = (bool)call_user_func_array($context['on_post'], $args);
                 }
 
-                $store->setMultiple($updates);
-                $store->save();
-                $notice = 'Settings saved';
+                if (empty($error) && !$handledAction) {
+                    $updates = array();
+
+                    foreach (($schema['tabs'] ?? array()) as $tab) {
+                        foreach (($tab['fields'] ?? array()) as $field) {
+                            if (!is_array($field) || empty($field['path']) || empty($field['type'])) {
+                                continue;
+                            }
+
+                            $path = (string)$field['path'];
+                            $type = (string)$field['type'];
+
+                            // module_cards posts its own name (modules.enabled[])
+                            if ($type === 'module_cards') {
+                                $posted = request()->post($path, null);
+                                if (is_array($posted)) {
+                                    $items = array();
+                                    foreach ($posted as $item) {
+                                        $item = trim((string)$item);
+                                        if ($item !== '') {
+                                            $items[] = $item;
+                                        }
+                                    }
+                                    $updates[$path] = array_values(array_unique($items));
+                                }
+                                continue;
+                            }
+
+                            $name = str_replace('.', '__', $path);
+
+                            if ($type === 'toggle') {
+                                $updates[$path] = request()->post($name) ? true : false;
+                                continue;
+                            }
+
+                            $raw = request()->post($name, null);
+                            if ($raw === null) {
+                                continue;
+                            }
+
+                            if ($type === 'number') {
+                                $updates[$path] = (int)$raw;
+                            } elseif ($type === 'select') {
+                                $val = (string)$raw;
+                                $options = isset($field['options']) && is_array($field['options']) ? $field['options'] : array();
+                                if (array_key_exists($val, $options)) {
+                                    $updates[$path] = $val;
+                                }
+                            } elseif ($type === 'textarea') {
+                                // Keep as string; view may display arrays as lines, but input posts string.
+                                $updates[$path] = (string)$raw;
+                            } else {
+                                // text
+                                $updates[$path] = (string)$raw;
+                            }
+                        }
+                    }
+
+                    if (!empty($updates)) {
+                        // Special-case: textarea fields that represent lists in config.
+                        // Schema can declare default as array; we accept textarea lines.
+                        foreach (($schema['tabs'] ?? array()) as $tab) {
+                            foreach (($tab['fields'] ?? array()) as $field) {
+                                if (!is_array($field) || empty($field['path']) || empty($field['type'])) {
+                                    continue;
+                                }
+                                $path = (string)$field['path'];
+                                if ((string)$field['type'] === 'textarea' && array_key_exists($path, $updates) && array_key_exists('default', $field) && is_array($field['default'])) {
+                                    $raw = (string)$updates[$path];
+                                    $lines = preg_split('/\r\n|\r|\n/', $raw);
+                                    $lines = is_array($lines) ? $lines : array();
+                                    $items = array();
+                                    foreach ($lines as $line) {
+                                        $line = trim((string)$line);
+                                        if ($line !== '') {
+                                            $items[] = $line;
+                                        }
+                                    }
+                                    $updates[$path] = $items;
+                                }
+                            }
+                        }
+
+                        $store->setMultiple($updates);
+                        $store->save();
+                        $notice = 'Settings saved';
+                    }
+                }
             }
+        }
+
+        $activeInnerTab = (string)request()->query('section', '');
+        if ($activeInnerTab === '') {
+            $activeInnerTab = (string)request()->post('active_tab', '');
         }
 
         $tabs = array();
@@ -994,6 +920,10 @@ class AdminModule extends Module {
             $tabId = isset($tab['id']) ? (string)$tab['id'] : 'tab';
             $tabTitle = $this->resolveAdminString($tab['title'] ?? $tab['label'] ?? $tabId);
 
+            if ($activeInnerTab === '' && $tabId !== '') {
+                $activeInnerTab = $tabId;
+            }
+
             $fields = array();
             foreach (($tab['fields'] ?? array()) as $field) {
                 if (!is_array($field) || empty($field['path']) || empty($field['type'])) {
@@ -1001,16 +931,20 @@ class AdminModule extends Module {
                 }
 
                 $path = (string)$field['path'];
-                $name = str_replace('.', '__', $path);
+                $type = (string)$field['type'];
+
+                $name = $type === 'module_cards' ? $path : str_replace('.', '__', $path);
+
+                $options = isset($field['options']) && is_array($field['options']) ? $field['options'] : array();
 
                 $f = array(
                     'path' => $path,
                     'name' => $name,
-                    'type' => (string)$field['type'],
+                    'type' => $type,
                     'title' => $this->resolveAdminString($field['title'] ?? $field['label'] ?? $path),
                     'help' => isset($field['help']) ? $this->resolveAdminString($field['help']) : '',
                     'value' => $store->get($path, array_key_exists('default', $field) ? $field['default'] : null),
-                    'options' => isset($field['options']) && is_array($field['options']) ? $field['options'] : array(),
+                    'options' => $options,
                 );
 
                 // Resolve option labels if they are i18n specs.
@@ -1018,6 +952,11 @@ class AdminModule extends Module {
                     foreach ($f['options'] as $k => $v) {
                         $f['options'][$k] = $this->resolveAdminString($v);
                     }
+                }
+
+                // Textarea convenience: allow arrays (lists) rendered as lines.
+                if ($f['type'] === 'textarea' && is_array($f['value'])) {
+                    $f['value'] = array_values($f['value']);
                 }
 
                 $fields[] = $f;
@@ -1034,6 +973,7 @@ class AdminModule extends Module {
         return $view->fetch('admin:module-settings', array(
             'title' => '',
             'tabs' => $tabs,
+            'active_tab' => $activeInnerTab,
             'action' => $actionUrl,
             'csrf_token' => auth()->generateCsrfToken(),
             'notice' => $notice,
@@ -1041,19 +981,23 @@ class AdminModule extends Module {
         ));
     }
 
-    private function buildGeneralSettingsContent(&$notice, &$error) {
-        if (request()->method() === 'POST') {
-            $this->handleGeneralPost($notice, $error);
-        }
+    private function buildModuleSettingsContent($module, $actionUrl, &$notice, &$error) {
+        $module = (string)$module;
+        $store = module_settings($module);
+        return $this->buildSchemaSettingsContent($store, $store->schema(), $actionUrl, $notice, $error);
+    }
 
-        $groups = $this->buildGeneralFields();
-
-        $view = new View();
-        return $view->fetch('admin:settings-general', array(
-            'groups' => $groups,
-            'action' => base_url('/admin/settings?tab=general'),
-            'csrf_token' => auth()->generateCsrfToken(),
-        ));
+    private function buildConfigSettingsContent($actionUrl, &$notice, &$error) {
+        $store = config_settings();
+        $schema = $this->applyConfigSchemaRuntimeOptions($store->schema());
+        return $this->buildSchemaSettingsContent(
+            $store,
+            $schema,
+            $actionUrl,
+            $notice,
+            $error,
+            array('on_post' => array($this, 'handleConfigDeleteModuleAction'))
+        );
     }
 
     public function settings() {
@@ -1099,7 +1043,10 @@ class AdminModule extends Module {
 
         $contentHtml = '';
         if ($activeTab === 'general') {
-            $contentHtml = $this->buildGeneralSettingsContent($notice, $error);
+            $contentHtml = $this->buildConfigSettingsContent(base_url('/admin/settings?tab=general'), $notice, $error);
+            if ($contentHtml === null) {
+                return $this->admin404('Settings schema not found');
+            }
         } else {
             $contentHtml = $this->buildModuleSettingsContent($activeTab, base_url('/admin/settings?tab=' . $activeTab), $notice, $error);
             if ($contentHtml === null) {

@@ -5,13 +5,20 @@
 <?php endif; ?>
 
 
+<?php $activeTab = isset($active_tab) ? (string)$active_tab : ''; ?>
+
 <form method="post" action="<?php echo e($action); ?>">
   <input type="hidden" name="csrf_token" value="<?php echo e($csrf_token); ?>">
+  <input type="hidden" name="active_tab" id="active_tab" value="<?php echo e($activeTab); ?>">
 
   <ul class="nav nav-tabs mb-3" role="tablist">
     <?php foreach ($tabs as $i => $tab): ?>
+      <?php
+        $tabId = (string)($tab['id'] ?? 'tab');
+        $isActive = ($activeTab !== '') ? ($activeTab === $tabId) : ($i === 0);
+      ?>
       <li class="nav-item" role="presentation">
-        <button class="nav-link <?php echo $i === 0 ? 'active' : ''; ?>" data-bs-toggle="tab" data-bs-target="#tab-<?php echo e($tab['id']); ?>" type="button" role="tab">
+        <button class="nav-link <?php echo $isActive ? 'active' : ''; ?>" data-bs-toggle="tab" data-bs-target="#tab-<?php echo e($tabId); ?>" type="button" role="tab" data-settings-tab="<?php echo e($tabId); ?>">
           <?php echo e($tab['title']); ?>
         </button>
       </li>
@@ -20,13 +27,23 @@
 
   <div class="tab-content">
     <?php foreach ($tabs as $i => $tab): ?>
-      <div class="tab-pane fade <?php echo $i === 0 ? 'show active' : ''; ?>" id="tab-<?php echo e($tab['id']); ?>" role="tabpanel">
+      <?php
+        $tabId = (string)($tab['id'] ?? 'tab');
+        $isActive = ($activeTab !== '') ? ($activeTab === $tabId) : ($i === 0);
+      ?>
+      <div class="tab-pane fade <?php echo $isActive ? 'show active' : ''; ?>" id="tab-<?php echo e($tabId); ?>" role="tabpanel">
         <?php foreach ($tab['fields'] as $field): ?>
           <div class="mb-3">
             <label class="form-label" for="f-<?php echo e($field['name']); ?>"><?php echo e($field['title']); ?></label>
 
             <?php if ($field['type'] === 'textarea'): ?>
-              <textarea class="form-control" id="f-<?php echo e($field['name']); ?>" name="<?php echo e($field['name']); ?>" rows="5"><?php echo e((string)$field['value']); ?></textarea>
+              <textarea class="form-control" id="f-<?php echo e($field['name']); ?>" name="<?php echo e($field['name']); ?>" rows="5"><?php
+                if (is_array($field['value'])) {
+                    echo e(implode("\n", $field['value']));
+                } else {
+                    echo e((string)$field['value']);
+                }
+              ?></textarea>
 
             <?php elseif ($field['type'] === 'number'): ?>
               <input class="form-control" type="number" id="f-<?php echo e($field['name']); ?>" name="<?php echo e($field['name']); ?>" value="<?php echo e((string)$field['value']); ?>">
@@ -46,6 +63,73 @@
                 <?php endforeach; ?>
               </select>
 
+            <?php elseif ($field['type'] === 'module_cards'): ?>
+              <label class="form-label d-block"><?php echo e($field['title']); ?></label>
+              <?php
+                $modules = array();
+                if (isset($field['options']) && is_array($field['options'])) {
+                    $modules = $field['options'];
+                }
+              ?>
+
+              <div class="border rounded" style="overflow:hidden;">
+                <?php foreach ($modules as $m): ?>
+                  <?php
+                    $id = (string)($m['id'] ?? '');
+                    if ($id === '') {
+                        continue;
+                    }
+                    $isEnabled = !empty($m['enabled']);
+                    $canToggle = !empty($m['disableable']);
+                    $canDelete = !empty($m['deletable']);
+                    $hasSettings = !empty($m['has_settings']);
+                    $homepage = (string)($m['homepage'] ?? '');
+                  ?>
+
+                  <div class="p-3 border-bottom">
+                    <div class="d-flex justify-content-between align-items-start gap-3">
+                      <div class="flex-grow-1">
+                        <div class="d-flex align-items-center gap-2">
+                          <div class="form-check m-0">
+                            <input class="form-check-input" type="checkbox" id="f-mod-<?php echo e($id); ?>" name="modules.enabled[]" value="<?php echo e($id); ?>" <?php echo $isEnabled ? 'checked' : ''; ?> <?php echo $canToggle ? '' : 'disabled'; ?>>
+                          </div>
+                          <div>
+                            <div class="fw-semibold"><?php echo e((string)($m['title'] ?? $id)); ?></div>
+                            <?php if (!empty($m['description'])): ?>
+                              <div class="text-muted small"><?php echo e((string)$m['description']); ?></div>
+                            <?php endif; ?>
+                          </div>
+                        </div>
+
+                        <div class="text-muted small mt-2">
+                          <?php if (!empty($m['version'])): ?>
+                            <span class="me-3"><strong>v</strong> <?php echo e((string)$m['version']); ?></span>
+                          <?php endif; ?>
+                          <?php if (!empty($m['author'])): ?>
+                            <span class="me-3"><strong><?php echo e(t('admin.modules.author')); ?></strong> <?php echo e((string)$m['author']); ?></span>
+                          <?php endif; ?>
+                          <?php if ($homepage !== ''): ?>
+                            <span class="me-3"><strong><?php echo e(t('admin.modules.homepage')); ?></strong> <a href="<?php echo e($homepage); ?>" target="_blank" rel="noopener noreferrer"><?php echo e($homepage); ?></a></span>
+                          <?php endif; ?>
+                        </div>
+
+                        <?php if ($hasSettings && $isEnabled): ?>
+                          <div class="mt-2">
+                            <a class="small" href="<?php echo e(base_url('/admin/settings?tab=' . $id)); ?>"><?php echo e(t('admin.modules.settings')); ?></a>
+                          </div>
+                        <?php endif; ?>
+                      </div>
+
+                      <div class="text-end">
+                        <button class="btn btn-sm btn-outline-danger" type="submit" name="module_delete" value="<?php echo e($id); ?>" <?php echo $canDelete ? '' : 'disabled'; ?> onclick="return confirm('<?php echo e(t('admin.modules.delete_confirm')); ?>');">
+                          <?php echo e(t('admin.modules.delete')); ?>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                <?php endforeach; ?>
+              </div>
+
             <?php else: ?>
               <input class="form-control" type="text" id="f-<?php echo e($field['name']); ?>" name="<?php echo e($field['name']); ?>" value="<?php echo e((string)$field['value']); ?>">
             <?php endif; ?>
@@ -63,3 +147,67 @@
     <i class="bi bi-check2 me-1"></i> Save
   </button>
 </form>
+
+<script>
+(function () {
+  function setActiveTab(id) {
+    var input = document.getElementById('active_tab');
+    if (input) input.value = id || '';
+
+    if (!id) return;
+
+    // Persist active tab in URL so F5 can render correct tab immediately (hash alone isn't sent to server).
+    try {
+      var url = new URL(window.location.href);
+      url.hash = 'tab-' + id;
+      url.searchParams.set('section', id);
+      history.replaceState(null, '', url.toString());
+    } catch (e) {
+      try {
+        history.replaceState(null, '', '#tab-' + id);
+      } catch (e2) {}
+    }
+  }
+
+  // On click, persist tab + update hash.
+  document.querySelectorAll('[data-settings-tab]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      setActiveTab(btn.getAttribute('data-settings-tab'));
+    });
+  });
+
+  function activateFromHash() {
+    if (!window.bootstrap || !bootstrap.Tab) {
+      return false;
+    }
+
+    var hash = (window.location.hash || '');
+    if (hash.indexOf('#tab-') !== 0) {
+      return false;
+    }
+
+    var id = hash.slice('#tab-'.length);
+    var safeId = (window.CSS && CSS.escape) ? CSS.escape(id) : id.replace(/[^a-zA-Z0-9_-]/g, '');
+    var trigger = document.querySelector('[data-settings-tab="' + safeId + '"]');
+    if (!trigger) {
+      return false;
+    }
+
+    try {
+      new bootstrap.Tab(trigger).show();
+      setActiveTab(id);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // Note: Bootstrap bundle is loaded at the end of the admin layout,
+  // so on hard refresh this template script may run before `bootstrap.Tab` exists.
+  // Try now, and again on load.
+  activateFromHash();
+  window.addEventListener('load', function () {
+    activateFromHash();
+  });
+})();
+</script>
