@@ -1,4 +1,11 @@
 <article class="post">
+    <?php
+    // Display breadcrumbs if available (provided by SEO module)
+    if (isset($breadcrumbs) && !empty($breadcrumbs)) {
+        echo widget('seo:breadcrumbs', array('breadcrumbs' => $breadcrumbs));
+    }
+    ?>
+
     <h1><?php echo $this->escape($post['title']); ?></h1>
 
     <div class="meta text-muted mb-3">

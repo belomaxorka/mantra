@@ -1,0 +1,8 @@
+{
+    "name": "seo",
+    "version": "1.0.0",
+    "description": "SEO optimization module - adds meta tags, Open Graph, and analytics",
+    "author": "Mantra CMS",
+    "homepage": "https://github.com/mantra-cms/mantra",
+    "dependencies": []
+}
