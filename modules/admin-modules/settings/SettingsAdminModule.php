@@ -301,7 +301,7 @@ class SettingsAdminModule implements AdminSubmodule
                     'description' => $description,
                     'enabled' => true,
                     'has_settings' => false,
-                    'disableable' => false,
+                    'disableable' => !empty($policy['disableable']),
                     'deletable' => !empty($policy['deletable']),
                 );
             }
