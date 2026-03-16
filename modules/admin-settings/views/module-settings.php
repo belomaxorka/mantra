@@ -146,7 +146,7 @@
   </div>
 
   <button class="btn btn-primary" type="submit">
-    <i class="bi bi-check2 me-1"></i> <?php echo t('admin.settings.save'); ?>
+    <i class="bi bi-check2 me-1"></i> <?php echo t('admin.common.save'); ?>
   </button>
 </form>
 

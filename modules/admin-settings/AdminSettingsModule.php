@@ -12,9 +12,9 @@ class AdminSettingsModule extends Module
 
             $items[] = array(
                 'id' => 'settings',
-                'title' => array('key' => 'admin.settings.title', 'fallback' => 'Settings'),
+                'title' => 'admin-settings.title',
                 'icon' => 'bi-sliders',
-                'group' => array('key' => 'admin.sidebar.group.system', 'fallback' => 'System'),
+                'group' => 'admin.sidebar.group.system',
                 'order' => 50,
                 'url' => base_url('/admin/settings'),
             );
@@ -65,7 +65,7 @@ class AdminSettingsModule extends Module
         $tabs = array();
         $tabs[] = array(
             'id' => 'general',
-            'title' => $this->translateOrFallback('admin.settings.general', 'General'),
+            'title' => $this->translateOrFallback('admin-settings.general', 'General'),
             'url' => base_url('/admin/settings?tab=general'),
             'active' => ($activeTab === 'general'),
         );
@@ -97,7 +97,7 @@ class AdminSettingsModule extends Module
         }
 
         $page = view()->fetch('admin-settings:settings', array(
-            'pageTitle' => $this->translateOrFallback('admin.settings.title', 'Settings'),
+            'pageTitle' => $this->translateOrFallback('admin-settings.title', 'Settings'),
             'tabs' => $tabs,
             'contentHtml' => $contentHtml,
             'notice' => $notice,

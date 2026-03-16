@@ -1,13 +1,13 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2><?php echo t('admin.posts.list_title'); ?></h2>
+    <h2><?php echo t('admin-posts.list_title'); ?></h2>
     <a href="<?php echo base_url('/admin/posts/new'); ?>" class="btn btn-primary">
-        <i class="bi bi-plus-circle"></i> <?php echo t('admin.posts.new_post'); ?>
+        <i class="bi bi-plus-circle"></i> <?php echo t('admin-posts.new_post'); ?>
     </a>
 </div>
 
 <?php if (empty($posts)): ?>
     <div class="alert alert-info">
-        <?php echo t('admin.posts.no_posts'); ?>
+        <?php echo t('admin-posts.no_posts'); ?>
     </div>
 <?php else: ?>
     <div class="card">
@@ -15,12 +15,12 @@
             <table class="table table-hover mb-0">
                 <thead>
                     <tr>
-                        <th><?php echo t('admin.posts.field.title'); ?></th>
-                        <th><?php echo t('admin.posts.field.author'); ?></th>
-                        <th><?php echo t('admin.posts.field.category'); ?></th>
-                        <th><?php echo t('admin.posts.field.status'); ?></th>
-                        <th><?php echo t('admin.posts.field.updated'); ?></th>
-                        <th class="text-end"><?php echo t('admin.posts.field.actions'); ?></th>
+                        <th><?php echo t('admin-posts.field.title'); ?></th>
+                        <th><?php echo t('admin-posts.field.author'); ?></th>
+                        <th><?php echo t('admin-posts.field.category'); ?></th>
+                        <th><?php echo t('admin-posts.field.status'); ?></th>
+                        <th><?php echo t('admin-posts.field.updated'); ?></th>
+                        <th class="text-end"><?php echo t('admin-posts.field.actions'); ?></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -60,13 +60,13 @@
                                 <div class="btn-group btn-group-sm">
                                     <a href="<?php echo base_url('/admin/posts/edit/' . $post['_id']); ?>"
                                        class="btn btn-outline-primary"
-                                       title="<?php echo t('admin.posts.edit'); ?>">
+                                       title="<?php echo t('admin-posts.edit'); ?>">
                                         <i class="bi bi-pencil"></i>
                                     </a>
                                     <button type="button"
                                             class="btn btn-outline-danger"
                                             onclick="deletePost('<?php echo e($post['_id']); ?>')"
-                                            title="<?php echo t('admin.posts.delete'); ?>">
+                                            title="<?php echo t('admin-posts.delete'); ?>">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </div>
@@ -85,7 +85,7 @@
 
 <script>
 function deletePost(id) {
-    if (!confirm('<?php echo t('admin.posts.delete_confirm'); ?>')) {
+    if (!confirm('<?php echo t('admin-posts.delete_confirm'); ?>')) {
         return;
     }
 

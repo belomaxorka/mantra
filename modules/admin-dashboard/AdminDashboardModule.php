@@ -5,9 +5,9 @@ class AdminDashboardModule extends BaseAdminModule {
     public function init() {
         $this->registerSidebarItem(array(
             'id' => 'dashboard',
-            'title' => array('key' => 'admin-dashboard.title', 'fallback' => 'Dashboard'),
+            'title' => 'admin-dashboard.title',
             'icon' => 'bi-speedometer2',
-            'group' => array('key' => 'admin.sidebar.group.general', 'fallback' => 'General'),
+            'group' => 'admin.sidebar.group.general',
             'order' => 0,
             'url' => base_url('/admin'),
         ));
