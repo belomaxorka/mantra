@@ -296,7 +296,6 @@ class JsonFile
 
         error_log($message . ' ' . json_encode($context));
     }
-}
 
     /**
      * Read JSON file with fallback on error

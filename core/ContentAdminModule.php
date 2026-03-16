@@ -6,7 +6,7 @@
  * Reduces code duplication in admin modules
  */
 
-abstract class ContentAdminModule extends AdminModule {
+abstract class ContentAdminModule extends BaseAdminModule {
     
     /**
      * Get content type name (singular)

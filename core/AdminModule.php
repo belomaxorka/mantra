@@ -1,6 +1,6 @@
 <?php
 /**
- * AdminModule - Base class for admin panel modules
+ * BaseAdminModule - Base class for admin panel modules
  * 
  * Provides common functionality for modules that extend the admin panel:
  * - Easy route registration
@@ -10,7 +10,7 @@
  * - CSRF protection
  */
 
-abstract class AdminModule extends Module {
+abstract class BaseAdminModule extends Module {
     
     /**
      * Register admin route

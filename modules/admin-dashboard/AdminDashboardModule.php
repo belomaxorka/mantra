@@ -1,6 +1,6 @@
 <?php
 
-class AdminDashboardModule extends AdminModule {
+class AdminDashboardModule extends BaseAdminModule {
 
     public function init() {
         $this->registerSidebarItem(array(

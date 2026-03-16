@@ -38,18 +38,11 @@ if (!defined('MANTRA_UPLOADS')) {
     define('MANTRA_UPLOADS', MANTRA_ROOT . '/uploads');
 }
 
-// Load vendored PSR-3 interfaces (no Composer)
+// Load vendored PSR-3 interfaces (no Composer) - in subfolder, autoloader won't find them
 require_once MANTRA_CORE . '/Psr/Log/LoggerInterface.php';
 require_once MANTRA_CORE . '/Psr/Log/LogLevel.php';
 
-// Load module system core classes
-require_once MANTRA_CORE . '/ModuleInterface.php';
-require_once MANTRA_CORE . '/ModuleType.php';
-require_once MANTRA_CORE . '/ModuleCapability.php';
-require_once MANTRA_CORE . '/AdminModule.php';
-require_once MANTRA_CORE . '/ContentAdminModule.php';
-
-// Load config and compute debug mode as early as possible
+// Load config classes BEFORE autoloader (needed to read config and set up debug mode)
 require_once MANTRA_CORE . '/JsonFile.php';
 require_once MANTRA_CORE . '/Config.php';
 $config = Config::bootstrap();
@@ -59,7 +52,7 @@ if (!defined('MANTRA_DEBUG')) {
     define('MANTRA_DEBUG', !empty(Config::getNested($config, 'debug.enabled', false)));
 }
 
-// Autoloader for core classes (Logger/ErrorHandler/Application/etc.)
+// Autoloader for core classes (Logger/ErrorHandler/Application/Module/etc.)
 spl_autoload_register(function($class) {
     $relative = str_replace("\0", '', $class);
     $relative = str_replace('\\', '/', $relative);
