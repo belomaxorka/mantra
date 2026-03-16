@@ -19,6 +19,9 @@ class AdminPagesModule extends ContentAdminModule {
             'image' => '',
             'show_in_navigation' => false,
             'navigation_order' => 50,
+            'author' => '',
+            'created_at' => '',
+            'updated_at' => ''
         );
     }
     

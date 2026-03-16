@@ -18,6 +18,9 @@ class AdminPostsModule extends ContentAdminModule {
             'excerpt' => '',
             'status' => 'draft',
             'category' => '',
+            'author' => '',
+            'created_at' => '',
+            'updated_at' => ''
         );
     }
     

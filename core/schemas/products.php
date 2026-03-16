@@ -1,6 +1,6 @@
 <?php
 
-// Collection schema for: posts
+// Collection schema for: products
 
 return array(
     'version' => 1,
@@ -8,10 +8,12 @@ return array(
         'title' => '',
         'slug' => '',
         'content' => '',
-        'excerpt' => '',
         'status' => 'draft',
+        'price' => 0.0,
+        'sku' => '',
+        'stock' => 0,
         'category' => '',
-        'author' => '',
+        'images' => array(),
         'created_at' => '',
         'updated_at' => ''
     )

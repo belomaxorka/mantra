@@ -8,7 +8,12 @@
 return array(
     'version' => 1,
     'defaults' => array(
+        'username' => '',
+        'email' => '',
+        'password' => '',
         'role' => 'editor',
-        'status' => 'active'
+        'status' => 'active',
+        'created_at' => '',
+        'updated_at' => ''
     )
 );

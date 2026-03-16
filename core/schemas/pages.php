@@ -5,13 +5,15 @@
 return array(
     'version' => 1,
     'defaults' => array(
-        'status' => 'draft',
         'title' => '',
         'slug' => '',
         'content' => '',
+        'status' => 'draft',
         'image' => '',
         'show_in_navigation' => false,
+        'navigation_order' => 50,
         'author' => '',
-        'navigation_order' => 50
+        'created_at' => '',
+        'updated_at' => ''
     )
 );
