@@ -179,6 +179,18 @@
 
 <script src="/core/assets/bootstrap/bootstrap.min.js"></script>
 <script>
+  // Auto-dismiss alerts after 3 seconds
+  (function () {
+    var alerts = document.querySelectorAll('.alert:not(.alert-permanent)');
+    alerts.forEach(function (alert) {
+      setTimeout(function () {
+        var bsAlert = new bootstrap.Alert(alert);
+        bsAlert.close();
+      }, 3000);
+    });
+  })();
+
+  // Sidebar collapse toggle
   (function () {
     function toggle(id) {
       var el = document.getElementById(id);

@@ -32,9 +32,10 @@
         </div>
 
         <?php if (isset($error)): ?>
-          <div class="alert alert-danger" role="alert">
+          <div class="alert alert-danger alert-dismissible fade show" role="alert">
             <i class="bi bi-exclamation-triangle-fill me-2"></i>
             <?php echo e($error); ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
           </div>
         <?php endif; ?>
 

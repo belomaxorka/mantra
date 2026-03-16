@@ -214,7 +214,10 @@ class AdminModule extends Module {
 
     private function admin404($message) {
         http_response_code(404);
-        $html = '<div class="alert alert-danger">' . e($message) . '</div>';
+        $html = '<div class="alert alert-danger alert-dismissible fade show alert-permanent" role="alert">' 
+              . e($message) 
+              . '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>'
+              . '</div>';
         return $this->renderAdminLayout('Not found', $html);
     }
 
