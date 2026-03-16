@@ -101,19 +101,19 @@ class ModuleSettings
     public function get($path, $default = null)
     {
         $this->load();
-        return self::getNested($this->data, (string)$path, $default);
+        return Config::getNested($this->data, (string)$path, $default);
     }
 
     public function has($path)
     {
         $this->load();
-        return self::hasNested($this->data, (string)$path);
+        return Config::hasNested($this->data, (string)$path);
     }
 
     public function set($path, $value)
     {
         $this->load();
-        self::setNested($this->data, (string)$path, $value);
+        Config::setNested($this->data, (string)$path, $value);
         return $this;
     }
 
@@ -124,7 +124,7 @@ class ModuleSettings
             return $this;
         }
         foreach ($values as $path => $value) {
-            self::setNested($this->data, (string)$path, $value);
+            Config::setNested($this->data, (string)$path, $value);
         }
         return $this;
     }
@@ -182,8 +182,8 @@ class ModuleSettings
                 }
 
                 $path = (string)$field['path'];
-                if (!self::hasNested($data, $path)) {
-                    self::setNested($data, $path, $field['default']);
+                if (!Config::hasNested($data, $path)) {
+                    Config::setNested($data, $path, $field['default']);
                     $dirty = true;
                 }
             }
@@ -192,82 +192,4 @@ class ModuleSettings
         return $dirty;
     }
 
-    public static function getNested($arr, $path, $default = null)
-    {
-        if (!is_array($arr)) {
-            return $default;
-        }
-        $path = trim((string)$path);
-        if ($path === '') {
-            return $default;
-        }
-
-        $parts = explode('.', $path);
-        $cur = $arr;
-        foreach ($parts as $part) {
-            if ($part === '') {
-                return $default;
-            }
-            if (!is_array($cur) || !array_key_exists($part, $cur)) {
-                return $default;
-            }
-            $cur = $cur[$part];
-        }
-        return $cur;
-    }
-
-    public static function hasNested($arr, $path)
-    {
-        if (!is_array($arr)) {
-            return false;
-        }
-        $path = trim((string)$path);
-        if ($path === '') {
-            return false;
-        }
-
-        $parts = explode('.', $path);
-        $cur = $arr;
-        foreach ($parts as $part) {
-            if ($part === '') {
-                return false;
-            }
-            if (!is_array($cur) || !array_key_exists($part, $cur)) {
-                return false;
-            }
-            $cur = $cur[$part];
-        }
-        return true;
-    }
-
-    public static function setNested(&$arr, $path, $value)
-    {
-        if (!is_array($arr)) {
-            $arr = array();
-        }
-
-        $path = trim((string)$path);
-        if ($path === '') {
-            return;
-        }
-
-        $parts = explode('.', $path);
-        $cur =& $arr;
-
-        $last = array_pop($parts);
-        foreach ($parts as $part) {
-            if ($part === '') {
-                return;
-            }
-            if (!isset($cur[$part]) || !is_array($cur[$part])) {
-                $cur[$part] = array();
-            }
-            $cur =& $cur[$part];
-        }
-
-        if ($last === '') {
-            return;
-        }
-        $cur[$last] = $value;
-    }
 }
