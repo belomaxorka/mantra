@@ -4,13 +4,6 @@
   </div>
 <?php endif; ?>
 
-<?php if (!empty($error)): ?>
-  <div class="alert alert-danger"><?php echo e($error); ?></div>
-<?php endif; ?>
-
-<?php if (!empty($notice)): ?>
-  <div class="alert alert-success"><?php echo e($notice); ?></div>
-<?php endif; ?>
 
 <form method="post" action="<?php echo e($action); ?>">
   <input type="hidden" name="csrf_token" value="<?php echo e($csrf_token); ?>">

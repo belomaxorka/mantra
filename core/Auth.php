@@ -137,6 +137,15 @@ class Auth {
      * Generate CSRF token
      */
     public function generateCsrfToken() {
+        // Reuse the existing token if present so that a browser refresh (POST resubmit)
+        // doesn't immediately invalidate the previous request.
+        if (session()->has('csrf_token')) {
+            $existing = session()->get('csrf_token');
+            if (is_string($existing) && $existing !== '') {
+                return $existing;
+            }
+        }
+
         $token = bin2hex(openssl_random_pseudo_bytes(32));
         session()->set('csrf_token', $token);
         return $token;
