@@ -21,13 +21,10 @@ class AdminDashboardModule extends BaseAdminModule {
             $quickActions = array();
         }
 
-        // Translate quick action titles
+        // Normalize quick actions (translate titles)
         foreach ($quickActions as &$action) {
             if (is_array($action) && isset($action['title'])) {
-                $title = $action['title'];
-                if (is_string($title)) {
-                    $action['title'] = t($title);
-                }
+                $action['title'] = $this->resolveAdminString($action['title']);
             }
         }
         unset($action);

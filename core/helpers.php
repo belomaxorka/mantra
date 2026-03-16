@@ -397,6 +397,9 @@ function dd($var) {
 
 /**
  * Translation helper
+ * @param string $key Translation key
+ * @param array $params Parameters for interpolation
+ * @return string
  */
 function t($key, $params = array()) {
     static $translator = null;

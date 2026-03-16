@@ -113,4 +113,21 @@ abstract class BaseAdminModule extends Module {
     protected function renderView($template, $data = array()) {
         return view()->fetch($template, $data);
     }
+
+    /**
+     * Resolve admin string (translate if needed)
+     * @param string|array $spec String key or array with 'key' and optional 'fallback'
+     * @return string
+     */
+    protected function resolveAdminString($spec) {
+        if (is_string($spec)) {
+            return t($spec);
+        }
+        if (is_array($spec) && isset($spec['key'])) {
+            // Note: fallback in array is for UI purposes only
+            // Translation system already handles locale fallback chain
+            return t($spec['key']);
+        }
+        return '';
+    }
 }

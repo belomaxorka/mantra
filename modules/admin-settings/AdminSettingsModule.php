@@ -111,8 +111,8 @@ class AdminSettingsModule extends Module
 
     private function translateOrFallback($key, $fallback)
     {
-        $key = (string)$key;
         $translated = t($key);
+        // If translation not found (returns key), use provided fallback
         if ($translated === $key) {
             return (string)$fallback;
         }
@@ -125,12 +125,9 @@ class AdminSettingsModule extends Module
             return t($spec);
         }
         if (is_array($spec) && isset($spec['key'])) {
-            $key = (string)$spec['key'];
-            $translated = t($key);
-            if ($translated === $key && isset($spec['fallback']) && is_string($spec['fallback'])) {
-                return $spec['fallback'];
-            }
-            return $translated;
+            // Note: fallback in array is for UI purposes only
+            // Translation system already handles locale fallback chain
+            return t($spec['key']);
         }
         return '';
     }

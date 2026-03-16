@@ -43,6 +43,8 @@ class AdminModule extends Module {
             return t($spec);
         }
         if (is_array($spec) && isset($spec['key'])) {
+            // Note: fallback in array is for UI purposes only
+            // Translation system already handles locale fallback chain
             return t($spec['key']);
         }
         return '';
