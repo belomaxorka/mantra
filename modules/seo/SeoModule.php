@@ -7,6 +7,7 @@
  * - Adding meta tags to <head>
  * - Modifying page data
  * - Providing widgets
+ * - Using module settings (settings.schema.php)
  */
 
 class SeoModule extends Module {
@@ -31,30 +32,62 @@ class SeoModule extends Module {
         $request = request();
         $path = $request->path();
 
+        // Get settings
+        $settings = module_settings('seo');
+
         // Get current page/post data from request
         $title = config('site.name', 'Mantra CMS');
-        $description = 'A powerful flat-file CMS';
-        $image = base_url('/themes/default/assets/images/og-image.jpg');
+        $description = $settings->get('meta.default_description', 'A powerful flat-file CMS');
+        $keywords = $settings->get('meta.default_keywords', '');
+
+        // Open Graph
+        $ogImage = $settings->get('og.default_image', '/themes/default/assets/images/og-image.jpg');
+        if (strpos($ogImage, 'http') !== 0) {
+            $ogImage = base_url($ogImage);
+        }
+        $ogSiteName = $settings->get('og.site_name', '');
+        if (empty($ogSiteName)) {
+            $ogSiteName = config('site.name', 'Mantra CMS');
+        }
+
+        // Twitter
+        $twitterCard = $settings->get('twitter.card_type', 'summary_large_image');
+        $twitterSite = $settings->get('twitter.site', '');
+        $twitterCreator = $settings->get('twitter.creator', '');
+
+        // Robots
+        $robots = $settings->get('robots.default', 'index,follow');
 
         // Build meta tags
         $meta = array();
 
+        // Basic SEO
+        $meta[] = '<meta name="description" content="' . e($description) . '">';
+        if (!empty($keywords)) {
+            $meta[] = '<meta name="keywords" content="' . e($keywords) . '">';
+        }
+        $meta[] = '<meta name="robots" content="' . e($robots) . '">';
+        $meta[] = '<link rel="canonical" href="' . e(base_url($path)) . '">';
+
         // Open Graph
         $meta[] = '<meta property="og:title" content="' . e($title) . '">';
         $meta[] = '<meta property="og:description" content="' . e($description) . '">';
-        $meta[] = '<meta property="og:image" content="' . e($image) . '">';
+        $meta[] = '<meta property="og:image" content="' . e($ogImage) . '">';
         $meta[] = '<meta property="og:url" content="' . e(base_url($path)) . '">';
         $meta[] = '<meta property="og:type" content="website">';
+        $meta[] = '<meta property="og:site_name" content="' . e($ogSiteName) . '">';
 
         // Twitter Card
-        $meta[] = '<meta name="twitter:card" content="summary_large_image">';
+        $meta[] = '<meta name="twitter:card" content="' . e($twitterCard) . '">';
         $meta[] = '<meta name="twitter:title" content="' . e($title) . '">';
         $meta[] = '<meta name="twitter:description" content="' . e($description) . '">';
-        $meta[] = '<meta name="twitter:image" content="' . e($image) . '">';
-
-        // SEO meta
-        $meta[] = '<meta name="description" content="' . e($description) . '">';
-        $meta[] = '<link rel="canonical" href="' . e(base_url($path)) . '">';
+        $meta[] = '<meta name="twitter:image" content="' . e($ogImage) . '">';
+        if (!empty($twitterSite)) {
+            $meta[] = '<meta name="twitter:site" content="' . e($twitterSite) . '">';
+        }
+        if (!empty($twitterCreator)) {
+            $meta[] = '<meta name="twitter:creator" content="' . e($twitterCreator) . '">';
+        }
 
         return $content . "\n    " . implode("\n    ", $meta);
     }
@@ -63,9 +96,19 @@ class SeoModule extends Module {
      * Add SEO data to page/post/product view
      */
     public function addSeoData($data) {
+        $settings = module_settings('seo');
+
+        // Check if breadcrumbs are enabled
+        if (!$settings->get('breadcrumbs.enabled', true)) {
+            return $data;
+        }
+
+        // Get home text from settings
+        $homeText = $settings->get('breadcrumbs.home_text', 'Home');
+
         // Add breadcrumbs data
         $breadcrumbs = array(
-            array('title' => 'Home', 'url' => base_url())
+            array('title' => $homeText, 'url' => base_url())
         );
 
         if (isset($data['page'])) {
