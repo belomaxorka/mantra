@@ -104,10 +104,13 @@ class Application {
             
             // Initialize router
             $this->router = new Router();
-            
-            // Let modules register routes
+
+            // Let modules register routes (specific routes like /admin/*)
             $this->hookManager->fire('routes.register', array('router' => $this->router));
-            
+
+            // Register core public routes (fallback for content pages)
+            $this->registerCoreRoutes();
+
             // Dispatch request
             $this->router->dispatch();
             
@@ -120,6 +123,22 @@ class Application {
         }
     }
     
+    /**
+     * Register core public routes
+     */
+    private function registerCoreRoutes() {
+        $controller = new PageController();
+
+        // Home page
+        $this->router->get('/', array($controller, 'home'));
+
+        // Single page
+        $this->router->get('/page/{slug}', array($controller, 'page'));
+
+        // Single post
+        $this->router->get('/post/{slug}', array($controller, 'post'));
+    }
+
     /**
      * Clean old logs if needed (once per day)
      */

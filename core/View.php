@@ -19,10 +19,10 @@ class View {
      */
     public function render($template, $data = array()) {
         $this->data = $data;
-        
+
         // Try theme template first
         $templatePath = $this->themePath . '/templates/' . $template . '.php';
-        
+
         // Fallback to module template
         if (!file_exists($templatePath)) {
             // Template might be in format "module:template"
@@ -31,27 +31,39 @@ class View {
                 $templatePath = MANTRA_MODULES . '/' . $module . '/views/' . $tpl . '.php';
             }
         }
-        
+
         if (!file_exists($templatePath)) {
             throw new Exception("Template not found: $template");
         }
-        
+
         // Extract data to variables
         extract($this->data);
-        
-        // Start output buffering
+
+        // Start output buffering for content
         ob_start();
-        
+
         // Include template
         include $templatePath;
-        
+
         // Get content
         $content = ob_get_clean();
-        
+
         // Apply filters
         $app = Application::getInstance();
         $content = $app->hooks()->fire('view.render', $content);
-        
+
+        // Wrap in layout if not a module template
+        if (strpos($template, ':') === false) {
+            $layoutPath = $this->themePath . '/templates/layout.php';
+            if (file_exists($layoutPath)) {
+                // Extract data again for layout
+                extract($this->data);
+                ob_start();
+                include $layoutPath;
+                $content = ob_get_clean();
+            }
+        }
+
         echo $content;
     }
     
