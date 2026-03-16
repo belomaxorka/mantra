@@ -63,21 +63,42 @@ class SettingsAdminModule implements AdminSubmodule
             return;
         }
 
+        // Get active tab from query string
+        $activeTab = (string)request()->query('tab', 'general');
+
+        // Build tabs list
         $tabs = array();
         $tabs[] = array(
             'id' => 'general',
             'title' => $this->translateOrFallback('admin.settings.general', 'General'),
             'url' => base_url('/admin/settings?tab=general'),
-            'active' => true,
+            'active' => ($activeTab === 'general'),
         );
+
+        // Add tabs for modules with settings
+        $modulesWithSettings = $this->getModulesWithSettings();
+        foreach ($modulesWithSettings as $modId => $modTitle) {
+            $tabs[] = array(
+                'id' => $modId,
+                'title' => $modTitle,
+                'url' => base_url('/admin/settings?tab=' . $modId),
+                'active' => ($activeTab === $modId),
+            );
+        }
 
         $notice = null;
         $error = null;
 
-        $contentHtml = $this->buildConfigSettingsContent(base_url('/admin/settings?tab=general'), $notice, $error);
+        // Render content based on active tab
+        if ($activeTab === 'general') {
+            $contentHtml = $this->buildConfigSettingsContent(base_url('/admin/settings?tab=general'), $notice, $error);
+        } else {
+            $contentHtml = $this->buildModuleSettingsContent($activeTab, base_url('/admin/settings?tab=' . $activeTab), $notice, $error);
+        }
+
         if ($contentHtml === null) {
             http_response_code(404);
-            return $admin->render('Settings', '<div class="alert alert-danger">Settings schema not found</div>');
+            return $admin->render('Settings', '<div class="alert alert-danger">Settings not found</div>');
         }
 
         $view = new View();
@@ -124,6 +145,81 @@ class SettingsAdminModule implements AdminSubmodule
     {
         $name = (string)$name;
         return ($name !== '' && preg_match('/^[a-z0-9_-]+$/', $name));
+    }
+
+    /**
+     * Check if module has settings schema
+     */
+    private function moduleHasSettings($modulePath)
+    {
+        return file_exists($modulePath . '/settings.schema.php');
+    }
+
+    /**
+     * Get list of modules with settings (id => title)
+     */
+    private function getModulesWithSettings()
+    {
+        $modules = array();
+        $base = MANTRA_MODULES;
+        if (!is_dir($base)) {
+            return $modules;
+        }
+
+        $enabled = config_settings()->get('modules.enabled', array('admin'));
+        if (!is_array($enabled)) {
+            $enabled = array('admin');
+        }
+
+        // Regular modules
+        foreach (glob($base . '/*/module.json') as $path) {
+            $dir = basename(dirname($path));
+            if (!$this->isValidModuleName($dir)) {
+                continue;
+            }
+
+            // Only show enabled modules
+            if (!in_array($dir, $enabled, true)) {
+                continue;
+            }
+
+            $modulePath = dirname($path);
+            if (!$this->moduleHasSettings($modulePath)) {
+                continue;
+            }
+
+            $meta = json_decode((string)file_get_contents($path), true);
+            $title = $dir;
+            if (is_array($meta) && !empty($meta['name']) && is_string($meta['name'])) {
+                $title = (string)$meta['name'];
+            }
+
+            $modules[$dir] = $title;
+        }
+
+        ksort($modules);
+        return $modules;
+    }
+
+    /**
+     * Build module settings content
+     */
+    private function buildModuleSettingsContent($moduleId, $actionUrl, &$notice, &$error)
+    {
+        if (!$this->isValidModuleName($moduleId)) {
+            $error = 'Invalid module name';
+            return null;
+        }
+
+        $store = module_settings($moduleId);
+        $schema = $store->schema();
+
+        if (!is_array($schema)) {
+            $error = 'This module has no settings';
+            return null;
+        }
+
+        return $this->buildSchemaSettingsContent($store, $schema, $actionUrl, $notice, $error);
     }
 
     private function adminModulePolicy($manifest)
@@ -278,7 +374,7 @@ class SettingsAdminModule implements AdminSubmodule
             $canDelete = !empty($policy['deletable']) && !$isEnabled && !$requiredByEnabled;
 
             // Check if module has settings schema
-            $hasSettings = file_exists(dirname($path) . '/settings.schema.php');
+            $hasSettings = $this->moduleHasSettings(dirname($path));
 
             $cards[] = array(
                 'id' => $dir,
@@ -339,7 +435,7 @@ class SettingsAdminModule implements AdminSubmodule
                 // (they're loaded on-demand when accessing /admin)
 
                 // Check if admin submodule has settings schema
-                $hasSettings = file_exists(dirname($path) . '/settings.schema.php');
+                $hasSettings = $this->moduleHasSettings(dirname($path));
 
                 $cards[] = array(
                     'id' => 'admin-modules/' . $dir,
