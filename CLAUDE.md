@@ -82,7 +82,7 @@ If you add tooling, prefer documenting the exact command(s) here.
 1. Loads config (prefer `$GLOBALS['MANTRA_CONFIG']` from bootstrap).
 2. Sets environment (timezone, `display_errors`, session start).
 3. Creates `HookManager`.
-4. Creates `ModuleManager` and loads enabled modules (`enabled_modules` from config).
+4. Creates `ModuleManager` and loads enabled modules (`modules.enabled` from config).
 5. Fires hooks:
    - `system.init`
    - `routes.register` (modules attach routes to the router here)

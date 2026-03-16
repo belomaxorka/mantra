@@ -96,7 +96,7 @@ class YourModuleModule extends Module {
 }
 ```
 
-4. Enable the module in `content/settings/config.json` under `enabled_modules`
+4. Enable the module in `content/settings/config.json` under `modules.enabled`
 
 ## Available Hooks
 

@@ -14,7 +14,7 @@ A **module** is a folder under:
 
 A module is enabled via config:
 
-- `content/settings/config.json` → `enabled_modules: ["admin", "pages", ...]`
+- `content/settings/config.json` → `modules.enabled: ["admin", "pages", ...]`
 
 Each module usually contains:
 
