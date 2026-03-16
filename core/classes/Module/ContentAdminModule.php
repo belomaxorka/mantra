@@ -77,6 +77,18 @@ abstract class ContentAdminModule extends BaseAdminModule {
     }
     
     /**
+     * Ensure slug is set, generate from title if empty
+     * @param array $data Item data
+     * @return array Modified data with slug
+     */
+    protected function ensureSlug($data) {
+        if (empty($data['slug']) && !empty($data['title'])) {
+            $data['slug'] = slugify($data['title']);
+        }
+        return $data;
+    }
+    
+    /**
      * List all items
      */
     public function listItems() {
@@ -114,6 +126,7 @@ abstract class ContentAdminModule extends BaseAdminModule {
         }
         
         $data = $this->extractFormData();
+        $data = $this->ensureSlug($data);
         $data['author'] = $this->getUser()['username'] ?? 'Unknown';
         $data['created_at'] = date('Y-m-d H:i:s');
         $data['updated_at'] = date('Y-m-d H:i:s');
@@ -164,6 +177,7 @@ abstract class ContentAdminModule extends BaseAdminModule {
         }
         
         $data = $this->extractFormData();
+        $data = $this->ensureSlug($data);
         $data['updated_at'] = date('Y-m-d H:i:s');
         
         // Preserve original fields
