@@ -152,39 +152,70 @@
     </form>
 </div>
 
-<script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
+<script src="https://cdn.ckeditor.com/ckeditor5/41.2.1/classic/ckeditor.js"></script>
 <script>
-tinymce.init({
-    selector: '#content',
-    height: 500,
-    menubar: true,
-    plugins: [
-        'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
-        'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
-        'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount'
-    ],
-    toolbar: 'undo redo | blocks | ' +
-        'bold italic forecolor | alignleft aligncenter ' +
-        'alignright alignjustify | bullist numlist outdent indent | ' +
-        'removeformat | link image media | code | help',
-    content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }',
-    branding: false,
-    promotion: false,
-    image_advtab: true,
-    link_default_target: '_blank',
-    link_assume_external_targets: true,
-    relative_urls: false,
-    remove_script_host: false,
-    convert_urls: true,
-    image_caption: true,
-    image_title: true,
-    automatic_uploads: false,
-    file_picker_types: 'image',
-    images_upload_handler: function (blobInfo, success, failure) {
-        // For now, just show a message that upload is not configured
-        failure('Image upload not configured. Please use image URL instead.');
-    }
-});
+let editor;
+ClassicEditor
+    .create(document.querySelector('#content'), {
+        toolbar: {
+            items: [
+                'undo', 'redo',
+                '|', 'heading',
+                '|', 'bold', 'italic', 'underline', 'strikethrough',
+                '|', 'link', 'insertImage', 'insertTable', 'mediaEmbed',
+                '|', 'bulletedList', 'numberedList', 'outdent', 'indent',
+                '|', 'alignment',
+                '|', 'blockQuote', 'codeBlock',
+                '|', 'sourceEditing'
+            ],
+            shouldNotGroupWhenFull: true
+        },
+        heading: {
+            options: [
+                { model: 'paragraph', title: 'Paragraph', class: 'ck-heading_paragraph' },
+                { model: 'heading1', view: 'h1', title: 'Heading 1', class: 'ck-heading_heading1' },
+                { model: 'heading2', view: 'h2', title: 'Heading 2', class: 'ck-heading_heading2' },
+                { model: 'heading3', view: 'h3', title: 'Heading 3', class: 'ck-heading_heading3' },
+                { model: 'heading4', view: 'h4', title: 'Heading 4', class: 'ck-heading_heading4' }
+            ]
+        },
+        link: {
+            defaultProtocol: 'https://',
+            decorators: {
+                openInNewTab: {
+                    mode: 'manual',
+                    label: 'Open in a new tab',
+                    defaultValue: true,
+                    attributes: {
+                        target: '_blank',
+                        rel: 'noopener noreferrer'
+                    }
+                }
+            }
+        },
+        image: {
+            toolbar: [
+                'imageTextAlternative', 'toggleImageCaption', 'imageStyle:inline',
+                'imageStyle:block', 'imageStyle:side', 'linkImage'
+            ]
+        },
+        table: {
+            contentToolbar: [
+                'tableColumn', 'tableRow', 'mergeTableCells',
+                'tableCellProperties', 'tableProperties'
+            ]
+        }
+    })
+    .then(newEditor => {
+        editor = newEditor;
+        // Set minimum height
+        editor.editing.view.change(writer => {
+            writer.setStyle('min-height', '500px', editor.editing.view.document.getRoot());
+        });
+    })
+    .catch(error => {
+        console.error('CKEditor initialization error:', error);
+    });
 
 // Auto-generate slug from title
 document.getElementById('title').addEventListener('input', function() {
