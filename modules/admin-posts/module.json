@@ -1,9 +1,18 @@
 {
   "id": "admin-posts",
-  "name": "Posts Admin",
+  "name": "Posts Management",
   "description": "Admin interface for managing blog posts",
   "version": "1.0.0",
-  "requires": ["admin"],
-  "main": "AdminPostsModule.php",
-  "class": "AdminPostsModule"
+  "author": "Mantra CMS",
+  "license": "MIT",
+  "type": "admin",
+  "capabilities": [
+    "routes",
+    "admin_ui",
+    "hooks",
+    "templates",
+    "translations"
+  ],
+  "dependencies": ["admin"],
+  "tags": ["admin", "posts", "blog", "management"]
 }

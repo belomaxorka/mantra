@@ -1,7 +1,17 @@
 {
-  "name": "Example Integration Module",
-  "version": "1.0.0",
+  "id": "example-integration",
+  "name": "Example Integration",
   "description": "Demonstrates integration points (navigation, footer links, sidebar)",
+  "version": "1.0.0",
   "author": "Mantra CMS",
-  "dependencies": []
+  "license": "MIT",
+  "type": "custom",
+  "capabilities": [
+    "routes",
+    "hooks",
+    "settings",
+    "widgets"
+  ],
+  "dependencies": [],
+  "tags": ["example", "integration", "demo"]
 }

@@ -1,13 +1,20 @@
 {
   "id": "admin-dashboard",
   "name": "Dashboard",
+  "description": "Admin dashboard with system overview and quick actions",
   "version": "1.0.0",
-  "description": "Admin dashboard with system overview",
   "author": "Mantra CMS",
   "homepage": "https://github.com/mantra-cms/mantra",
-  "main": "AdminDashboardModule.php",
-  "class": "AdminDashboardModule",
-  "requires": ["admin"],
+  "license": "MIT",
+  "type": "admin",
+  "capabilities": [
+    "routes",
+    "admin_ui",
+    "hooks",
+    "templates"
+  ],
+  "dependencies": ["admin"],
+  "tags": ["admin", "dashboard", "overview"],
   "admin": {
     "disableable": false,
     "deletable": false

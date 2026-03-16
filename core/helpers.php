@@ -396,21 +396,25 @@ function dd($var) {
 }
 
 /**
- * Translation helper.
+ * Translation helper
  */
 function t($key, $params = array()) {
-    static $lang = null;
-    if ($lang === null) {
-        $lang = new Language();
+    static $translator = null;
+    if ($translator === null) {
+        $translator = new TranslationManager();
     }
-    return $lang->translate($key, $params);
+    return $translator->translate($key, $params);
 }
 
 /**
- * Backward-compatible translation alias.
+ * Get translation manager instance
  */
-function __($key, $params = array()) {
-    return t($key, $params);
+function translator() {
+    static $translator = null;
+    if ($translator === null) {
+        $translator = new TranslationManager();
+    }
+    return $translator;
 }
 
 /**
@@ -426,26 +430,31 @@ function widget($name, $params = array()) {
 }
 
 /**
+ * Get module instance
+ * @param string $moduleId
+ * @return Module|null
+ */
+function module($moduleId) {
+    return app()->modules()->getModule($moduleId);
+}
+
+/**
  * Check if module is enabled
- *
  * @param string $moduleName Module name
  * @return bool
  */
 function module_enabled($moduleName) {
-    $enabled = config('modules.enabled', array());
-    return in_array($moduleName, $enabled);
+    return app()->modules()->isLoaded($moduleName);
 }
 
 /**
  * Fire a hook
- *
  * @param string $hookName Hook name
  * @param mixed $data Data to pass to hook
  * @return mixed Modified data
  */
 function fire_hook($hookName, $data = null) {
-    $app = Application::getInstance();
-    return $app->hooks()->fire($hookName, $data);
+    return app()->hooks()->fire($hookName, $data);
 }
 
 /**

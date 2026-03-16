@@ -1,13 +1,21 @@
 {
   "id": "admin-settings",
-  "name": "Settings",
-  "version": "1.0.0",
+  "name": "Settings Management",
   "description": "System settings and configuration management",
+  "version": "1.0.0",
   "author": "Mantra CMS",
   "homepage": "https://github.com/mantra-cms/mantra",
-  "main": "AdminSettingsModule.php",
-  "class": "AdminSettingsModule",
-  "requires": ["admin"],
+  "license": "MIT",
+  "type": "admin",
+  "capabilities": [
+    "routes",
+    "admin_ui",
+    "hooks",
+    "templates",
+    "translations"
+  ],
+  "dependencies": ["admin"],
+  "tags": ["admin", "settings", "configuration"],
   "admin": {
     "disableable": false,
     "deletable": false

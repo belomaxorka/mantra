@@ -43,12 +43,7 @@ class AdminModule extends Module {
             return t($spec);
         }
         if (is_array($spec) && isset($spec['key'])) {
-            $key = (string)$spec['key'];
-            $translated = t($key);
-            if ($translated === $key && isset($spec['fallback']) && is_string($spec['fallback'])) {
-                return $spec['fallback'];
-            }
-            return $translated;
+            return t($spec['key']);
         }
         return '';
     }

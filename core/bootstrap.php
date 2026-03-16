@@ -42,6 +42,11 @@ if (!defined('MANTRA_UPLOADS')) {
 require_once MANTRA_CORE . '/Psr/Log/LoggerInterface.php';
 require_once MANTRA_CORE . '/Psr/Log/LogLevel.php';
 
+// Load module system core classes
+require_once MANTRA_CORE . '/ModuleInterface.php';
+require_once MANTRA_CORE . '/ModuleType.php';
+require_once MANTRA_CORE . '/ModuleCapability.php';
+
 // Load config and compute debug mode as early as possible
 require_once MANTRA_CORE . '/JsonFile.php';
 require_once MANTRA_CORE . '/Config.php';

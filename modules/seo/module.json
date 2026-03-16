@@ -1,8 +1,17 @@
 {
-    "name": "SEO",
-    "version": "1.0.0",
-    "description": "SEO optimization module - adds meta tags, Open Graph, and analytics",
-    "author": "Mantra CMS",
-    "homepage": "https://github.com/mantra-cms/mantra",
-    "dependencies": []
+  "id": "seo",
+  "name": "SEO",
+  "description": "SEO optimization - meta tags, Open Graph, Twitter Cards, and breadcrumbs",
+  "version": "1.0.0",
+  "author": "Mantra CMS",
+  "homepage": "https://github.com/mantra-cms/mantra",
+  "license": "MIT",
+  "type": "utility",
+  "capabilities": [
+    "hooks",
+    "settings",
+    "widgets"
+  ],
+  "dependencies": [],
+  "tags": ["seo", "meta", "opengraph", "optimization"]
 }

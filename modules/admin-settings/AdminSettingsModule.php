@@ -143,59 +143,21 @@ class AdminSettingsModule extends Module
     }
 
     /**
-     * Check if module has settings schema
-     */
-    private function moduleHasSettings($modulePath)
-    {
-        return file_exists($modulePath . '/settings.schema.php');
-    }
-
-    /**
      * Get list of modules with settings (id => title)
      */
     private function getModulesWithSettings()
     {
         $modules = array();
-        $base = MANTRA_MODULES;
-        if (!is_dir($base)) {
-            return $modules;
-        }
-
-        $enabled = config_settings()->get('modules.enabled', array('admin'));
-        if (!is_array($enabled)) {
-            $enabled = array('admin');
-        }
-
-        // Regular modules
-        foreach (glob($base . '/*/module.json') as $path) {
-            $dir = basename(dirname($path));
-            if (!$this->isValidModuleName($dir)) {
+        $moduleManager = app()->modules();
+        
+        foreach ($moduleManager->getModules() as $moduleId => $data) {
+            $module = $data['instance'];
+            
+            if (!$module->hasSettings()) {
                 continue;
             }
-
-            // Only show enabled modules
-            if (!in_array($dir, $enabled, true)) {
-                continue;
-            }
-
-            $modulePath = dirname($path);
-            if (!$this->moduleHasSettings($modulePath)) {
-                continue;
-            }
-
-            try {
-                $meta = JsonFile::read($path);
-            } catch (JsonFileException $e) {
-                continue;
-            }
-            $title = $dir;
-            if (is_array($meta) && !empty($meta['name']) && is_string($meta['name'])) {
-                $title = (string)$meta['name'];
-            }
-            // Try translation first (e.g., "seo.name"), fallback to module.json name
-            $title = $this->translateOrFallback($dir . '.name', $title);
-
-            $modules[$dir] = $title;
+            
+            $modules[$moduleId] = $module->getName();
         }
 
         ksort($modules);
@@ -221,29 +183,6 @@ class AdminSettingsModule extends Module
         }
 
         return $this->buildSchemaSettingsContent($store, $schema, $actionUrl, $notice, $error);
-    }
-
-    private function adminModulePolicy($manifest)
-    {
-        if (!is_array($manifest)) {
-            $manifest = array();
-        }
-        $admin = isset($manifest['admin']) && is_array($manifest['admin']) ? $manifest['admin'] : array();
-
-        $disableable = true;
-        if (array_key_exists('disableable', $admin) && $admin['disableable'] === false) {
-            $disableable = false;
-        }
-
-        $deletable = true;
-        if (array_key_exists('deletable', $admin) && $admin['deletable'] === false) {
-            $deletable = false;
-        }
-
-        return array(
-            'disableable' => $disableable,
-            'deletable' => $deletable,
-        );
     }
 
     private function availableThemeOptions()
@@ -309,81 +248,77 @@ class AdminSettingsModule extends Module
     private function availableModuleCards()
     {
         $cards = array();
-        $base = MANTRA_MODULES;
-        if (!is_dir($base)) {
-            return $cards;
-        }
-
-        $enabled = config_settings()->get('modules.enabled', array('admin'));
-        if (!is_array($enabled)) {
-            $enabled = array('admin');
-        }
-
-        // Build dependency graph to check which modules are required by others
-        $graph = $this->collectModuleDependencyGraph();
-
-        // Regular modules
-        foreach (glob($base . '/*/module.json') as $path) {
-            $dir = basename(dirname($path));
-            if (!$this->isValidModuleName($dir)) {
-                continue;
-            }
-
-            try {
-                $meta = JsonFile::read($path);
-            } catch (JsonFileException $e) {
-                $meta = array();
-            }
-
-            $policy = $this->adminModulePolicy($meta);
-
-            $title = $dir;
-            if (!empty($meta['name']) && is_string($meta['name'])) {
-                $title = (string)$meta['name'];
-            }
-
-            $version = '';
-            if (!empty($meta['version']) && is_string($meta['version'])) {
-                $version = (string)$meta['version'];
-            }
-
-            $author = '';
-            if (!empty($meta['author']) && is_string($meta['author'])) {
-                $author = (string)$meta['author'];
-            }
-
-            $homepage = '';
-            if (!empty($meta['homepage']) && is_string($meta['homepage'])) {
-                $homepage = (string)$meta['homepage'];
-            }
-
-            $description = '';
-            if (!empty($meta['description']) && is_string($meta['description'])) {
-                $description = (string)$meta['description'];
-            }
-
-            $isEnabled = in_array($dir, $enabled, true);
-
-            // Check if any enabled module depends on this one
-            $requiredByEnabled = false;
-            foreach ($enabled as $enabledMod) {
-                if ($enabledMod !== $dir && $this->dependsOnTransitive($enabledMod, $dir, $graph)) {
-                    $requiredByEnabled = true;
-                    break;
+        $moduleManager = app()->modules();
+        
+        // Get all available modules (including disabled)
+        $allModules = $moduleManager->discoverModules();
+        
+        foreach ($allModules as $moduleId => $moduleData) {
+            $isEnabled = $moduleData['enabled'];
+            $manifest = $moduleData['manifest'];
+            
+            // Get module instance if loaded
+            $module = $isEnabled ? $moduleManager->getModule($moduleId) : null;
+            
+            // Use module API if available, otherwise parse manifest
+            if ($module) {
+                $title = $module->getName();
+                $version = $module->getVersion();
+                $author = $module->getAuthor();
+                $homepage = $module->getHomepage();
+                $description = $module->getDescription();
+                $hasSettings = $module->hasSettings();
+                $canDisable = $module->isDisableable();
+                $canDelete = $module->isDeletable();
+            } else {
+                // Parse from manifest for disabled modules
+                $title = $manifest['name'] ?? $moduleId;
+                $version = $manifest['version'] ?? '';
+                $author = $manifest['author'] ?? '';
+                $homepage = $manifest['homepage'] ?? '';
+                $description = $manifest['description'] ?? '';
+                $hasSettings = file_exists($moduleData['path'] . '/settings.schema.php');
+                
+                // Check type for disableable/deletable
+                $type = $manifest['type'] ?? 'custom';
+                $adminConfig = $manifest['admin'] ?? array();
+                
+                if ($type === ModuleType::CORE) {
+                    $canDisable = false;
+                    $canDelete = false;
+                } else {
+                    $canDisable = $adminConfig['disableable'] ?? true;
+                    $canDelete = $adminConfig['deletable'] ?? true;
                 }
             }
-
-            // Module can't be disabled if: manifest says so OR it's required by an enabled module
-            $canDisable = !empty($policy['disableable']) && !$requiredByEnabled;
-
-            // Module can't be deleted if: manifest says so OR it's currently enabled OR it's required by any enabled module
-            $canDelete = !empty($policy['deletable']) && !$isEnabled && !$requiredByEnabled;
-
-            // Check if module has settings schema
-            $hasSettings = $this->moduleHasSettings(dirname($path));
-
+            
+            // Check if any enabled module depends on this one
+            $requiredByEnabled = false;
+            if ($isEnabled) {
+                $enabled = config_settings()->get('modules.enabled', array('admin'));
+                $graph = $this->collectModuleDependencyGraph();
+                
+                foreach ($enabled as $enabledMod) {
+                    if ($enabledMod !== $moduleId && $this->dependsOnTransitive($enabledMod, $moduleId, $graph)) {
+                        $requiredByEnabled = true;
+                        break;
+                    }
+                }
+            }
+            
+            // Override permissions if required by other modules
+            if ($requiredByEnabled) {
+                $canDisable = false;
+                $canDelete = false;
+            }
+            
+            // Can't delete if enabled
+            if ($isEnabled) {
+                $canDelete = false;
+            }
+            
             $cards[] = array(
-                'id' => $dir,
+                'id' => $moduleId,
                 'title' => $title,
                 'version' => $version,
                 'author' => $author,
@@ -397,7 +332,7 @@ class AdminSettingsModule extends Module
         }
 
         usort($cards, function ($a, $b) {
-            return strcasecmp((string)($a['title'] ?? ''), (string)($b['title'] ?? ''));
+            return strcasecmp($a['title'] ?? '', $b['title'] ?? '');
         });
 
         return $cards;
@@ -563,36 +498,55 @@ class AdminSettingsModule extends Module
             $error = 'Invalid module name';
             return true;
         }
-        $manifestPath = MANTRA_MODULES . '/' . $deleteId . '/module.json';
-        $moduleDir = MANTRA_MODULES . '/' . $deleteId;
-        $settingsPath = MANTRA_CONTENT . '/settings/' . $deleteId . '.json';
 
-        $manifest = array();
-        if (file_exists($manifestPath)) {
-            try {
-                $manifest = JsonFile::read($manifestPath);
-            } catch (JsonFileException $e) {
-                $manifest = array();
+        $moduleManager = app()->modules();
+        
+        // Check if module is loaded
+        $module = $moduleManager->getModule($deleteId);
+        
+        if ($module) {
+            // Use module API for loaded modules
+            if (!$module->isDeletable()) {
+                $error = 'This module cannot be deleted';
+                return true;
+            }
+            
+            if ($moduleManager->isLoaded($deleteId)) {
+                $error = 'Disable the module before deleting it';
+                return true;
+            }
+        } else {
+            // Check manifest for unloaded modules
+            $manifestPath = MANTRA_MODULES . '/' . $deleteId . '/module.json';
+            if (file_exists($manifestPath)) {
+                try {
+                    $manifest = JsonFile::read($manifestPath);
+                    $type = $manifest['type'] ?? 'custom';
+                    $adminConfig = $manifest['admin'] ?? array();
+                    
+                    // CORE modules cannot be deleted
+                    if ($type === ModuleType::CORE) {
+                        $error = 'Core modules cannot be deleted';
+                        return true;
+                    }
+                    
+                    // Check admin.deletable flag
+                    if (isset($adminConfig['deletable']) && $adminConfig['deletable'] === false) {
+                        $error = 'This module cannot be deleted';
+                        return true;
+                    }
+                } catch (JsonFileException $e) {
+                    // Continue with deletion if manifest is unreadable
+                }
             }
         }
 
-        $policy = $this->adminModulePolicy($manifest);
-        if (empty($policy['deletable'])) {
-            $error = 'This module cannot be deleted';
-            return true;
-        }
-
+        // Check if any enabled module depends on this one
         $enabled = config_settings()->get('modules.enabled', array('admin'));
         if (!is_array($enabled)) {
             $enabled = array('admin');
         }
 
-        if (in_array($deleteId, $enabled, true)) {
-            $error = 'Disable the module before deleting it';
-            return true;
-        }
-
-        // Block deletion if any enabled module depends on this one (transitively).
         $graph = $this->collectModuleDependencyGraph();
         foreach ($enabled as $m) {
             if ($m === '' || $m === $deleteId) {
@@ -604,19 +558,21 @@ class AdminSettingsModule extends Module
             }
         }
 
-        // Delete module settings config if present.
+        // Delete module settings
+        $settingsPath = MANTRA_CONTENT . '/settings/' . $deleteId . '.json';
         if (file_exists($settingsPath)) {
             @unlink($settingsPath);
         }
 
-        // Delete module folder (defense-in-depth: ensure it stays under MANTRA_MODULES).
+        // Delete module folder
+        $moduleDir = MANTRA_MODULES . '/' . $deleteId;
         $realModules = realpath(MANTRA_MODULES);
         $realModuleDir = realpath($moduleDir);
         if ($realModules && $realModuleDir && strpos($realModuleDir, $realModules) === 0) {
             $this->rrmdirSafe($realModuleDir);
         }
 
-        // Ensure it's pruned from enabled list if it was present.
+        // Remove from enabled list
         $newEnabled = array_values(array_diff($enabled, array($deleteId)));
         config_settings()->set('modules.enabled', $newEnabled);
         config_settings()->save();
@@ -625,10 +581,6 @@ class AdminSettingsModule extends Module
         return true;
     }
 
-    /**
-     * Validate modules.enabled update (security: enforce policies and dependencies).
-     * Returns null if valid, or an error message string if invalid.
-     */
     private function validateModulesEnabledUpdate($newEnabled)
     {
         if (!is_array($newEnabled)) {
@@ -640,22 +592,43 @@ class AdminSettingsModule extends Module
             $current = array('admin');
         }
 
+        $moduleManager = app()->modules();
         $graph = $this->collectModuleDependencyGraph();
 
         // Check modules being disabled
         $beingDisabled = array_diff($current, $newEnabled);
         foreach ($beingDisabled as $modId) {
-            // Check if module has disableable: false policy
-            $manifestPath = MANTRA_MODULES . '/' . $modId . '/module.json';
-            if (file_exists($manifestPath)) {
-                try {
-                    $manifest = JsonFile::read($manifestPath);
-                    $policy = $this->adminModulePolicy($manifest);
-                    if (empty($policy['disableable'])) {
-                        return "Cannot disable module '{$modId}': protected by policy";
+            // Use module API if loaded
+            $module = $moduleManager->getModule($modId);
+            
+            if ($module) {
+                if (!$module->isDisableable()) {
+                    $type = $module->getType();
+                    if ($type === ModuleType::CORE) {
+                        return "Cannot disable core module '{$modId}'";
                     }
-                } catch (JsonFileException $e) {
-                    // Skip policy check if manifest is unreadable
+                    return "Cannot disable module '{$modId}': protected by policy";
+                }
+            } else {
+                // Check manifest for unloaded modules
+                $manifestPath = MANTRA_MODULES . '/' . $modId . '/module.json';
+                if (file_exists($manifestPath)) {
+                    try {
+                        $manifest = JsonFile::read($manifestPath);
+                        $type = $manifest['type'] ?? 'custom';
+                        
+                        // CORE modules cannot be disabled
+                        if ($type === ModuleType::CORE) {
+                            return "Cannot disable core module '{$modId}'";
+                        }
+                        
+                        $adminConfig = $manifest['admin'] ?? array();
+                        if (isset($adminConfig['disableable']) && $adminConfig['disableable'] === false) {
+                            return "Cannot disable module '{$modId}': protected by policy";
+                        }
+                    } catch (JsonFileException $e) {
+                        // Skip policy check if manifest is unreadable
+                    }
                 }
             }
 
@@ -670,29 +643,27 @@ class AdminSettingsModule extends Module
         // Check modules being enabled
         $beingEnabled = array_diff($newEnabled, $current);
         foreach ($beingEnabled as $modId) {
-            // Validate module name
             if (!$this->isValidModuleName($modId)) {
                 return "Invalid module name: '{$modId}'";
             }
 
-            // Check if module exists
             $manifestPath = MANTRA_MODULES . '/' . $modId . '/module.json';
             if (!file_exists($manifestPath)) {
                 return "Module not found: '{$modId}'";
             }
 
-            // Check if dependencies are satisfied
             try {
                 $manifest = JsonFile::read($manifestPath);
             } catch (JsonFileException $e) {
                 return "Cannot read module manifest: '{$modId}'";
             }
-            if (is_array($manifest) && isset($manifest['dependencies']) && is_array($manifest['dependencies'])) {
+            
+            if (isset($manifest['dependencies']) && is_array($manifest['dependencies'])) {
                 foreach ($manifest['dependencies'] as $dep) {
                     if (!is_string($dep)) {
                         continue;
                     }
-                    $dep = trim((string)$dep);
+                    $dep = trim($dep);
                     if ($dep !== '' && !in_array($dep, $newEnabled, true)) {
                         return "Cannot enable module '{$modId}': missing dependency '{$dep}'";
                     }

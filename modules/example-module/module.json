@@ -1,0 +1,21 @@
+{
+  "id": "example-module",
+  "name": "Example Module",
+  "description": "Example module demonstrating best practices",
+  "version": "1.0.0",
+  "author": "Mantra CMS",
+  "license": "MIT",
+  "type": "feature",
+  "capabilities": [
+    "routes",
+    "hooks",
+    "settings",
+    "templates"
+  ],
+  "dependencies": [],
+  "tags": [
+    "example",
+    "demo",
+    "tutorial"
+  ]
+}

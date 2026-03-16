@@ -1,8 +1,18 @@
 {
-    "name": "products",
-    "version": "1.0.0",
-    "description": "Products module - demonstrates custom content types with ContentTypeRegistry",
-    "author": "Mantra CMS",
-    "homepage": "https://github.com/mantra-cms/mantra",
-    "dependencies": []
+  "id": "products",
+  "name": "Products",
+  "description": "Product catalog and management with custom content types",
+  "version": "1.0.0",
+  "author": "Mantra CMS",
+  "homepage": "https://github.com/mantra-cms/mantra",
+  "license": "MIT",
+  "type": "feature",
+  "capabilities": [
+    "routes",
+    "content_type",
+    "templates",
+    "hooks"
+  ],
+  "dependencies": [],
+  "tags": ["products", "catalog", "ecommerce"]
 }

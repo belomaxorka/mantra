@@ -1,8 +1,16 @@
 {
-    "name": "Analytics",
-    "version": "1.0.0",
-    "description": "Analytics module - adds Google Analytics, Yandex Metrika, and custom tracking",
-    "author": "Mantra CMS",
-    "homepage": "https://github.com/mantra-cms/mantra",
-    "dependencies": []
+  "id": "analytics",
+  "name": "Analytics",
+  "description": "Analytics integration - Google Analytics, Yandex Metrika, and custom tracking",
+  "version": "1.0.0",
+  "author": "Mantra CMS",
+  "homepage": "https://github.com/mantra-cms/mantra",
+  "license": "MIT",
+  "type": "integration",
+  "capabilities": [
+    "hooks",
+    "settings"
+  ],
+  "dependencies": [],
+  "tags": ["analytics", "tracking", "google", "yandex"]
 }

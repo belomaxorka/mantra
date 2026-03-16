@@ -1,12 +1,22 @@
 {
-    "name": "admin",
-    "version": "1.0.0",
-    "description": "Admin panel module",
-    "author": "Mantra CMS",
-    "homepage": "https://github.com/mantra-cms/mantra",
-    "dependencies": [],
-    "admin": {
-        "disableable": false,
-        "deletable": false
-    }
+  "id": "admin",
+  "name": "Admin Panel",
+  "description": "Core admin panel functionality",
+  "version": "1.0.0",
+  "author": "Mantra CMS",
+  "homepage": "https://github.com/mantra-cms/mantra",
+  "license": "MIT",
+  "type": "core",
+  "capabilities": [
+    "routes",
+    "admin_ui",
+    "middleware",
+    "templates"
+  ],
+  "dependencies": [],
+  "tags": ["admin", "panel", "management"],
+  "admin": {
+    "disableable": false,
+    "deletable": false
+  }
 }
