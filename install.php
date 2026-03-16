@@ -115,7 +115,7 @@ if (request()->method() === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title data-i18n="page_title">Install Mantra CMS</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/core/assets/bootstrap/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
             background: #f8f9fa;
@@ -191,7 +191,7 @@ if (request()->method() === 'POST') {
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/core/assets/bootstrap/bootstrap.min.js"></script>
     <script>
         const translations = {
             en: {
