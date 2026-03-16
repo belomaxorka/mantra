@@ -2,16 +2,16 @@
 
 return array(
     // Module name
-    'admin-posts.name' => 'Управление постами',
+    'admin-posts.name' => 'Посты',
 
     // Posts list
-    'admin-posts.list_title' => 'Посты',
     'admin-posts.title' => 'Посты',
+    'admin-posts.list_title' => 'Посты',
     'admin-posts.new_post' => 'Новый пост',
     'admin-posts.no_posts' => 'Пока нет постов. Создайте свой первый пост!',
     'admin-posts.edit_post' => 'Редактировать пост',
 
-    // Table columns
+    // Fields
     'admin-posts.field.title' => 'Заголовок',
     'admin-posts.field.author' => 'Автор',
     'admin-posts.field.category' => 'Категория',
@@ -34,9 +34,11 @@ return array(
     'admin-posts.update' => 'Обновить пост',
     'admin-posts.cancel' => 'Отмена',
 
-    // Edit form
+    // Sections
     'admin-posts.publish' => 'Публикация',
     'admin-posts.metadata' => 'Метаданные',
+
+    // Help text
     'admin-posts.slug_help' => 'URL-адрес поста. Оставьте пустым для автоматической генерации.',
-    'admin-posts.excerpt_help' => 'Краткое описание поста (необязательно)',
+    'admin-posts.excerpt_help' => 'Краткое описание поста (опционально)',
 );

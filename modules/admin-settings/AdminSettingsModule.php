@@ -150,7 +150,16 @@ class AdminSettingsModule extends Module
                 continue;
             }
             
-            $modules[$moduleId] = $module->getName();
+            // Try to get translated name using module_id.name key
+            $nameKey = $moduleId . '.name';
+            $translatedName = t($nameKey);
+            
+            // If translation not found, fallback to manifest name
+            if ($translatedName === $nameKey) {
+                $translatedName = $module->getName();
+            }
+            
+            $modules[$moduleId] = $translatedName;
         }
 
         ksort($modules);
