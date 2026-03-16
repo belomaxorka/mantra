@@ -93,7 +93,7 @@ return array(
                     'path' => 'modules.enabled',
                     'type' => 'module_cards',
                     'title' => array('key' => 'admin.settings.modules.enabled', 'fallback' => 'Enabled modules'),
-                    'default' => array('admin', 'pages', 'media', 'users', 'editor'),
+                    'default' => array('admin'),
                     'options' => array(),
                 ),
             ),

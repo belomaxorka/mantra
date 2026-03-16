@@ -103,11 +103,7 @@ class AdminModule extends Module {
             return $cards;
         }
 
-        $enabled = config('modules.enabled', array());
-        if (!is_array($enabled)) {
-            $enabled = array();
-        }
-        $enabled = array_map('strval', $enabled);
+        $enabled = array('admin');
 
         foreach (glob($base . '/*/module.json') as $path) {
             $dir = basename(dirname($path));
@@ -148,7 +144,9 @@ class AdminModule extends Module {
             }
 
             $hasSettings = false;
-            $schema = module_settings($dir)->schema();
+            // Front-end module settings are currently not used; admin-only submodules handle their own UI.
+            // Keep the field for potential future use.
+            $schema = null;
             if (is_array($schema)) {
                 $hasSettings = true;
             }
@@ -435,9 +433,6 @@ class AdminModule extends Module {
         $router->post('/admin/login', array($this, 'loginProcess'));
         $router->get('/admin/logout', array($this, 'logout'));
 
-        // Admin shell
-        $router->get('/admin', array($this, 'dashboard'))
-               ->middleware(array($this, 'requireAuth'));
 
         // Unified settings
         $router->get('/admin/settings', array($this, 'settings'))
@@ -445,18 +440,7 @@ class AdminModule extends Module {
         $router->post('/admin/settings', array($this, 'settings'))
                ->middleware(array($this, 'requireAuth'));
 
-        // Module dispatcher routes (front-end modules)
-        // Note: Admin-only submodules register their own routes via $admin->adminRoute(...)
-        // inside modules/admin-modules/*.
-        //
-        // If you remove all front-end modules, this dispatcher becomes effectively unused,
-        // but it can remain as the extension point for future front-end modules.
-        //
-        // New dispatcher routes (front-end modules)
-        $router->get('/admin/{module}', array($this, 'dispatchModuleIndex'))
-               ->middleware(array($this, 'requireAuth'));
-        $router->any('/admin/{module}/settings', array($this, 'dispatchModuleSettings'))
-               ->middleware(array($this, 'requireAuth'));
+        // (admin-modules register their own /admin/* routes via $admin->adminRoute(...))
 
         return $data;
     }
@@ -740,11 +724,7 @@ class AdminModule extends Module {
             return true;
         }
 
-        $enabled = config('modules.enabled', array());
-        if (!is_array($enabled)) {
-            $enabled = array();
-        }
-        $enabled = array_map('strval', $enabled);
+        $enabled = array('admin');
 
         if (in_array($deleteId, $enabled, true)) {
             $error = 'Disable the module before deleting it';
@@ -978,12 +958,6 @@ class AdminModule extends Module {
         ));
     }
 
-    private function buildModuleSettingsContent($module, $actionUrl, &$notice, &$error) {
-        $module = (string)$module;
-        $store = module_settings($module);
-        return $this->buildSchemaSettingsContent($store, $store->schema(), $actionUrl, $notice, $error);
-    }
-
     private function buildConfigSettingsContent($actionUrl, &$notice, &$error) {
         $store = config_settings();
         $schema = $this->applyConfigSchemaRuntimeOptions($store->schema());
@@ -1016,39 +990,13 @@ class AdminModule extends Module {
             'active' => ($activeTab === 'general'),
         );
 
-        foreach ($enabled as $module) {
-            $module = (string)$module;
-            if ($module === '' || $module === 'admin') {
-                continue;
-            }
-
-            $schema = module_settings($module)->schema();
-            if (!is_array($schema)) {
-                continue;
-            }
-
-            $tabs[] = array(
-                'id' => $module,
-                'title' => ucfirst($module),
-                'url' => base_url('/admin/settings?tab=' . $module),
-                'active' => ($activeTab === $module),
-            );
-        }
 
         $notice = null;
         $error = null;
 
-        $contentHtml = '';
-        if ($activeTab === 'general') {
-            $contentHtml = $this->buildConfigSettingsContent(base_url('/admin/settings?tab=general'), $notice, $error);
-            if ($contentHtml === null) {
-                return $this->admin404('Settings schema not found');
-            }
-        } else {
-            $contentHtml = $this->buildModuleSettingsContent($activeTab, base_url('/admin/settings?tab=' . $activeTab), $notice, $error);
-            if ($contentHtml === null) {
-                return $this->admin404('This module has no settings');
-            }
+        $contentHtml = $this->buildConfigSettingsContent(base_url('/admin/settings?tab=general'), $notice, $error);
+        if ($contentHtml === null) {
+            return $this->admin404('Settings schema not found');
         }
 
         $view = new View();
@@ -1063,41 +1011,6 @@ class AdminModule extends Module {
         return $this->renderAdminLayout('Settings', $page);
     }
 
-    public function dispatchModuleIndex($params) {
-        $module = isset($params['module']) ? (string)$params['module'] : '';
-        if ($module === '' || $module === 'admin') {
-            redirect(base_url('/admin'));
-            return;
-        }
-
-        $instance = app()->modules()->getModule($module);
-        if (!$instance) {
-            return $this->admin404('Module not found');
-        }
-
-        if (method_exists($instance, 'adminIndex')) {
-            return $instance->adminIndex();
-        }
-
-        $schema = module_settings($module)->schema();
-        if (is_array($schema)) {
-            redirect(base_url('/admin/settings?tab=' . $module));
-            return;
-        }
-
-        return $this->admin404('No admin screen available for this module');
-    }
-
-    public function dispatchModuleSettings($params) {
-        $module = isset($params['module']) ? (string)$params['module'] : '';
-        if ($module === '' || $module === 'admin') {
-            return $this->admin404('Invalid module');
-        }
-
-        // Unified settings page (legacy redirect)
-        redirect(base_url('/admin/settings?tab=' . $module));
-        return;
-    }
 
     /**
      * Auth middleware
@@ -1110,22 +1023,10 @@ class AdminModule extends Module {
         return true;
     }
 
-    /**
-     * Dashboard
-     */
-    public function dashboard() {
-        $view = new View();
-        $content = $view->fetch('admin:dashboard', array(
-            'user' => auth()->user()
-        ));
+    // Dashboard route is registered by the dashboard admin-submodule.
 
-        return $this->renderAdminLayout('Dashboard', $content, array(
-            'user' => auth()->user(),
-        ));
-    }
-    
-    // (requireAuth and dashboard are defined above with admin layout rendering)
-    
+    // (requireAuth is defined above with admin layout rendering)
+
     /**
      * Login form
      */

@@ -27,5 +27,26 @@ class DashboardAdminModule implements AdminSubmodule {
 
             return $items;
         });
+
+        if (is_object($admin) && method_exists($admin, 'adminRoute')) {
+            $admin->adminRoute('GET', '', array($this, 'dashboard'));
+        }
+    }
+
+    public function dashboard() {
+        $admin = app()->modules()->getModule('admin');
+
+        $view = new View();
+        $content = $view->fetch('admin:dashboard', array(
+            'user' => auth()->user()
+        ));
+
+        if ($admin && method_exists($admin, 'render')) {
+            return $admin->render('Dashboard', $content, array(
+                'user' => auth()->user(),
+            ));
+        }
+
+        echo $content;
     }
 }
