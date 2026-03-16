@@ -198,6 +198,7 @@ class SettingsAdminModule implements AdminSubmodule
 
         $enabled = array('admin');
 
+        // Regular modules
         foreach (glob($base . '/*/module.json') as $path) {
             $dir = basename(dirname($path));
             if (!$this->isValidModuleName($dir)) {
@@ -248,6 +249,62 @@ class SettingsAdminModule implements AdminSubmodule
                 'disableable' => !empty($policy['disableable']),
                 'deletable' => !empty($policy['deletable']),
             );
+        }
+
+        // Admin submodules
+        $adminModulesBase = $base . '/admin-modules';
+        if (is_dir($adminModulesBase)) {
+            foreach (glob($adminModulesBase . '/*/module.json') as $path) {
+                $dir = basename(dirname($path));
+                if (!$this->isValidModuleName($dir)) {
+                    continue;
+                }
+
+                $meta = json_decode((string)file_get_contents($path), true);
+                if (!is_array($meta)) {
+                    $meta = array();
+                }
+
+                $policy = $this->adminModulePolicy($meta);
+
+                $title = $dir;
+                if (!empty($meta['name']) && is_string($meta['name'])) {
+                    $title = (string)$meta['name'];
+                }
+
+                $version = '';
+                if (!empty($meta['version']) && is_string($meta['version'])) {
+                    $version = (string)$meta['version'];
+                }
+
+                $author = '';
+                if (!empty($meta['author']) && is_string($meta['author'])) {
+                    $author = (string)$meta['author'];
+                }
+
+                $homepage = '';
+                if (!empty($meta['homepage']) && is_string($meta['homepage'])) {
+                    $homepage = (string)$meta['homepage'];
+                }
+
+                $description = '';
+                if (!empty($meta['description']) && is_string($meta['description'])) {
+                    $description = (string)$meta['description'];
+                }
+
+                $cards[] = array(
+                    'id' => 'admin-modules/' . $dir,
+                    'title' => $title . ' (Admin)',
+                    'version' => $version,
+                    'author' => $author,
+                    'homepage' => $homepage,
+                    'description' => $description,
+                    'enabled' => true,
+                    'has_settings' => false,
+                    'disableable' => false,
+                    'deletable' => !empty($policy['deletable']),
+                );
+            }
         }
 
         usort($cards, function ($a, $b) {
@@ -412,12 +469,27 @@ class SettingsAdminModule implements AdminSubmodule
             return false;
         }
 
-        if (!$this->isValidModuleName($deleteId)) {
-            $error = 'Invalid module name';
-            return true;
+        // Handle admin-modules/xxx format
+        $isAdminModule = (strpos($deleteId, 'admin-modules/') === 0);
+        if ($isAdminModule) {
+            $moduleName = substr($deleteId, strlen('admin-modules/'));
+            if (!$this->isValidModuleName($moduleName)) {
+                $error = 'Invalid module name';
+                return true;
+            }
+            $manifestPath = MANTRA_MODULES . '/admin-modules/' . $moduleName . '/module.json';
+            $moduleDir = MANTRA_MODULES . '/admin-modules/' . $moduleName;
+            $settingsPath = MANTRA_CONTENT . '/settings/admin-modules-' . $moduleName . '.json';
+        } else {
+            if (!$this->isValidModuleName($deleteId)) {
+                $error = 'Invalid module name';
+                return true;
+            }
+            $manifestPath = MANTRA_MODULES . '/' . $deleteId . '/module.json';
+            $moduleDir = MANTRA_MODULES . '/' . $deleteId;
+            $settingsPath = MANTRA_CONTENT . '/settings/' . $deleteId . '.json';
         }
 
-        $manifestPath = MANTRA_MODULES . '/' . $deleteId . '/module.json';
         $manifest = array();
         if (file_exists($manifestPath)) {
             $tmp = json_decode((string)file_get_contents($manifestPath), true);
@@ -452,13 +524,11 @@ class SettingsAdminModule implements AdminSubmodule
         }
 
         // Delete module settings config if present.
-        $settingsPath = MANTRA_CONTENT . '/settings/' . $deleteId . '.json';
         if (file_exists($settingsPath)) {
             @unlink($settingsPath);
         }
 
         // Delete module folder (defense-in-depth: ensure it stays under MANTRA_MODULES).
-        $moduleDir = MANTRA_MODULES . '/' . $deleteId;
         $realModules = realpath(MANTRA_MODULES);
         $realModuleDir = realpath($moduleDir);
         if ($realModules && $realModuleDir && strpos($realModuleDir, $realModules) === 0) {

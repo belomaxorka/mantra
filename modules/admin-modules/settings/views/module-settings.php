@@ -34,7 +34,9 @@
       <div class="tab-pane fade <?php echo $isActive ? 'show active' : ''; ?>" id="tab-<?php echo e($tabId); ?>" role="tabpanel">
         <?php foreach ($tab['fields'] as $field): ?>
           <div class="mb-3">
-            <label class="form-label" for="f-<?php echo e($field['name']); ?>"><?php echo e($field['title']); ?></label>
+            <?php if (!in_array($field['type'], array('toggle', 'module_cards'), true)): ?>
+              <label class="form-label" for="f-<?php echo e($field['name']); ?>"><?php echo e($field['title']); ?></label>
+            <?php endif; ?>
 
             <?php if ($field['type'] === 'textarea'): ?>
               <textarea class="form-control" id="f-<?php echo e($field['name']); ?>" name="<?php echo e($field['name']); ?>" rows="5"><?php
