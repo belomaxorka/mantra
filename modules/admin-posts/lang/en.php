@@ -28,6 +28,7 @@ return array(
 
     // Actions
     'admin-posts.edit' => 'Edit',
+    'admin-posts.view' => 'View',
     'admin-posts.delete' => 'Delete',
     'admin-posts.delete_confirm' => 'Are you sure you want to delete this post?',
     'admin-posts.create' => 'Create Post',

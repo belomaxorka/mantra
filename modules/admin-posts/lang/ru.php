@@ -28,6 +28,7 @@ return array(
 
     // Actions
     'admin-posts.edit' => 'Редактировать',
+    'admin-posts.view' => 'Просмотр',
     'admin-posts.delete' => 'Удалить',
     'admin-posts.delete_confirm' => 'Вы уверены, что хотите удалить этот пост?',
     'admin-posts.create' => 'Создать пост',

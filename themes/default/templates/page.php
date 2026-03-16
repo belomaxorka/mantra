@@ -15,6 +15,6 @@
     </div>
 
     <div class="content">
-        <?php echo isset($page['content']) ? $page['content'] : ''; ?>
+        <?php echo $page['content']; ?>
     </div>
 </article>

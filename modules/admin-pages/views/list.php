@@ -60,11 +60,7 @@
                                             </td>
                                             <td>
                                                 <small class="text-muted">
-                                                    <?php
-                                                    if (!empty($page['updated_at'])) {
-                                                        echo $this->escape(date('Y-m-d H:i', strtotime($page['updated_at'])));
-                                                    }
-                                                    ?>
+                                                    <?php echo $this->escape(date('Y-m-d H:i', strtotime($page['updated_at']))); ?>
                                                 </small>
                                             </td>
                                             <td>

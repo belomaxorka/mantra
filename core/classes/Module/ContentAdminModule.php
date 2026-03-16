@@ -59,14 +59,11 @@ abstract class ContentAdminModule extends BaseAdminModule {
     
     /**
      * Generate ID for new item
-     * @param array $data Item data
+     * @param array $data Item data (must have slug already set via ensureSlug)
      * @return string
      */
     protected function generateId($data) {
-        $slug = $data['slug'] ?? '';
-        if (empty($slug) && isset($data['title'])) {
-            $slug = slugify($data['title']);
-        }
+        $slug = $data['slug'];
         
         $id = $slug;
         if (db()->exists($this->getCollectionName(), $id)) {

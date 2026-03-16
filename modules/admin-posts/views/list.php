@@ -43,35 +43,25 @@
                     <?php foreach ($posts as $post): ?>
                         <tr>
                             <td>
-                                <strong><?php echo e(isset($post['title']) ? $post['title'] : 'Untitled'); ?></strong>
+                                <strong><?php echo e($post['title']); ?></strong>
                             </td>
                             <td>
-                                <?php echo e(isset($post['author']) ? $post['author'] : 'Unknown'); ?>
+                                <?php echo e($post['author']); ?>
                             </td>
                             <td>
-                                <?php
-                                $category = isset($post['category']) && $post['category'] !== '' ? $post['category'] : '-';
-                                echo e($category);
-                                ?>
+                                <?php echo e($post['category'] !== '' ? $post['category'] : '-'); ?>
                             </td>
                             <td>
-                                <?php
-                                $status = isset($post['status']) ? $post['status'] : 'draft';
-                                ?>
-                                <?php if ($status === 'published'): ?>
+                                <?php if ($post['status'] === 'published'): ?>
                                     <span class="badge bg-success"><?php echo t('admin-posts.status_published'); ?></span>
                                 <?php else: ?>
                                     <span class="badge bg-secondary"><?php echo t('admin-posts.status_draft'); ?></span>
                                 <?php endif; ?>
                             </td>
                             <td>
-                                <?php
-                                if (isset($post['updated_at'])) {
-                                    echo e(date('Y-m-d H:i', strtotime($post['updated_at'])));
-                                } else {
-                                    echo '-';
-                                }
-                                ?>
+                                <small class="text-muted">
+                                    <?php echo e(date('Y-m-d H:i', strtotime($post['updated_at']))); ?>
+                                </small>
                             </td>
                             <td>
                                 <div class="btn-group btn-group-sm">
@@ -79,6 +69,12 @@
                                        class="btn btn-outline-primary"
                                        title="<?php echo t('admin-posts.edit'); ?>">
                                         <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <a href="<?php echo base_url('/post/' . $post['slug']); ?>"
+                                       class="btn btn-outline-secondary"
+                                       title="<?php echo t('admin-posts.view'); ?>"
+                                       target="_blank">
+                                        <i class="bi bi-eye"></i>
                                     </a>
                                     <button type="button"
                                             class="btn btn-outline-danger"

@@ -18,6 +18,6 @@
     </div>
 
     <div class="content">
-        <?php echo isset($post['content']) ? $post['content'] : ''; ?>
+        <?php echo $post['content']; ?>
     </div>
 </article>

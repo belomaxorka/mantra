@@ -51,7 +51,7 @@
             <?php endif; ?>
 
             <div class="content my-4">
-                <?php echo isset($product['content']) ? $product['content'] : ''; ?>
+                <?php echo $product['content']; ?>
             </div>
 
             <button class="btn btn-success btn-lg">Add to Cart</button>

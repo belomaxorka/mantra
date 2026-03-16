@@ -25,7 +25,7 @@
                                class="form-control"
                                id="title"
                                name="title"
-                               value="<?php echo e(isset($post['title']) ? $post['title'] : ''); ?>"
+                               value="<?php echo e($post['title']); ?>"
                                required>
                     </div>
 
@@ -37,7 +37,7 @@
                                class="form-control"
                                id="slug"
                                name="slug"
-                               value="<?php echo e(isset($post['slug']) ? $post['slug'] : ''); ?>">
+                               value="<?php echo e($post['slug']); ?>">
                         <div class="form-text">
                             <?php echo t('admin-posts.slug_help'); ?>
                         </div>
@@ -50,7 +50,7 @@
                         <textarea class="form-control"
                                   id="excerpt"
                                   name="excerpt"
-                                  rows="3"><?php echo e(isset($post['excerpt']) ? $post['excerpt'] : ''); ?></textarea>
+                                  rows="3"><?php echo e($post['excerpt']); ?></textarea>
                         <div class="form-text">
                             <?php echo t('admin-posts.excerpt_help'); ?>
                         </div>
@@ -63,7 +63,7 @@
                         <textarea class="form-control"
                                   id="content"
                                   name="content"
-                                  rows="15"><?php echo e(isset($post['content']) ? $post['content'] : ''); ?></textarea>
+                                  rows="15"><?php echo e($post['content']); ?></textarea>
                     </div>
                 </div>
             </div>
@@ -80,10 +80,10 @@
                             <?php echo t('admin-posts.field.status'); ?>
                         </label>
                         <select class="form-select" id="status" name="status">
-                            <option value="draft" <?php echo (isset($post['status']) && $post['status'] === 'draft') ? 'selected' : ''; ?>>
+                            <option value="draft" <?php echo ($post['status'] === 'draft') ? 'selected' : ''; ?>>
                                 <?php echo t('admin-posts.status_draft'); ?>
                             </option>
-                            <option value="published" <?php echo (isset($post['status']) && $post['status'] === 'published') ? 'selected' : ''; ?>>
+                            <option value="published" <?php echo ($post['status'] === 'published') ? 'selected' : ''; ?>>
                                 <?php echo t('admin-posts.status_published'); ?>
                             </option>
                         </select>
@@ -106,6 +106,14 @@
                             <i class="bi bi-check-circle"></i>
                             <?php echo $isNew ? t('admin-posts.create') : t('admin-posts.update'); ?>
                         </button>
+                        <?php if (!$isNew): ?>
+                            <a href="<?php echo base_url('/post/' . $post['slug']); ?>"
+                               class="btn btn-outline-secondary"
+                               target="_blank">
+                                <i class="bi bi-eye"></i>
+                                <?php echo t('admin-posts.view'); ?>
+                            </a>
+                        <?php endif; ?>
                         <a href="<?php echo base_url('/admin/posts'); ?>" class="btn btn-outline-secondary">
                             <?php echo t('admin-posts.cancel'); ?>
                         </a>
@@ -126,7 +134,7 @@
                                class="form-control"
                                id="category"
                                name="category"
-                               value="<?php echo e(isset($post['category']) ? $post['category'] : ''); ?>">
+                               value="<?php echo e($post['category']); ?>">
                     </div>
                 </div>
             </div>

@@ -176,9 +176,7 @@ class PageController {
         }
 
         // Template by slug
-        if (isset($page['slug'])) {
-            $templates[] = 'page-' . $page['slug'];
-        }
+        $templates[] = 'page-' . $page['slug'];
 
         // Default page template
         $templates[] = 'page';
@@ -204,9 +202,7 @@ class PageController {
         }
 
         // Template by slug
-        if (isset($post['slug'])) {
-            $templates[] = 'post-' . $post['slug'];
-        }
+        $templates[] = 'post-' . $post['slug'];
 
         // Default post template
         $templates[] = 'post';
