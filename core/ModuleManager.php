@@ -88,7 +88,11 @@ class ModuleManager {
         try {
             $modulePath = MANTRA_MODULES . '/' . $moduleName;
             $manifestPath = $modulePath . '/module.json';
-            $mainFile = $modulePath . '/' . ucfirst($moduleName) . 'Module.php';
+
+            // Convert kebab-case to PascalCase (e.g., 'example-integration' -> 'ExampleIntegration')
+            $parts = explode('-', $moduleName);
+            $pascalCase = implode('', array_map('ucfirst', $parts));
+            $mainFile = $modulePath . '/' . $pascalCase . 'Module.php';
 
             // Check if module exists
             if (!file_exists($manifestPath) || !file_exists($mainFile)) {
@@ -131,7 +135,7 @@ class ModuleManager {
             // Load module class
             require_once $mainFile;
 
-            $className = ucfirst($moduleName) . 'Module';
+            $className = $pascalCase . 'Module';
             if (!class_exists($className)) {
                 $error = "Module class '$className' not found";
                 logger()->error($error, array('module' => $moduleName));
