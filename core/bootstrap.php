@@ -35,7 +35,7 @@ if (!defined('MANTRA_THEMES')) {
     define('MANTRA_THEMES', MANTRA_ROOT . '/themes');
 }
 if (!defined('MANTRA_UPLOADS')) {
-    define('MANTRA_UPLOADS', MANTRA_ROOT . '/uploads');
+    define('MANTRA_UPLOADS', MANTRA_STORAGE . '/uploads');
 }
 
 // Load vendored PSR-3 interfaces (no Composer) - in subfolder, autoloader won't find them

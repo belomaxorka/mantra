@@ -24,7 +24,7 @@ Flat-File Content Management System with modular architecture.
 1. Clone or download this repository
 2. Set write permissions:
    ```bash
-   chmod -R 755 content storage uploads
+   chmod -R 755 content storage
    ```
 3. Configure your web server to point to the project root
 4. Configure the CMS via `content/settings/config.json`
@@ -56,8 +56,7 @@ Configure trusted proxies in `content/settings/config.json`:
   /modules        - Modules (plugins)
   /themes         - Themes
   /content        - Content storage (pages, posts, users)
-  /storage        - Cache and logs
-  /uploads        - User uploaded files
+  /storage        - Cache, logs, and uploads
   index.php       - Entry point
   content/settings/config.json - Configuration
 ```
