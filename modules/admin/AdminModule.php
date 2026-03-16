@@ -388,17 +388,17 @@ class AdminModule extends Module {
             redirect(base_url('/admin'));
             return;
         }
-        
+
         $this->view('admin:login', array());
     }
-    
+
     /**
      * Process login
      */
     public function loginProcess() {
         $username = (string)request()->post('username', '');
         $password = (string)request()->post('password', '');
-        
+
         if (auth()->login($username, $password)) {
             redirect(base_url('/admin'));
         } else {
