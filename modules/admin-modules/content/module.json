@@ -1,8 +1,0 @@
-{
-  "id": "content",
-  "name": "Content",
-  "version": "1.0.0",
-  "main": "ContentAdminModule.php",
-  "class": "ContentAdminModule",
-  "requires": ["admin"]
-}
