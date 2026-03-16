@@ -572,6 +572,78 @@ class SettingsAdminModule implements AdminSubmodule
         return true;
     }
 
+    /**
+     * Validate modules.enabled update (security: enforce policies and dependencies).
+     * Returns null if valid, or an error message string if invalid.
+     */
+    private function validateModulesEnabledUpdate($newEnabled)
+    {
+        if (!is_array($newEnabled)) {
+            return 'Invalid modules list';
+        }
+
+        $current = config_settings()->get('modules.enabled', array('admin'));
+        if (!is_array($current)) {
+            $current = array('admin');
+        }
+
+        $graph = $this->collectModuleDependencyGraph();
+
+        // Check modules being disabled
+        $beingDisabled = array_diff($current, $newEnabled);
+        foreach ($beingDisabled as $modId) {
+            // Check if module has disableable: false policy
+            $manifestPath = MANTRA_MODULES . '/' . $modId . '/module.json';
+            if (file_exists($manifestPath)) {
+                $manifest = json_decode((string)file_get_contents($manifestPath), true);
+                if (is_array($manifest)) {
+                    $policy = $this->adminModulePolicy($manifest);
+                    if (empty($policy['disableable'])) {
+                        return "Cannot disable module '{$modId}': protected by policy";
+                    }
+                }
+            }
+
+            // Check if any module in the new enabled list depends on this one
+            foreach ($newEnabled as $enabledMod) {
+                if ($enabledMod !== $modId && $this->dependsOnTransitive($enabledMod, $modId, $graph)) {
+                    return "Cannot disable module '{$modId}': required by '{$enabledMod}'";
+                }
+            }
+        }
+
+        // Check modules being enabled
+        $beingEnabled = array_diff($newEnabled, $current);
+        foreach ($beingEnabled as $modId) {
+            // Validate module name
+            if (!$this->isValidModuleName($modId)) {
+                return "Invalid module name: '{$modId}'";
+            }
+
+            // Check if module exists
+            $manifestPath = MANTRA_MODULES . '/' . $modId . '/module.json';
+            if (!file_exists($manifestPath)) {
+                return "Module not found: '{$modId}'";
+            }
+
+            // Check if dependencies are satisfied
+            $manifest = json_decode((string)file_get_contents($manifestPath), true);
+            if (is_array($manifest) && isset($manifest['dependencies']) && is_array($manifest['dependencies'])) {
+                foreach ($manifest['dependencies'] as $dep) {
+                    if (!is_string($dep)) {
+                        continue;
+                    }
+                    $dep = trim((string)$dep);
+                    if ($dep !== '' && !in_array($dep, $newEnabled, true)) {
+                        return "Cannot enable module '{$modId}': missing dependency '{$dep}'";
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
     private function buildSchemaSettingsContent($store, $schema, $actionUrl, &$notice, &$error, $context = array())
     {
         if (!is_array($schema)) {
@@ -682,9 +754,20 @@ class SettingsAdminModule implements AdminSubmodule
                             }
                         }
 
-                        $store->setMultiple($updates);
-                        $store->save();
-                        $notice = 'Settings saved';
+                        // Validate modules.enabled changes (security: enforce policies and dependencies)
+                        if (array_key_exists('modules.enabled', $updates)) {
+                            $validationError = $this->validateModulesEnabledUpdate($updates['modules.enabled']);
+                            if ($validationError !== null) {
+                                $error = $validationError;
+                                unset($updates['modules.enabled']);
+                            }
+                        }
+
+                        if (!empty($updates)) {
+                            $store->setMultiple($updates);
+                            $store->save();
+                            $notice = 'Settings saved';
+                        }
                     }
                 }
             }
