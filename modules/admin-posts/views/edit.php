@@ -1,13 +1,19 @@
-<div class="mb-4">
-    <h2>
-        <?php echo $isNew ? t('admin-posts.new_post') : t('admin-posts.edit_post'); ?>
-    </h2>
-</div>
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="h3"><?php echo $isNew ? t('admin-posts.new_post') : t('admin-posts.edit_post'); ?></h1>
+                <a href="<?php echo base_url('/admin/posts'); ?>" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-2"></i><?php echo t('admin.common.back'); ?>
+                </a>
+            </div>
+        </div>
+    </div>
 
-<form method="POST" action="<?php echo $isNew ? base_url('/admin/posts/new') : base_url('/admin/posts/edit/' . $post['_id']); ?>">
-    <input type="hidden" name="csrf_token" value="<?php echo e($csrf_token); ?>">
+    <form method="POST" action="<?php echo $isNew ? base_url('/admin/posts/new') : base_url('/admin/posts/edit/' . $post['_id']); ?>">
+        <input type="hidden" name="csrf_token" value="<?php echo e($csrf_token); ?>">
 
-    <div class="row">
+        <div class="row">
         <div class="col-lg-8">
             <div class="card mb-4">
                 <div class="card-body">
@@ -125,5 +131,5 @@
                 </div>
             </div>
         </div>
-    </div>
-</form>
+    </form>
+</div>

@@ -1,18 +1,34 @@
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2><?php echo t('admin-posts.list_title'); ?></h2>
-    <a href="<?php echo base_url('/admin/posts/new'); ?>" class="btn btn-primary">
-        <i class="bi bi-plus-circle"></i> <?php echo t('admin-posts.new_post'); ?>
-    </a>
-</div>
-
-<?php if (empty($posts)): ?>
-    <div class="alert alert-info">
-        <?php echo t('admin-posts.no_posts'); ?>
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="h3"><?php echo t('admin-posts.title'); ?></h1>
+                <a href="<?php echo base_url('/admin/posts/new'); ?>" class="btn btn-primary">
+                    <i class="bi bi-plus-circle me-2"></i><?php echo t('admin-posts.new_post'); ?>
+                </a>
+            </div>
+        </div>
     </div>
-<?php else: ?>
-    <div class="card">
-        <div class="table-responsive">
-            <table class="table table-hover mb-0">
+
+    <div class="row">
+        <div class="col">
+            <?php if (empty($posts)): ?>
+                <div class="card">
+                    <div class="card-body">
+                        <div class="text-center py-5 text-muted">
+                            <i class="bi bi-file-earmark-text" style="font-size: 3rem;"></i>
+                            <p class="mt-3"><?php echo t('admin-posts.no_posts'); ?></p>
+                            <a href="<?php echo base_url('/admin/posts/new'); ?>" class="btn btn-primary">
+                                <i class="bi bi-plus-circle me-2"></i><?php echo t('admin-posts.new_post'); ?>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            <?php else: ?>
+                <div class="card">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
                 <thead>
                     <tr>
                         <th><?php echo t('admin-posts.field.title'); ?></th>
@@ -56,7 +72,7 @@
                                 }
                                 ?>
                             </td>
-                            <td class="text-end">
+                            <td>
                                 <div class="btn-group btn-group-sm">
                                     <a href="<?php echo base_url('/admin/posts/edit/' . $post['_id']); ?>"
                                        class="btn btn-outline-primary"
@@ -73,11 +89,15 @@
                             </td>
                         </tr>
                     <?php endforeach; ?>
-                </tbody>
-            </table>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            <?php endif; ?>
         </div>
     </div>
-<?php endif; ?>
+</div>
 
 <form id="deleteForm" method="POST" style="display: none;">
     <input type="hidden" name="csrf_token" value="<?php echo auth()->generateCsrfToken(); ?>">
