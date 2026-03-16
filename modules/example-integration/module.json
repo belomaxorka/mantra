@@ -1,0 +1,7 @@
+{
+  "name": "Example Integration Module",
+  "version": "1.0.0",
+  "description": "Demonstrates integration points (navigation, footer links, sidebar)",
+  "author": "Mantra CMS",
+  "dependencies": []
+}

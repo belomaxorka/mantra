@@ -105,6 +105,20 @@ Modules commonly hook:
 - `view.render`
 - `system.shutdown`
 
+**Public theme integration:**
+- `theme.head` - Add content to `<head>`
+- `theme.body.start` - Add content after `<body>`
+- `theme.footer` - Add scripts before `</body>`
+- `theme.body.end` - Add content before `</body>`
+- `theme.navigation` - Add items to main navigation menu
+- `theme.footer.links` - Add links to footer
+
+**Admin integration:**
+- `admin.sidebar` - Add items to admin sidebar menu
+- `admin.quick_actions` - Add quick action buttons to dashboard
+- `admin.head` - Add content to admin `<head>`
+- `admin.footer` - Add scripts to admin footer
+
 ### Modules
 
 - Modules live in `modules/<name>/`.
@@ -122,9 +136,13 @@ Included modules (enabled by default in `core/Config.php`):
 
 **Example modules** (not enabled by default):
 - `seo` - SEO optimization with meta tags, Open Graph, breadcrumbs (see `modules/seo/`)
+- `analytics` - Google Analytics and Yandex Metrika integration (see `modules/analytics/`)
+- `products` - Custom content type example with products (see `modules/products/`)
+- `example-integration` - Demonstrates integration points (navigation, footer, admin sidebar) (see `modules/example-integration/`)
 
 **Creating modules:**
 See `EXTENSIBILITY.md` for complete guide on hooks, widgets, and custom content types.
+See `docs/INTEGRATION_POINTS.md` for guide on integration points (navigation, footer, admin).
 
 ### Routing
 

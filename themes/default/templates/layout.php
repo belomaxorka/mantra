@@ -27,12 +27,50 @@
                 </button>
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav ms-auto">
-                        <li class="nav-item">
-                            <a class="nav-link" href="<?php echo base_url(); ?>">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="<?php echo base_url('/admin'); ?>">Admin</a>
-                        </li>
+                        <?php
+                        // Build navigation items
+                        $navItems = array(
+                            array(
+                                'id' => 'home',
+                                'title' => 'Home',
+                                'url' => base_url(),
+                                'order' => 0,
+                            ),
+                            array(
+                                'id' => 'admin',
+                                'title' => 'Admin',
+                                'url' => base_url('/admin'),
+                                'order' => 100,
+                            ),
+                        );
+
+                        // Hook: allow modules to add navigation items
+                        $navItems = $app->hooks()->fire('theme.navigation', $navItems);
+
+                        if (is_array($navItems)) {
+                            // Sort by order
+                            usort($navItems, function($a, $b) {
+                                $orderA = isset($a['order']) ? (int)$a['order'] : 100;
+                                $orderB = isset($b['order']) ? (int)$b['order'] : 100;
+                                return $orderA - $orderB;
+                            });
+
+                            // Render navigation items
+                            foreach ($navItems as $item) {
+                                if (!is_array($item) || empty($item['url']) || empty($item['title'])) {
+                                    continue;
+                                }
+
+                                $active = !empty($item['active']) ? ' active' : '';
+                                $url = htmlspecialchars($item['url'], ENT_QUOTES, 'UTF-8');
+                                $title = htmlspecialchars($item['title'], ENT_QUOTES, 'UTF-8');
+
+                                echo '<li class="nav-item">';
+                                echo '<a class="nav-link' . $active . '" href="' . $url . '">' . $title . '</a>';
+                                echo '</li>';
+                            }
+                        }
+                        ?>
                     </ul>
                 </div>
             </div>
@@ -45,6 +83,32 @@
 
     <footer class="bg-light text-center py-4 mt-5">
         <div class="container">
+            <?php
+            // Hook: allow modules to add footer links
+            $footerLinks = $app->hooks()->fire('theme.footer.links', array());
+
+            if (is_array($footerLinks) && !empty($footerLinks)) {
+                // Sort by order
+                usort($footerLinks, function($a, $b) {
+                    $orderA = isset($a['order']) ? (int)$a['order'] : 100;
+                    $orderB = isset($b['order']) ? (int)$b['order'] : 100;
+                    return $orderA - $orderB;
+                });
+
+                echo '<div class="mb-2">';
+                $links = array();
+                foreach ($footerLinks as $link) {
+                    if (!is_array($link) || empty($link['url']) || empty($link['title'])) {
+                        continue;
+                    }
+                    $url = htmlspecialchars($link['url'], ENT_QUOTES, 'UTF-8');
+                    $title = htmlspecialchars($link['title'], ENT_QUOTES, 'UTF-8');
+                    $links[] = '<a href="' . $url . '" class="text-muted text-decoration-none">' . $title . '</a>';
+                }
+                echo implode(' <span class="text-muted">|</span> ', $links);
+                echo '</div>';
+            }
+            ?>
             <p class="text-muted mb-0">&copy; <?php echo date('Y'); ?> Mantra CMS</p>
         </div>
     </footer>

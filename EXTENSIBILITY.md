@@ -24,6 +24,14 @@ Hooks allow modules to modify behavior without changing core code.
 - `theme.body.start` - Add content after `<body>` tag
 - `theme.footer` - Add scripts before `</body>`
 - `theme.body.end` - Add content before `</body>`
+- `theme.navigation` - Add items to main navigation menu
+- `theme.footer.links` - Add links to footer
+
+**Admin Hooks:**
+- `admin.sidebar` - Add items to admin sidebar menu
+- `admin.quick_actions` - Add quick action buttons to dashboard
+- `admin.head` - Add content to admin `<head>`
+- `admin.footer` - Add scripts to admin footer
 
 **View Rendering:**
 - `view.render` - Modify rendered content
@@ -180,6 +188,14 @@ class ProductsModule extends Module {
 
 ## Complete Examples
 
+### Example Integration Module (`modules/example-integration/`)
+Demonstrates integration points:
+- Adding navigation items via `theme.navigation` hook
+- Adding footer links via `theme.footer.links` hook
+- Adding admin sidebar items via `admin.sidebar` hook
+- Adding dashboard quick actions via `admin.quick_actions` hook
+- Respecting module settings (show/hide in navigation)
+
 ### SEO Module (`modules/seo/`)
 Demonstrates meta tags, Open Graph, breadcrumbs:
 - Adding meta tags to `<head>` via `theme.head` hook
@@ -210,7 +226,7 @@ Add to `content/settings/config.json`:
 ```json
 {
     "modules": {
-        "enabled": ["admin", "seo", "analytics", "products"]
+        "enabled": ["admin", "seo", "analytics", "products", "example-integration"]
     }
 }
 ```
