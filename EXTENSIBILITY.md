@@ -138,7 +138,7 @@ class ProductsModule extends Module {
             'plural' => 'Products',
             'route_pattern' => '/product/{slug}',
             'collection' => 'products',
-            'supports' => array('title', 'content', 'slug', 'price', 'sku')
+            'supports' => array('title', 'content', 'slug', 'price', 'sku', 'stock', 'images')
         ));
 
         // Register route
@@ -171,21 +171,46 @@ class ProductsModule extends Module {
 }
 ```
 
-## Complete Example: SEO Module
+**Complete Example:** See `modules/products/ProductsModule.php` for a full implementation with:
+- Product listing page
+- Single product page with image carousel
+- Category filtering
+- Price formatting and stock status
+- Custom hooks for product data
 
-See `modules/seo/SeoModule.php` for a complete example that demonstrates:
-- Adding meta tags to `<head>`
-- Modifying page data
-- Providing breadcrumb widgets
+## Complete Examples
+
+### SEO Module (`modules/seo/`)
+Demonstrates meta tags, Open Graph, breadcrumbs:
+- Adding meta tags to `<head>` via `theme.head` hook
+- Modifying page data via `page.single.data` and `post.single.data` hooks
+- Providing breadcrumb widgets via `widget.render` hook
 - Using multiple hooks together
 
-### Enabling the SEO Module
+### Analytics Module (`modules/analytics/`)
+Demonstrates tracking script injection:
+- Adding scripts to footer via `theme.footer` hook
+- Google Analytics integration
+- Yandex Metrika integration
+- Module settings usage
+- Conditional script loading
+
+### Products Module (`modules/products/`)
+Demonstrates custom content types:
+- Registering custom content type via ContentTypeRegistry
+- Custom routes for products
+- Product listing and single product pages
+- Custom fields (price, sku, stock, images)
+- Data transformation hooks
+- Custom templates with image carousel
+
+## Enabling Modules
 
 Add to `content/settings/config.json`:
 ```json
 {
     "modules": {
-        "enabled": ["admin", "seo"]
+        "enabled": ["admin", "seo", "analytics", "products"]
     }
 }
 ```
