@@ -3,5 +3,6 @@
   "name": "Dashboard",
   "version": "1.0.0",
   "main": "DashboardAdminModule.php",
-  "class": "DashboardAdminModule"
+  "class": "DashboardAdminModule",
+  "requires": ["admin"]
 }

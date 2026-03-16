@@ -3,5 +3,6 @@
   "name": "System",
   "version": "1.0.0",
   "main": "SystemAdminModule.php",
-  "class": "SystemAdminModule"
+  "class": "SystemAdminModule",
+  "requires": ["admin"]
 }
