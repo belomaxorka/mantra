@@ -1,0 +1,17 @@
+{
+    "_id": "monitor-27",
+    "title": "Монитор 27\" 4K UHD",
+    "slug": "monitor-27",
+    "content": "<p>Профессиональный 27-дюймовый монитор с разрешением 4K UHD и поддержкой HDR10. Идеален для дизайнеров и фотографов.</p><ul><li>Разрешение: 3840x2160 (4K UHD)</li><li>Панель: IPS, 99% sRGB</li><li>Частота: 60Hz</li><li>Время отклика: 5ms</li><li>Порты: HDMI 2.0, DisplayPort 1.4, USB-C</li><li>Регулировка: высота, наклон, поворот</li></ul>",
+    "status": "published",
+    "price": 449.99,
+    "sku": "MON-27-4K-001",
+    "stock": 8,
+    "category": "monitors",
+    "images": [
+        "/uploads/products/monitor-27-1.jpg",
+        "/uploads/products/monitor-27-2.jpg"
+    ],
+    "created_at": "2026-03-11T11:20:00Z",
+    "updated_at": "2026-03-11T11:20:00Z"
+}

@@ -1,0 +1,16 @@
+{
+    "_id": "usb-hub",
+    "title": "USB-C Hub 7-в-1",
+    "slug": "usb-hub",
+    "content": "<p>Многофункциональный USB-C хаб с 7 портами для расширения возможностей вашего ноутбука.</p><ul><li>3x USB 3.0</li><li>1x HDMI 4K@30Hz</li><li>1x USB-C PD (до 100W)</li><li>1x SD Card Reader</li><li>1x Ethernet RJ45</li></ul>",
+    "status": "published",
+    "price": 59.99,
+    "sku": "HUB-USBC-7IN1-001",
+    "stock": 0,
+    "category": "accessories",
+    "images": [
+        "/uploads/products/usb-hub-1.jpg"
+    ],
+    "created_at": "2026-03-12T16:45:00Z",
+    "updated_at": "2026-03-12T16:45:00Z"
+}

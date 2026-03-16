@@ -1,0 +1,18 @@
+{
+    "_id": "laptop-pro-15",
+    "title": "Laptop Pro 15",
+    "slug": "laptop-pro-15",
+    "content": "<p>Мощный ноутбук для профессионалов с процессором последнего поколения, 16GB RAM и SSD 512GB. Идеально подходит для разработки, дизайна и видеомонтажа.</p><ul><li>Процессор: Intel Core i7</li><li>RAM: 16GB DDR4</li><li>Накопитель: 512GB SSD</li><li>Экран: 15.6\" Full HD IPS</li><li>Видеокарта: NVIDIA GTX 1650</li></ul>",
+    "status": "published",
+    "price": 1299.99,
+    "sku": "LPT-PRO-15-001",
+    "stock": 15,
+    "category": "laptops",
+    "images": [
+        "/uploads/products/laptop-pro-15-1.jpg",
+        "/uploads/products/laptop-pro-15-2.jpg",
+        "/uploads/products/laptop-pro-15-3.jpg"
+    ],
+    "created_at": "2026-03-15T10:00:00Z",
+    "updated_at": "2026-03-15T10:00:00Z"
+}

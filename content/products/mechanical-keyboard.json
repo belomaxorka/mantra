@@ -1,0 +1,18 @@
+{
+    "_id": "mechanical-keyboard",
+    "title": "Механическая клавиатура RGB",
+    "slug": "mechanical-keyboard",
+    "content": "<p>Профессиональная механическая клавиатура с переключателями Cherry MX Blue и настраиваемой RGB подсветкой. Алюминиевый корпус обеспечивает долговечность.</p><ul><li>Переключатели: Cherry MX Blue</li><li>Подсветка: RGB (16.8 млн цветов)</li><li>Подключение: USB Type-C</li><li>Раскладка: 104 клавиши</li><li>Материал: алюминий + ABS</li></ul>",
+    "status": "published",
+    "price": 149.99,
+    "sku": "KBD-MECH-RGB-001",
+    "stock": 25,
+    "category": "accessories",
+    "images": [
+        "/uploads/products/mechanical-keyboard-1.jpg",
+        "/uploads/products/mechanical-keyboard-2.jpg",
+        "/uploads/products/mechanical-keyboard-3.jpg"
+    ],
+    "created_at": "2026-03-13T09:15:00Z",
+    "updated_at": "2026-03-13T09:15:00Z"
+}
