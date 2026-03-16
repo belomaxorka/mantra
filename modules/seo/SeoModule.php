@@ -18,6 +18,7 @@ class SeoModule extends Module {
         // Hook into page data to add SEO fields
         $this->hook('page.single.data', array($this, 'addSeoData'));
         $this->hook('post.single.data', array($this, 'addSeoData'));
+        $this->hook('product.single.data', array($this, 'addSeoData'));
 
         // Hook into widget rendering to provide breadcrumbs
         $this->hook('widget.render', array($this, 'renderWidget'));
@@ -59,7 +60,7 @@ class SeoModule extends Module {
     }
 
     /**
-     * Add SEO data to page/post view
+     * Add SEO data to page/post/product view
      */
     public function addSeoData($data) {
         // Add breadcrumbs data
@@ -76,6 +77,18 @@ class SeoModule extends Module {
             $breadcrumbs[] = array('title' => 'Blog', 'url' => base_url('/blog'));
             $breadcrumbs[] = array(
                 'title' => $data['post']['title'],
+                'url' => null
+            );
+        } elseif (isset($data['product'])) {
+            $breadcrumbs[] = array('title' => 'Products', 'url' => base_url('/products'));
+            if (isset($data['product']['category'])) {
+                $breadcrumbs[] = array(
+                    'title' => ucfirst($data['product']['category']),
+                    'url' => base_url('/products/category/' . $data['product']['category'])
+                );
+            }
+            $breadcrumbs[] = array(
+                'title' => $data['product']['title'],
                 'url' => null
             );
         }

@@ -1,4 +1,11 @@
 <article class="product">
+    <?php
+    // Display breadcrumbs if available (provided by SEO module)
+    if (isset($breadcrumbs) && !empty($breadcrumbs)) {
+        echo widget('seo:breadcrumbs', array('breadcrumbs' => $breadcrumbs));
+    }
+    ?>
+
     <div class="row">
         <div class="col-md-6">
             <?php if (isset($product['images']) && !empty($product['images'])): ?>
