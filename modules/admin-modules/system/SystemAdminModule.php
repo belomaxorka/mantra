@@ -24,13 +24,6 @@ class SystemAdminModule implements AdminSubmodule {
                 'order' => 20,
                 'url' => '#',
                 'children' => array(
-                    array(
-                        'id' => 'users',
-                        'title' => array('key' => 'users.admin.title', 'fallback' => 'Users'),
-                        'icon' => 'bi-people',
-                        'url' => base_url('/admin/users'),
-                        'order' => 10,
-                    ),
                 ),
             );
 

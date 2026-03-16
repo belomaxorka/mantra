@@ -445,17 +445,14 @@ class AdminModule extends Module {
         $router->post('/admin/settings', array($this, 'settings'))
                ->middleware(array($this, 'requireAuth'));
 
-        // Legacy routes (keep during transition)
-        // IMPORTANT: keep these before the generic /admin/{module} dispatcher
-        // so that explicit routes like /admin/pages do not get captured and redirected in a loop.
-        $router->get('/admin/pages', array($this, 'listPages'))
-               ->middleware(array($this, 'requireAuth'));
-        $router->get('/admin/pages/create', array($this, 'createPage'))
-               ->middleware(array($this, 'requireAuth'));
-        $router->post('/admin/pages/save', array($this, 'savePage'))
-               ->middleware(array($this, 'requireAuth'));
-
-        // New dispatcher routes
+        // Module dispatcher routes (front-end modules)
+        // Note: Admin-only submodules register their own routes via $admin->adminRoute(...)
+        // inside modules/admin-modules/*.
+        //
+        // If you remove all front-end modules, this dispatcher becomes effectively unused,
+        // but it can remain as the extension point for future front-end modules.
+        //
+        // New dispatcher routes (front-end modules)
         $router->get('/admin/{module}', array($this, 'dispatchModuleIndex'))
                ->middleware(array($this, 'requireAuth'));
         $router->any('/admin/{module}/settings', array($this, 'dispatchModuleSettings'))
@@ -1165,53 +1162,4 @@ class AdminModule extends Module {
         redirect(base_url('/admin/login'));
     }
     
-    /**
-     * List pages
-     */
-    public function listPages() {
-        $db = new Database();
-        $pages = $db->query('pages', array(), array('sort' => 'created_at', 'order' => 'desc'));
-        
-        $this->view('admin:pages', array(
-            'pages' => $pages
-        ));
-    }
-    
-    /**
-     * Create page form
-     */
-    public function createPage() {
-        $this->view('admin:page-edit', array(
-            'page' => null
-        ));
-    }
-    
-    /**
-     * Save page
-     */
-    public function savePage() {
-        $db = new Database();
-        
-        $id = (string)request()->post('id', '');
-        if ($id === '') {
-            $id = $db->generateId();
-        }
-
-        $title = (string)request()->post('title', '');
-
-        $data = array(
-            'title' => $title,
-            'slug' => slugify($title),
-            'content_html' => (string)request()->post('content', ''),
-            'content_type' => 'html',
-            'status' => (string)request()->post('status', 'draft'),
-            'lang' => (string)request()->post('lang', 'en')
-        );
-        
-        if ($db->write('pages', $id, $data)) {
-            redirect(base_url('/admin/pages'));
-        } else {
-            echo 'Error saving page';
-        }
-    }
 }

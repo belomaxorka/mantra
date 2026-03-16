@@ -24,27 +24,6 @@ class ContentAdminModule implements AdminSubmodule {
                 'order' => 10,
                 'url' => '#',
                 'children' => array(
-                    array(
-                        'id' => 'pages',
-                        'title' => array('key' => 'pages.admin.title', 'fallback' => 'Pages'),
-                        'icon' => 'bi-file-earmark-text',
-                        'url' => base_url('/admin/pages'),
-                        'order' => 10,
-                    ),
-                    array(
-                        'id' => 'media',
-                        'title' => array('key' => 'media.admin.title', 'fallback' => 'Media'),
-                        'icon' => 'bi-images',
-                        'url' => base_url('/admin/media'),
-                        'order' => 20,
-                    ),
-                    array(
-                        'id' => 'editor',
-                        'title' => array('key' => 'editor.admin.title', 'fallback' => 'Editor'),
-                        'icon' => 'bi-pencil-square',
-                        'url' => base_url('/admin/settings?tab=editor'),
-                        'order' => 60,
-                    ),
                 ),
             );
 
