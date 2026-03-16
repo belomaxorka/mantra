@@ -414,6 +414,50 @@ function __($key, $params = array()) {
 }
 
 /**
+ * Render widget/component
+ *
+ * @param string $name Widget name (e.g., "sidebar", "module:widget")
+ * @param array $params Parameters to pass to widget
+ * @return string Rendered widget HTML
+ */
+function widget($name, $params = array()) {
+    $view = new View();
+    return $view->widget($name, $params);
+}
+
+/**
+ * Check if module is enabled
+ *
+ * @param string $moduleName Module name
+ * @return bool
+ */
+function module_enabled($moduleName) {
+    $enabled = config('modules.enabled', array());
+    return in_array($moduleName, $enabled);
+}
+
+/**
+ * Fire a hook
+ *
+ * @param string $hookName Hook name
+ * @param mixed $data Data to pass to hook
+ * @return mixed Modified data
+ */
+function fire_hook($hookName, $data = null) {
+    $app = Application::getInstance();
+    return $app->hooks()->fire($hookName, $data);
+}
+
+/**
+ * Get content type registry instance
+ *
+ * @return ContentTypeRegistry
+ */
+function content_types() {
+    return ContentTypeRegistry::getInstance();
+}
+
+/**
  * Resolve theme.json description with locale fallbacks.
  *
  * Variant A support: "description" may be an object of translations.

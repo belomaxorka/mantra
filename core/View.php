@@ -66,6 +66,50 @@ class View {
 
         echo $content;
     }
+
+    /**
+     * Render widget/component (for embedding in templates)
+     *
+     * @param string $name Widget name in format "module:widget" or just "widget"
+     * @param array $params Parameters to pass to widget
+     * @return string Rendered widget HTML
+     */
+    public function widget($name, $params = array()) {
+        $app = Application::getInstance();
+
+        // Hook: allow modules to provide widgets
+        $widgetData = array(
+            'name' => $name,
+            'params' => $params,
+            'output' => ''
+        );
+
+        $widgetData = $app->hooks()->fire('widget.render', $widgetData);
+
+        // If hook provided output, return it
+        if (!empty($widgetData['output'])) {
+            return $widgetData['output'];
+        }
+
+        // Try to load widget template
+        if (strpos($name, ':') !== false) {
+            // Module widget: "module:widget"
+            list($module, $widget) = explode(':', $name, 2);
+            $widgetPath = MANTRA_MODULES . '/' . $module . '/widgets/' . $widget . '.php';
+        } else {
+            // Theme widget
+            $widgetPath = $this->themePath . '/widgets/' . $name . '.php';
+        }
+
+        if (file_exists($widgetPath)) {
+            extract($params);
+            ob_start();
+            include $widgetPath;
+            return ob_get_clean();
+        }
+
+        return '<!-- Widget not found: ' . htmlspecialchars($name) . ' -->';
+    }
     
     /**
      * Render and return as string
