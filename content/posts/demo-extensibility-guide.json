@@ -1,0 +1,12 @@
+{
+    "_id": "demo-extensibility-guide",
+    "title": "Руководство по расширению функционала",
+    "slug": "demo-extensibility-guide",
+    "content": "<p>Mantra CMS предоставляет мощную систему расширения через модули и хуки.</p><h2>Создание модуля</h2><p>Каждый модуль состоит из:</p><ul><li>Файла <code>module.json</code> с метаданными</li><li>Главного класса, наследующего <code>Module</code></li><li>Метода <code>init()</code> для регистрации хуков</li></ul><h2>Доступные хуки</h2><p>Система предоставляет хуки для:</p><ul><li>Модификации запросов к данным</li><li>Изменения контента перед рендерингом</li><li>Добавления скриптов и стилей</li><li>Создания виджетов</li></ul><p>Подробнее читайте в документации EXTENSIBILITY.md</p>",
+    "status": "published",
+    "author": "Admin",
+    "category": "tutorials",
+    "created_at": "2026-03-12T14:30:00Z",
+    "updated_at": "2026-03-16 08:32:27",
+    "schema_version": 1
+}

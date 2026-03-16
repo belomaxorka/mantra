@@ -1,7 +1,7 @@
 {
-    "_id": "usb-hub",
+    "_id": "demo-usb-hub",
     "title": "USB-C Hub 7-в-1",
-    "slug": "usb-hub",
+    "slug": "demo-usb-hub",
     "content": "<p>Многофункциональный USB-C хаб с 7 портами для расширения возможностей вашего ноутбука.</p><ul><li>3x USB 3.0</li><li>1x HDMI 4K@30Hz</li><li>1x USB-C PD (до 100W)</li><li>1x SD Card Reader</li><li>1x Ethernet RJ45</li></ul>",
     "status": "published",
     "price": 59.99,

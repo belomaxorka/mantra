@@ -1,0 +1,10 @@
+{
+    "_id": "demo-features",
+    "title": "Возможности",
+    "slug": "demo-features",
+    "content": "<h1>Возможности Mantra CMS</h1><h2>Система хуков</h2><p>Модули могут подключаться к различным этапам обработки запроса:</p><ul><li><code>page.home.query</code> - модификация запроса на главной</li><li><code>page.single.data</code> - добавление данных к странице</li><li><code>post.single.data</code> - добавление данных к посту</li><li><code>theme.head</code> - добавление контента в &lt;head&gt;</li><li><code>theme.footer</code> - добавление скриптов в футер</li></ul><h2>Виджеты</h2><p>Создавайте переиспользуемые компоненты:</p><pre><code>&lt;?php echo widget('sidebar'); ?&gt;\n&lt;?php echo widget('module:widget', array('param' =&gt; 'value')); ?&gt;</code></pre><h2>Пользовательские типы контента</h2><p>Регистрируйте новые типы через ContentTypeRegistry:</p><pre><code>content_types()-&gt;register('product', array(\n    'singular' =&gt; 'Product',\n    'plural' =&gt; 'Products',\n    'collection' =&gt; 'products'\n));</code></pre><h2>Иерархия шаблонов</h2><p>Система автоматически выбирает наиболее специфичный шаблон:</p><ul><li><code>page-{template}.php</code> - кастомный шаблон</li><li><code>page-{slug}.php</code> - шаблон для конкретной страницы</li><li><code>page.php</code> - базовый шаблон</li></ul>",
+    "status": "published",
+    "author": "Admin",
+    "created_at": "2026-03-09T10:00:00Z",
+    "updated_at": "2026-03-09T10:00:00Z"
+}

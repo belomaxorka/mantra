@@ -1,7 +1,7 @@
 {
-    "_id": "mechanical-keyboard",
+    "_id": "demo-mechanical-keyboard",
     "title": "Механическая клавиатура RGB",
-    "slug": "mechanical-keyboard",
+    "slug": "demo-mechanical-keyboard",
     "content": "<p>Профессиональная механическая клавиатура с переключателями Cherry MX Blue и настраиваемой RGB подсветкой. Алюминиевый корпус обеспечивает долговечность.</p><ul><li>Переключатели: Cherry MX Blue</li><li>Подсветка: RGB (16.8 млн цветов)</li><li>Подключение: USB Type-C</li><li>Раскладка: 104 клавиши</li><li>Материал: алюминий + ABS</li></ul>",
     "status": "published",
     "price": 149.99,

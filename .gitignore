@@ -2,7 +2,11 @@
 
 # Content (user data)
 /content/pages/*
+!/content/pages/demo-*.json
 /content/posts/*
+!/content/posts/demo-*.json
+/content/products/*
+!/content/products/demo-*.json
 /content/users/*
 /content/settings/*
 !/content/languages/

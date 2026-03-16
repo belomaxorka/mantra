@@ -1,7 +1,7 @@
 {
-    "_id": "wireless-mouse",
+    "_id": "demo-wireless-mouse",
     "title": "Беспроводная мышь Ergo",
-    "slug": "wireless-mouse",
+    "slug": "demo-wireless-mouse",
     "content": "<p>Эргономичная беспроводная мышь с точным оптическим сенсором. Работает до 12 месяцев от одной батарейки.</p><ul><li>Подключение: Bluetooth 5.0</li><li>DPI: 1600</li><li>Батарея: 1x AA (в комплекте)</li><li>Совместимость: Windows, macOS, Linux</li></ul>",
     "status": "published",
     "price": 29.99,
