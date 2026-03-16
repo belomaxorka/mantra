@@ -66,4 +66,20 @@ return array(
     'admin.modules.settings' => 'Настройки',
     'admin.modules.delete' => 'Удалить',
     'admin.modules.delete_confirm' => 'Удалить этот модуль? Это удалит его файлы с сервера.',
+
+    // Группы в боковой панели
+    'admin.sidebar.group.general' => 'Общее',
+    'admin.sidebar.group.content' => 'Контент',
+    'admin.sidebar.group.system' => 'Система',
+
+    // Страница входа
+    'admin.login.title' => 'Вход',
+    'admin.login.subtitle' => 'Войдите, чтобы продолжить',
+    'admin.login.username' => 'Имя пользователя',
+    'admin.login.password' => 'Пароль',
+    'admin.login.sign_in' => 'Войти',
+
+    // Макет
+    'admin.layout.signed_in_as' => 'Вы вошли как',
+    'admin.layout.logout' => 'Выйти',
 );

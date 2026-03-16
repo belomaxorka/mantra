@@ -164,10 +164,10 @@
     <hr>
     <div class="small text-secondary">
       <?php if (!empty($user) && !empty($user['username'])): ?>
-        Signed in as <strong><?php echo e($user['username']); ?></strong>
+        <?php echo t('admin.layout.signed_in_as'); ?> <strong><?php echo e($user['username']); ?></strong>
       <?php endif; ?>
       <div class="mt-2">
-        <a href="<?php echo e(base_url('/admin/logout')); ?>" class="link-secondary text-decoration-none">Logout</a>
+        <a href="<?php echo e(base_url('/admin/logout')); ?>" class="link-secondary text-decoration-none"><?php echo t('admin.layout.logout'); ?></a>
       </div>
     </div>
   </aside>

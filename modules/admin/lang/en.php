@@ -66,4 +66,20 @@ return array(
     'admin.modules.settings' => 'Settings',
     'admin.modules.delete' => 'Delete',
     'admin.modules.delete_confirm' => 'Delete this module? This will remove its files from the server.',
+
+    // Sidebar groups
+    'admin.sidebar.group.general' => 'General',
+    'admin.sidebar.group.content' => 'Content',
+    'admin.sidebar.group.system' => 'System',
+
+    // Login page
+    'admin.login.title' => 'Sign In',
+    'admin.login.subtitle' => 'Sign in to continue',
+    'admin.login.username' => 'Username',
+    'admin.login.password' => 'Password',
+    'admin.login.sign_in' => 'Sign In',
+
+    // Layout
+    'admin.layout.signed_in_as' => 'Signed in as',
+    'admin.layout.logout' => 'Logout',
 );

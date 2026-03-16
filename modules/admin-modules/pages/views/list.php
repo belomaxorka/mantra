@@ -2,9 +2,9 @@
     <div class="row mb-4">
         <div class="col">
             <div class="d-flex justify-content-between align-items-center">
-                <h1 class="h3">Pages</h1>
+                <h1 class="h3"><?php echo t('admin.pages.title'); ?></h1>
                 <a href="<?php echo base_url('/admin/pages/new'); ?>" class="btn btn-primary">
-                    <i class="bi bi-plus-circle me-2"></i>New Page
+                    <i class="bi bi-plus-circle me-2"></i><?php echo t('admin.pages.new'); ?>
                 </a>
             </div>
         </div>
@@ -17,9 +17,9 @@
                     <?php if (empty($pages)): ?>
                         <div class="text-center py-5 text-muted">
                             <i class="bi bi-file-earmark-text" style="font-size: 3rem;"></i>
-                            <p class="mt-3">No pages yet. Create your first page!</p>
+                            <p class="mt-3"><?php echo t('admin.pages.no_pages'); ?></p>
                             <a href="<?php echo base_url('/admin/pages/new'); ?>" class="btn btn-primary">
-                                <i class="bi bi-plus-circle me-2"></i>New Page
+                                <i class="bi bi-plus-circle me-2"></i><?php echo t('admin.pages.new'); ?>
                             </a>
                         </div>
                     <?php else: ?>
@@ -27,12 +27,12 @@
                             <table class="table table-hover">
                                 <thead>
                                     <tr>
-                                        <th>Title</th>
-                                        <th>Slug</th>
-                                        <th>Status</th>
-                                        <th>Navigation</th>
-                                        <th>Updated</th>
-                                        <th>Actions</th>
+                                        <th><?php echo t('admin.pages.title_field'); ?></th>
+                                        <th><?php echo t('admin.pages.slug_field'); ?></th>
+                                        <th><?php echo t('admin.pages.status'); ?></th>
+                                        <th><?php echo t('admin.pages.navigation'); ?></th>
+                                        <th><?php echo t('admin.pages.updated'); ?></th>
+                                        <th><?php echo t('admin.pages.actions'); ?></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -46,16 +46,16 @@
                                             </td>
                                             <td>
                                                 <?php if ($page['status'] === 'published'): ?>
-                                                    <span class="badge bg-success">Published</span>
+                                                    <span class="badge bg-success"><?php echo t('admin.pages.published'); ?></span>
                                                 <?php else: ?>
-                                                    <span class="badge bg-secondary">Draft</span>
+                                                    <span class="badge bg-secondary"><?php echo t('admin.pages.draft'); ?></span>
                                                 <?php endif; ?>
                                             </td>
                                             <td>
                                                 <?php if (!empty($page['show_in_navigation'])): ?>
-                                                    <i class="bi bi-check-circle-fill text-success" title="Shown in navigation"></i>
+                                                    <i class="bi bi-check-circle-fill text-success" title="<?php echo t('admin.pages.shown_in_nav'); ?>"></i>
                                                 <?php else: ?>
-                                                    <i class="bi bi-dash-circle text-muted" title="Hidden from navigation"></i>
+                                                    <i class="bi bi-dash-circle text-muted" title="<?php echo t('admin.pages.hidden_from_nav'); ?>"></i>
                                                 <?php endif; ?>
                                             </td>
                                             <td>
@@ -70,16 +70,16 @@
                                             <td>
                                                 <div class="btn-group btn-group-sm">
                                                     <a href="<?php echo base_url('/admin/pages/edit/' . $page['_id']); ?>"
-                                                       class="btn btn-outline-primary" title="Edit">
+                                                       class="btn btn-outline-primary" title="<?php echo t('admin.pages.edit'); ?>">
                                                         <i class="bi bi-pencil"></i>
                                                     </a>
                                                     <a href="<?php echo base_url('/' . $page['slug']); ?>"
-                                                       class="btn btn-outline-secondary" title="View" target="_blank">
+                                                       class="btn btn-outline-secondary" title="<?php echo t('admin.pages.view'); ?>" target="_blank">
                                                         <i class="bi bi-eye"></i>
                                                     </a>
                                                     <button type="button"
                                                             class="btn btn-outline-danger"
-                                                            title="Delete"
+                                                            title="<?php echo t('admin.pages.delete'); ?>"
                                                             onclick="deletePage('<?php echo $this->escape($page['_id']); ?>', '<?php echo $this->escape($page['title']); ?>')">
                                                         <i class="bi bi-trash"></i>
                                                     </button>
@@ -103,7 +103,7 @@
 
 <script>
 function deletePage(id, title) {
-    if (!confirm('Are you sure you want to delete "' + title + '"?')) {
+    if (!confirm('<?php echo t('admin.pages.delete_confirm'); ?>')) {
         return;
     }
 

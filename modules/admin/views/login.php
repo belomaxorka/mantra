@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Sign In - Mantra CMS</title>
+  <title><?php echo t('admin.login.title'); ?> - Mantra CMS</title>
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
@@ -28,7 +28,7 @@
       <div class="card-body p-4">
         <div class="text-center mb-4">
           <h1 class="h3 fw-bold">Mantra CMS</h1>
-          <p class="text-muted">Sign in to continue</p>
+          <p class="text-muted"><?php echo t('admin.login.subtitle'); ?></p>
         </div>
 
         <?php if (isset($error)): ?>
@@ -40,17 +40,17 @@
 
         <form method="POST" action="<?php echo base_url('/admin/login'); ?>">
           <div class="mb-3">
-            <label for="username" class="form-label">Username</label>
+            <label for="username" class="form-label"><?php echo t('admin.login.username'); ?></label>
             <input type="text" class="form-control" id="username" name="username" required autofocus>
           </div>
 
           <div class="mb-4">
-            <label for="password" class="form-label">Password</label>
+            <label for="password" class="form-label"><?php echo t('admin.login.password'); ?></label>
             <input type="password" class="form-control" id="password" name="password" required>
           </div>
 
           <button type="submit" class="btn btn-primary w-100">
-            <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+            <i class="bi bi-box-arrow-in-right me-2"></i><?php echo t('admin.login.sign_in'); ?>
           </button>
         </form>
       </div>
