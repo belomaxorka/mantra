@@ -10,7 +10,13 @@
  *
  * Keys are expected to be namespaced:
  *   - "pages.title" => module "pages"
+ *   - "admin-dashboard.title" => module "admin-dashboard"
  *   - "theme.header.welcome" => theme domain
+ *
+ * Hierarchical loading for parent namespaces:
+ *   - "admin.dashboard.title" => checks "admin" module, then "admin-dashboard" module
+ *   - Parent namespace translations take precedence over child modules
+ *   - Supports both "admin.dashboard.*" (legacy) and "admin-dashboard.*" (new) formats
  */
 class Language {
     private $locale;
@@ -19,6 +25,7 @@ class Language {
 
     private $themeTranslations = array(); // [locale => array]
     private $moduleTranslations = array(); // [module => [locale => array]]
+    private $childModulesCache = array(); // [parent => [child1, child2, ...]]
 
     public function __construct() {
         // Prefer config() helper when available (no Application dependency),
@@ -116,9 +123,62 @@ class Language {
             return $this->moduleTranslations[$module][$locale];
         }
 
+        // Primary: Load from exact module match
         $file = MANTRA_MODULES . '/' . $module . '/lang/' . $locale . '.php';
-        $this->moduleTranslations[$module][$locale] = $this->loadTranslationFile($file);
+        $translations = $this->loadTranslationFile($file);
+        
+        // Secondary: For parent namespaces (without hyphen), also check child modules
+        // Example: "admin" key can load from "admin-dashboard", "admin-pages", etc.
+        if (strpos($module, '-') === false) {
+            // This is a parent namespace (e.g., "admin")
+            // Check all child modules (e.g., "admin-dashboard", "admin-pages")
+            $childModules = $this->findChildModules($module);
+            foreach ($childModules as $childModule) {
+                $childFile = MANTRA_MODULES . '/' . $childModule . '/lang/' . $locale . '.php';
+                $childTranslations = $this->loadTranslationFile($childFile);
+                // Merge child translations (parent takes precedence)
+                $translations = array_merge($childTranslations, $translations);
+            }
+        }
+        
+        $this->moduleTranslations[$module][$locale] = $translations;
         return $this->moduleTranslations[$module][$locale];
+    }
+
+    /**
+     * Find child modules for a parent namespace
+     * Example: "admin" -> ["admin-dashboard", "admin-pages", "admin-posts", "admin-settings"]
+     * 
+     * @param string $parentNamespace Parent namespace (e.g., "admin")
+     * @return array Array of child module names
+     */
+    private function findChildModules($parentNamespace) {
+        // Check cache first
+        if (isset($this->childModulesCache[$parentNamespace])) {
+            return $this->childModulesCache[$parentNamespace];
+        }
+        
+        $children = array();
+        $modulesDir = MANTRA_MODULES;
+        
+        if (!is_dir($modulesDir)) {
+            $this->childModulesCache[$parentNamespace] = $children;
+            return $children;
+        }
+        
+        // Find all directories matching pattern: {parent}-*
+        $pattern = $modulesDir . '/' . $parentNamespace . '-*';
+        $dirs = glob($pattern, GLOB_ONLYDIR);
+        
+        if (is_array($dirs)) {
+            foreach ($dirs as $dir) {
+                $children[] = basename($dir);
+            }
+        }
+        
+        // Cache the result
+        $this->childModulesCache[$parentNamespace] = $children;
+        return $children;
     }
 
     private function loadTranslationFile($filePath) {

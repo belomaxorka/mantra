@@ -35,7 +35,7 @@ class AdminPostsModule extends ContentAdminModule {
     public function init() {
         $this->registerSidebarItem(array(
             'id' => 'posts',
-            'title' => array('key' => 'admin.posts.title', 'fallback' => 'Posts'),
+            'title' => array('key' => 'admin-posts.title', 'fallback' => 'Posts'),
             'icon' => 'bi-file-earmark-text',
             'group' => array('key' => 'admin.sidebar.group.content', 'fallback' => 'Content'),
             'order' => 15,
