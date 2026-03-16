@@ -1,15 +1,8 @@
 <?php
 
-class PagesAdminModule implements AdminSubmodule {
+class AdminPagesModule extends Module {
 
-    public function __construct($manifest = array(), $admin = null) {
-    }
-
-    public function getId() {
-        return 'pages';
-    }
-
-    public function init($admin) {
+    public function init() {
         // Sidebar item
         app()->hooks()->register('admin.sidebar', function ($items) {
             if (!is_array($items)) {
@@ -45,14 +38,18 @@ class PagesAdminModule implements AdminSubmodule {
             return $actions;
         });
 
-        if (is_object($admin) && method_exists($admin, 'adminRoute')) {
-            $admin->adminRoute('GET', 'pages', array($this, 'listPages'));
-            $admin->adminRoute('GET', 'pages/new', array($this, 'newPage'));
-            $admin->adminRoute('POST', 'pages/new', array($this, 'createPage'));
-            $admin->adminRoute('GET', 'pages/edit/{id}', array($this, 'editPage'));
-            $admin->adminRoute('POST', 'pages/edit/{id}', array($this, 'updatePage'));
-            $admin->adminRoute('POST', 'pages/delete/{id}', array($this, 'deletePage'));
-        }
+        // Register routes
+        app()->hooks()->register('routes.register', function ($data) {
+            $admin = app()->modules()->getModule('admin');
+            if ($admin && method_exists($admin, 'adminRoute')) {
+                $admin->adminRoute('GET', 'pages', array($this, 'listPages'));
+                $admin->adminRoute('GET', 'pages/new', array($this, 'newPage'));
+                $admin->adminRoute('POST', 'pages/new', array($this, 'createPage'));
+                $admin->adminRoute('GET', 'pages/edit/{id}', array($this, 'editPage'));
+                $admin->adminRoute('POST', 'pages/edit/{id}', array($this, 'updatePage'));
+                $admin->adminRoute('POST', 'pages/delete/{id}', array($this, 'deletePage'));
+            }
+        });
     }
 
     public function listPages() {
@@ -65,7 +62,7 @@ class PagesAdminModule implements AdminSubmodule {
         ));
 
         $view = new View();
-        $content = $view->fetch('admin-modules/pages:list', array(
+        $content = $view->fetch('admin-pages:list', array(
             'pages' => $pages
         ));
 
@@ -76,7 +73,7 @@ class PagesAdminModule implements AdminSubmodule {
         $admin = app()->modules()->getModule('admin');
 
         $view = new View();
-        $content = $view->fetch('admin-modules/pages:edit', array(
+        $content = $view->fetch('admin-pages:edit', array(
             'page' => array(
                 'title' => '',
                 'slug' => '',
@@ -156,7 +153,7 @@ class PagesAdminModule implements AdminSubmodule {
         }
 
         $view = new View();
-        $content = $view->fetch('admin-modules/pages:edit', array(
+        $content = $view->fetch('admin-pages:edit', array(
             'page' => $page,
             'isNew' => false,
             'csrf_token' => auth()->generateCsrfToken()

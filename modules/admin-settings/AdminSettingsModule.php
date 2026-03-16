@@ -1,17 +1,8 @@
 <?php
 
-class SettingsAdminModule implements AdminSubmodule
+class AdminSettingsModule extends Module
 {
-    public function __construct($manifest = array(), $admin = null)
-    {
-    }
-
-    public function getId()
-    {
-        return 'settings';
-    }
-
-    public function init($admin)
+    public function init()
     {
         // Sidebar item
         app()->hooks()->register('admin.sidebar', function ($items) {
@@ -48,10 +39,14 @@ class SettingsAdminModule implements AdminSubmodule
             return $actions;
         });
 
-        if (is_object($admin) && method_exists($admin, 'adminRoute')) {
-            $admin->adminRoute('GET', 'settings', array($this, 'settings'));
-            $admin->adminRoute('POST', 'settings', array($this, 'settings'));
-        }
+        // Register routes
+        app()->hooks()->register('routes.register', function ($data) {
+            $admin = app()->modules()->getModule('admin');
+            if ($admin && method_exists($admin, 'adminRoute')) {
+                $admin->adminRoute('GET', 'settings', array($this, 'settings'));
+                $admin->adminRoute('POST', 'settings', array($this, 'settings'));
+            }
+        });
     }
 
     public function settings()
@@ -102,7 +97,7 @@ class SettingsAdminModule implements AdminSubmodule
         }
 
         $view = new View();
-        $page = $view->fetch('admin-modules/settings:settings', array(
+        $page = $view->fetch('admin-settings:settings', array(
             'pageTitle' => $this->translateOrFallback('admin.settings.title', 'Settings'),
             'tabs' => $tabs,
             'contentHtml' => $contentHtml,
@@ -401,69 +396,6 @@ class SettingsAdminModule implements AdminSubmodule
             );
         }
 
-        // Admin submodules (always enabled, but respect manifest policies)
-        $adminModulesBase = $base . '/admin-modules';
-        if (is_dir($adminModulesBase)) {
-            foreach (glob($adminModulesBase . '/*/module.json') as $path) {
-                $dir = basename(dirname($path));
-                if (!$this->isValidModuleName($dir)) {
-                    continue;
-                }
-
-                try {
-                    $meta = JsonFile::read($path);
-                } catch (JsonFileException $e) {
-                    $meta = array();
-                }
-
-                $policy = $this->adminModulePolicy($meta);
-
-                $title = $dir;
-                if (!empty($meta['name']) && is_string($meta['name'])) {
-                    $title = (string)$meta['name'];
-                }
-
-                $version = '';
-                if (!empty($meta['version']) && is_string($meta['version'])) {
-                    $version = (string)$meta['version'];
-                }
-
-                $author = '';
-                if (!empty($meta['author']) && is_string($meta['author'])) {
-                    $author = (string)$meta['author'];
-                }
-
-                $homepage = '';
-                if (!empty($meta['homepage']) && is_string($meta['homepage'])) {
-                    $homepage = (string)$meta['homepage'];
-                }
-
-                $description = '';
-                if (!empty($meta['description']) && is_string($meta['description'])) {
-                    $description = (string)$meta['description'];
-                }
-
-                // Admin submodules are always enabled and can't be disabled
-                // (they're loaded on-demand when accessing /admin)
-
-                // Check if admin submodule has settings schema
-                $hasSettings = $this->moduleHasSettings(dirname($path));
-
-                $cards[] = array(
-                    'id' => 'admin-modules/' . $dir,
-                    'title' => $title . ' (Admin)',
-                    'version' => $version,
-                    'author' => $author,
-                    'homepage' => $homepage,
-                    'description' => $description,
-                    'enabled' => true,
-                    'has_settings' => $hasSettings,
-                    'disableable' => !empty($policy['disableable']),
-                    'deletable' => !empty($policy['deletable']),
-                );
-            }
-        }
-
         usort($cards, function ($a, $b) {
             return strcasecmp((string)($a['title'] ?? ''), (string)($b['title'] ?? ''));
         });
@@ -627,26 +559,13 @@ class SettingsAdminModule implements AdminSubmodule
             return false;
         }
 
-        // Handle admin-modules/xxx format
-        $isAdminModule = (strpos($deleteId, 'admin-modules/') === 0);
-        if ($isAdminModule) {
-            $moduleName = substr($deleteId, strlen('admin-modules/'));
-            if (!$this->isValidModuleName($moduleName)) {
-                $error = 'Invalid module name';
-                return true;
-            }
-            $manifestPath = MANTRA_MODULES . '/admin-modules/' . $moduleName . '/module.json';
-            $moduleDir = MANTRA_MODULES . '/admin-modules/' . $moduleName;
-            $settingsPath = MANTRA_CONTENT . '/settings/admin-modules-' . $moduleName . '.json';
-        } else {
-            if (!$this->isValidModuleName($deleteId)) {
-                $error = 'Invalid module name';
-                return true;
-            }
-            $manifestPath = MANTRA_MODULES . '/' . $deleteId . '/module.json';
-            $moduleDir = MANTRA_MODULES . '/' . $deleteId;
-            $settingsPath = MANTRA_CONTENT . '/settings/' . $deleteId . '.json';
+        if (!$this->isValidModuleName($deleteId)) {
+            $error = 'Invalid module name';
+            return true;
         }
+        $manifestPath = MANTRA_MODULES . '/' . $deleteId . '/module.json';
+        $moduleDir = MANTRA_MODULES . '/' . $deleteId;
+        $settingsPath = MANTRA_CONTENT . '/settings/' . $deleteId . '.json';
 
         $manifest = array();
         if (file_exists($manifestPath)) {
@@ -977,7 +896,7 @@ class SettingsAdminModule implements AdminSubmodule
         }
 
         $view = new View();
-        return $view->fetch('admin-modules/settings:module-settings', array(
+        return $view->fetch('admin-settings:module-settings', array(
             'title' => '',
             'tabs' => $tabs,
             'active_tab' => $activeInnerTab,

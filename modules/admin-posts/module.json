@@ -1,9 +1,9 @@
 {
-  "id": "posts",
+  "id": "admin-posts",
   "name": "Posts Admin",
   "description": "Admin interface for managing blog posts",
   "version": "1.0.0",
   "requires": ["admin"],
-  "main": "PostsAdminModule.php",
-  "class": "PostsAdminModule"
+  "main": "AdminPostsModule.php",
+  "class": "AdminPostsModule"
 }

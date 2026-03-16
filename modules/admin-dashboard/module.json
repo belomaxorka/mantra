@@ -1,12 +1,12 @@
 {
-  "id": "dashboard",
+  "id": "admin-dashboard",
   "name": "Dashboard",
   "version": "1.0.0",
   "description": "Admin dashboard with system overview",
   "author": "Mantra CMS",
   "homepage": "https://github.com/mantra-cms/mantra",
-  "main": "DashboardAdminModule.php",
-  "class": "DashboardAdminModule",
+  "main": "AdminDashboardModule.php",
+  "class": "AdminDashboardModule",
   "requires": ["admin"],
   "admin": {
     "disableable": false,

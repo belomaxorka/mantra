@@ -1,12 +1,12 @@
 {
-  "id": "settings",
-  "name": "Settings",
+  "id": "admin-pages",
+  "name": "Pages",
   "version": "1.0.0",
-  "description": "System settings and configuration management",
+  "description": "Manage static pages",
   "author": "Mantra CMS",
   "homepage": "https://github.com/mantra-cms/mantra",
-  "main": "SettingsAdminModule.php",
-  "class": "SettingsAdminModule",
+  "main": "AdminPagesModule.php",
+  "class": "AdminPagesModule",
   "requires": ["admin"],
   "admin": {
     "disableable": false,

@@ -1,15 +1,8 @@
 <?php
 
-class PostsAdminModule implements AdminSubmodule {
+class AdminPostsModule extends Module {
 
-    public function __construct($manifest = array(), $admin = null) {
-    }
-
-    public function getId() {
-        return 'posts';
-    }
-
-    public function init($admin) {
+    public function init() {
         // Sidebar item
         app()->hooks()->register('admin.sidebar', function ($items) {
             if (!is_array($items)) {
@@ -45,14 +38,18 @@ class PostsAdminModule implements AdminSubmodule {
             return $actions;
         });
 
-        if (is_object($admin) && method_exists($admin, 'adminRoute')) {
-            $admin->adminRoute('GET', 'posts', array($this, 'listPosts'));
-            $admin->adminRoute('GET', 'posts/new', array($this, 'newPost'));
-            $admin->adminRoute('POST', 'posts/new', array($this, 'createPost'));
-            $admin->adminRoute('GET', 'posts/edit/{id}', array($this, 'editPost'));
-            $admin->adminRoute('POST', 'posts/edit/{id}', array($this, 'updatePost'));
-            $admin->adminRoute('POST', 'posts/delete/{id}', array($this, 'deletePost'));
-        }
+        // Register routes
+        app()->hooks()->register('routes.register', function ($data) {
+            $admin = app()->modules()->getModule('admin');
+            if ($admin && method_exists($admin, 'adminRoute')) {
+                $admin->adminRoute('GET', 'posts', array($this, 'listPosts'));
+                $admin->adminRoute('GET', 'posts/new', array($this, 'newPost'));
+                $admin->adminRoute('POST', 'posts/new', array($this, 'createPost'));
+                $admin->adminRoute('GET', 'posts/edit/{id}', array($this, 'editPost'));
+                $admin->adminRoute('POST', 'posts/edit/{id}', array($this, 'updatePost'));
+                $admin->adminRoute('POST', 'posts/delete/{id}', array($this, 'deletePost'));
+            }
+        });
     }
 
     public function listPosts() {
@@ -65,7 +62,7 @@ class PostsAdminModule implements AdminSubmodule {
         ));
 
         $view = new View();
-        $content = $view->fetch('admin-modules/posts:list', array(
+        $content = $view->fetch('admin-posts:list', array(
             'posts' => $posts
         ));
 
@@ -76,7 +73,7 @@ class PostsAdminModule implements AdminSubmodule {
         $admin = app()->modules()->getModule('admin');
 
         $view = new View();
-        $content = $view->fetch('admin-modules/posts:edit', array(
+        $content = $view->fetch('admin-posts:edit', array(
             'post' => array(
                 'title' => '',
                 'slug' => '',
@@ -154,7 +151,7 @@ class PostsAdminModule implements AdminSubmodule {
         }
 
         $view = new View();
-        $content = $view->fetch('admin-modules/posts:edit', array(
+        $content = $view->fetch('admin-posts:edit', array(
             'post' => $post,
             'isNew' => false,
             'csrf_token' => auth()->generateCsrfToken()

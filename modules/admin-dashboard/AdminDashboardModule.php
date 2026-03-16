@@ -1,15 +1,8 @@
 <?php
 
-class DashboardAdminModule implements AdminSubmodule {
+class AdminDashboardModule extends Module {
 
-    public function __construct($manifest = array(), $admin = null) {
-    }
-
-    public function getId() {
-        return 'dashboard';
-    }
-
-    public function init($admin) {
+    public function init() {
         // Root dashboard item
         app()->hooks()->register('admin.sidebar', function ($items) {
             if (!is_array($items)) {
@@ -28,9 +21,13 @@ class DashboardAdminModule implements AdminSubmodule {
             return $items;
         });
 
-        if (is_object($admin) && method_exists($admin, 'adminRoute')) {
-            $admin->adminRoute('GET', '', array($this, 'dashboard'));
-        }
+        // Register routes
+        app()->hooks()->register('routes.register', function ($data) {
+            $admin = app()->modules()->getModule('admin');
+            if ($admin && method_exists($admin, 'adminRoute')) {
+                $admin->adminRoute('GET', '', array($this, 'dashboard'));
+            }
+        });
     }
 
     public function dashboard() {
@@ -50,7 +47,7 @@ class DashboardAdminModule implements AdminSubmodule {
         });
 
         $view = new View();
-        $content = $view->fetch('admin-modules/dashboard:dashboard', array(
+        $content = $view->fetch('admin-dashboard:dashboard', array(
             'user' => auth()->user(),
             'quickActions' => $quickActions
         ));
