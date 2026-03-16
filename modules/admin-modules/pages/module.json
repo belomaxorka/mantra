@@ -7,7 +7,7 @@
   "homepage": "https://github.com/mantra-cms/mantra",
   "main": "PagesAdminModule.php",
   "class": "PagesAdminModule",
-  "requires": ["admin", "pages"],
+  "requires": ["admin"],
   "admin": {
     "disableable": false,
     "deletable": false
