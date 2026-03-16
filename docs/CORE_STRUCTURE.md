@@ -54,9 +54,7 @@ core/
 │   ├── posts.php
 │   └── users.php
 │
-├── settings/            # System settings schemas
-│   └── config.settings.schema.php
-│
+├── config.settings.schema.php   # Global config UI schema
 ├── bootstrap.php        # System initialization
 └── helpers.php          # Helper functions
 

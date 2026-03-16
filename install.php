@@ -77,7 +77,7 @@ if (request()->method() === 'POST') {
             $overrides = array();
         }
 
-        $schemaPath = MANTRA_CORE . '/settings/config.settings.schema.php';
+        $schemaPath = MANTRA_CORE . '/config.settings.schema.php';
         if (file_exists($schemaPath)) {
             $schema = require $schemaPath;
             if (is_array($schema) && isset($schema['version'])) {

@@ -3,7 +3,7 @@
  * ConfigSettings - Schema-driven settings storage for global config.
  *
  * - Values stored at: content/settings/config.json
- * - Schema stored at: core/settings/config.settings.schema.php
+ * - Schema stored at: core/config.settings.schema.php
  * - Persists config.json as overrides-only (diff from Config::defaults()).
  */
 class ConfigSettings
@@ -32,7 +32,7 @@ class ConfigSettings
         }
 
         $this->schemaLoaded = true;
-        $schemaPath = MANTRA_CORE . '/settings/config.settings.schema.php';
+        $schemaPath = MANTRA_CORE . '/config.settings.schema.php';
         if (!file_exists($schemaPath)) {
             $this->schema = null;
             return null;
