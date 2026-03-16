@@ -132,6 +132,9 @@ class Application {
         // Home page
         $this->router->get('/', array($controller, 'home'));
 
+        // Blog listing page
+        $this->router->get('/blog', array($controller, 'blog'));
+
         // Single post (must be before catch-all page route)
         $this->router->get('/post/{slug}', array($controller, 'post'));
 

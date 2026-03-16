@@ -47,6 +47,46 @@ class PageController {
     }
 
     /**
+     * Render blog listing page
+     */
+    public function blog() {
+        $app = Application::getInstance();
+        $db = new Database();
+
+        // Hook: allow modules to modify query parameters
+        $queryParams = $app->hooks()->fire('page.blog.query', array(
+            'collection' => 'posts',
+            'filter' => array('status' => 'published'),
+            'options' => array(
+                'sort' => 'created_at',
+                'order' => 'desc',
+                'limit' => 20
+            )
+        ));
+
+        $posts = $db->query(
+            $queryParams['collection'],
+            $queryParams['filter'],
+            $queryParams['options']
+        );
+
+        // Hook: allow modules to modify posts data
+        $posts = $app->hooks()->fire('page.blog.posts', $posts);
+
+        // Prepare view data
+        $data = array(
+            'posts' => $posts,
+            'title' => 'Blog - ' . config('site.name', 'Mantra CMS')
+        );
+
+        // Hook: allow modules to add data to view
+        $data = $app->hooks()->fire('page.blog.data', $data);
+
+        $view = new View();
+        $view->render('blog', $data);
+    }
+
+    /**
      * Render single page
      */
     public function page($params) {
