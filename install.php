@@ -20,11 +20,6 @@ if (!empty($missingExtensions)) {
     die('Missing required PHP extensions: ' . implode(', ', $missingExtensions));
 }
 
-// Load core classes (explicit for installer clarity)
-require_once MANTRA_CORE . '/Database.php';
-require_once MANTRA_CORE . '/Auth.php';
-require_once MANTRA_CORE . '/Config.php';
-
 // Check if already installed
 if (file_exists(MANTRA_CONTENT . '/users')) {
     $users = glob(MANTRA_CONTENT . '/users/*.json');
@@ -67,16 +62,12 @@ if (request()->method() === 'POST') {
         $scriptPath = dirname((string)request()->server('SCRIPT_NAME', ''));
         $baseUrl = $protocol . '://' . $host . ($scriptPath !== '/' ? $scriptPath : '');
         
-        // Create configuration file (single source of truth)
-        // Persist as overrides-only (diff from Config::defaults()) to match admin settings behavior.
+        // Create configuration
         $config = Config::buildInstallConfig($siteName, $language, $baseUrl);
-
         $defaults = Config::defaults();
         $overrides = Config::diffOverrides($defaults, $config);
-        if (!is_array($overrides)) {
-            $overrides = array();
-        }
-
+        
+        // Add schema version
         $schemaPath = MANTRA_CORE . '/config.settings.schema.php';
         if (file_exists($schemaPath)) {
             $schema = require $schemaPath;
@@ -84,15 +75,14 @@ if (request()->method() === 'POST') {
                 $overrides['schema_version'] = (int)$schema['version'];
             }
         }
-
-        $configPath = MANTRA_CONTENT . '/settings/config.json';
-        JsonFile::write($configPath, $overrides);
+        
+        // Save configuration
+        JsonFile::write(MANTRA_CONTENT . '/settings/config.json', $overrides);
         
         // Create admin user
         $db = new Database();
         $auth = new Auth();
         
-        $userId = $db->generateId();
         $userData = array(
             'username' => $username,
             'email' => $email,
@@ -100,7 +90,7 @@ if (request()->method() === 'POST') {
             'role' => 'admin'
         );
         
-        if ($db->write('users', $userId, $userData)) {
+        if ($db->write('users', $db->generateId(), $userData)) {
             $success = true;
             $adminUrl = rtrim($baseUrl, '/') . '/admin';
         } else {
@@ -142,12 +132,12 @@ if (request()->method() === 'POST') {
                                 <h5 class="alert-heading" data-i18n="success_heading">Installation successful!</h5>
                                 <p class="mb-0" data-i18n="success_message">Your CMS is ready to use.</p>
                                 <hr>
-                                <a href="<?php echo isset($adminUrl) ? htmlspecialchars($adminUrl) : '/admin'; ?>" class="btn btn-success" data-i18n="success_button">Go to admin panel</a>
+                                <a href="<?php echo e($adminUrl); ?>" class="btn btn-success" data-i18n="success_button">Go to admin panel</a>
                             </div>
                         <?php else: ?>
                             <?php if (isset($error)): ?>
                                 <div class="alert alert-danger" role="alert">
-                                    <?php echo htmlspecialchars($error); ?>
+                                    <?php echo e($error); ?>
                                 </div>
                             <?php endif; ?>
 

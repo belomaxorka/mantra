@@ -10,7 +10,11 @@ AddDefaultCharset UTF-8
     # Deny direct access to sensitive directories
     RewriteRule ^content/(users|settings)/.*$ - [R=404,L]
     RewriteRule ^storage/(cache|logs)/.*$ - [R=404,L]
+    
+    # Allow access to core assets (CSS, JS, images)
+    RewriteCond %{REQUEST_URI} !^/core/assets/
     RewriteRule ^core/.*$ - [R=404,L]
+    
     RewriteRule ^modules/.*/lang/.*$ - [R=404,L]
     
     # All URL process by index.php
