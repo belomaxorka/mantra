@@ -16,11 +16,18 @@ class View {
     
     /**
      * Render a template
+     *
+     * Template resolution order:
+     * 1. Theme template (allows theme to override): themes/{theme}/templates/{template}.php
+     * 2. Explicit module syntax: "module:template" -> modules/{module}/views/{template}.php
+     * 3. Smart fallback via _module parameter: modules/{_module}/views/{template}.php
+     *
+     * This allows modules to be self-contained while themes can optionally override.
      */
     public function render($template, $data = array()) {
         $this->data = $data;
 
-        // Try theme template first
+        // Try theme template first (allows theme to override)
         $templatePath = $this->themePath . '/templates/' . $template . '.php';
 
         // Fallback to module template
@@ -29,6 +36,14 @@ class View {
             if (strpos($template, ':') !== false) {
                 list($module, $tpl) = explode(':', $template, 2);
                 $templatePath = MANTRA_MODULES . '/' . $module . '/views/' . $tpl . '.php';
+            } else {
+                // Smart fallback: if module is specified in data, try module views
+                if (isset($data['_module']) && !empty($data['_module'])) {
+                    $modulePath = MANTRA_MODULES . '/' . $data['_module'] . '/views/' . $template . '.php';
+                    if (file_exists($modulePath)) {
+                        $templatePath = $modulePath;
+                    }
+                }
             }
         }
 

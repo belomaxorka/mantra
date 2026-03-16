@@ -142,16 +142,21 @@ This ensures modules can override default behavior when needed.
 
 ### Views / themes
 
-- `core/View.php` renders templates.
-  - Theme templates: `themes/<active_theme>/templates/<template>.php`
-  - Module templates fallback: `modules/<module>/views/<tpl>.php` via `"module:tpl"` template naming.
+- `core/View.php` renders templates with smart fallback logic.
+  - **Theme templates** (first priority): `themes/<active_theme>/templates/<template>.php`
+  - **Module templates** (fallback): `modules/<module>/views/<template>.php`
   - Content templates are automatically wrapped in `layout.php` (unless using module template syntax)
   - After rendering, output is filtered through the `view.render` hook.
 
+**Template resolution order:**
+1. Theme template (allows themes to override module defaults)
+2. Module template via `"module:template"` syntax (explicit)
+3. Module template via `_module` data parameter (automatic fallback)
+
 **Architecture:**
 - **Core** (`core/PageController.php`) handles routing and business logic for public pages
-- **Themes** (`themes/*/templates/`) handle presentation and layout
-- **Modules** provide components/widgets that can be embedded in pages (not for routing public content)
+- **Themes** (`themes/*/templates/`) handle presentation and can override module templates
+- **Modules** (`modules/*/views/`) provide default templates and are self-contained
 
 **Template Hierarchy:**
 

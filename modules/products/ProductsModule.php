@@ -76,7 +76,8 @@ class ProductsModule extends Module {
         $view = new View();
         $view->render('products', array(
             'products' => $products,
-            'title' => 'Products - ' . config('site.name', 'Mantra CMS')
+            'title' => 'Products - ' . config('site.name', 'Mantra CMS'),
+            '_module' => 'products'
         ));
     }
 
@@ -119,7 +120,10 @@ class ProductsModule extends Module {
         $data = $app->hooks()->fire('product.single.data', $data);
 
         $view = new View();
-        $view->render('product', array_merge($data, array('product' => $product)));
+        $view->render('product', array_merge($data, array(
+            'product' => $product,
+            '_module' => 'products'
+        )));
     }
 
     /**
@@ -141,7 +145,8 @@ class ProductsModule extends Module {
         $view->render('products', array(
             'products' => $products,
             'category' => $category,
-            'title' => ucfirst($category) . ' Products - ' . config('site.name', 'Mantra CMS')
+            'title' => ucfirst($category) . ' Products - ' . config('site.name', 'Mantra CMS'),
+            '_module' => 'products'
         ));
     }
 
