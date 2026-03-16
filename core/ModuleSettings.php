@@ -131,6 +131,13 @@ class ModuleSettings
 
     public function save()
     {
+        $this->load();
+
+        $schema = $this->schema();
+        if (is_array($schema) && isset($schema['version']) && (int)$schema['version'] > 0) {
+            $this->data['schema_version'] = (int)$schema['version'];
+        }
+
         JsonFile::write($this->path, $this->data);
         return true;
     }
