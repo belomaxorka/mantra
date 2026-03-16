@@ -64,7 +64,7 @@ class SettingsAdminModule implements AdminSubmodule
         }
 
         $view = new View();
-        $page = $view->fetch('admin:settings', array(
+        $page = $view->fetch('admin-modules/settings:settings', array(
             'pageTitle' => $this->translateOrFallback('admin.settings.title', 'Settings'),
             'tabs' => $tabs,
             'contentHtml' => $contentHtml,
@@ -656,7 +656,7 @@ class SettingsAdminModule implements AdminSubmodule
         }
 
         $view = new View();
-        return $view->fetch('admin:module-settings', array(
+        return $view->fetch('admin-modules/settings:module-settings', array(
             'title' => '',
             'tabs' => $tabs,
             'active_tab' => $activeInnerTab,
