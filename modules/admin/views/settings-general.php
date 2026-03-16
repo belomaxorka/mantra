@@ -37,6 +37,37 @@
                 }
               ?></textarea>
 
+            <?php elseif ($type === 'select'): ?>
+              <label class="form-label" for="f-<?php echo e($name); ?>"><?php echo e($title); ?></label>
+              <select class="form-select" id="f-<?php echo e($name); ?>" name="<?php echo e($name); ?>">
+                <?php foreach (($field['options'] ?? array()) as $optValue => $optLabel): ?>
+                  <option value="<?php echo e($optValue); ?>" <?php echo ((string)$value === (string)$optValue) ? 'selected' : ''; ?>>
+                    <?php echo e($optLabel); ?>
+                  </option>
+                <?php endforeach; ?>
+              </select>
+
+            <?php elseif ($type === 'checklist'): ?>
+              <label class="form-label d-block"><?php echo e($title); ?></label>
+              <?php
+                $selected = array();
+                if (is_array($value)) {
+                    $selected = $value;
+                } elseif (is_string($value) && $value !== '') {
+                    $selected = array_map('trim', explode(',', $value));
+                }
+                $selected = array_values(array_filter($selected, 'strlen'));
+              ?>
+              <div class="border rounded p-2" style="max-height: 240px; overflow:auto;">
+                <?php foreach (($field['options'] ?? array()) as $optValue => $optLabel): ?>
+                  <?php $isChecked = in_array((string)$optValue, array_map('strval', $selected), true); ?>
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="f-<?php echo e($name); ?>-<?php echo e($optValue); ?>" name="<?php echo e($name); ?>[]" value="<?php echo e($optValue); ?>" <?php echo $isChecked ? 'checked' : ''; ?>>
+                    <label class="form-check-label" for="f-<?php echo e($name); ?>-<?php echo e($optValue); ?>"><?php echo e($optLabel); ?></label>
+                  </div>
+                <?php endforeach; ?>
+              </div>
+
             <?php else: ?>
               <label class="form-label" for="f-<?php echo e($name); ?>"><?php echo e($title); ?></label>
               <input class="form-control" type="text" id="f-<?php echo e($name); ?>" name="<?php echo e($name); ?>" value="<?php echo e((string)$value); ?>">

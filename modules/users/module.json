@@ -3,5 +3,8 @@
     "version": "1.0.0",
     "description": "User management module",
     "author": "Mantra CMS",
-    "dependencies": []
+    "dependencies": [],
+    "admin": {
+        "disableable": false
+    }
 }

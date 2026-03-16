@@ -36,10 +36,142 @@ class AdminModule extends Module {
         return $group !== '' ? $group : 'advanced';
     }
 
+    private function availableThemeOptions() {
+        $options = array();
+        $base = MANTRA_THEMES;
+        if (!is_dir($base)) {
+            return $options;
+        }
+
+        foreach (glob($base . '/*/theme.json') as $path) {
+            $dir = basename(dirname($path));
+            $meta = json_decode((string)file_get_contents($path), true);
+            $name = $dir;
+            if (is_array($meta) && !empty($meta['name']) && is_string($meta['name'])) {
+                $name = (string)$meta['name'];
+            }
+            $options[$dir] = $name;
+        }
+
+        ksort($options);
+        return $options;
+    }
+
+    private function availableModuleOptions() {
+        $options = array();
+        $base = MANTRA_MODULES;
+        if (!is_dir($base)) {
+            return $options;
+        }
+
+        foreach (glob($base . '/*/module.json') as $path) {
+            $dir = basename(dirname($path));
+            $meta = json_decode((string)file_get_contents($path), true);
+            if (!is_array($meta)) {
+                $meta = array();
+            }
+
+            // Allow modules to opt-out of being disable-able via config UI.
+            // module.json: { "admin": { "disableable": false } }
+            if (isset($meta['admin']) && is_array($meta['admin'])) {
+                if (array_key_exists('disableable', $meta['admin']) && $meta['admin']['disableable'] === false) {
+                    continue;
+                }
+            }
+
+            $title = $dir;
+            if (!empty($meta['name']) && is_string($meta['name'])) {
+                $title = (string)$meta['name'];
+            }
+            $options[$dir] = $title;
+        }
+
+        ksort($options);
+        return $options;
+    }
+
+    private function availableLocaleOptions() {
+        $locales = array();
+
+        // Modules
+        $modBase = MANTRA_MODULES;
+        if (is_dir($modBase)) {
+            foreach (glob($modBase . '/*/lang/*.php') as $path) {
+                $locale = pathinfo($path, PATHINFO_FILENAME);
+                if ($locale !== '') {
+                    $locales[$locale] = strtoupper($locale);
+                }
+            }
+        }
+
+        // Themes
+        $themeBase = MANTRA_THEMES;
+        if (is_dir($themeBase)) {
+            foreach (glob($themeBase . '/*/lang/*.php') as $path) {
+                $locale = pathinfo($path, PATHINFO_FILENAME);
+                if ($locale !== '') {
+                    $locales[$locale] = strtoupper($locale);
+                }
+            }
+        }
+
+        if (empty($locales)) {
+            $locales = array('en' => 'EN');
+        }
+
+        ksort($locales);
+        return $locales;
+    }
+
+    private function generalSchema() {
+        // Minimal schema to drive admin UI widgets for core config.
+        return array(
+            'locale.default_language' => array(
+                'type' => 'select',
+                'options' => $this->availableLocaleOptions(),
+            ),
+            'locale.fallback_locale' => array(
+                'type' => 'select',
+                'options' => $this->availableLocaleOptions(),
+            ),
+            'theme.active' => array(
+                'type' => 'select',
+                'options' => $this->availableThemeOptions(),
+            ),
+            'security.password_hash_algo' => array(
+                'type' => 'select',
+                'options' => array(
+                    'PASSWORD_DEFAULT' => 'PASSWORD_DEFAULT',
+                    'PASSWORD_BCRYPT' => 'PASSWORD_BCRYPT',
+                    'PASSWORD_ARGON2I' => 'PASSWORD_ARGON2I',
+                    'PASSWORD_ARGON2ID' => 'PASSWORD_ARGON2ID',
+                ),
+            ),
+            'logging.level' => array(
+                'type' => 'select',
+                'options' => array(
+                    Logger::DEBUG => 'debug',
+                    Logger::INFO => 'info',
+                    Logger::NOTICE => 'notice',
+                    Logger::WARNING => 'warning',
+                    Logger::ERROR => 'error',
+                    Logger::CRITICAL => 'critical',
+                    Logger::ALERT => 'alert',
+                    Logger::EMERGENCY => 'emergency',
+                ),
+            ),
+            'modules.enabled' => array(
+                'type' => 'checklist',
+                'options' => $this->availableModuleOptions(),
+            ),
+        );
+    }
+
     private function buildGeneralFields() {
         $defaultsNested = Config::defaults();
         $defaults = Config::flattenPaths($defaultsNested);
         $values = config()->all();
+        $schema = $this->generalSchema();
 
         $groups = array();
 
@@ -56,12 +188,20 @@ class AdminModule extends Module {
             $currentVal = Config::getNested($values, $path, $defaultVal);
 
             $type = 'text';
-            if (is_bool($defaultVal)) {
-                $type = 'toggle';
-            } elseif (is_int($defaultVal) || is_float($defaultVal)) {
-                $type = 'number';
-            } elseif (is_array($defaultVal)) {
-                $type = 'list';
+            $options = null;
+            if (isset($schema[$path]) && is_array($schema[$path]) && !empty($schema[$path]['type'])) {
+                $type = (string)$schema[$path]['type'];
+                if (!empty($schema[$path]['options']) && is_array($schema[$path]['options'])) {
+                    $options = $schema[$path]['options'];
+                }
+            } else {
+                if (is_bool($defaultVal)) {
+                    $type = 'toggle';
+                } elseif (is_int($defaultVal) || is_float($defaultVal)) {
+                    $type = 'number';
+                } elseif (is_array($defaultVal)) {
+                    $type = 'list';
+                }
             }
 
             $labelKey = 'admin.settings.' . $path;
@@ -76,6 +216,10 @@ class AdminModule extends Module {
                 'value' => $currentVal,
                 'default' => $defaultVal,
             );
+
+            if (is_array($options)) {
+                $field['options'] = $options;
+            }
 
             // If help key not translated, keep empty.
             if ($field['help'] === $helpKey) {
@@ -134,6 +278,20 @@ class AdminModule extends Module {
             }
 
             if (is_array($defaultVal)) {
+                // Support checklist widgets that post arrays (e.g. modules.enabled[])
+                if (is_array($posted)) {
+                    $items = array();
+                    foreach ($posted as $item) {
+                        $item = trim((string)$item);
+                        if ($item !== '') {
+                            $items[] = $item;
+                        }
+                    }
+                    $updates[$path] = array_values(array_unique($items));
+                    continue;
+                }
+
+                // Default list widget posts textarea lines.
                 $raw = (string)$posted;
                 $lines = preg_split('/\r\n|\r|\n/', $raw);
                 $lines = is_array($lines) ? $lines : array();
