@@ -434,12 +434,6 @@ class AdminModule extends Module {
         $router->get('/admin/logout', array($this, 'logout'));
 
 
-        // Unified settings
-        $router->get('/admin/settings', array($this, 'settings'))
-               ->middleware(array($this, 'requireAuth'));
-        $router->post('/admin/settings', array($this, 'settings'))
-               ->middleware(array($this, 'requireAuth'));
-
         // (admin-modules register their own /admin/* routes via $admin->adminRoute(...))
 
         return $data;
@@ -972,24 +966,13 @@ class AdminModule extends Module {
     }
 
     public function settings() {
-        $activeTab = (string)request()->query('tab', 'general');
-        if ($activeTab === '') {
-            $activeTab = 'general';
-        }
-
-        $enabled = config('modules.enabled', array());
-        if (!is_array($enabled)) {
-            $enabled = array();
-        }
-
         $tabs = array();
         $tabs[] = array(
             'id' => 'general',
             'title' => $this->translateOrFallback('admin.settings.general', 'General'),
             'url' => base_url('/admin/settings?tab=general'),
-            'active' => ($activeTab === 'general'),
+            'active' => true,
         );
-
 
         $notice = null;
         $error = null;
