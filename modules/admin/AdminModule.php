@@ -316,30 +316,6 @@ class AdminModule extends Module {
             $updates[$path] = (string)$posted;
         }
 
-        // Auto-prune removed modules from modules.enabled to avoid keeping stale IDs
-        // when a module directory was deleted from disk.
-        if (isset($updates['modules.enabled']) && is_array($updates['modules.enabled'])) {
-            $existing = array();
-            $base = MANTRA_MODULES;
-            if (is_dir($base)) {
-                foreach (glob($base . '/*/module.json') as $path) {
-                    $dir = basename(dirname($path));
-                    if ($dir !== '') {
-                        $existing[$dir] = true;
-                    }
-                }
-            }
-
-            $pruned = array();
-            foreach ($updates['modules.enabled'] as $id) {
-                $id = (string)$id;
-                if (isset($existing[$id])) {
-                    $pruned[] = $id;
-                }
-            }
-            $updates['modules.enabled'] = $pruned;
-        }
-
         config()->setMultiple($updates);
         $notice = 'Settings saved';
     }
