@@ -114,6 +114,7 @@
                     </div>
                 </div>
 
+                <?php if (module_enabled('pages')): ?>
                 <div class="card">
                     <div class="card-header">
                         <strong>Navigation</strong>
@@ -147,6 +148,19 @@
                         </div>
                     </div>
                 </div>
+                <?php else: ?>
+                <div class="card">
+                    <div class="card-header">
+                        <strong>Navigation</strong>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info mb-0">
+                            <i class="bi bi-info-circle me-2"></i>
+                            Navigation integration is disabled. Enable the <strong>pages</strong> module in settings to add pages to the site menu.
+                        </div>
+                    </div>
+                </div>
+                <?php endif; ?>
             </div>
         </div>
     </form>
