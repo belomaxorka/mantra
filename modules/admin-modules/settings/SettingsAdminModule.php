@@ -31,6 +31,23 @@ class SettingsAdminModule implements AdminSubmodule
             return $items;
         });
 
+        // Quick action
+        app()->hooks()->register('admin.quick_actions', function ($actions) {
+            if (!is_array($actions)) {
+                $actions = array();
+            }
+
+            $actions[] = array(
+                'id' => 'settings',
+                'title' => 'Settings',
+                'icon' => 'bi-gear',
+                'url' => base_url('/admin/settings'),
+                'order' => 10,
+            );
+
+            return $actions;
+        });
+
         if (is_object($admin) && method_exists($admin, 'adminRoute')) {
             $admin->adminRoute('GET', 'settings', array($this, 'settings'));
             $admin->adminRoute('POST', 'settings', array($this, 'settings'));

@@ -36,9 +36,23 @@ class DashboardAdminModule implements AdminSubmodule {
     public function dashboard() {
         $admin = app()->modules()->getModule('admin');
 
+        // Collect quick actions from modules via hook
+        $quickActions = app()->hooks()->fire('admin.quick_actions', array());
+        if (!is_array($quickActions)) {
+            $quickActions = array();
+        }
+
+        // Sort by order
+        usort($quickActions, function($a, $b) {
+            $orderA = isset($a['order']) ? (int)$a['order'] : 100;
+            $orderB = isset($b['order']) ? (int)$b['order'] : 100;
+            return $orderA - $orderB;
+        });
+
         $view = new View();
         $content = $view->fetch('admin-modules/dashboard:dashboard', array(
-            'user' => auth()->user()
+            'user' => auth()->user(),
+            'quickActions' => $quickActions
         ));
 
         if ($admin && method_exists($admin, 'render')) {

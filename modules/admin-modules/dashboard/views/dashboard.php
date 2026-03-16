@@ -20,9 +20,18 @@
                 <div class="card-body">
                     <h5 class="card-title">Quick Actions</h5>
                     <div class="d-grid gap-2">
-                        <a href="<?php echo base_url('/admin/settings'); ?>" class="btn btn-outline-primary">
-                            <i class="bi bi-gear me-2"></i>Settings
-                        </a>
+                        <?php if (!empty($quickActions) && is_array($quickActions)): ?>
+                            <?php foreach ($quickActions as $action): ?>
+                                <?php if (is_array($action) && !empty($action['url']) && !empty($action['title'])): ?>
+                                    <a href="<?php echo $this->escape($action['url']); ?>" class="btn btn-outline-primary">
+                                        <?php if (!empty($action['icon'])): ?>
+                                            <i class="<?php echo $this->escape($action['icon']); ?> me-2"></i>
+                                        <?php endif; ?>
+                                        <?php echo $this->escape($action['title']); ?>
+                                    </a>
+                                <?php endif; ?>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
