@@ -14,7 +14,7 @@ $isInstalled = file_exists(MANTRA_CONTENT . '/users') &&
 if (!$isInstalled) {
     $currentUri = request()->uri();
     if (strpos($currentUri, 'install.php') === false) {
-        redirect('install.php');
+        redirect('/install.php');
     }
 }
 
