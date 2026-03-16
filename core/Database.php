@@ -45,9 +45,11 @@ class Database {
         if ($normalized !== $data) {
             // Persist migrated defaults.
             $this->write($collection, $id, $normalized);
+            $normalized['_id'] = $id;
             return $normalized;
         }
 
+        $data['_id'] = $id;
         return $data;
     }
 

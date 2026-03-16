@@ -57,11 +57,11 @@ class Auth {
     public function logout() {
         if ($this->currentUser) {
             logger()->info('User logged out', array(
-                'username' => $this->currentUser['username'],
-                'user_id' => $this->currentUser['_id']
+                'username' => isset($this->currentUser['username']) ? $this->currentUser['username'] : 'unknown',
+                'user_id' => isset($this->currentUser['_id']) ? $this->currentUser['_id'] : 'unknown'
             ));
         }
-        
+
         session()->delete('user_id');
         session()->delete('user_role');
         $this->currentUser = null;
