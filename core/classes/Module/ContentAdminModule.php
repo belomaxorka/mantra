@@ -33,6 +33,15 @@ abstract class ContentAdminModule extends BaseAdminModule {
     abstract protected function extractFormData();
     
     /**
+     * Get admin path for redirects (without /admin prefix)
+     * Override this if module ID differs from route path
+     * @return string
+     */
+    protected function getAdminPath() {
+        return $this->getCollectionName();
+    }
+    
+    /**
      * Get list view template
      * @return string
      */
@@ -113,7 +122,7 @@ abstract class ContentAdminModule extends BaseAdminModule {
         
         db()->write($this->getCollectionName(), $id, $data);
         
-        $this->redirectAdmin($this->getId());
+        $this->redirectAdmin($this->getAdminPath());
     }
     
     /**
@@ -163,7 +172,7 @@ abstract class ContentAdminModule extends BaseAdminModule {
         
         db()->write($this->getCollectionName(), $id, $data);
         
-        $this->redirectAdmin($this->getId());
+        $this->redirectAdmin($this->getAdminPath());
     }
     
     /**
@@ -180,6 +189,6 @@ abstract class ContentAdminModule extends BaseAdminModule {
             db()->delete($this->getCollectionName(), $id);
         }
         
-        $this->redirectAdmin($this->getId());
+        $this->redirectAdmin($this->getAdminPath());
     }
 }
