@@ -193,6 +193,8 @@ class SettingsAdminModule implements AdminSubmodule
             if (is_array($meta) && !empty($meta['name']) && is_string($meta['name'])) {
                 $title = (string)$meta['name'];
             }
+            // Try translation first (e.g., "seo.name"), fallback to module.json name
+            $title = $this->translateOrFallback($dir . '.name', $title);
 
             $modules[$dir] = $title;
         }
