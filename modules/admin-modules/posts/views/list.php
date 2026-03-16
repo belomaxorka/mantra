@@ -1,13 +1,13 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2><?php echo t('admin.posts.list_title', 'Posts'); ?></h2>
+    <h2><?php echo t('admin.posts.list_title'); ?></h2>
     <a href="<?php echo base_url('/admin/posts/new'); ?>" class="btn btn-primary">
-        <i class="bi bi-plus-circle"></i> <?php echo t('admin.posts.new_post', 'New Post'); ?>
+        <i class="bi bi-plus-circle"></i> <?php echo t('admin.posts.new_post'); ?>
     </a>
 </div>
 
 <?php if (empty($posts)): ?>
     <div class="alert alert-info">
-        <?php echo t('admin.posts.no_posts', 'No posts yet. Create your first post!'); ?>
+        <?php echo t('admin.posts.no_posts'); ?>
     </div>
 <?php else: ?>
     <div class="card">
@@ -15,12 +15,12 @@
             <table class="table table-hover mb-0">
                 <thead>
                     <tr>
-                        <th><?php echo t('admin.posts.title', 'Title'); ?></th>
-                        <th><?php echo t('admin.posts.author', 'Author'); ?></th>
-                        <th><?php echo t('admin.posts.category', 'Category'); ?></th>
-                        <th><?php echo t('admin.posts.status', 'Status'); ?></th>
-                        <th><?php echo t('admin.posts.updated', 'Updated'); ?></th>
-                        <th class="text-end"><?php echo t('admin.posts.actions', 'Actions'); ?></th>
+                        <th><?php echo t('admin.posts.field.title'); ?></th>
+                        <th><?php echo t('admin.posts.field.author'); ?></th>
+                        <th><?php echo t('admin.posts.field.category'); ?></th>
+                        <th><?php echo t('admin.posts.field.status'); ?></th>
+                        <th><?php echo t('admin.posts.field.updated'); ?></th>
+                        <th class="text-end"><?php echo t('admin.posts.field.actions'); ?></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -60,13 +60,13 @@
                                 <div class="btn-group btn-group-sm">
                                     <a href="<?php echo base_url('/admin/posts/edit/' . $post['_id']); ?>"
                                        class="btn btn-outline-primary"
-                                       title="<?php echo t('admin.posts.edit', 'Edit'); ?>">
+                                       title="<?php echo t('admin.posts.edit'); ?>">
                                         <i class="bi bi-pencil"></i>
                                     </a>
                                     <button type="button"
                                             class="btn btn-outline-danger"
                                             onclick="deletePost('<?php echo e($post['_id']); ?>')"
-                                            title="<?php echo t('admin.posts.delete', 'Delete'); ?>">
+                                            title="<?php echo t('admin.posts.delete'); ?>">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </div>
@@ -85,7 +85,7 @@
 
 <script>
 function deletePost(id) {
-    if (!confirm('<?php echo t('admin.posts.delete_confirm', 'Are you sure you want to delete this post?'); ?>')) {
+    if (!confirm('<?php echo t('admin.posts.delete_confirm'); ?>')) {
         return;
     }
 
