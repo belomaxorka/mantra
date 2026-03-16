@@ -49,7 +49,7 @@ $config = Config::bootstrap();
 $GLOBALS['MANTRA_CONFIG'] = $config;
 
 if (!defined('MANTRA_DEBUG')) {
-    define('MANTRA_DEBUG', !empty($config['debug']));
+    define('MANTRA_DEBUG', !empty(Config::getNested($config, 'debug.enabled', false)));
 }
 
 // Autoloader for core classes (Logger/ErrorHandler/Application/etc.)

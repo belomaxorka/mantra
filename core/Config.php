@@ -5,7 +5,7 @@
  * Single source of truth: content/settings/config.json
  *
  * - Provides defaults
- * - Auto-detects base URL (used as default site_url)
+ * - Auto-detects base URL (used as default site.url)
  * - Merges JSON over defaults
  */
 class Config {
@@ -34,63 +34,87 @@ class Config {
             }
         }
 
-        return array_merge($defaults, $json);
+        $merged = self::deepMerge($defaults, $json);
+        return self::pruneToDefaults($merged, $defaults);
+    }
+
+    private static function pruneToDefaults($data, $defaults) {
+        if (!is_array($defaults)) {
+            return $data;
+        }
+        if (!is_array($data)) {
+            $data = array();
+        }
+
+        $out = array();
+        foreach ($defaults as $k => $defVal) {
+            if (is_array($defVal) && self::isAssoc($defVal)) {
+                $out[$k] = self::pruneToDefaults(isset($data[$k]) ? $data[$k] : array(), $defVal);
+            } else {
+                if (array_key_exists($k, $data)) {
+                    $out[$k] = $data[$k];
+                } else {
+                    $out[$k] = $defVal;
+                }
+            }
+        }
+
+        return $out;
     }
 
     /**
-     * Default configuration.
-     * Note: site_url defaults to an auto-detected base URL.
+     * Default configuration (nested).
      */
     public static function defaults() {
         $baseUrl = self::detectBaseUrl();
 
         return array(
-            // General settings
-            'site_name' => 'Mantra CMS',
-            'site_url' => $baseUrl,
-            'timezone' => 'UTC',
-            'default_language' => 'en',
-            'fallback_locale' => 'en',
-
-            // Debug mode
-            'debug' => true,
-
-            // Logging settings
-            'log_level' => 'debug', // emergency, alert, critical, error, warning, notice, info, debug
-            'log_retention_days' => 30, // Auto-delete logs older than X days
-
-            // Cache settings
-            'cache_enabled' => true,
-            'cache_lifetime' => 3600,
-
-            // Session settings
-            'session_name' => 'mantra_session',
-            'session_lifetime' => 7200,
-
-            // Security
-            'password_hash_algo' => PASSWORD_DEFAULT,
-            'csrf_token_name' => 'mantra_csrf',
-
-            // Proxy/CDN settings
-            // Only trust proxy headers (X-Forwarded-For, etc.) when REMOTE_ADDR matches one of these entries.
-            // Entries can be IPs or CIDRs (IPv4/IPv6). Example: array('127.0.0.1', '10.0.0.0/8')
-            'trusted_proxies' => array(),
-
-            // Content settings
-            'content_format' => 'json',
-            'posts_per_page' => 10,
-
-            // Theme
-            'active_theme' => 'default',
-
-            // Modules - enabled modules list
-            'enabled_modules' => array(
-                'admin',
-                'pages',
-                'media',
-                'users',
-                'editor'
-            )
+            'site' => array(
+                'name' => 'Mantra CMS',
+                'url' => $baseUrl,
+            ),
+            'locale' => array(
+                'timezone' => 'UTC',
+                'default_language' => 'en',
+                'fallback_locale' => 'en',
+            ),
+            'theme' => array(
+                'active' => 'default',
+            ),
+            'content' => array(
+                'format' => 'json',
+                'posts_per_page' => 10,
+            ),
+            'modules' => array(
+                'enabled' => array('admin', 'pages', 'media', 'users', 'editor'),
+            ),
+            'security' => array(
+                // Stored as string identifier; interpreted by Auth when hashing.
+                'password_hash_algo' => 'PASSWORD_DEFAULT',
+                'csrf_token_name' => 'mantra_csrf',
+            ),
+            'session' => array(
+                'name' => 'mantra_session',
+                'lifetime' => 7200,
+            ),
+            'cache' => array(
+                'enabled' => true,
+                'lifetime' => 3600,
+            ),
+            'logging' => array(
+                'level' => 'debug',
+                'retention_days' => 30,
+            ),
+            'proxy' => array(
+                'trusted_proxies' => array(),
+            ),
+            'debug' => array(
+                'enabled' => true,
+            ),
+            'advanced' => array(
+                // Placeholder to force JSON object encoding for empty group.
+                '_placeholder' => null,
+            ),
         );
     }
 
@@ -99,10 +123,10 @@ class Config {
      */
     public static function buildInstallConfig($siteName, $language, $siteUrl) {
         $config = self::defaults();
-        $config['site_name'] = $siteName;
-        $config['default_language'] = $language;
-        $config['fallback_locale'] = 'en';
-        $config['site_url'] = $siteUrl;
+        self::setNested($config, 'site.name', $siteName);
+        self::setNested($config, 'locale.default_language', $language);
+        self::setNested($config, 'locale.fallback_locale', 'en');
+        self::setNested($config, 'site.url', $siteUrl);
         return $config;
     }
 
@@ -131,7 +155,7 @@ class Config {
             try {
                 $decoded = JsonFile::read($this->configPath, array('recover' => true));
                 if (is_array($decoded)) {
-                    $this->config = array_merge($this->config, $decoded);
+                    $this->config = self::deepMerge($this->config, $decoded);
                 }
             } catch (Exception $e) {
                 logger('app')->warning('Failed to read config.json, using defaults', array(
@@ -143,37 +167,42 @@ class Config {
     }
 
     /**
-     * Get configuration value
+     * Get configuration value by dot-path.
      */
-    public function get($key, $default = null) {
-        return isset($this->config[$key]) ? $this->config[$key] : $default;
+    public function get($path, $default = null) {
+        return self::getNested($this->config, (string)$path, $default);
     }
 
     /**
-     * Set configuration value
+     * Set configuration value by dot-path.
      */
-    public function set($key, $value) {
-        $this->config[$key] = $value;
+    public function set($path, $value) {
+        self::setNested($this->config, (string)$path, $value);
         return $this->save();
     }
 
     /**
-     * Set multiple configuration values
+     * Set multiple configuration values by dot-path.
      */
-    public function setMultiple($data) {
-        $this->config = array_merge($this->config, $data);
+    public function setMultiple($values) {
+        if (!is_array($values)) {
+            return false;
+        }
+        foreach ($values as $path => $value) {
+            self::setNested($this->config, (string)$path, $value);
+        }
         return $this->save();
     }
 
     /**
-     * Get all configuration
+     * Get all configuration.
      */
     public function all() {
         return $this->config;
     }
 
     /**
-     * Save configuration to file
+     * Save configuration to file.
      */
     public function save() {
         $dir = dirname($this->configPath);
@@ -194,20 +223,169 @@ class Config {
     }
 
     /**
-     * Delete configuration key
+     * Delete configuration key by dot-path.
      */
-    public function delete($key) {
-        if (isset($this->config[$key])) {
-            unset($this->config[$key]);
-            return $this->save();
+    public function delete($path) {
+        $path = trim((string)$path);
+        if ($path === '') {
+            return false;
         }
-        return false;
+
+        $parts = explode('.', $path);
+        $cur =& $this->config;
+
+        $last = array_pop($parts);
+        foreach ($parts as $part) {
+            if ($part === '' || !is_array($cur) || !array_key_exists($part, $cur)) {
+                return false;
+            }
+            $cur =& $cur[$part];
+        }
+
+        if ($last === '' || !is_array($cur) || !array_key_exists($last, $cur)) {
+            return false;
+        }
+
+        unset($cur[$last]);
+        return $this->save();
     }
 
     /**
-     * Check if key exists
+     * Check if dot-path exists.
      */
-    public function has($key) {
-        return isset($this->config[$key]);
+    public function has($path) {
+        return self::hasNested($this->config, (string)$path);
+    }
+
+    /**
+     * Deep merge two nested config arrays.
+     */
+    public static function deepMerge($base, $override) {
+        if (!is_array($base)) {
+            $base = array();
+        }
+        if (!is_array($override)) {
+            return $base;
+        }
+
+        foreach ($override as $k => $v) {
+            if (is_array($v) && array_key_exists($k, $base) && is_array($base[$k])) {
+                $base[$k] = self::deepMerge($base[$k], $v);
+            } else {
+                $base[$k] = $v;
+            }
+        }
+
+        return $base;
+    }
+
+    /**
+     * Flatten nested arrays into dot-path => value map.
+     */
+    public static function flattenPaths($nested, $prefix = '') {
+        $out = array();
+        if (!is_array($nested)) {
+            return $out;
+        }
+
+        foreach ($nested as $k => $v) {
+            $k = (string)$k;
+            $path = $prefix === '' ? $k : ($prefix . '.' . $k);
+
+            if (is_array($v) && self::isAssoc($v)) {
+                $out = array_merge($out, self::flattenPaths($v, $path));
+            } else {
+                if ($path === 'advanced._placeholder') {
+                    continue;
+                }
+                $out[$path] = $v;
+            }
+        }
+
+        return $out;
+    }
+
+    public static function isAssoc($arr) {
+        if (!is_array($arr)) {
+            return false;
+        }
+        $keys = array_keys($arr);
+        return array_keys($keys) !== $keys;
+    }
+
+    public static function getNested($arr, $path, $default = null) {
+        if (!is_array($arr)) {
+            return $default;
+        }
+        $path = trim((string)$path);
+        if ($path === '') {
+            return $default;
+        }
+
+        $parts = explode('.', $path);
+        $cur = $arr;
+        foreach ($parts as $part) {
+            if ($part === '') {
+                return $default;
+            }
+            if (!is_array($cur) || !array_key_exists($part, $cur)) {
+                return $default;
+            }
+            $cur = $cur[$part];
+        }
+        return $cur;
+    }
+
+    public static function hasNested($arr, $path) {
+        if (!is_array($arr)) {
+            return false;
+        }
+        $path = trim((string)$path);
+        if ($path === '') {
+            return false;
+        }
+
+        $parts = explode('.', $path);
+        $cur = $arr;
+        foreach ($parts as $part) {
+            if ($part === '') {
+                return false;
+            }
+            if (!is_array($cur) || !array_key_exists($part, $cur)) {
+                return false;
+            }
+            $cur = $cur[$part];
+        }
+        return true;
+    }
+
+    public static function setNested(&$arr, $path, $value) {
+        if (!is_array($arr)) {
+            $arr = array();
+        }
+
+        $path = trim((string)$path);
+        if ($path === '') {
+            return;
+        }
+
+        $parts = explode('.', $path);
+        $cur =& $arr;
+
+        $last = array_pop($parts);
+        foreach ($parts as $part) {
+            if ($part === '') {
+                return;
+            }
+            if (!isset($cur[$part]) || !is_array($cur[$part])) {
+                $cur[$part] = array();
+            }
+            $cur =& $cur[$part];
+        }
+
+        if ($last === '') {
+            return;
+        }
+        $cur[$last] = $value;
     }
 }

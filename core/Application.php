@@ -42,7 +42,7 @@ class Application {
         
         // Define debug constant (may already be defined in index.php)
         if (!defined('MANTRA_DEBUG')) {
-            define('MANTRA_DEBUG', isset($config['debug']) ? $config['debug'] : false);
+            define('MANTRA_DEBUG', !empty(Config::getNested($config, 'debug.enabled', false)));
         }
     }
     
@@ -51,8 +51,18 @@ class Application {
      */
     private function setupEnvironment() {
         // Set timezone
-        if (isset($this->config['timezone'])) {
-            date_default_timezone_set($this->config['timezone']);
+        $tz = Config::getNested($this->config, 'locale.timezone', null);
+        if (is_string($tz) && $tz !== '') {
+            date_default_timezone_set($tz);
+        }
+
+        // Ensure MANTRA_DEBUG matches config as a single source of truth.
+        $debug = Config::getNested($this->config, 'debug.enabled', false);
+        if (!defined('MANTRA_DEBUG') || MANTRA_DEBUG !== (bool)$debug) {
+            // Constants can't be redefined; only define if missing.
+            if (!defined('MANTRA_DEBUG')) {
+                define('MANTRA_DEBUG', (bool)$debug);
+            }
         }
         
         // Error reporting
@@ -126,7 +136,7 @@ class Application {
         }
         
         // Perform cleanup
-        $retentionDays = $this->config('log_retention_days', 30);
+        $retentionDays = (int)$this->config('logging.retention_days', 30);
         $deleted = logger()->clearOldLogs($retentionDays);
         
         if ($deleted > 0) {
@@ -173,10 +183,10 @@ class Application {
     /**
      * Get configuration value
      */
-    public function config($key, $default = null) {
-        return isset($this->config[$key]) ? $this->config[$key] : $default;
+    public function config($path, $default = null) {
+        return Config::getNested($this->config, (string)$path, $default);
     }
-    
+
     /**
      * Get router instance
      */

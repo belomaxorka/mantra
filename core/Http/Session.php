@@ -24,11 +24,11 @@ class Session {
             return;
         }
 
-        $sessionName = config('session_name', 'mantra_session');
+        $sessionName = config('session.name', 'mantra_session');
         session_name($sessionName);
 
         // Configure session cookie params before start
-        $lifetime = (int)config('session_lifetime', 0);
+        $lifetime = (int)config('session.lifetime', 0);
         $secure = is_https();
 
         if (defined('PHP_VERSION_ID') && PHP_VERSION_ID >= 70300) {

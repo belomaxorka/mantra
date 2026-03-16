@@ -53,8 +53,9 @@ function logger($channel = 'app') {
 
         // Prefer early-loaded config (no Application dependency).
         if (isset($GLOBALS['MANTRA_CONFIG']) && is_array($GLOBALS['MANTRA_CONFIG'])) {
-            if (!empty($GLOBALS['MANTRA_CONFIG']['log_level'])) {
-                $minLevel = $GLOBALS['MANTRA_CONFIG']['log_level'];
+            $level = Config::getNested($GLOBALS['MANTRA_CONFIG'], 'logging.level', null);
+            if (!empty($level)) {
+                $minLevel = $level;
             }
         }
 
@@ -143,7 +144,7 @@ function json_response($data, $code = 200) {
 /**
  * Determine whether the current request is HTTPS.
  *
- * Uses request headers first (HTTPS / X-Forwarded-Proto), with a fallback to site_url scheme.
+ * Uses request headers first (HTTPS / X-Forwarded-Proto), with a fallback to site.url scheme.
  */
 function is_https() {
     if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
@@ -157,7 +158,7 @@ function is_https() {
         }
     }
 
-    $siteUrl = config('site_url');
+    $siteUrl = config('site.url');
     if ($siteUrl) {
         $scheme = parse_url($siteUrl, PHP_URL_SCHEME);
         return strtolower((string)$scheme) === 'https';
@@ -171,7 +172,7 @@ function is_https() {
  *
  * By default returns REMOTE_ADDR.
  *
- * If config('trusted_proxies') is set and the current REMOTE_ADDR matches one of them
+ * If config('proxy.trusted_proxies') is set and the current REMOTE_ADDR matches one of them
  * (IP or CIDR), this function will also consider common proxy/CDN headers.
  */
 function client_ip() {
@@ -180,7 +181,7 @@ function client_ip() {
         return null;
     }
 
-    $trusted = config('trusted_proxies', array());
+    $trusted = config('proxy.trusted_proxies', array());
     if (is_string($trusted)) {
         $trusted = array_filter(array_map('trim', explode(',', $trusted)), 'strlen');
     }
@@ -325,13 +326,20 @@ function module_settings($module, $key = null, $default = null) {
  * Get base URL
  */
 function base_url($path = '') {
-    $siteUrl = config('site_url');
+    $siteUrl = config('site.url');
     if (!$siteUrl) {
         $app = Application::getInstance();
-        $siteUrl = $app->config('site_url');
+        $siteUrl = $app->config('site.url');
+    }
+
+    if (!$siteUrl) {
+        $siteUrl = '';
     }
 
     // Normalize both forward and back slashes to avoid URLs like "//admin" or "\\admin".
+    if ($siteUrl === '') {
+        return '/' . ltrim($path, "/\\");
+    }
     return rtrim($siteUrl, "/\\") . '/' . ltrim($path, "/\\");
 }
 
@@ -414,12 +422,12 @@ function theme_description($themeMeta) {
     }
 
     if (function_exists('config')) {
-        $locale = (string)config('default_language', 'en');
-        $fallback = (string)config('fallback_locale', 'en');
+        $locale = (string)config('locale.default_language', 'en');
+        $fallback = (string)config('locale.fallback_locale', 'en');
     } else {
         $cfg = (isset($GLOBALS['MANTRA_CONFIG']) && is_array($GLOBALS['MANTRA_CONFIG'])) ? $GLOBALS['MANTRA_CONFIG'] : array();
-        $locale = isset($cfg['default_language']) ? (string)$cfg['default_language'] : 'en';
-        $fallback = isset($cfg['fallback_locale']) ? (string)$cfg['fallback_locale'] : 'en';
+        $locale = (string)Config::getNested($cfg, 'locale.default_language', 'en');
+        $fallback = (string)Config::getNested($cfg, 'locale.fallback_locale', 'en');
     }
 
     if ($locale !== '' && isset($desc[$locale]) && is_string($desc[$locale])) {

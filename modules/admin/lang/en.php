@@ -18,35 +18,45 @@ return array(
     'admin.settings.group.debug' => 'Debug',
     'admin.settings.group.advanced' => 'Advanced',
 
-    // Keys from Config::defaults()
-    'admin.settings.site_name' => 'Site name',
-    'admin.settings.site_url' => 'Site URL',
-    'admin.settings.timezone' => 'Timezone',
-    'admin.settings.default_language' => 'Default language',
-    'admin.settings.fallback_locale' => 'Fallback locale',
+    // Keys from Config::defaults() (dot-paths)
+    'admin.settings.site.name' => 'Site name',
+    'admin.settings.site.url' => 'Site URL',
 
-    'admin.settings.debug' => 'Debug mode',
+    'admin.settings.locale.timezone' => 'Timezone',
+    'admin.settings.locale.default_language' => 'Default language',
+    'admin.settings.locale.fallback_locale' => 'Fallback locale',
 
-    'admin.settings.log_level' => 'Log level',
-    'admin.settings.log_retention_days' => 'Log retention (days)',
+    'admin.settings.debug.enabled' => 'Debug mode',
 
-    'admin.settings.cache_enabled' => 'Cache enabled',
-    'admin.settings.cache_lifetime' => 'Cache lifetime (seconds)',
+    'admin.settings.logging.level' => 'Log level',
+    'admin.settings.logging.retention_days' => 'Log retention (days)',
 
-    'admin.settings.session_name' => 'Session name',
-    'admin.settings.session_lifetime' => 'Session lifetime (seconds)',
+    'admin.settings.cache.enabled' => 'Cache enabled',
+    'admin.settings.cache.lifetime' => 'Cache lifetime (seconds)',
 
-    'admin.settings.password_hash_algo' => 'Password hash algorithm',
-    'admin.settings.csrf_token_name' => 'CSRF token name',
+    'admin.settings.session.name' => 'Session name',
+    'admin.settings.session.lifetime' => 'Session lifetime (seconds)',
 
-    'admin.settings.trusted_proxies' => 'Trusted proxies',
-    'admin.settings.trusted_proxies.help' => 'One IP/CIDR per line. Proxy headers are only trusted when REMOTE_ADDR matches.',
+    'admin.settings.security.password_hash_algo' => 'Password hash algorithm',
+    'admin.settings.security.csrf_token_name' => 'CSRF token name',
 
-    'admin.settings.content_format' => 'Content format',
-    'admin.settings.posts_per_page' => 'Posts per page',
+    'admin.settings.proxy.trusted_proxies' => 'Trusted proxies',
+    'admin.settings.proxy.trusted_proxies.help' => 'One IP/CIDR per line. Proxy headers are only trusted when REMOTE_ADDR matches.',
 
-    'admin.settings.active_theme' => 'Active theme',
+    'admin.settings.content.format' => 'Content format',
+    'admin.settings.content.posts_per_page' => 'Posts per page',
 
-    'admin.settings.enabled_modules' => 'Enabled modules',
-    'admin.settings.enabled_modules.help' => 'One module ID per line.',
+    'admin.settings.theme.active' => 'Active theme',
+
+    'admin.settings.modules.enabled' => 'Enabled modules',
+    'admin.settings.modules.enabled.help' => 'One module ID per line.',
+
+    'admin.settings.advanced' => 'Advanced',
+    'admin.settings.advanced.help' => '',
+
+    // For security.password_hash_algo
+    'admin.settings.security.password_hash_algo.help' => 'Use a PHP password hashing algorithm identifier like PASSWORD_DEFAULT.',
+
+    // For site.url
+    'admin.settings.site.url.help' => 'Base URL used to build links (e.g. https://example.com).',
 );

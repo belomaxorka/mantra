@@ -106,16 +106,33 @@ class Auth {
      * Hash password
      */
     public function hashPassword($password) {
-        return password_hash($password, PASSWORD_DEFAULT);
+        $algo = config('security.password_hash_algo', 'PASSWORD_DEFAULT');
+
+        // Config stores algorithm as a string identifier.
+        if (!is_string($algo) || $algo === '') {
+            $algo = 'PASSWORD_DEFAULT';
+        }
+
+        switch ($algo) {
+            case 'PASSWORD_BCRYPT':
+                return password_hash($password, PASSWORD_BCRYPT);
+            case 'PASSWORD_ARGON2I':
+                return defined('PASSWORD_ARGON2I') ? password_hash($password, PASSWORD_ARGON2I) : password_hash($password, PASSWORD_DEFAULT);
+            case 'PASSWORD_ARGON2ID':
+                return defined('PASSWORD_ARGON2ID') ? password_hash($password, PASSWORD_ARGON2ID) : password_hash($password, PASSWORD_DEFAULT);
+            case 'PASSWORD_DEFAULT':
+            default:
+                return password_hash($password, PASSWORD_DEFAULT);
+        }
     }
-    
+
     /**
      * Verify password
      */
     private function verifyPassword($password, $hash) {
         return password_verify($password, $hash);
     }
-    
+
     /**
      * Generate CSRF token
      */
@@ -124,7 +141,7 @@ class Auth {
         session()->set('csrf_token', $token);
         return $token;
     }
-    
+
     /**
      * Verify CSRF token
      */

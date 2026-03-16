@@ -25,62 +25,26 @@ class AdminModule extends Module {
         return $translated;
     }
 
-    private function configGroupForKey($key) {
-        $key = (string)$key;
-        $map = array(
-            // Site
-            'site_name' => 'site',
-            'site_url' => 'site',
+    private function configGroupForKey($path) {
+        $path = trim((string)$path);
+        if ($path === '') {
+            return 'advanced';
+        }
 
-            // Locale
-            'timezone' => 'locale',
-            'default_language' => 'locale',
-            'fallback_locale' => 'locale',
-
-            // Debug
-            'debug' => 'debug',
-
-            // Logging
-            'log_level' => 'logging',
-            'log_retention_days' => 'logging',
-
-            // Cache
-            'cache_enabled' => 'cache',
-            'cache_lifetime' => 'cache',
-
-            // Session
-            'session_name' => 'session',
-            'session_lifetime' => 'session',
-
-            // Security
-            'password_hash_algo' => 'security',
-            'csrf_token_name' => 'security',
-
-            // Proxy
-            'trusted_proxies' => 'proxy',
-
-            // Content
-            'content_format' => 'content',
-            'posts_per_page' => 'content',
-
-            // Theme
-            'active_theme' => 'theme',
-
-            // Modules
-            'enabled_modules' => 'modules',
-        );
-
-        return isset($map[$key]) ? $map[$key] : 'advanced';
+        $parts = explode('.', $path);
+        $group = (string)array_shift($parts);
+        return $group !== '' ? $group : 'advanced';
     }
 
     private function buildGeneralFields() {
-        $defaults = Config::defaults();
+        $defaultsNested = Config::defaults();
+        $defaults = Config::flattenPaths($defaultsNested);
         $values = config()->all();
 
         $groups = array();
 
-        foreach ($defaults as $key => $defaultVal) {
-            $groupId = $this->configGroupForKey($key);
+        foreach ($defaults as $path => $defaultVal) {
+            $groupId = $this->configGroupForKey($path);
             if (!isset($groups[$groupId])) {
                 $groups[$groupId] = array(
                     'id' => $groupId,
@@ -89,7 +53,7 @@ class AdminModule extends Module {
                 );
             }
 
-            $currentVal = array_key_exists($key, $values) ? $values[$key] : $defaultVal;
+            $currentVal = Config::getNested($values, $path, $defaultVal);
 
             $type = 'text';
             if (is_bool($defaultVal)) {
@@ -100,14 +64,14 @@ class AdminModule extends Module {
                 $type = 'list';
             }
 
-            $labelKey = 'admin.settings.' . $key;
+            $labelKey = 'admin.settings.' . $path;
             $helpKey = $labelKey . '.help';
 
             $field = array(
-                'key' => $key,
-                'name' => $key,
+                'key' => $path,
+                'name' => $path,
                 'type' => $type,
-                'title' => $this->translateOrFallback($labelKey, $this->humanizeKey($key)),
+                'title' => $this->translateOrFallback($labelKey, $this->humanizeKey($path)),
                 'help' => $this->translateOrFallback($helpKey, ''),
                 'value' => $currentVal,
                 'default' => $defaultVal,
@@ -143,14 +107,15 @@ class AdminModule extends Module {
             return;
         }
 
-        $defaults = Config::defaults();
+        $defaultsNested = Config::defaults();
+        $defaults = Config::flattenPaths($defaultsNested);
         $updates = array();
 
-        foreach ($defaults as $key => $defaultVal) {
-            $posted = request()->post($key, null);
+        foreach ($defaults as $path => $defaultVal) {
+            $posted = request()->post($path, null);
 
             if (is_bool($defaultVal)) {
-                $updates[$key] = $posted ? true : false;
+                $updates[$path] = $posted ? true : false;
                 continue;
             }
 
@@ -159,12 +124,12 @@ class AdminModule extends Module {
             }
 
             if (is_int($defaultVal)) {
-                $updates[$key] = (int)$posted;
+                $updates[$path] = (int)$posted;
                 continue;
             }
 
             if (is_float($defaultVal)) {
-                $updates[$key] = (float)$posted;
+                $updates[$path] = (float)$posted;
                 continue;
             }
 
@@ -179,11 +144,11 @@ class AdminModule extends Module {
                         $items[] = $line;
                     }
                 }
-                $updates[$key] = $items;
+                $updates[$path] = $items;
                 continue;
             }
 
-            $updates[$key] = (string)$posted;
+            $updates[$path] = (string)$posted;
         }
 
         config()->setMultiple($updates);
@@ -692,7 +657,7 @@ class AdminModule extends Module {
             $activeTab = 'general';
         }
 
-        $enabled = config('enabled_modules', array());
+        $enabled = config('modules.enabled', array());
         if (!is_array($enabled)) {
             $enabled = array();
         }

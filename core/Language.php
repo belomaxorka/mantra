@@ -2,10 +2,10 @@
 /**
  * Language - i18n translator (module/theme scoped)
  *
- * - Single global locale from config('default_language')
- * - Fallback locale from config('fallback_locale', 'en')
+ * - Single global locale from config('locale.default_language')
+ * - Fallback locale from config('locale.fallback_locale', 'en')
  * - Loads PHP translation arrays from:
- *   - themes/<active_theme>/lang/<locale>.php
+ *   - themes/<theme.active>/lang/<locale>.php
  *   - modules/<module>/lang/<locale>.php
  *
  * Keys are expected to be namespaced:
@@ -24,14 +24,14 @@ class Language {
         // Prefer config() helper when available (no Application dependency),
         // but fall back to early-loaded $GLOBALS['MANTRA_CONFIG'] during bootstrap.
         if (function_exists('config')) {
-            $this->locale = (string)config('default_language', 'en');
-            $this->fallbackLocale = (string)config('fallback_locale', 'en');
-            $this->theme = (string)config('active_theme', 'default');
+            $this->locale = (string)config('locale.default_language', 'en');
+            $this->fallbackLocale = (string)config('locale.fallback_locale', 'en');
+            $this->theme = (string)config('theme.active', 'default');
         } else {
             $cfg = (isset($GLOBALS['MANTRA_CONFIG']) && is_array($GLOBALS['MANTRA_CONFIG'])) ? $GLOBALS['MANTRA_CONFIG'] : array();
-            $this->locale = isset($cfg['default_language']) ? (string)$cfg['default_language'] : 'en';
-            $this->fallbackLocale = isset($cfg['fallback_locale']) ? (string)$cfg['fallback_locale'] : 'en';
-            $this->theme = isset($cfg['active_theme']) ? (string)$cfg['active_theme'] : 'default';
+            $this->locale = (string)Config::getNested($cfg, 'locale.default_language', 'en');
+            $this->fallbackLocale = (string)Config::getNested($cfg, 'locale.fallback_locale', 'en');
+            $this->theme = (string)Config::getNested($cfg, 'theme.active', 'default');
         }
 
         if ($this->locale === '') {

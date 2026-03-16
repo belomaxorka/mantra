@@ -44,9 +44,10 @@ class ModuleManager {
      * Load all enabled modules
      */
     public function loadModules() {
-        $enabledModules = isset($this->config['enabled_modules']) 
-            ? $this->config['enabled_modules'] 
-            : array();
+        $enabledModules = Config::getNested($this->config, 'modules.enabled', array());
+        if (!is_array($enabledModules)) {
+            $enabledModules = array();
+        }
         
         foreach ($enabledModules as $moduleName) {
             $this->loadModule($moduleName);
@@ -147,8 +148,8 @@ class ModuleManager {
 
             // Load translated manifest description if present (Variant A).
             if (isset($manifest['description']) && is_array($manifest['description'])) {
-                $locale = isset($this->config['default_language']) ? (string)$this->config['default_language'] : 'en';
-                $fallback = isset($this->config['fallback_locale']) ? (string)$this->config['fallback_locale'] : 'en';
+                $locale = (string)Config::getNested($this->config, 'locale.default_language', 'en');
+                $fallback = (string)Config::getNested($this->config, 'locale.fallback_locale', 'en');
 
                 if ($locale !== '' && isset($manifest['description'][$locale]) && is_string($manifest['description'][$locale])) {
                     $manifest['description'] = $manifest['description'][$locale];

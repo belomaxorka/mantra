@@ -18,35 +18,45 @@ return array(
     'admin.settings.group.debug' => 'Отладка',
     'admin.settings.group.advanced' => 'Дополнительно',
 
-    // Keys from Config::defaults()
-    'admin.settings.site_name' => 'Название сайта',
-    'admin.settings.site_url' => 'URL сайта',
-    'admin.settings.timezone' => 'Часовой пояс',
-    'admin.settings.default_language' => 'Язык по умолчанию',
-    'admin.settings.fallback_locale' => 'Fallback-локаль',
+    // Keys from Config::defaults() (dot-paths)
+    'admin.settings.site.name' => 'Название сайта',
+    'admin.settings.site.url' => 'URL сайта',
 
-    'admin.settings.debug' => 'Режим отладки',
+    'admin.settings.locale.timezone' => 'Часовой пояс',
+    'admin.settings.locale.default_language' => 'Язык по умолчанию',
+    'admin.settings.locale.fallback_locale' => 'Fallback-локаль',
 
-    'admin.settings.log_level' => 'Уровень логирования',
-    'admin.settings.log_retention_days' => 'Хранить логи (дней)',
+    'admin.settings.debug.enabled' => 'Режим отладки',
 
-    'admin.settings.cache_enabled' => 'Кэш включён',
-    'admin.settings.cache_lifetime' => 'Время жизни кэша (сек)',
+    'admin.settings.logging.level' => 'Уровень логирования',
+    'admin.settings.logging.retention_days' => 'Хранить логи (дней)',
 
-    'admin.settings.session_name' => 'Имя сессии',
-    'admin.settings.session_lifetime' => 'Время жизни сессии (сек)',
+    'admin.settings.cache.enabled' => 'Кэш включён',
+    'admin.settings.cache.lifetime' => 'Время жизни кэша (сек)',
 
-    'admin.settings.password_hash_algo' => 'Алгоритм хеширования пароля',
-    'admin.settings.csrf_token_name' => 'Имя CSRF токена',
+    'admin.settings.session.name' => 'Имя сессии',
+    'admin.settings.session.lifetime' => 'Время жизни сессии (сек)',
 
-    'admin.settings.trusted_proxies' => 'Доверенные прокси',
-    'admin.settings.trusted_proxies.help' => 'Один IP/CIDR на строку. Заголовки прокси учитываются только если REMOTE_ADDR совпадает.',
+    'admin.settings.security.password_hash_algo' => 'Алгоритм хеширования пароля',
+    'admin.settings.security.csrf_token_name' => 'Имя CSRF токена',
 
-    'admin.settings.content_format' => 'Формат контента',
-    'admin.settings.posts_per_page' => 'Постов на страницу',
+    'admin.settings.proxy.trusted_proxies' => 'Доверенные прокси',
+    'admin.settings.proxy.trusted_proxies.help' => 'Один IP/CIDR на строку. Заголовки прокси учитываются только если REMOTE_ADDR совпадает.',
 
-    'admin.settings.active_theme' => 'Активная тема',
+    'admin.settings.content.format' => 'Формат контента',
+    'admin.settings.content.posts_per_page' => 'Постов на страницу',
 
-    'admin.settings.enabled_modules' => 'Включённые модули',
-    'admin.settings.enabled_modules.help' => 'Один ID модуля на строку.',
+    'admin.settings.theme.active' => 'Активная тема',
+
+    'admin.settings.modules.enabled' => 'Включённые модули',
+    'admin.settings.modules.enabled.help' => 'Один ID модуля на строку.',
+
+    'admin.settings.advanced' => 'Дополнительно',
+    'admin.settings.advanced.help' => '',
+
+    // Для security.password_hash_algo
+    'admin.settings.security.password_hash_algo.help' => 'Используйте строковый идентификатор алгоритма, например PASSWORD_DEFAULT.',
+
+    // Для site.url
+    'admin.settings.site.url.help' => 'Базовый URL для генерации ссылок (например https://example.com).',
 );

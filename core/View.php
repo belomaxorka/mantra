@@ -10,7 +10,7 @@ class View {
     
     public function __construct() {
         $app = Application::getInstance();
-        $theme = $app->config('active_theme', 'default');
+        $theme = $app->config('theme.active', 'default');
         $this->themePath = MANTRA_THEMES . '/' . $theme;
     }
     
@@ -86,7 +86,7 @@ class View {
      */
     public function asset($path) {
         $app = Application::getInstance();
-        $baseUrl = $app->config('site_url', '');
+        $baseUrl = $app->config('site.url', '');
         return $baseUrl . '/themes/' . basename($this->themePath) . '/assets/' . ltrim($path, '/');
     }
 }

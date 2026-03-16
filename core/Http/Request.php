@@ -46,6 +46,23 @@ class Request {
         if ($key === null) {
             return $_POST;
         }
+
+        // Support dot-path keys in HTML form names (e.g. "site.url") by reading
+        // nested array shapes produced by PHP when dots are present.
+        // Example: name="site.url" becomes $_POST['site']['url'].
+        $key = (string)$key;
+        if (strpos($key, '.') !== false) {
+            $parts = explode('.', $key);
+            $cur = $_POST;
+            foreach ($parts as $part) {
+                if ($part === '' || !is_array($cur) || !array_key_exists($part, $cur)) {
+                    return $default;
+                }
+                $cur = $cur[$part];
+            }
+            return $cur;
+        }
+
         return isset($_POST[$key]) ? $_POST[$key] : $default;
     }
 

@@ -12,8 +12,8 @@ class Cache {
         $this->cachePath = MANTRA_STORAGE . '/cache';
         
         $app = Application::getInstance();
-        $this->enabled = $app->config('cache_enabled', true);
-        $this->lifetime = $app->config('cache_lifetime', 3600);
+        $this->enabled = $app->config('cache.enabled', true);
+        $this->lifetime = $app->config('cache.lifetime', 3600);
         
         // Create cache directory
         if (!is_dir($this->cachePath)) {
