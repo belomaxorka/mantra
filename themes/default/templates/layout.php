@@ -78,7 +78,45 @@
     </header>
 
     <main class="container my-5">
-        <?php echo isset($content) ? $content : ''; ?>
+        <div class="row">
+            <div class="col-lg-8">
+                <?php echo isset($content) ? $content : ''; ?>
+            </div>
+            <aside class="col-lg-4">
+                <?php
+                // Hook: allow modules to add sidebar widgets
+                $sidebarWidgets = $app->hooks()->fire('theme.sidebar', array());
+
+                if (is_array($sidebarWidgets) && !empty($sidebarWidgets)) {
+                    // Sort by order
+                    usort($sidebarWidgets, function($a, $b) {
+                        $orderA = isset($a['order']) ? (int)$a['order'] : 100;
+                        $orderB = isset($b['order']) ? (int)$b['order'] : 100;
+                        return $orderA - $orderB;
+                    });
+
+                    // Render widgets
+                    foreach ($sidebarWidgets as $widget) {
+                        if (!is_array($widget)) {
+                            continue;
+                        }
+
+                        echo '<div class="sidebar-widget mb-4">';
+
+                        // Widget can provide direct content or reference a widget template
+                        if (!empty($widget['content'])) {
+                            echo $widget['content'];
+                        } elseif (!empty($widget['widget'])) {
+                            $params = isset($widget['params']) && is_array($widget['params']) ? $widget['params'] : array();
+                            echo widget($widget['widget'], $params);
+                        }
+
+                        echo '</div>';
+                    }
+                }
+                ?>
+            </aside>
+        </div>
     </main>
 
     <footer class="bg-light text-center py-4 mt-5">

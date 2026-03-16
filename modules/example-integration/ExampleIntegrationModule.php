@@ -18,6 +18,9 @@ class ExampleIntegrationModule extends Module {
         // Add footer link
         $this->hook('theme.footer.links', array($this, 'addFooterLink'));
 
+        // Add sidebar widget
+        $this->hook('theme.sidebar', array($this, 'addSidebarWidget'));
+
         // Add admin sidebar item
         app()->hooks()->register('admin.sidebar', function ($items) {
             if (!is_array($items)) {
@@ -99,6 +102,31 @@ class ExampleIntegrationModule extends Module {
     }
 
     /**
+     * Add sidebar widget
+     */
+    public function addSidebarWidget($widgets) {
+        if (!is_array($widgets)) {
+            $widgets = array();
+        }
+
+        $widgets[] = array(
+            'id' => 'example-widget',
+            'content' => '
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Example Widget</h5>
+                        <p class="card-text">This widget was added by the Example Integration module.</p>
+                        <a href="' . base_url('/example-page') . '" class="btn btn-sm btn-primary">Learn More</a>
+                    </div>
+                </div>
+            ',
+            'order' => 10,
+        );
+
+        return $widgets;
+    }
+
+    /**
      * Register routes
      */
     public function registerRoutes($data) {
@@ -133,6 +161,7 @@ class ExampleIntegrationModule extends Module {
             <ul>
                 <li><strong>theme.navigation</strong> - Added "Example" link to main navigation</li>
                 <li><strong>theme.footer.links</strong> - Added "Example" link to footer</li>
+                <li><strong>theme.sidebar</strong> - Added widget to sidebar</li>
                 <li><strong>admin.sidebar</strong> - Added "Example Page" to admin sidebar</li>
                 <li><strong>admin.quick_actions</strong> - Added "Example Action" to dashboard</li>
             </ul>
@@ -143,7 +172,10 @@ class ExampleIntegrationModule extends Module {
 $this->hook(\'theme.navigation\', array($this, \'addNavigationItem\'));
 
 // Add footer link
-$this->hook(\'theme.footer.links\', array($this, \'addFooterLink\'));</code></pre>
+$this->hook(\'theme.footer.links\', array($this, \'addFooterLink\'));
+
+// Add sidebar widget
+$this->hook(\'theme.sidebar\', array($this, \'addSidebarWidget\'));</code></pre>
 
             <p>Each hook receives an array of items and returns the modified array with new items added.</p>
 
