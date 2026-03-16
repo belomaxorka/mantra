@@ -216,17 +216,4 @@ ClassicEditor
     .catch(error => {
         console.error('CKEditor initialization error:', error);
     });
-
-// Auto-generate slug from title
-document.getElementById('title').addEventListener('input', function() {
-    var slugField = document.getElementById('slug');
-    if (<?php echo $isNew ? 'true' : 'false'; ?> && slugField.value === '') {
-        var slug = this.value
-            .toLowerCase()
-            .replace(/[^\w\s-]/g, '')
-            .replace(/[\s_-]+/g, '-')
-            .replace(/^-+|-+$/g, '');
-        slugField.value = slug;
-    }
-});
 </script>
