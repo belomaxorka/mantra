@@ -1,0 +1,15 @@
+{
+  "id": "pages",
+  "name": "Pages",
+  "version": "1.0.0",
+  "description": "Manage static pages",
+  "author": "Mantra CMS",
+  "homepage": "https://github.com/mantra-cms/mantra",
+  "main": "PagesAdminModule.php",
+  "class": "PagesAdminModule",
+  "requires": ["admin"],
+  "admin": {
+    "disableable": false,
+    "deletable": false
+  }
+}
