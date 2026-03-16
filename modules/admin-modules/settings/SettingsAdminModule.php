@@ -277,6 +277,9 @@ class SettingsAdminModule implements AdminSubmodule
             // Module can't be deleted if: manifest says so OR it's currently enabled OR it's required by any enabled module
             $canDelete = !empty($policy['deletable']) && !$isEnabled && !$requiredByEnabled;
 
+            // Check if module has settings schema
+            $hasSettings = file_exists(dirname($path) . '/settings.schema.php');
+
             $cards[] = array(
                 'id' => $dir,
                 'title' => $title,
@@ -285,7 +288,7 @@ class SettingsAdminModule implements AdminSubmodule
                 'homepage' => $homepage,
                 'description' => $description,
                 'enabled' => $isEnabled,
-                'has_settings' => false,
+                'has_settings' => $hasSettings,
                 'disableable' => $canDisable,
                 'deletable' => $canDelete,
             );
@@ -334,6 +337,10 @@ class SettingsAdminModule implements AdminSubmodule
 
                 // Admin submodules are always enabled and can't be disabled
                 // (they're loaded on-demand when accessing /admin)
+
+                // Check if admin submodule has settings schema
+                $hasSettings = file_exists(dirname($path) . '/settings.schema.php');
+
                 $cards[] = array(
                     'id' => 'admin-modules/' . $dir,
                     'title' => $title . ' (Admin)',
@@ -342,7 +349,7 @@ class SettingsAdminModule implements AdminSubmodule
                     'homepage' => $homepage,
                     'description' => $description,
                     'enabled' => true,
-                    'has_settings' => false,
+                    'has_settings' => $hasSettings,
                     'disableable' => !empty($policy['disableable']),
                     'deletable' => !empty($policy['deletable']),
                 );
