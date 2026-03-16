@@ -120,6 +120,12 @@ Included modules (enabled by default in `core/Config.php`):
 
 - `admin` - Admin panel for managing content and settings
 
+**Example modules** (not enabled by default):
+- `seo` - SEO optimization with meta tags, Open Graph, breadcrumbs (see `modules/seo/`)
+
+**Creating modules:**
+See `EXTENSIBILITY.md` for complete guide on hooks, widgets, and custom content types.
+
 ### Routing
 
 - `core/Router.php` supports `get()`, `post()`, `any()`.
@@ -146,6 +152,23 @@ This ensures modules can override default behavior when needed.
 - **Core** (`core/PageController.php`) handles routing and business logic for public pages
 - **Themes** (`themes/*/templates/`) handle presentation and layout
 - **Modules** provide components/widgets that can be embedded in pages (not for routing public content)
+
+**Template Hierarchy:**
+
+Templates are resolved in order of specificity:
+
+Pages: `page-{template}.php` > `page-{slug}.php` > `page.php`
+Posts: `post-{template}.php` > `post-{category}.php` > `post-{slug}.php` > `post.php`
+
+**Widget System:**
+
+Widgets are reusable components embedded in templates:
+- Theme widgets: `themes/{theme}/widgets/{name}.php`
+- Module widgets: `modules/{module}/widgets/{name}.php`
+- Usage: `<?php echo widget('sidebar'); ?>` or `<?php echo widget('module:widget', $params); ?>`
+- Modules can provide widgets via `widget.render` hook
+
+See `EXTENSIBILITY.md` for complete guide.
 
 ### Persistence (flat-file DB)
 
