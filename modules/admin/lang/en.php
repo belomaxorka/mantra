@@ -59,4 +59,11 @@ return array(
 
     // For site.url
     'admin.settings.site.url.help' => 'Base URL used to build links (e.g. https://example.com).',
+
+    // Modules list (General settings)
+    'admin.modules.author' => 'Author:',
+    'admin.modules.homepage' => 'Site:',
+    'admin.modules.settings' => 'Settings',
+    'admin.modules.delete' => 'Delete',
+    'admin.modules.delete_confirm' => 'Delete this module? This will remove its files from the server.',
 );

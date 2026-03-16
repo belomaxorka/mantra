@@ -47,6 +47,73 @@
                 <?php endforeach; ?>
               </select>
 
+            <?php elseif ($type === 'module_cards'): ?>
+              <label class="form-label d-block"><?php echo e($title); ?></label>
+              <?php
+                $modules = array();
+                if (isset($field['options']) && is_array($field['options'])) {
+                    $modules = $field['options'];
+                }
+              ?>
+
+              <div class="border rounded" style="overflow:hidden;">
+                <?php foreach ($modules as $m): ?>
+                  <?php
+                    $id = (string)($m['id'] ?? '');
+                    if ($id === '') {
+                        continue;
+                    }
+                    $isEnabled = !empty($m['enabled']);
+                    $canToggle = !empty($m['disableable']);
+                    $canDelete = !empty($m['deletable']);
+                    $hasSettings = !empty($m['has_settings']);
+                    $homepage = (string)($m['homepage'] ?? '');
+                  ?>
+
+                  <div class="p-3 border-bottom">
+                    <div class="d-flex justify-content-between align-items-start gap-3">
+                      <div class="flex-grow-1">
+                        <div class="d-flex align-items-center gap-2">
+                          <div class="form-check m-0">
+                            <input class="form-check-input" type="checkbox" id="f-mod-<?php echo e($id); ?>" name="modules.enabled[]" value="<?php echo e($id); ?>" <?php echo $isEnabled ? 'checked' : ''; ?> <?php echo $canToggle ? '' : 'disabled'; ?>>
+                          </div>
+                          <div>
+                            <div class="fw-semibold"><?php echo e((string)($m['title'] ?? $id)); ?></div>
+                            <?php if (!empty($m['description'])): ?>
+                              <div class="text-muted small"><?php echo e((string)$m['description']); ?></div>
+                            <?php endif; ?>
+                          </div>
+                        </div>
+
+                        <div class="text-muted small mt-2">
+                          <?php if (!empty($m['version'])): ?>
+                            <span class="me-3"><strong>v</strong> <?php echo e((string)$m['version']); ?></span>
+                          <?php endif; ?>
+                          <?php if (!empty($m['author'])): ?>
+                            <span class="me-3"><strong><?php echo e(t('admin.modules.author')); ?></strong> <?php echo e((string)$m['author']); ?></span>
+                          <?php endif; ?>
+                          <?php if ($homepage !== ''): ?>
+                            <span class="me-3"><strong><?php echo e(t('admin.modules.homepage')); ?></strong> <a href="<?php echo e($homepage); ?>" target="_blank" rel="noopener noreferrer"><?php echo e($homepage); ?></a></span>
+                          <?php endif; ?>
+                        </div>
+
+                        <?php if ($hasSettings && $isEnabled): ?>
+                          <div class="mt-2">
+                            <a class="small" href="<?php echo e(base_url('/admin/settings?tab=' . $id)); ?>"><?php echo e(t('admin.modules.settings')); ?></a>
+                          </div>
+                        <?php endif; ?>
+                      </div>
+
+                      <div class="text-end">
+                        <button class="btn btn-sm btn-outline-danger" type="submit" name="module_delete" value="<?php echo e($id); ?>" <?php echo $canDelete ? '' : 'disabled'; ?> onclick="return confirm('<?php echo e(t('admin.modules.delete_confirm')); ?>');">
+                          <?php echo e(t('admin.modules.delete')); ?>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                <?php endforeach; ?>
+              </div>
+
             <?php elseif ($type === 'checklist'): ?>
               <label class="form-label d-block"><?php echo e($title); ?></label>
               <?php

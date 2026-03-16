@@ -59,35 +59,206 @@ class AdminModule extends Module {
 
     private function availableModuleOptions() {
         $options = array();
+        foreach ($this->availableModuleCards() as $m) {
+            if (empty($m['id'])) {
+                continue;
+            }
+            $options[(string)$m['id']] = (string)($m['title'] ?? $m['id']);
+        }
+        ksort($options);
+        return $options;
+    }
+
+    private function isValidModuleName($name) {
+        $name = (string)$name;
+        return ($name !== '' && preg_match('/^[a-z0-9_-]+$/', $name));
+    }
+
+    private function adminModulePolicy($manifest) {
+        if (!is_array($manifest)) {
+            $manifest = array();
+        }
+        $admin = isset($manifest['admin']) && is_array($manifest['admin']) ? $manifest['admin'] : array();
+
+        $disableable = true;
+        if (array_key_exists('disableable', $admin) && $admin['disableable'] === false) {
+            $disableable = false;
+        }
+
+        $deletable = true;
+        if (array_key_exists('deletable', $admin) && $admin['deletable'] === false) {
+            $deletable = false;
+        }
+
+        return array(
+            'disableable' => $disableable,
+            'deletable' => $deletable,
+        );
+    }
+
+    private function availableModuleCards() {
+        $cards = array();
         $base = MANTRA_MODULES;
         if (!is_dir($base)) {
-            return $options;
+            return $cards;
         }
+
+        $enabled = config('modules.enabled', array());
+        if (!is_array($enabled)) {
+            $enabled = array();
+        }
+        $enabled = array_map('strval', $enabled);
 
         foreach (glob($base . '/*/module.json') as $path) {
             $dir = basename(dirname($path));
+            if (!$this->isValidModuleName($dir)) {
+                continue;
+            }
+
             $meta = json_decode((string)file_get_contents($path), true);
             if (!is_array($meta)) {
                 $meta = array();
             }
 
-            // Allow modules to opt-out of being disable-able via config UI.
-            // module.json: { "admin": { "disableable": false } }
-            if (isset($meta['admin']) && is_array($meta['admin'])) {
-                if (array_key_exists('disableable', $meta['admin']) && $meta['admin']['disableable'] === false) {
-                    continue;
-                }
-            }
+            $policy = $this->adminModulePolicy($meta);
 
             $title = $dir;
             if (!empty($meta['name']) && is_string($meta['name'])) {
                 $title = (string)$meta['name'];
             }
-            $options[$dir] = $title;
+
+            $version = '';
+            if (!empty($meta['version']) && is_string($meta['version'])) {
+                $version = (string)$meta['version'];
+            }
+
+            $author = '';
+            if (!empty($meta['author']) && is_string($meta['author'])) {
+                $author = (string)$meta['author'];
+            }
+
+            $homepage = '';
+            if (!empty($meta['homepage']) && is_string($meta['homepage'])) {
+                $homepage = (string)$meta['homepage'];
+            }
+
+            $description = '';
+            if (!empty($meta['description']) && is_string($meta['description'])) {
+                $description = (string)$meta['description'];
+            }
+
+            $hasSettings = false;
+            $schema = module_settings($dir)->schema();
+            if (is_array($schema)) {
+                $hasSettings = true;
+            }
+
+            $cards[] = array(
+                'id' => $dir,
+                'title' => $title,
+                'version' => $version,
+                'author' => $author,
+                'homepage' => $homepage,
+                'description' => $description,
+                'enabled' => in_array($dir, $enabled, true),
+                'has_settings' => $hasSettings,
+                'disableable' => !empty($policy['disableable']),
+                'deletable' => !empty($policy['deletable']),
+            );
         }
 
-        ksort($options);
-        return $options;
+        usort($cards, function ($a, $b) {
+            return strcasecmp((string)($a['title'] ?? ''), (string)($b['title'] ?? ''));
+        });
+
+        return $cards;
+    }
+
+    private function collectModuleDependencyGraph() {
+        $graph = array();
+        $base = MANTRA_MODULES;
+        if (!is_dir($base)) {
+            return $graph;
+        }
+
+        foreach (glob($base . '/*/module.json') as $path) {
+            $dir = basename(dirname($path));
+            if (!$this->isValidModuleName($dir)) {
+                continue;
+            }
+
+            $meta = json_decode((string)file_get_contents($path), true);
+            if (!is_array($meta)) {
+                $meta = array();
+            }
+
+            $deps = array();
+            if (isset($meta['dependencies']) && is_array($meta['dependencies'])) {
+                foreach ($meta['dependencies'] as $d) {
+                    if (!is_string($d)) {
+                        continue;
+                    }
+                    $d = trim((string)$d);
+                    if ($d !== '' && $this->isValidModuleName($d)) {
+                        $deps[] = $d;
+                    }
+                }
+            }
+
+            $graph[$dir] = array_values(array_unique($deps));
+        }
+
+        return $graph;
+    }
+
+    private function dependsOnTransitive($start, $target, $graph) {
+        $start = (string)$start;
+        $target = (string)$target;
+        if ($start === '' || $target === '' || $start === $target) {
+            return false;
+        }
+
+        $visited = array();
+        $stack = array($start);
+
+        while (!empty($stack)) {
+            $cur = array_pop($stack);
+            if (isset($visited[$cur])) {
+                continue;
+            }
+            $visited[$cur] = true;
+
+            $deps = isset($graph[$cur]) && is_array($graph[$cur]) ? $graph[$cur] : array();
+            foreach ($deps as $d) {
+                if ($d === $target) {
+                    return true;
+                }
+                if (!isset($visited[$d])) {
+                    $stack[] = $d;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private function rrmdirSafe($dirPath) {
+        $dirPath = (string)$dirPath;
+        if ($dirPath === '' || !is_dir($dirPath)) {
+            return;
+        }
+
+        $it = new RecursiveDirectoryIterator($dirPath, FilesystemIterator::SKIP_DOTS);
+        $ri = new RecursiveIteratorIterator($it, RecursiveIteratorIterator::CHILD_FIRST);
+        foreach ($ri as $file) {
+            /** @var SplFileInfo $file */
+            if ($file->isDir()) {
+                @rmdir($file->getPathname());
+            } else {
+                @unlink($file->getPathname());
+            }
+        }
+        @rmdir($dirPath);
     }
 
     private function availableLocaleOptions() {
@@ -168,8 +339,9 @@ class AdminModule extends Module {
                 ),
             ),
             'modules.enabled' => array(
-                'type' => 'checklist',
-                'options' => $this->availableModuleOptions(),
+                // Custom widget: rich module list with metadata + enable/disable + delete.
+                'type' => 'module_cards',
+                'options' => $this->availableModuleCards(),
             ),
         );
     }
@@ -258,6 +430,74 @@ class AdminModule extends Module {
             return;
         }
 
+        // Module delete action from the General settings page.
+        $deleteId = (string)request()->post('module_delete', '');
+        if ($deleteId !== '') {
+            if (!$this->isValidModuleName($deleteId)) {
+                $error = 'Invalid module name';
+                return;
+            }
+
+            $manifestPath = MANTRA_MODULES . '/' . $deleteId . '/module.json';
+            $manifest = array();
+            if (file_exists($manifestPath)) {
+                $tmp = json_decode((string)file_get_contents($manifestPath), true);
+                if (is_array($tmp)) {
+                    $manifest = $tmp;
+                }
+            }
+
+            $policy = $this->adminModulePolicy($manifest);
+            if (empty($policy['deletable'])) {
+                $error = 'This module cannot be deleted';
+                return;
+            }
+
+            $enabled = config('modules.enabled', array());
+            if (!is_array($enabled)) {
+                $enabled = array();
+            }
+            $enabled = array_map('strval', $enabled);
+
+            if (in_array($deleteId, $enabled, true)) {
+                $error = 'Disable the module before deleting it';
+                return;
+            }
+
+            // Block deletion if any enabled module depends on this one (transitively).
+            $graph = $this->collectModuleDependencyGraph();
+            foreach ($enabled as $m) {
+                if ($m === '' || $m === $deleteId) {
+                    continue;
+                }
+                if ($this->dependsOnTransitive($m, $deleteId, $graph)) {
+                    $error = "Cannot delete module '{$deleteId}': required by '{$m}'";
+                    return;
+                }
+            }
+
+            // Delete module settings config if present.
+            $settingsPath = MANTRA_CONTENT . '/settings/' . $deleteId . '.json';
+            if (file_exists($settingsPath)) {
+                @unlink($settingsPath);
+            }
+
+            // Delete module folder (defense-in-depth: ensure it stays under MANTRA_MODULES).
+            $moduleDir = MANTRA_MODULES . '/' . $deleteId;
+            $realModules = realpath(MANTRA_MODULES);
+            $realModuleDir = realpath($moduleDir);
+            if ($realModules && $realModuleDir && strpos($realModuleDir, $realModules) === 0) {
+                $this->rrmdirSafe($realModuleDir);
+            }
+
+            // Ensure it's pruned from enabled list if it was present.
+            $newEnabled = array_values(array_diff($enabled, array($deleteId)));
+            config()->set('modules.enabled', $newEnabled);
+
+            $notice = "Module '{$deleteId}' deleted";
+            return;
+        }
+
         $defaultsNested = Config::defaults();
         $defaults = Config::flattenPaths($defaultsNested);
         $updates = array();
@@ -285,7 +525,7 @@ class AdminModule extends Module {
             }
 
             if (is_array($defaultVal)) {
-                // Support checklist widgets that post arrays (e.g. modules.enabled[])
+                // Support checklist/widgets that post arrays (e.g. modules.enabled[])
                 if (is_array($posted)) {
                     $items = array();
                     foreach ($posted as $item) {

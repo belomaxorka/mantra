@@ -5,6 +5,7 @@
     "author": "Mantra CMS",
     "dependencies": [],
     "admin": {
-        "disableable": false
+        "disableable": false,
+        "deletable": false
     }
 }

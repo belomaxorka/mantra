@@ -59,4 +59,11 @@ return array(
 
     // Для site.url
     'admin.settings.site.url.help' => 'Базовый URL для генерации ссылок (например https://example.com).',
+
+    // Список модулей (Основные настройки)
+    'admin.modules.author' => 'Автор:',
+    'admin.modules.homepage' => 'Сайт:',
+    'admin.modules.settings' => 'Настройки',
+    'admin.modules.delete' => 'Удалить',
+    'admin.modules.delete_confirm' => 'Удалить этот модуль? Это удалит его файлы с сервера.',
 );
