@@ -28,7 +28,7 @@ class ContentTypeRegistry {
         $this->register('page', array(
             'singular' => 'Page',
             'plural' => 'Pages',
-            'route_pattern' => '/page/{slug}',
+            'route_pattern' => '/{slug}',
             'collection' => 'pages',
             'supports' => array('title', 'content', 'slug', 'status', 'template')
         ));

@@ -88,7 +88,7 @@ If you add tooling, prefer documenting the exact command(s) here.
    - `routes.register` (modules attach routes to the router here)
 6. Creates `Router` and registers routes:
    - Module routes (via `routes.register` hook) - specific routes like `/admin/*`
-   - Core routes (via `registerCoreRoutes()`) - public content routes like `/`, `/page/{slug}`, `/post/{slug}`
+   - Core routes (via `registerCoreRoutes()`) - public content routes like `/`, `/{slug}` (pages), `/post/{slug}`
 7. `dispatch()`es the request.
 8. Fires `system.shutdown`.
 
@@ -136,7 +136,7 @@ See `EXTENSIBILITY.md` for complete guide on hooks, widgets, and custom content 
 
 **Route registration order:**
 1. Module routes are registered first via the `routes.register` hook (e.g., `/admin/*`)
-2. Core public routes are registered last via `PageController` (e.g., `/`, `/page/{slug}`, `/post/{slug}`)
+2. Core public routes are registered last via `PageController` (e.g., `/`, `/{slug}` for pages, `/post/{slug}` for posts)
 
 This ensures modules can override default behavior when needed.
 

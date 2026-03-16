@@ -132,11 +132,11 @@ class Application {
         // Home page
         $this->router->get('/', array($controller, 'home'));
 
-        // Single page
-        $this->router->get('/page/{slug}', array($controller, 'page'));
-
-        // Single post
+        // Single post (must be before catch-all page route)
         $this->router->get('/post/{slug}', array($controller, 'post'));
+
+        // Single page (catch-all, registered last)
+        $this->router->get('/{slug}', array($controller, 'page'));
     }
 
     /**
