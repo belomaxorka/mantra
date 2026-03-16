@@ -37,7 +37,7 @@ class DashboardAdminModule implements AdminSubmodule {
         $admin = app()->modules()->getModule('admin');
 
         $view = new View();
-        $content = $view->fetch('admin:dashboard', array(
+        $content = $view->fetch('admin-modules/dashboard:dashboard', array(
             'user' => auth()->user()
         ));
 
