@@ -135,12 +135,6 @@ class AdminSettingsModule extends Module
         return '';
     }
 
-    private function isValidModuleName($name)
-    {
-        $name = (string)$name;
-        return ($name !== '' && preg_match('/^[a-z0-9_-]+$/', $name));
-    }
-
     /**
      * Get list of modules with settings (id => title)
      */
@@ -168,7 +162,7 @@ class AdminSettingsModule extends Module
      */
     private function buildModuleSettingsContent($moduleId, $actionUrl, &$notice, &$error)
     {
-        if (!$this->isValidModuleName($moduleId)) {
+        if (!ModuleValidator::isValidModuleId($moduleId)) {
             $error = 'Invalid module name';
             return null;
         }
@@ -347,7 +341,7 @@ class AdminSettingsModule extends Module
 
         foreach (glob($base . '/*/module.json') as $path) {
             $dir = basename(dirname($path));
-            if (!$this->isValidModuleName($dir)) {
+            if (!ModuleValidator::isValidModuleId($dir)) {
                 continue;
             }
 
@@ -364,7 +358,7 @@ class AdminSettingsModule extends Module
                         continue;
                     }
                     $d = trim((string)$d);
-                    if ($d !== '' && $this->isValidModuleName($d)) {
+                    if ($d !== '' && ModuleValidator::isValidModuleId($d)) {
                         $deps[] = $d;
                     }
                 }
@@ -493,7 +487,7 @@ class AdminSettingsModule extends Module
             return false;
         }
 
-        if (!$this->isValidModuleName($deleteId)) {
+        if (!ModuleValidator::isValidModuleId($deleteId)) {
             $error = 'Invalid module name';
             return true;
         }
@@ -642,7 +636,7 @@ class AdminSettingsModule extends Module
         // Check modules being enabled
         $beingEnabled = array_diff($newEnabled, $current);
         foreach ($beingEnabled as $modId) {
-            if (!$this->isValidModuleName($modId)) {
+            if (!ModuleValidator::isValidModuleId($modId)) {
                 return "Invalid module name: '{$modId}'";
             }
 

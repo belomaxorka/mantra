@@ -11,7 +11,7 @@ class ModuleValidator {
      * @return bool
      */
     public static function isValidModuleId($id) {
-        return is_string($id) && $id !== '' && preg_match('/^[a-z0-9-]+$/', $id);
+        return is_string($id) && $id !== '' && preg_match('/^[a-z0-9_-]+$/', $id);
     }
     
     /**
@@ -41,8 +41,8 @@ class ModuleValidator {
         // Required: id
         if (!isset($manifest['id'])) {
             $errors[] = 'Missing required field: id';
-        } elseif (!is_string($manifest['id']) || !preg_match('/^[a-z0-9-]+$/', $manifest['id'])) {
-            $errors[] = 'Invalid id format (must be kebab-case: lowercase with hyphens)';
+        } elseif (!self::isValidModuleId($manifest['id'])) {
+            $errors[] = 'Invalid id format (must be lowercase with hyphens or underscores)';
         }
         
         // Required: version
@@ -83,7 +83,7 @@ class ModuleValidator {
                 $errors[] = 'dependencies must be an array';
             } else {
                 foreach ($manifest['dependencies'] as $dep) {
-                    if (!is_string($dep) || !preg_match('/^[a-z0-9-]+$/', $dep)) {
+                    if (!self::isValidModuleId($dep)) {
                         $errors[] = "Invalid dependency format: {$dep}";
                     }
                 }
