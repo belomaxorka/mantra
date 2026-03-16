@@ -806,8 +806,10 @@ class SettingsAdminModule implements AdminSubmodule
                             $type = (string)$field['type'];
 
                             // module_cards posts its own name (modules.enabled[])
+                            // Read directly from $_POST since the form uses "modules.enabled[]" as the name
+                            // (not nested as modules[enabled][]), which doesn't work with Request::post() dot notation
                             if ($type === 'module_cards') {
-                                $posted = request()->post($path, null);
+                                $posted = isset($_POST[$path]) ? $_POST[$path] : null;
                                 if (is_array($posted)) {
                                     $items = array();
                                     foreach ($posted as $item) {
