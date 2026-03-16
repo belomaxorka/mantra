@@ -430,6 +430,52 @@ function widget($name, $params = array()) {
 }
 
 /**
+ * Get view instance or render template
+ * @param string|null $template Template name
+ * @param array $data Template data
+ * @return View|string
+ */
+function view($template = null, $data = array()) {
+    $view = new View();
+    
+    if ($template === null) {
+        return $view;
+    }
+    
+    return $view->render($template, $data);
+}
+
+/**
+ * Get admin module instance
+ * @return Module|null
+ */
+function admin() {
+    static $admin = null;
+    if ($admin === null) {
+        $admin = app()->modules()->getModule('admin');
+    }
+    return $admin;
+}
+
+/**
+ * Verify CSRF token from POST request
+ * @return bool
+ */
+function verify_csrf() {
+    if (request()->method() !== 'POST') {
+        return true;
+    }
+    
+    $token = request()->post('csrf_token', '');
+    if (!auth()->verifyCsrfToken($token)) {
+        http_response_code(403);
+        echo 'Invalid CSRF token';
+        return false;
+    }
+    return true;
+}
+
+/**
  * Get module instance
  * @param string $moduleId
  * @return Module|null

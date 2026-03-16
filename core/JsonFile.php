@@ -297,3 +297,43 @@ class JsonFile
         error_log($message . ' ' . json_encode($context));
     }
 }
+
+    /**
+     * Read JSON file with fallback on error
+     * @param string $path File path
+     * @param mixed $default Default value if file doesn't exist or is invalid
+     * @return mixed
+     */
+    public static function readSafe($path, $default = array())
+    {
+        try {
+            return self::read($path);
+        } catch (JsonFileException $e) {
+            self::logWarning('Failed to read JSON file', array(
+                'path' => $path,
+                'error' => $e->getMessage()
+            ));
+            return $default;
+        }
+    }
+    
+    /**
+     * Write JSON file with error handling
+     * @param string $path File path
+     * @param mixed $data Data to write
+     * @return bool Success status
+     */
+    public static function writeSafe($path, $data)
+    {
+        try {
+            self::write($path, $data);
+            return true;
+        } catch (JsonFileException $e) {
+            self::logWarning('Failed to write JSON file', array(
+                'path' => $path,
+                'error' => $e->getMessage()
+            ));
+            return false;
+        }
+    }
+}

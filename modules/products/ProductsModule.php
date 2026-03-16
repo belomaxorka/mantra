@@ -67,14 +67,12 @@ class ProductsModule extends Module {
      * List all products
      */
     public function listProducts() {
-        $db = new Database();
-        $products = $db->query('products', array('status' => 'published'), array(
+        $products = db()->query('products', array('status' => 'published'), array(
             'sort' => 'created_at',
             'order' => 'desc'
         ));
 
-        $view = new View();
-        $view->render('products', array(
+        view('products', array(
             'products' => $products,
             'title' => 'Products - ' . config('site.name', 'Mantra CMS'),
             '_module' => 'products'
@@ -86,7 +84,6 @@ class ProductsModule extends Module {
      */
     public function showProduct($params) {
         $app = Application::getInstance();
-        $db = new Database();
         $slug = isset($params['slug']) ? $params['slug'] : '';
 
         // Hook: allow modules to modify query
@@ -96,12 +93,11 @@ class ProductsModule extends Module {
             'slug' => $slug
         ));
 
-        $products = $db->query($queryParams['collection'], $queryParams['filter']);
+        $products = db()->query($queryParams['collection'], $queryParams['filter']);
 
         if (empty($products)) {
             http_response_code(404);
-            $view = new View();
-            $view->render('404', array('title' => '404 - Product Not Found'));
+            view('404', array('title' => '404 - Product Not Found'));
             return;
         }
 
@@ -119,8 +115,7 @@ class ProductsModule extends Module {
         // Hook: allow modules to add data to view
         $data = $app->hooks()->fire('product.single.data', $data);
 
-        $view = new View();
-        $view->render('product', array_merge($data, array(
+        view('product', array_merge($data, array(
             'product' => $product,
             '_module' => 'products'
         )));
@@ -130,10 +125,9 @@ class ProductsModule extends Module {
      * Products by category
      */
     public function productsByCategory($params) {
-        $db = new Database();
         $category = isset($params['category']) ? $params['category'] : '';
 
-        $products = $db->query('products', array(
+        $products = db()->query('products', array(
             'status' => 'published',
             'category' => $category
         ), array(
@@ -141,8 +135,7 @@ class ProductsModule extends Module {
             'order' => 'desc'
         ));
 
-        $view = new View();
-        $view->render('products', array(
+        view('products', array(
             'products' => $products,
             'category' => $category,
             'title' => ucfirst($category) . ' Products - ' . config('site.name', 'Mantra CMS'),

@@ -212,7 +212,6 @@ class AdminModule extends Module {
     }
 
     private function renderAdminLayout($title, $content, $extra = array()) {
-        $view = new View();
         $data = array_merge(array(
             'title' => $title,
             'content' => $content,
@@ -220,7 +219,7 @@ class AdminModule extends Module {
             'user' => auth()->user(),
         ), is_array($extra) ? $extra : array());
 
-        return $view->render('admin:layout', $data);
+        return view('admin:layout', $data);
     }
 
     private function admin404($message) {

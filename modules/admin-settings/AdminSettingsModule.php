@@ -96,8 +96,7 @@ class AdminSettingsModule extends Module
             return $admin->render('Settings', '<div class="alert alert-danger">Settings not found</div>');
         }
 
-        $view = new View();
-        $page = $view->fetch('admin-settings:settings', array(
+        $page = view()->fetch('admin-settings:settings', array(
             'pageTitle' => $this->translateOrFallback('admin.settings.title', 'Settings'),
             'tabs' => $tabs,
             'contentHtml' => $contentHtml,

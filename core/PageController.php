@@ -11,7 +11,6 @@ class PageController {
      */
     public function home() {
         $app = Application::getInstance();
-        $db = new Database();
 
         // Hook: allow modules to modify query parameters
         $queryParams = $app->hooks()->fire('page.home.query', array(
@@ -24,7 +23,7 @@ class PageController {
             )
         ));
 
-        $posts = $db->query(
+        $posts = db()->query(
             $queryParams['collection'],
             $queryParams['filter'],
             $queryParams['options']
@@ -42,8 +41,7 @@ class PageController {
         // Hook: allow modules to add data to view
         $data = $app->hooks()->fire('page.home.data', $data);
 
-        $view = new View();
-        $view->render('home', $data);
+        view('home', $data);
     }
 
     /**
@@ -51,7 +49,6 @@ class PageController {
      */
     public function blog() {
         $app = Application::getInstance();
-        $db = new Database();
 
         // Hook: allow modules to modify query parameters
         $queryParams = $app->hooks()->fire('page.blog.query', array(
@@ -64,7 +61,7 @@ class PageController {
             )
         ));
 
-        $posts = $db->query(
+        $posts = db()->query(
             $queryParams['collection'],
             $queryParams['filter'],
             $queryParams['options']
@@ -82,8 +79,7 @@ class PageController {
         // Hook: allow modules to add data to view
         $data = $app->hooks()->fire('page.blog.data', $data);
 
-        $view = new View();
-        $view->render('blog', $data);
+        view('blog', $data);
     }
 
     /**
@@ -91,7 +87,6 @@ class PageController {
      */
     public function page($params) {
         $app = Application::getInstance();
-        $db = new Database();
         $slug = isset($params['slug']) ? $params['slug'] : '';
 
         // Hook: allow modules to modify query
@@ -101,7 +96,7 @@ class PageController {
             'slug' => $slug
         ));
 
-        $pages = $db->query($queryParams['collection'], $queryParams['filter']);
+        $pages = db()->query($queryParams['collection'], $queryParams['filter']);
 
         if (empty($pages)) {
             $this->notFound();
@@ -125,8 +120,7 @@ class PageController {
         // Determine template (support template hierarchy)
         $template = $this->getPageTemplate($page);
 
-        $view = new View();
-        $view->render($template, $data);
+        view($template, $data);
     }
 
     /**
@@ -134,7 +128,6 @@ class PageController {
      */
     public function post($params) {
         $app = Application::getInstance();
-        $db = new Database();
         $slug = isset($params['slug']) ? $params['slug'] : '';
 
         // Hook: allow modules to modify query
@@ -144,7 +137,7 @@ class PageController {
             'slug' => $slug
         ));
 
-        $posts = $db->query($queryParams['collection'], $queryParams['filter']);
+        $posts = db()->query($queryParams['collection'], $queryParams['filter']);
 
         if (empty($posts)) {
             $this->notFound();
@@ -168,8 +161,7 @@ class PageController {
         // Determine template (support template hierarchy)
         $template = $this->getPostTemplate($post);
 
-        $view = new View();
-        $view->render($template, $data);
+        view($template, $data);
     }
 
     /**
@@ -247,9 +239,8 @@ class PageController {
      */
     private function notFound() {
         http_response_code(404);
-        $view = new View();
         try {
-            $view->render('404', array('title' => '404 - Page Not Found'));
+            view('404', array('title' => '404 - Page Not Found'));
         } catch (Exception $e) {
             echo '<h1>404 - Page Not Found</h1>';
         }

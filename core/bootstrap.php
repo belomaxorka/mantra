@@ -46,6 +46,8 @@ require_once MANTRA_CORE . '/Psr/Log/LogLevel.php';
 require_once MANTRA_CORE . '/ModuleInterface.php';
 require_once MANTRA_CORE . '/ModuleType.php';
 require_once MANTRA_CORE . '/ModuleCapability.php';
+require_once MANTRA_CORE . '/AdminModule.php';
+require_once MANTRA_CORE . '/ContentAdminModule.php';
 
 // Load config and compute debug mode as early as possible
 require_once MANTRA_CORE . '/JsonFile.php';

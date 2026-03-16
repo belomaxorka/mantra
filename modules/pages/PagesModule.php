@@ -20,8 +20,7 @@ class PagesModule extends Module {
             $navItems = array();
         }
 
-        $db = new Database();
-        $pages = $db->query('pages', array(
+        $pages = db()->query('pages', array(
             'status' => 'published',
             'show_in_navigation' => true
         ));

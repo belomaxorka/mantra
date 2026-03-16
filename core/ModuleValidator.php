@@ -6,6 +6,31 @@
 class ModuleValidator {
     
     /**
+     * Check if module ID is valid
+     * @param string $id
+     * @return bool
+     */
+    public static function isValidModuleId($id) {
+        return is_string($id) && $id !== '' && preg_match('/^[a-z0-9-]+$/', $id);
+    }
+    
+    /**
+     * Assert module ID is valid (throws exception if not)
+     * @param string $id
+     * @param string|null $context
+     * @throws InvalidArgumentException
+     */
+    public static function assertValidModuleId($id, $context = null) {
+        if (!self::isValidModuleId($id)) {
+            $message = "Invalid module ID: '{$id}'";
+            if ($context) {
+                $message .= " ({$context})";
+            }
+            throw new InvalidArgumentException($message);
+        }
+    }
+    
+    /**
      * Validate module manifest
      * @param array $manifest
      * @return array Array of validation errors (empty if valid)
