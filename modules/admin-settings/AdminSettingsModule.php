@@ -30,7 +30,7 @@ class AdminSettingsModule extends Module
 
             $actions[] = array(
                 'id' => 'settings',
-                'title' => 'Settings',
+                'title' => 'admin-settings.title',
                 'icon' => 'bi-gear',
                 'url' => base_url('/admin/settings'),
                 'order' => 10,

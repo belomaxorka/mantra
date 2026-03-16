@@ -44,7 +44,7 @@ class AdminPostsModule extends ContentAdminModule {
         
         $this->registerQuickAction(array(
             'id' => 'new-post',
-            'title' => 'New Post',
+            'title' => 'admin-posts.new_post',
             'icon' => 'bi-file-earmark-plus',
             'url' => base_url('/admin/posts/new'),
             'order' => 25,

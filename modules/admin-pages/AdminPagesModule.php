@@ -46,7 +46,7 @@ class AdminPagesModule extends ContentAdminModule {
         
         $this->registerQuickAction(array(
             'id' => 'new-page',
-            'title' => 'New Page',
+            'title' => 'admin-pages.new',
             'icon' => 'bi-file-earmark-plus',
             'url' => base_url('/admin/pages/new'),
             'order' => 20,

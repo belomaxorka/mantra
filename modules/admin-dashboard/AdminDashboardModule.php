@@ -21,6 +21,17 @@ class AdminDashboardModule extends BaseAdminModule {
             $quickActions = array();
         }
 
+        // Translate quick action titles
+        foreach ($quickActions as &$action) {
+            if (is_array($action) && isset($action['title'])) {
+                $title = $action['title'];
+                if (is_string($title)) {
+                    $action['title'] = t($title);
+                }
+            }
+        }
+        unset($action);
+
         usort($quickActions, function($a, $b) {
             $orderA = isset($a['order']) ? (int)$a['order'] : 100;
             $orderB = isset($b['order']) ? (int)$b['order'] : 100;
