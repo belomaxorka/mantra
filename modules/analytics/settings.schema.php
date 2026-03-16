@@ -7,33 +7,33 @@ return array(
     'tabs' => array(
         array(
             'id' => 'general',
-            'title' => 'Analytics Services',
+            'title' => array('key' => 'analytics.settings.services', 'fallback' => 'Analytics Services'),
             'fields' => array(
                 array(
                     'path' => 'google_analytics_id',
                     'type' => 'text',
-                    'title' => 'Google Analytics ID',
-                    'help' => 'Your Google Analytics tracking ID (e.g., G-XXXXXXXXXX or UA-XXXXXXXXX-X)',
+                    'title' => array('key' => 'analytics.settings.google_analytics_id', 'fallback' => 'Google Analytics ID'),
+                    'help' => array('key' => 'analytics.settings.google_analytics_id.help', 'fallback' => 'Your Google Analytics tracking ID (e.g., G-XXXXXXXXXX or UA-XXXXXXXXX-X)'),
                     'default' => ''
                 ),
                 array(
                     'path' => 'yandex_metrika_id',
                     'type' => 'text',
-                    'title' => 'Yandex Metrika ID',
-                    'help' => 'Your Yandex Metrika counter ID (numeric)',
+                    'title' => array('key' => 'analytics.settings.yandex_metrika_id', 'fallback' => 'Yandex Metrika ID'),
+                    'help' => array('key' => 'analytics.settings.yandex_metrika_id.help', 'fallback' => 'Your Yandex Metrika counter ID (numeric)'),
                     'default' => ''
                 ),
             )
         ),
         array(
             'id' => 'custom',
-            'title' => 'Custom Code',
+            'title' => array('key' => 'analytics.settings.custom', 'fallback' => 'Custom Code'),
             'fields' => array(
                 array(
                     'path' => 'custom_code',
                     'type' => 'textarea',
-                    'title' => 'Custom Tracking Code',
-                    'help' => 'Add custom analytics or tracking scripts (will be inserted in footer)',
+                    'title' => array('key' => 'analytics.settings.custom_code', 'fallback' => 'Custom Tracking Code'),
+                    'help' => array('key' => 'analytics.settings.custom_code.help', 'fallback' => 'Add custom analytics or tracking scripts (will be inserted in footer)'),
                     'default' => ''
                 ),
             )
