@@ -39,12 +39,12 @@ if (!defined('MANTRA_UPLOADS')) {
 }
 
 // Load vendored PSR-3 interfaces (no Composer) - in subfolder, autoloader won't find them
-require_once MANTRA_CORE . '/Psr/Log/LoggerInterface.php';
-require_once MANTRA_CORE . '/Psr/Log/LogLevel.php';
+require_once MANTRA_CORE . '/classes/Psr/Log/LoggerInterface.php';
+require_once MANTRA_CORE . '/classes/Psr/Log/LogLevel.php';
 
 // Load config classes BEFORE autoloader (needed to read config and set up debug mode)
-require_once MANTRA_CORE . '/JsonFile.php';
-require_once MANTRA_CORE . '/Config.php';
+require_once MANTRA_CORE . '/classes/JsonFile.php';
+require_once MANTRA_CORE . '/classes/Config.php';
 $config = Config::bootstrap();
 $GLOBALS['MANTRA_CONFIG'] = $config;
 
@@ -56,9 +56,26 @@ if (!defined('MANTRA_DEBUG')) {
 spl_autoload_register(function($class) {
     $relative = str_replace("\0", '', $class);
     $relative = str_replace('\\', '/', $relative);
-    $coreFile = MANTRA_CORE . '/' . $relative . '.php';
-    if (file_exists($coreFile)) {
-        require_once $coreFile;
+    
+    // Try core/classes/ with full path (handles Http\Request, etc.)
+    $classFile = MANTRA_CORE . '/classes/' . $relative . '.php';
+    if (file_exists($classFile)) {
+        require_once $classFile;
+        return;
+    }
+    
+    // Try core/classes/Module/ for module-related classes
+    $moduleFile = MANTRA_CORE . '/classes/Module/' . $relative . '.php';
+    if (file_exists($moduleFile)) {
+        require_once $moduleFile;
+        return;
+    }
+    
+    // Try direct in core/classes/ (for classes without namespace-like structure)
+    $directFile = MANTRA_CORE . '/classes/' . basename($relative) . '.php';
+    if (file_exists($directFile)) {
+        require_once $directFile;
+        return;
     }
 });
 
