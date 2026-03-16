@@ -86,8 +86,11 @@ If you add tooling, prefer documenting the exact command(s) here.
 5. Fires hooks:
    - `system.init`
    - `routes.register` (modules attach routes to the router here)
-6. Creates `Router` and `dispatch()`es the request.
-7. Fires `system.shutdown`.
+6. Creates `Router` and registers routes:
+   - Module routes (via `routes.register` hook) - specific routes like `/admin/*`
+   - Core routes (via `registerCoreRoutes()`) - public content routes like `/`, `/page/{slug}`, `/post/{slug}`
+7. `dispatch()`es the request.
+8. Fires `system.shutdown`.
 
 ### Hooks
 
@@ -115,11 +118,7 @@ Modules commonly hook:
 
 Included modules (enabled by default in `core/Config.php`):
 
-- `admin` (depends on `users`)
-- `pages`
-- `media`
-- `users`
-- `editor`
+- `admin` - Admin panel for managing content and settings
 
 ### Routing
 
@@ -129,12 +128,24 @@ Included modules (enabled by default in `core/Config.php`):
   - strings in the form `"module:method"` which dispatches to the module instance.
 - Patterns support `{param}` path parameters.
 
+**Route registration order:**
+1. Module routes are registered first via the `routes.register` hook (e.g., `/admin/*`)
+2. Core public routes are registered last via `PageController` (e.g., `/`, `/page/{slug}`, `/post/{slug}`)
+
+This ensures modules can override default behavior when needed.
+
 ### Views / themes
 
 - `core/View.php` renders templates.
   - Theme templates: `themes/<active_theme>/templates/<template>.php`
   - Module templates fallback: `modules/<module>/views/<tpl>.php` via `"module:tpl"` template naming.
+  - Content templates are automatically wrapped in `layout.php` (unless using module template syntax)
   - After rendering, output is filtered through the `view.render` hook.
+
+**Architecture:**
+- **Core** (`core/PageController.php`) handles routing and business logic for public pages
+- **Themes** (`themes/*/templates/`) handle presentation and layout
+- **Modules** provide components/widgets that can be embedded in pages (not for routing public content)
 
 ### Persistence (flat-file DB)
 
