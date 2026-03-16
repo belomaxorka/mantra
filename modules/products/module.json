@@ -1,0 +1,8 @@
+{
+    "name": "products",
+    "version": "1.0.0",
+    "description": "Products module - demonstrates custom content types with ContentTypeRegistry",
+    "author": "Mantra CMS",
+    "homepage": "https://github.com/mantra-cms/mantra",
+    "dependencies": []
+}
