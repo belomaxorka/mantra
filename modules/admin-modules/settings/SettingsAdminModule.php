@@ -188,7 +188,11 @@ class SettingsAdminModule implements AdminSubmodule
                 continue;
             }
 
-            $meta = json_decode((string)file_get_contents($path), true);
+            try {
+                $meta = JsonFile::read($path);
+            } catch (JsonFileException $e) {
+                continue;
+            }
             $title = $dir;
             if (is_array($meta) && !empty($meta['name']) && is_string($meta['name'])) {
                 $title = (string)$meta['name'];
@@ -257,7 +261,11 @@ class SettingsAdminModule implements AdminSubmodule
 
         foreach (glob($base . '/*/theme.json') as $path) {
             $dir = basename(dirname($path));
-            $meta = json_decode((string)file_get_contents($path), true);
+            try {
+                $meta = JsonFile::read($path);
+            } catch (JsonFileException $e) {
+                continue;
+            }
             $name = $dir;
             if (is_array($meta) && !empty($meta['name']) && is_string($meta['name'])) {
                 $name = (string)$meta['name'];
@@ -326,8 +334,9 @@ class SettingsAdminModule implements AdminSubmodule
                 continue;
             }
 
-            $meta = json_decode((string)file_get_contents($path), true);
-            if (!is_array($meta)) {
+            try {
+                $meta = JsonFile::read($path);
+            } catch (JsonFileException $e) {
                 $meta = array();
             }
 
@@ -401,8 +410,9 @@ class SettingsAdminModule implements AdminSubmodule
                     continue;
                 }
 
-                $meta = json_decode((string)file_get_contents($path), true);
-                if (!is_array($meta)) {
+                try {
+                    $meta = JsonFile::read($path);
+                } catch (JsonFileException $e) {
                     $meta = array();
                 }
 
@@ -475,8 +485,9 @@ class SettingsAdminModule implements AdminSubmodule
                 continue;
             }
 
-            $meta = json_decode((string)file_get_contents($path), true);
-            if (!is_array($meta)) {
+            try {
+                $meta = JsonFile::read($path);
+            } catch (JsonFileException $e) {
                 $meta = array();
             }
 
@@ -639,9 +650,10 @@ class SettingsAdminModule implements AdminSubmodule
 
         $manifest = array();
         if (file_exists($manifestPath)) {
-            $tmp = json_decode((string)file_get_contents($manifestPath), true);
-            if (is_array($tmp)) {
-                $manifest = $tmp;
+            try {
+                $manifest = JsonFile::read($manifestPath);
+            } catch (JsonFileException $e) {
+                $manifest = array();
             }
         }
 
@@ -717,12 +729,14 @@ class SettingsAdminModule implements AdminSubmodule
             // Check if module has disableable: false policy
             $manifestPath = MANTRA_MODULES . '/' . $modId . '/module.json';
             if (file_exists($manifestPath)) {
-                $manifest = json_decode((string)file_get_contents($manifestPath), true);
-                if (is_array($manifest)) {
+                try {
+                    $manifest = JsonFile::read($manifestPath);
                     $policy = $this->adminModulePolicy($manifest);
                     if (empty($policy['disableable'])) {
                         return "Cannot disable module '{$modId}': protected by policy";
                     }
+                } catch (JsonFileException $e) {
+                    // Skip policy check if manifest is unreadable
                 }
             }
 
@@ -749,7 +763,11 @@ class SettingsAdminModule implements AdminSubmodule
             }
 
             // Check if dependencies are satisfied
-            $manifest = json_decode((string)file_get_contents($manifestPath), true);
+            try {
+                $manifest = JsonFile::read($manifestPath);
+            } catch (JsonFileException $e) {
+                return "Cannot read module manifest: '{$modId}'";
+            }
             if (is_array($manifest) && isset($manifest['dependencies']) && is_array($manifest['dependencies'])) {
                 foreach ($manifest['dependencies'] as $dep) {
                     if (!is_string($dep)) {

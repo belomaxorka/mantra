@@ -43,9 +43,10 @@ class AdminModule extends Module {
             $dir = basename(dirname($manifestPath));
             $this->assertValidAdminSubmoduleName($dir);
 
-            $manifest = json_decode((string)file_get_contents($manifestPath), true);
-            if (!is_array($manifest)) {
-                logger()->warning('Invalid admin submodule manifest', array('path' => $manifestPath));
+            try {
+                $manifest = JsonFile::read($manifestPath);
+            } catch (JsonFileException $e) {
+                logger()->warning('Invalid admin submodule manifest', array('path' => $manifestPath, 'error' => $e->getMessage()));
                 continue;
             }
 

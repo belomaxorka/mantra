@@ -101,9 +101,10 @@ class ModuleManager {
             }
 
             // Load manifest
-            $manifest = json_decode(file_get_contents($manifestPath), true);
-            if (!$manifest) {
-                logger()->error('Invalid module manifest', array('module' => $moduleName));
+            try {
+                $manifest = JsonFile::read($manifestPath);
+            } catch (JsonFileException $e) {
+                logger()->error('Invalid module manifest', array('module' => $moduleName, 'error' => $e->getMessage()));
                 return false;
             }
 
