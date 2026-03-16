@@ -57,11 +57,12 @@
                             <td>
                                 <?php
                                 $status = isset($post['status']) ? $post['status'] : 'draft';
-                                $badgeClass = $status === 'published' ? 'bg-success' : 'bg-secondary';
                                 ?>
-                                <span class="badge <?php echo $badgeClass; ?>">
-                                    <?php echo e(ucfirst($status)); ?>
-                                </span>
+                                <?php if ($status === 'published'): ?>
+                                    <span class="badge bg-success"><?php echo t('admin-posts.status_published'); ?></span>
+                                <?php else: ?>
+                                    <span class="badge bg-secondary"><?php echo t('admin-posts.status_draft'); ?></span>
+                                <?php endif; ?>
                             </td>
                             <td>
                                 <?php
