@@ -1,0 +1,20 @@
+AddDefaultCharset UTF-8
+
+<IfModule mod_rewrite.c>
+    # Enable rewrite rules
+    RewriteEngine on
+    
+    # Base directory
+    RewriteBase /
+    
+    # Deny direct access to sensitive directories
+    RewriteRule ^content/(users|settings)/.*$ - [R=404,L]
+    RewriteRule ^storage/(cache|logs)/.*$ - [R=404,L]
+    RewriteRule ^core/.*$ - [R=404,L]
+    RewriteRule ^modules/.*/lang/.*$ - [R=404,L]
+    
+    # All URL process by index.php
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*) index.php [PT,L]
+</IfModule>
