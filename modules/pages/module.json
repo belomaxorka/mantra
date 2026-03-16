@@ -1,0 +1,10 @@
+{
+    "id": "pages",
+    "name": "Pages",
+    "description": "Public pages integration - adds published pages to site navigation",
+    "version": "1.0.0",
+    "author": "Mantra CMS",
+    "main": "PagesModule.php",
+    "class": "PagesModule",
+    "requires": []
+}

@@ -45,9 +45,6 @@ class PagesAdminModule implements AdminSubmodule {
             return $actions;
         });
 
-        // Hook into theme navigation to add pages
-        app()->hooks()->register('theme.navigation', array($this, 'addPagesToNavigation'));
-
         if (is_object($admin) && method_exists($admin, 'adminRoute')) {
             $admin->adminRoute('GET', 'pages', array($this, 'listPages'));
             $admin->adminRoute('GET', 'pages/new', array($this, 'newPage'));
@@ -56,29 +53,6 @@ class PagesAdminModule implements AdminSubmodule {
             $admin->adminRoute('POST', 'pages/edit/{id}', array($this, 'updatePage'));
             $admin->adminRoute('POST', 'pages/delete/{id}', array($this, 'deletePage'));
         }
-    }
-
-    public function addPagesToNavigation($navItems) {
-        if (!is_array($navItems)) {
-            $navItems = array();
-        }
-
-        $db = new Database();
-        $pages = $db->query('pages', array(
-            'status' => 'published',
-            'show_in_navigation' => true
-        ));
-
-        foreach ($pages as $page) {
-            $navItems[] = array(
-                'id' => 'page-' . $page['slug'],
-                'title' => $page['title'],
-                'url' => base_url('/' . $page['slug']),
-                'order' => isset($page['navigation_order']) ? (int)$page['navigation_order'] : 50,
-            );
-        }
-
-        return $navItems;
     }
 
     public function listPages() {
