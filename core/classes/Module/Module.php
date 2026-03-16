@@ -222,4 +222,16 @@ abstract class Module implements ModuleInterface {
         $viewsPath = $this->getPath() . '/views';
         return is_dir($viewsPath) ? $viewsPath : null;
     }
+    
+    /**
+     * Resolve admin string (translate if needed)
+     * @param string $spec Translation key
+     * @return string
+     */
+    protected function resolveAdminString($spec) {
+        if (is_string($spec)) {
+            return t($spec);
+        }
+        return '';
+    }
 }
