@@ -29,14 +29,16 @@ if (file_exists(MANTRA_CONTENT . '/users')) {
 }
 
 // Handle form submission
+$selectedLanguage = 'en';
 if (request()->method() === 'POST') {
     $username = trim((string)request()->post('username', ''));
     $password = (string)request()->post('password', '');
     $siteName = trim((string)request()->post('site_name', MANTRA_PROJECT_INFO['name']));
     $language = (string)request()->post('language', 'en');
+    $selectedLanguage = $language;
 
     if (empty($username) || empty($password)) {
-        $error = 'Username and password are required';
+        $error = 'error_required_fields';
     } else {
         // Create directories
         $dirs = array(
@@ -91,7 +93,7 @@ if (request()->method() === 'POST') {
             $success = true;
             $adminUrl = rtrim($baseUrl, '/') . '/admin';
         } else {
-            $error = 'Failed to create user';
+            $error = 'error_create_user';
         }
     }
 }
@@ -133,8 +135,7 @@ if (request()->method() === 'POST') {
                             </div>
                         <?php else: ?>
                             <?php if (isset($error)): ?>
-                                <div class="alert alert-danger" role="alert">
-                                    <?php echo e($error); ?>
+                                <div class="alert alert-danger" role="alert" data-i18n="<?php echo e($error); ?>">
                                 </div>
                             <?php endif; ?>
 
@@ -147,8 +148,8 @@ if (request()->method() === 'POST') {
                                 <div class="mb-3">
                                     <label for="language" class="form-label" data-i18n="label_language">Language</label>
                                     <select class="form-select" id="language" name="language">
-                                        <option value="en">English</option>
-                                        <option value="ru">Русский</option>
+                                        <option value="en"<?php echo $selectedLanguage === 'en' ? ' selected' : ''; ?>>English</option>
+                                        <option value="ru"<?php echo $selectedLanguage === 'ru' ? ' selected' : ''; ?>>Русский</option>
                                     </select>
                                 </div>
 
@@ -186,7 +187,9 @@ if (request()->method() === 'POST') {
                 label_language: 'Language',
                 label_username: 'Admin Username',
                 label_password: 'Admin Password',
-                button_install: 'Install'
+                button_install: 'Install',
+                error_required_fields: 'Username and password are required',
+                error_create_user: 'Failed to create user'
             },
             ru: {
                 page_title: 'Установка <?php echo e(MANTRA_PROJECT_INFO['name']); ?>',
@@ -198,7 +201,9 @@ if (request()->method() === 'POST') {
                 label_language: 'Язык',
                 label_username: 'Имя администратора',
                 label_password: 'Пароль администратора',
-                button_install: 'Установить'
+                button_install: 'Установить',
+                error_required_fields: 'Имя пользователя и пароль обязательны',
+                error_create_user: 'Не удалось создать пользователя'
             }
         };
 
@@ -221,7 +226,8 @@ if (request()->method() === 'POST') {
         });
 
         // Set initial language on page load
-        const initialLang = document.getElementById('language').value || 'en';
+        const initialLang = '<?php echo e($selectedLanguage); ?>';
+        document.getElementById('language').value = initialLang;
         setLanguage(initialLang);
     </script>
 </body>
