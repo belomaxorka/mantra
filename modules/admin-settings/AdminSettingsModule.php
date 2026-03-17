@@ -120,6 +120,30 @@ class AdminSettingsModule extends Module
     }
 
     /**
+     * Resolve localized value (string or array with locale keys)
+     */
+    private function resolveLocalizedValue($value)
+    {
+        if (is_string($value)) {
+            return $value;
+        }
+
+        if (is_array($value)) {
+            $lang = config()->get('locale.default_language', 'en');
+            if (isset($value[$lang])) {
+                return (string)$value[$lang];
+            }
+            if (isset($value['en'])) {
+                return (string)$value['en'];
+            }
+            $first = reset($value);
+            return is_string($first) ? $first : '';
+        }
+
+        return '';
+    }
+
+    /**
      * Get list of modules with settings (id => title)
      */
     private function getModulesWithSettings()
@@ -218,7 +242,7 @@ class AdminSettingsModule extends Module
                 'name' => isset($meta['name']) && is_string($meta['name']) ? (string)$meta['name'] : $dir,
                 'version' => isset($meta['version']) && is_string($meta['version']) ? (string)$meta['version'] : '',
                 'author' => isset($meta['author']) && is_string($meta['author']) ? (string)$meta['author'] : '',
-                'description' => isset($meta['description']) ? $meta['description'] : '',
+                'description' => isset($meta['description']) ? $this->resolveLocalizedValue($meta['description']) : '',
             );
         }
 

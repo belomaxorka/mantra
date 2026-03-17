@@ -90,16 +90,7 @@
                       <?php if (!empty($themeInfo['description'])): ?>
                         <div class="mb-0">
                           <strong><?php echo e(t('admin-settings.theme.description')); ?>:</strong>
-                          <?php
-                            $desc = $themeInfo['description'];
-                            if (is_array($desc)) {
-                              $lang = config()->get('locale.default_language', 'en');
-                              $descText = isset($desc[$lang]) ? $desc[$lang] : (isset($desc['en']) ? $desc['en'] : reset($desc));
-                            } else {
-                              $descText = (string)$desc;
-                            }
-                            echo e($descText);
-                          ?>
+                          <?php echo e($themeInfo['description']); ?>
                         </div>
                       <?php endif; ?>
                     </div>
