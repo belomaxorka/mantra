@@ -105,16 +105,16 @@
 
                         <div class="text-muted small mt-2">
                           <?php if (!empty($m['type'])): ?>
-                            <span class="me-3"><strong><?php echo e(t('admin.modules.type')); ?>:</strong> <?php echo e(t('admin.modules.type.' . (string)$m['type'])); ?></span>
+                            <span class="me-1"><strong><?php echo e(t('admin.modules.type')); ?>:</strong> <?php echo e(t('admin.modules.type.' . (string)$m['type'])); ?></span>
                           <?php endif; ?>
                           <?php if (!empty($m['version'])): ?>
-                            <span class="me-3"><strong>v</strong> <?php echo e((string)$m['version']); ?></span>
+                            <span class="me-1">v<?php echo e((string)$m['version']); ?></span>
                           <?php endif; ?>
                           <?php if (!empty($m['author'])): ?>
-                            <span class="me-3"><strong><?php echo e(t('admin.modules.author')); ?></strong> <?php echo e((string)$m['author']); ?></span>
+                            <span class="me-1"><strong><?php echo e(t('admin.modules.author')); ?></strong>: <?php echo e((string)$m['author']); ?></span>
                           <?php endif; ?>
                           <?php if ($homepage !== ''): ?>
-                            <span class="me-3"><strong><?php echo e(t('admin.modules.homepage')); ?></strong> <a href="<?php echo e($homepage); ?>" target="_blank" rel="noopener noreferrer"><?php echo e($homepage); ?></a></span>
+                            <span class="me-1"><strong><?php echo e(t('admin.modules.homepage')); ?></strong> <a href="<?php echo e($homepage); ?>" target="_blank" rel="noopener noreferrer"><?php echo e($homepage); ?></a></span>
                           <?php endif; ?>
                         </div>
 
