@@ -14,6 +14,7 @@ return array(
 
     // Layout
     'admin.layout.signed_in_as' => 'Вы вошли как',
+    'admin.layout.view_site' => 'Перейти на сайт',
     'admin.layout.logout' => 'Выйти',
 
     // Common actions (universal translations shared across all admin modules)

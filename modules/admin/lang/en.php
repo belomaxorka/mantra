@@ -14,6 +14,7 @@ return array(
 
     // Layout
     'admin.layout.signed_in_as' => 'Signed in as',
+    'admin.layout.view_site' => 'View Site',
     'admin.layout.logout' => 'Logout',
 
     // Common actions (universal translations shared across all admin modules)

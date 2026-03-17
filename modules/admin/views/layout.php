@@ -167,7 +167,14 @@
         <?php echo t('admin.layout.signed_in_as'); ?> <strong><?php echo e($user['username']); ?></strong>
       <?php endif; ?>
       <div class="mt-2">
-        <a href="<?php echo e(base_url('/admin/logout')); ?>" class="link-secondary text-decoration-none"><?php echo t('admin.layout.logout'); ?></a>
+        <a href="<?php echo e(base_url('/')); ?>" class="link-secondary text-decoration-none" target="_blank">
+          <i class="bi bi-box-arrow-up-right me-1"></i><?php echo t('admin.layout.view_site'); ?>
+        </a>
+      </div>
+      <div class="mt-2">
+        <a href="<?php echo e(base_url('/admin/logout')); ?>" class="link-secondary text-decoration-none">
+          <i class="bi bi-box-arrow-right me-1"></i><?php echo t('admin.layout.logout'); ?>
+        </a>
       </div>
     </div>
   </aside>
