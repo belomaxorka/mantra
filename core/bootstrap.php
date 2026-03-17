@@ -53,24 +53,24 @@ if (!defined('MANTRA_DEBUG')) {
 }
 
 // Autoloader for core classes (Logger/ErrorHandler/Application/Module/etc.)
-spl_autoload_register(function($class) {
+spl_autoload_register(function ($class) {
     $relative = str_replace("\0", '', $class);
     $relative = str_replace('\\', '/', $relative);
-    
+
     // Try core/classes/ with full path (handles Http\Request, etc.)
     $classFile = MANTRA_CORE . '/classes/' . $relative . '.php';
     if (file_exists($classFile)) {
         require_once $classFile;
         return;
     }
-    
+
     // Try core/classes/Module/ for module-related classes
     $moduleFile = MANTRA_CORE . '/classes/Module/' . $relative . '.php';
     if (file_exists($moduleFile)) {
         require_once $moduleFile;
         return;
     }
-    
+
     // Try direct in core/classes/ (for classes without namespace-like structure)
     $directFile = MANTRA_CORE . '/classes/' . basename($relative) . '.php';
     if (file_exists($directFile)) {
@@ -79,8 +79,17 @@ spl_autoload_register(function($class) {
     }
 });
 
-// Load helper functions (logger(), config(), base_url(), ...)
-require_once MANTRA_CORE . '/helpers.php';
+// Load helper functions from core/helpers/ directory
+$helpersDir = MANTRA_CORE . '/helpers';
+if (is_dir($helpersDir)) {
+    $helperFiles = glob($helpersDir . '/*.php');
+    if ($helperFiles !== false) {
+        sort($helperFiles);
+        foreach ($helperFiles as $helperFile) {
+            require_once $helperFile;
+        }
+    }
+}
 
 // Register centralized PHP error handling (logs to channel "php")
 ErrorHandler::register(new Logger('php', array(

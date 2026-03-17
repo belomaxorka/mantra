@@ -2,12 +2,12 @@
 
 /**
  * UI Schema for global config settings (Admin -> Settings -> General).
- * 
+ *
  * IMPORTANT: This is NOT the actual config file!
  * - This file defines the UI form structure (fields, tabs, types, defaults)
  * - Actual config values are stored in: content/settings/config.json
  * - Config is edited through the admin panel or programmatically via ConfigSettings class
- * 
+ *
  * Options for dynamic selects and widgets (themes/modules list) are injected at runtime by AdminModule.
  */
 
