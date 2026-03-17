@@ -69,7 +69,9 @@
 <div class="admin-shell d-flex">
   <aside class="admin-sidebar border-end bg-body-tertiary p-3">
     <div class="d-flex align-items-center mb-3">
-      <span class="fs-5 fw-semibold">Mantra</span>
+      <a href="<?php echo e(base_url('/admin')); ?>" class="text-decoration-none text-dark">
+        <span class="fs-5 fw-semibold"><?php echo e(config('site.name', 'My Site')); ?></span>
+      </a>
     </div>
 
     <?php
@@ -176,6 +178,22 @@
           <i class="bi bi-box-arrow-right me-1"></i><?php echo t('admin.layout.logout'); ?>
         </a>
       </div>
+      
+      <?php if (defined('MANTRA_PROJECT_INFO')): ?>
+        <?php $projectInfo = MANTRA_PROJECT_INFO; ?>
+        <hr class="my-2">
+        <div class="text-muted" style="font-size: 0.85rem;">
+          <div><strong><?php echo e($projectInfo['name']); ?></strong> v<?php echo e($projectInfo['version']); ?></div>
+          <div class="mt-1">Released: <?php echo e($projectInfo['release_date']); ?></div>
+          <?php if (!empty($projectInfo['github'])): ?>
+            <div class="mt-1">
+              <a href="<?php echo e($projectInfo['github']); ?>" class="link-secondary text-decoration-none" target="_blank">
+                <i class="bi bi-github me-1"></i>GitHub
+              </a>
+            </div>
+          <?php endif; ?>
+        </div>
+      <?php endif; ?>
     </div>
   </aside>
 

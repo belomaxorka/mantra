@@ -1,5 +1,5 @@
 <div class="home">
-    <h1>Welcome to <?php echo $this->escape(config('site.name', 'Mantra CMS')); ?></h1>
+    <h1>Welcome to <?php echo $this->escape(config('site.name', MANTRA_PROJECT_INFO['name'])); ?></h1>
 
     <?php if (!empty($posts)): ?>
         <div class="posts">

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo isset($title) ? $this->escape($title) : 'Mantra CMS'; ?></title>
+    <title><?php echo isset($title) ? $this->escape($title) : e(MANTRA_PROJECT_INFO['name']); ?></title>
     <link href="/core/assets/bootstrap/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="<?php echo $this->asset('css/style.css'); ?>">
     <?php
@@ -21,7 +21,7 @@
     <header class="bg-dark text-white">
         <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
             <div class="container">
-                <a class="navbar-brand" href="<?php echo base_url(); ?>">Mantra CMS</a>
+                <a class="navbar-brand" href="<?php echo base_url(); ?>"><?php echo e(MANTRA_PROJECT_INFO['name']); ?></a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                     <span class="navbar-toggler-icon"></span>
                 </button>
@@ -147,7 +147,7 @@
                 echo '</div>';
             }
             ?>
-            <p class="text-muted mb-0">&copy; <?php echo date('Y'); ?> Mantra CMS</p>
+            <p class="text-muted mb-0">&copy; <?php echo date('Y'); ?> <?php echo e(MANTRA_PROJECT_INFO['name']); ?></p>
         </div>
     </footer>
 

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title><?php echo t('admin.login.title'); ?> - Mantra CMS</title>
+  <title><?php echo t('admin.login.title'); ?> - <?php echo e(MANTRA_PROJECT_INFO['name']); ?></title>
 
   <link href="/core/assets/bootstrap/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
@@ -27,7 +27,7 @@
     <div class="card shadow">
       <div class="card-body p-4">
         <div class="text-center mb-4">
-          <h1 class="h3 fw-bold">Mantra CMS</h1>
+          <h1 class="h3 fw-bold"><?php echo e(MANTRA_PROJECT_INFO['name']); ?></h1>
           <p class="text-muted"><?php echo t('admin.login.subtitle'); ?></p>
         </div>
 

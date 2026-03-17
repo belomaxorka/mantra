@@ -36,7 +36,7 @@ class SeoModule extends Module {
         $settings = module_settings('seo');
 
         // Get current page/post data from request
-        $title = config('site.name', 'Mantra CMS');
+        $title = config('site.name', MANTRA_PROJECT_INFO['name']);
         $description = $settings->get('meta.default_description', 'A powerful flat-file CMS');
         $keywords = $settings->get('meta.default_keywords', '');
 
@@ -47,7 +47,7 @@ class SeoModule extends Module {
         }
         $ogSiteName = $settings->get('og.site_name', '');
         if (empty($ogSiteName)) {
-            $ogSiteName = config('site.name', 'Mantra CMS');
+            $ogSiteName = config('site.name', MANTRA_PROJECT_INFO['name']);
         }
 
         // Twitter

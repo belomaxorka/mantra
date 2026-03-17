@@ -10,6 +10,16 @@ if (version_compare(PHP_VERSION, '5.5.0', '<')) {
     die('Mantra CMS requires PHP 5.5.0 or higher. Your version: ' . PHP_VERSION);
 }
 
+// Project information
+if (!defined('MANTRA_PROJECT_INFO')) {
+    define('MANTRA_PROJECT_INFO', array(
+        'name' => 'Mantra CMS',
+        'version' => '1.0.0',
+        'github' => 'https://github.com/yourusername/mantra-cms',
+        'release_date' => '2026-03-17'
+    ));
+}
+
 // Detect CLI mode
 if (!defined('MANTRA_CLI')) {
     define('MANTRA_CLI', (PHP_SAPI === 'cli'));

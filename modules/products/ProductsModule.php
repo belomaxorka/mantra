@@ -74,7 +74,7 @@ class ProductsModule extends Module {
 
         view('products', array(
             'products' => $products,
-            'title' => 'Products - ' . config('site.name', 'Mantra CMS'),
+            'title' => 'Products - ' . config('site.name', MANTRA_PROJECT_INFO['name']),
             '_module' => 'products'
         ));
     }
@@ -109,7 +109,7 @@ class ProductsModule extends Module {
         // Prepare view data
         $data = array(
             'product' => $product,
-            'title' => $product['title'] . ' - ' . config('site.name', 'Mantra CMS')
+            'title' => $product['title'] . ' - ' . config('site.name', MANTRA_PROJECT_INFO['name'])
         );
 
         // Hook: allow modules to add data to view
@@ -138,7 +138,7 @@ class ProductsModule extends Module {
         view('products', array(
             'products' => $products,
             'category' => $category,
-            'title' => ucfirst($category) . ' Products - ' . config('site.name', 'Mantra CMS'),
+            'title' => ucfirst($category) . ' Products - ' . config('site.name', MANTRA_PROJECT_INFO['name']),
             '_module' => 'products'
         ));
     }
