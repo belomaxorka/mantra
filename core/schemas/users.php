@@ -27,7 +27,7 @@ return array(
         ),
         'email' => array(
             'type' => 'email',
-            'required' => true,
+            'required' => false,
             'maxLength' => 255
         ),
         'password' => array(

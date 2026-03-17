@@ -32,7 +32,6 @@ if (file_exists(MANTRA_CONTENT . '/users')) {
 if (request()->method() === 'POST') {
     $username = trim((string)request()->post('username', ''));
     $password = (string)request()->post('password', '');
-    $email = trim((string)request()->post('email', ''));
     $siteName = trim((string)request()->post('site_name', MANTRA_PROJECT_INFO['name']));
     $language = (string)request()->post('language', 'en');
 
@@ -84,7 +83,6 @@ if (request()->method() === 'POST') {
         
         $userData = array(
             'username' => $username,
-            'email' => $email,
             'password' => $auth->hashPassword($password),
             'role' => 'admin'
         );
@@ -160,11 +158,6 @@ if (request()->method() === 'POST') {
                                 </div>
 
                                 <div class="mb-3">
-                                    <label for="email" class="form-label" data-i18n="label_email">Admin Email</label>
-                                    <input type="email" class="form-control" id="email" name="email" required>
-                                </div>
-
-                                <div class="mb-3">
                                     <label for="password" class="form-label" data-i18n="label_password">Admin Password</label>
                                     <input type="password" class="form-control" id="password" name="password" required>
                                 </div>
@@ -192,7 +185,6 @@ if (request()->method() === 'POST') {
                 label_site_name: 'Site Name',
                 label_language: 'Language',
                 label_username: 'Admin Username',
-                label_email: 'Admin Email',
                 label_password: 'Admin Password',
                 button_install: 'Install'
             },
@@ -205,7 +197,6 @@ if (request()->method() === 'POST') {
                 label_site_name: 'Название сайта',
                 label_language: 'Язык',
                 label_username: 'Имя администратора',
-                label_email: 'Email администратора',
                 label_password: 'Пароль администратора',
                 button_install: 'Установить'
             }
