@@ -6,8 +6,8 @@
  * Provides:
  * - shared/exclusive locking via a dedicated .lock file
  * - atomic writes (tmp + rename)
- * - rotating backups (file.json.bak.1, .bak.2, ...)
- * - optional recovery from backups when JSON is corrupted
+ * - file size validation
+ * - improved error handling
  */
 class JsonFileException extends Exception
 {
@@ -27,24 +27,27 @@ class JsonFileException extends Exception
 
 class JsonFile
 {
-    const DEFAULT_BACKUP_COUNT = 5;
+    const MAX_FILE_SIZE = 10485760; // 10MB
 
     /**
      * Read and decode a JSON file.
-     *
-     * If the JSON is corrupted, this will try to recover from backups and will
-     * log a warning (when logger() is available).
      *
      * @return array
      * @throws JsonFileException
      */
     public static function read($path, $options = array())
     {
-        $backupCount = isset($options['backupCount']) ? (int)$options['backupCount'] : self::DEFAULT_BACKUP_COUNT;
-        $recover = array_key_exists('recover', $options) ? (bool)$options['recover'] : true;
-
         if (!file_exists($path)) {
             throw new JsonFileException('JSON file not found', $path);
+        }
+
+        // Validate file size before reading
+        $size = @filesize($path);
+        if ($size === false) {
+            throw new JsonFileException('Failed to get file size', $path);
+        }
+        if ($size > self::MAX_FILE_SIZE) {
+            throw new JsonFileException('JSON file exceeds maximum size (' . self::MAX_FILE_SIZE . ' bytes)', $path);
         }
 
         $lockHandle = self::openLock($path);
@@ -60,41 +63,10 @@ class JsonFile
             }
 
             $data = self::decode($raw, $path);
-            flock($lockHandle, LOCK_UN);
-            fclose($lockHandle);
             return $data;
-        } catch (JsonFileException $e) {
-            // Try recovery from backups.
-            if (!$recover) {
-                flock($lockHandle, LOCK_UN);
-                fclose($lockHandle);
-                throw $e;
-            }
-
-            $recovered = self::tryRecoverFromBackups($path, $backupCount);
-            if ($recovered !== null) {
-                self::logWarning('Corrupted JSON recovered from backup', array(
-                    'path' => $path,
-                    'recovered_from' => $recovered['from']
-                ));
-
-                // Write recovered content back as the main file.
-                // Use the existing shared lock handle: upgrade is not supported,
-                // so release and re-acquire exclusive lock.
-                flock($lockHandle, LOCK_UN);
-                fclose($lockHandle);
-
-                self::write($path, $recovered['data'], array(
-                    'backupCount' => $backupCount,
-                    'skipBackup' => true // backup already contains last-known-good
-                ));
-
-                return $recovered['data'];
-            }
-
+        } finally {
             flock($lockHandle, LOCK_UN);
             fclose($lockHandle);
-            throw $e;
         }
     }
 
@@ -106,14 +78,19 @@ class JsonFile
      */
     public static function write($path, $data, $options = array())
     {
-        $backupCount = isset($options['backupCount']) ? (int)$options['backupCount'] : self::DEFAULT_BACKUP_COUNT;
-        $skipBackup = !empty($options['skipBackup']);
-
         $dir = dirname($path);
         if (!is_dir($dir)) {
             if (!mkdir($dir, 0755, true) && !is_dir($dir)) {
                 throw new JsonFileException('Failed to create directory for JSON file', $path);
             }
+        }
+
+        // Encode first to validate before acquiring lock
+        $json = self::encode($data, $path);
+        
+        // Validate size before writing
+        if (strlen($json) > self::MAX_FILE_SIZE) {
+            throw new JsonFileException('JSON data exceeds maximum size (' . self::MAX_FILE_SIZE . ' bytes)', $path);
         }
 
         $lockHandle = self::openLock($path);
@@ -123,64 +100,30 @@ class JsonFile
         }
 
         try {
-            // Backup current file before overwriting.
-            if (!$skipBackup && file_exists($path)) {
-                self::rotateBackups($path, $backupCount);
-                $bak1 = self::backupPath($path, 1);
-                if (!@copy($path, $bak1)) {
-                    // Backup failure shouldn't silently pass.
-                    throw new JsonFileException('Failed to create JSON backup', $path);
-                }
-            }
-
-            $json = self::encode($data, $path);
-
             $tmp = $path . '.tmp.' . self::randomSuffix();
-            $bytes = file_put_contents($tmp, $json);
+            $bytes = file_put_contents($tmp, $json, LOCK_EX);
             if ($bytes === false) {
                 throw new JsonFileException('Failed to write temp JSON file', $tmp);
             }
 
-            // Replace destination as safely as possible across platforms.
-            // - On POSIX, rename() over an existing file is atomic.
-            // - On Windows, rename() fails if the destination exists.
-            if (@rename($tmp, $path)) {
-                // ok
-            } else {
-                $old = null;
-                if (file_exists($path)) {
-                    $old = $path . '.old.' . self::randomSuffix();
-                    if (!@rename($path, $old)) {
-                        @unlink($tmp);
-                        throw new JsonFileException('Failed to rotate existing JSON file before replace', $path);
-                    }
-                }
-
-                if (!@rename($tmp, $path)) {
-                    // Restore old file if we moved it.
-                    if ($old && file_exists($old)) {
-                        @rename($old, $path);
-                    }
+            // Atomic replace - handle Windows compatibility
+            if (DIRECTORY_SEPARATOR === '\\' && file_exists($path)) {
+                // Windows: delete target first
+                if (!@unlink($path)) {
                     @unlink($tmp);
-                    throw new JsonFileException('Failed to replace JSON file', $path);
-                }
-
-                if ($old && file_exists($old)) {
-                    @unlink($old);
+                    throw new JsonFileException('Failed to remove existing JSON file for replacement', $path);
                 }
             }
 
-            flock($lockHandle, LOCK_UN);
-            fclose($lockHandle);
+            if (!@rename($tmp, $path)) {
+                @unlink($tmp);
+                throw new JsonFileException('Failed to replace JSON file', $path);
+            }
+
             return true;
-        } catch (Exception $e) {
+        } finally {
             flock($lockHandle, LOCK_UN);
             fclose($lockHandle);
-
-            if ($e instanceof JsonFileException) {
-                throw $e;
-            }
-            throw new JsonFileException($e->getMessage(), $path, 0, $e);
         }
     }
 
@@ -235,55 +178,42 @@ class JsonFile
         return str_replace('.', '', uniqid('', true));
     }
 
-    private static function backupPath($path, $index)
+    /**
+     * Clean up orphaned lock files older than specified time
+     * 
+     * @param string $directory Directory to clean
+     * @param int $maxAge Maximum age in seconds (default: 1 hour)
+     * @return int Number of files cleaned
+     */
+    public static function cleanOrphanedLocks($directory, $maxAge = 3600)
     {
-        return $path . '.bak.' . (int)$index;
-    }
-
-    private static function rotateBackups($path, $backupCount)
-    {
-        if ($backupCount <= 0) {
-            return;
-        }
-
-        for ($i = $backupCount; $i >= 2; $i--) {
-            $from = self::backupPath($path, $i - 1);
-            $to = self::backupPath($path, $i);
-            if (file_exists($from)) {
-                // Best-effort rotation.
-                @rename($from, $to);
-            }
-        }
-
-        // .bak.1 is created by copy() during write.
-    }
-
-    private static function tryRecoverFromBackups($path, $backupCount)
-    {
-        if ($backupCount <= 0) {
-            return null;
-        }
-
-        for ($i = 1; $i <= $backupCount; $i++) {
-            $bak = self::backupPath($path, $i);
-            if (!file_exists($bak)) {
+        $cleaned = 0;
+        $pattern = $directory . '/*.lock';
+        
+        foreach (glob($pattern) as $lockFile) {
+            if (!file_exists($lockFile)) {
                 continue;
             }
-
-            $raw = file_get_contents($bak);
-            if ($raw === false) {
-                continue;
-            }
-
-            try {
-                $data = self::decode($raw, $bak);
-                return array('from' => $bak, 'data' => $data);
-            } catch (JsonFileException $e) {
-                // try next
+            
+            $age = time() - filemtime($lockFile);
+            if ($age > $maxAge) {
+                // Try to acquire exclusive lock - if we can, it's orphaned
+                $handle = @fopen($lockFile, 'c');
+                if ($handle !== false) {
+                    if (flock($handle, LOCK_EX | LOCK_NB)) {
+                        flock($handle, LOCK_UN);
+                        fclose($handle);
+                        if (@unlink($lockFile)) {
+                            $cleaned++;
+                        }
+                    } else {
+                        fclose($handle);
+                    }
+                }
             }
         }
-
-        return null;
+        
+        return $cleaned;
     }
 
     private static function logWarning($message, $context = array())
