@@ -1,7 +1,7 @@
 <?php
 /**
  * ContentTypeRegistry - Register and manage custom content types
- * Allows modules to register new content types (products, events, etc.)
+ * Allows modules to register new content types (events, etc.)
  */
 
 class ContentTypeRegistry {

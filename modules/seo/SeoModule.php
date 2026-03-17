@@ -122,18 +122,6 @@ class SeoModule extends Module {
                 'title' => $data['post']['title'],
                 'url' => null
             );
-        } elseif (isset($data['product'])) {
-            $breadcrumbs[] = array('title' => 'Products', 'url' => base_url('/products'));
-            if (isset($data['product']['category'])) {
-                $breadcrumbs[] = array(
-                    'title' => ucfirst($data['product']['category']),
-                    'url' => base_url('/products/category/' . $data['product']['category'])
-                );
-            }
-            $breadcrumbs[] = array(
-                'title' => $data['product']['title'],
-                'url' => null
-            );
         }
 
         $data['breadcrumbs'] = $breadcrumbs;

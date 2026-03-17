@@ -137,7 +137,6 @@ Included modules (enabled by default in `core/Config.php`):
 **Example modules** (not enabled by default):
 - `seo` - SEO optimization with meta tags, Open Graph, breadcrumbs (see `modules/seo/`)
 - `analytics` - Google Analytics and Yandex Metrika integration (see `modules/analytics/`)
-- `products` - Custom content type example with products (see `modules/products/`)
 - `example-integration` - Demonstrates integration points (navigation, footer, admin sidebar) (see `modules/example-integration/`)
 
 **Creating modules:**
