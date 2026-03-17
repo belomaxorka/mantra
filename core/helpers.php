@@ -497,18 +497,6 @@ function t($key, $params = array())
 }
 
 /**
- * Get translation manager instance
- */
-function translator()
-{
-    static $translator = null;
-    if ($translator === null) {
-        $translator = new TranslationManager();
-    }
-    return $translator;
-}
-
-/**
  * Render widget/component
  *
  * @param string $name Widget name (e.g., "sidebar", "module:widget")
