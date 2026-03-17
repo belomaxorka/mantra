@@ -120,8 +120,19 @@ class Database {
         }
 
         // Add metadata
+        // Preserve created_at from existing document if updating
         if (!isset($data['created_at'])) {
-            $data['created_at'] = date('Y-m-d H:i:s');
+            $driver = $this->getDriver($collection);
+            if ($driver->exists($collection, $id)) {
+                $existing = $driver->read($collection, $id);
+                if ($existing && isset($existing['created_at'])) {
+                    $data['created_at'] = $existing['created_at'];
+                } else {
+                    $data['created_at'] = date('Y-m-d H:i:s');
+                }
+            } else {
+                $data['created_at'] = date('Y-m-d H:i:s');
+            }
         }
         $data['updated_at'] = date('Y-m-d H:i:s');
 

@@ -771,6 +771,7 @@ class DatabaseTest {
         echo "\n--- Test: Query - Basic Collection Read ---\n";
         
         $this->createTestSchema('test_query', array(
+            'version' => 1,
             'defaults' => array('name' => ''),
             'fields' => array(
                 'name' => array('type' => 'string', 'required' => true)
