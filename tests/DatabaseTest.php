@@ -1480,9 +1480,8 @@ PHP;
 
         $readUpdated = $db->read('test_metadata_override', $id);
 
-        // On update, if created_at is provided in data, it gets written (not preserved from existing)
-        // This is current behavior - created_at can be overridden if explicitly provided
-        $this->assert($readUpdated['created_at'] === $newCustomCreatedAt, 'Provided created_at is written on update');
+        // On update, created_at is immutable - original value is preserved, ignoring provided value
+        $this->assert($readUpdated['created_at'] === $customCreatedAt, 'Original created_at preserved on update (provided value ignored)');
         $this->assert($readUpdated['updated_at'] > $read['updated_at'], 'updated_at updated to current time');
     }
 
@@ -1528,9 +1527,8 @@ PHP;
         $filterTime = microtime(true) - $startTime;
 
         $this->assert(count($filtered) === 10, 'Filtered query returns correct count');
-        // Note: Current sorting uses strcmp() which does string comparison, not numeric
-        // So numeric sorting may not work as expected for integer fields
-        $this->assert(isset($filtered[0]['value']), 'Sorted results contain value field');
+        $this->assert($filtered[0]['value'] === $itemCount, 'Numeric sorting works correctly (desc order)');
+        $this->assert($filtered[9]['value'] === ($itemCount - 9), 'Numeric sorting order is correct');
         $this->assert($filterTime < 5, 'Filtered query completes in reasonable time');
 
         // Individual reads
