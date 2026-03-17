@@ -218,7 +218,7 @@ class AdminSettingsModule extends Module
                 'name' => isset($meta['name']) && is_string($meta['name']) ? (string)$meta['name'] : $dir,
                 'version' => isset($meta['version']) && is_string($meta['version']) ? (string)$meta['version'] : '',
                 'author' => isset($meta['author']) && is_string($meta['author']) ? (string)$meta['author'] : '',
-                'description' => isset($meta['description']) ? $this->resolveLocalizedValue($meta['description']) : '',
+                'description' => isset($meta['description']) ? resolve_localized($meta['description']) : '',
             );
         }
 
