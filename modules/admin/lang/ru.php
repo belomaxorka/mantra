@@ -44,6 +44,14 @@ return array(
     'admin.modules.settings' => 'Настройки',
     'admin.modules.delete' => 'Удалить',
     'admin.modules.delete_confirm' => 'Вы уверены, что хотите удалить этот модуль?',
+    'admin.modules.type' => 'Тип',
+    'admin.modules.type.core' => 'Ядро',
+    'admin.modules.type.feature' => 'Функция',
+    'admin.modules.type.admin' => 'Админ',
+    'admin.modules.type.integration' => 'Интеграция',
+    'admin.modules.type.theme' => 'Тема',
+    'admin.modules.type.utility' => 'Утилита',
+    'admin.modules.type.custom' => 'Пользовательский',
 
     // Sidebar groups (shared across all admin modules)
     'admin.sidebar.group.general' => 'Общее',

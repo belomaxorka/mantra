@@ -4,7 +4,6 @@
   "description": "SEO optimization - meta tags, Open Graph, Twitter Cards, and breadcrumbs",
   "version": "1.0.0",
   "author": "Mantra CMS",
-  "homepage": "https://github.com/mantra-cms/mantra",
   "license": "MIT",
   "type": "utility",
   "capabilities": [

@@ -104,6 +104,9 @@
                         </div>
 
                         <div class="text-muted small mt-2">
+                          <?php if (!empty($m['type'])): ?>
+                            <span class="me-3"><strong><?php echo e(t('admin.modules.type')); ?>:</strong> <?php echo e(t('admin.modules.type.' . (string)$m['type'])); ?></span>
+                          <?php endif; ?>
                           <?php if (!empty($m['version'])): ?>
                             <span class="me-3"><strong>v</strong> <?php echo e((string)$m['version']); ?></span>
                           <?php endif; ?>

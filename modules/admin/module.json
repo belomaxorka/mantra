@@ -4,7 +4,6 @@
   "description": "Core admin panel functionality",
   "version": "1.0.0",
   "author": "Mantra CMS",
-  "homepage": "https://github.com/mantra-cms/mantra",
   "license": "MIT",
   "type": "core",
   "capabilities": [

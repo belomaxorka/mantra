@@ -253,6 +253,7 @@ class AdminSettingsModule extends Module
                 $author = $module->getAuthor();
                 $homepage = $module->getHomepage();
                 $description = $module->getDescription();
+                $type = $module->getType();
                 $hasSettings = $module->hasSettings();
                 $canDisable = $module->isDisableable();
                 $canDelete = $module->isDeletable();
@@ -263,12 +264,12 @@ class AdminSettingsModule extends Module
                 $author = $manifest['author'] ?? '';
                 $homepage = $manifest['homepage'] ?? '';
                 $description = $manifest['description'] ?? '';
-                $hasSettings = file_exists($moduleData['path'] . '/settings.schema.php');
-                
-                // Check type for disableable/deletable
                 $type = $manifest['type'] ?? 'custom';
+                $hasSettings = file_exists($moduleData['path'] . '/settings.schema.php');
+
+                // Check type for disableable/deletable
                 $adminConfig = $manifest['admin'] ?? array();
-                
+
                 if ($type === ModuleType::CORE) {
                     $canDisable = false;
                     $canDelete = false;
@@ -310,6 +311,7 @@ class AdminSettingsModule extends Module
                 'author' => $author,
                 'homepage' => $homepage,
                 'description' => $description,
+                'type' => $type,
                 'enabled' => $isEnabled,
                 'has_settings' => $hasSettings,
                 'disableable' => $canDisable,

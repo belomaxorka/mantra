@@ -44,6 +44,14 @@ return array(
     'admin.modules.settings' => 'Settings',
     'admin.modules.delete' => 'Delete',
     'admin.modules.delete_confirm' => 'Are you sure you want to delete this module?',
+    'admin.modules.type' => 'Type',
+    'admin.modules.type.core' => 'Core',
+    'admin.modules.type.feature' => 'Feature',
+    'admin.modules.type.admin' => 'Admin',
+    'admin.modules.type.integration' => 'Integration',
+    'admin.modules.type.theme' => 'Theme',
+    'admin.modules.type.utility' => 'Utility',
+    'admin.modules.type.custom' => 'Custom',
 
     // Sidebar groups (shared across all admin modules)
     'admin.sidebar.group.general' => 'General',
