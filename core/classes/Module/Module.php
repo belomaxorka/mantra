@@ -43,21 +43,21 @@ abstract class Module implements ModuleInterface {
      * Get module name (human-readable)
      */
     public function getName() {
-        return $this->manifest['name'];
+        return resolve_localized($this->manifest['name']);
     }
-    
+
     /**
      * Get module version
      */
     public function getVersion() {
         return $this->manifest['version'];
     }
-    
+
     /**
      * Get module description
      */
     public function getDescription() {
-        return isset($this->manifest['description']) ? $this->manifest['description'] : '';
+        return isset($this->manifest['description']) ? resolve_localized($this->manifest['description']) : '';
     }
     
     /**

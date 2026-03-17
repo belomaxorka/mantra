@@ -2,8 +2,8 @@
     "name": "default",
     "version": "1.0.0",
     "description": {
-        "en": "Default Mantra theme",
-        "ru": "Тема Mantra по умолчанию"
+        "en": "Default Mantra theme with clean and modern design",
+        "ru": "Тема Mantra по умолчанию с чистым и современным дизайном"
     },
     "author": "Mantra CMS"
 }

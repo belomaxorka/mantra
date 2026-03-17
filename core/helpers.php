@@ -6,14 +6,16 @@
 /**
  * Get application instance
  */
-function app() {
+function app()
+{
     return Application::getInstance();
 }
 
 /**
  * Get database instance
  */
-function db() {
+function db()
+{
     static $db = null;
     if ($db === null) {
         $db = new Database();
@@ -24,7 +26,8 @@ function db() {
 /**
  * Get auth instance
  */
-function auth() {
+function auth()
+{
     static $auth = null;
     if ($auth === null) {
         $auth = new Auth();
@@ -35,7 +38,8 @@ function auth() {
 /**
  * Get logger instance
  */
-function logger($channel = 'app') {
+function logger($channel = 'app')
+{
     static $loggers = array();
     if (!isset($loggers[$channel])) {
         $minLevel = (defined('MANTRA_DEBUG') && MANTRA_DEBUG) ? Logger::DEBUG : Logger::INFO;
@@ -58,14 +62,16 @@ function logger($channel = 'app') {
 /**
  * Quick log helper
  */
-function log_message($level, $message, $context = array()) {
+function log_message($level, $message, $context = array())
+{
     return logger()->log($level, $message, $context);
 }
 
 /**
  * Debug log helper (only in debug mode)
  */
-function log_debug($message, $context = array()) {
+function log_debug($message, $context = array())
+{
     if (defined('MANTRA_DEBUG') && MANTRA_DEBUG) {
         return logger()->debug($message, $context);
     }
@@ -75,7 +81,8 @@ function log_debug($message, $context = array()) {
 /**
  * Get session wrapper instance
  */
-function session() {
+function session()
+{
     static $session = null;
     if ($session === null) {
         $session = new Http\Session();
@@ -86,7 +93,8 @@ function session() {
 /**
  * Get cookie wrapper instance
  */
-function cookie() {
+function cookie()
+{
     static $cookie = null;
     if ($cookie === null) {
         $cookie = new Http\Cookie();
@@ -97,7 +105,8 @@ function cookie() {
 /**
  * Get response wrapper instance
  */
-function response() {
+function response()
+{
     static $response = null;
     if ($response === null) {
         $response = new Http\Response();
@@ -108,7 +117,8 @@ function response() {
 /**
  * Get request wrapper instance
  */
-function request() {
+function request()
+{
     static $request = null;
     if ($request === null) {
         $request = new Http\Request();
@@ -119,14 +129,16 @@ function request() {
 /**
  * Redirect helper
  */
-function redirect($url, $code = 302) {
+function redirect($url, $code = 302)
+{
     response()->redirect($url, $code);
 }
 
 /**
  * JSON response helper
  */
-function json_response($data, $code = 200) {
+function json_response($data, $code = 200)
+{
     response()->json($data, $code);
 }
 
@@ -135,7 +147,8 @@ function json_response($data, $code = 200) {
  *
  * Uses request headers first (HTTPS / X-Forwarded-Proto), with a fallback to site.url scheme.
  */
-function is_https() {
+function is_https()
+{
     if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
         return true;
     }
@@ -164,7 +177,8 @@ function is_https() {
  * If config('proxy.trusted_proxies') is set and the current REMOTE_ADDR matches one of them
  * (IP or CIDR), this function will also consider common proxy/CDN headers.
  */
-function client_ip() {
+function client_ip()
+{
     $remoteAddr = $_SERVER['REMOTE_ADDR'] ?? null;
     if (!$remoteAddr || !filter_var($remoteAddr, FILTER_VALIDATE_IP)) {
         return null;
@@ -220,7 +234,8 @@ function client_ip() {
 /**
  * Check whether an IP matches any entry in a list of IPs/CIDRs.
  */
-function ip_matches_any($ip, $entries) {
+function ip_matches_any($ip, $entries)
+{
     foreach ($entries as $entry) {
         if (ip_matches($ip, $entry)) {
             return true;
@@ -232,7 +247,8 @@ function ip_matches_any($ip, $entries) {
 /**
  * Check whether an IP matches a single entry (IP or CIDR).
  */
-function ip_matches($ip, $entry) {
+function ip_matches($ip, $entry)
+{
     $entry = trim((string)$entry);
     if ($entry === '') {
         return false;
@@ -280,7 +296,8 @@ function ip_matches($ip, $entry) {
 /**
  * Get config instance or value
  */
-function config($key = null, $default = null) {
+function config($key = null, $default = null)
+{
     static $config = null;
     if ($config === null) {
         $config = new Config();
@@ -294,9 +311,46 @@ function config($key = null, $default = null) {
 }
 
 /**
+ * Resolve localized value (string or array with locale keys)
+ *
+ * @param mixed $value String or array with locale keys (e.g., ['en' => 'Hello', 'ru' => 'Привет'])
+ * @param string|null $locale Locale to use (defaults to current locale)
+ * @return string Resolved localized string
+ */
+function resolve_localized($value, $locale = null)
+{
+    if (is_string($value)) {
+        return $value;
+    }
+
+    if (!is_array($value)) {
+        return '';
+    }
+
+    if ($locale === null) {
+        $locale = config()->get('locale.default_language', 'en');
+    }
+
+    // Try requested locale
+    if (isset($value[$locale])) {
+        return (string)$value[$locale];
+    }
+
+    // Fallback to English
+    if (isset($value['en'])) {
+        return (string)$value['en'];
+    }
+
+    // Fallback to first available value
+    $first = reset($value);
+    return is_string($first) ? $first : '';
+}
+
+/**
  * Get module settings instance or a specific value.
  */
-function module_settings($module, $key = null, $default = null) {
+function module_settings($module, $key = null, $default = null)
+{
     static $stores = array();
 
     $module = (string)$module;
@@ -314,7 +368,8 @@ function module_settings($module, $key = null, $default = null) {
 /**
  * Get config settings store (schema-driven admin settings for config.json).
  */
-function config_settings() {
+function config_settings()
+{
     static $store = null;
     if ($store === null) {
         $store = new ConfigSettings();
@@ -325,7 +380,8 @@ function config_settings() {
 /**
  * Get base URL
  */
-function base_url($path = '') {
+function base_url($path = '')
+{
     $siteUrl = config('site.url');
     if (!$siteUrl) {
         $app = Application::getInstance();
@@ -346,7 +402,8 @@ function base_url($path = '') {
 /**
  * Sanitize string for output (XSS protection)
  */
-function sanitize($value) {
+function sanitize($value)
+{
     if (is_array($value)) {
         return array_map('sanitize', $value);
     }
@@ -356,14 +413,16 @@ function sanitize($value) {
 /**
  * Escape output (alias for sanitize)
  */
-function e($value) {
+function e($value)
+{
     return sanitize($value);
 }
 
 /**
  * Generate slug from string
  */
-function slugify($text) {
+function slugify($text)
+{
     // Transliteration map for Cyrillic characters
     $cyrillic = array(
         'а' => 'a', 'б' => 'b', 'в' => 'v', 'г' => 'g', 'д' => 'd',
@@ -414,7 +473,8 @@ function slugify($text) {
 /**
  * Debug dump
  */
-function dd($var) {
+function dd($var)
+{
     echo '<pre>';
     var_dump($var);
     echo '</pre>';
@@ -427,7 +487,8 @@ function dd($var) {
  * @param array $params Parameters for interpolation
  * @return string
  */
-function t($key, $params = array()) {
+function t($key, $params = array())
+{
     static $translator = null;
     if ($translator === null) {
         $translator = new TranslationManager();
@@ -438,7 +499,8 @@ function t($key, $params = array()) {
 /**
  * Get translation manager instance
  */
-function translator() {
+function translator()
+{
     static $translator = null;
     if ($translator === null) {
         $translator = new TranslationManager();
@@ -453,7 +515,8 @@ function translator() {
  * @param array $params Parameters to pass to widget
  * @return string Rendered widget HTML
  */
-function widget($name, $params = array()) {
+function widget($name, $params = array())
+{
     $view = new View();
     return $view->widget($name, $params);
 }
@@ -464,7 +527,8 @@ function widget($name, $params = array()) {
  * @param array $data Template data
  * @return View|string
  */
-function view($template = null, $data = array()) {
+function view($template = null, $data = array())
+{
     $view = new View();
 
     if ($template === null) {
@@ -478,7 +542,8 @@ function view($template = null, $data = array()) {
  * Get admin module instance
  * @return Module|null
  */
-function admin() {
+function admin()
+{
     static $admin = null;
     if ($admin === null) {
         $admin = app()->modules()->getModule('admin');
@@ -490,7 +555,8 @@ function admin() {
  * Verify CSRF token from POST request
  * @return bool
  */
-function verify_csrf() {
+function verify_csrf()
+{
     if (request()->method() !== 'POST') {
         return true;
     }
@@ -509,27 +575,9 @@ function verify_csrf() {
  * @param string $moduleId
  * @return Module|null
  */
-function module($moduleId) {
+function module($moduleId)
+{
     return app()->modules()->getModule($moduleId);
-}
-
-/**
- * Check if module is enabled
- * @param string $moduleName Module name
- * @return bool
- */
-function module_enabled($moduleName) {
-    return app()->modules()->isLoaded($moduleName);
-}
-
-/**
- * Fire a hook
- * @param string $hookName Hook name
- * @param mixed $data Data to pass to hook
- * @return mixed Modified data
- */
-function fire_hook($hookName, $data = null) {
-    return app()->hooks()->fire($hookName, $data);
 }
 
 /**
@@ -537,44 +585,7 @@ function fire_hook($hookName, $data = null) {
  *
  * @return ContentTypeRegistry
  */
-function content_types() {
+function content_types()
+{
     return ContentTypeRegistry::getInstance();
-}
-
-/**
- * Resolve theme.json description with locale fallbacks.
- *
- * Variant A support: "description" may be an object of translations.
- */
-function theme_description($themeMeta) {
-    if (!is_array($themeMeta) || !isset($themeMeta['description'])) {
-        return '';
-    }
-
-    $desc = $themeMeta['description'];
-    if (is_string($desc)) {
-        return $desc;
-    }
-
-    if (!is_array($desc)) {
-        return '';
-    }
-
-    if (function_exists('config')) {
-        $locale = (string)config('locale.default_language', 'en');
-        $fallback = (string)config('locale.fallback_locale', 'en');
-    } else {
-        $cfg = (isset($GLOBALS['MANTRA_CONFIG']) && is_array($GLOBALS['MANTRA_CONFIG'])) ? $GLOBALS['MANTRA_CONFIG'] : array();
-        $locale = (string)Config::getNested($cfg, 'locale.default_language', 'en');
-        $fallback = (string)Config::getNested($cfg, 'locale.fallback_locale', 'en');
-    }
-
-    if ($locale !== '' && isset($desc[$locale]) && is_string($desc[$locale])) {
-        return $desc[$locale];
-    }
-    if ($fallback !== '' && isset($desc[$fallback]) && is_string($desc[$fallback])) {
-        return $desc[$fallback];
-    }
-
-    return '';
 }

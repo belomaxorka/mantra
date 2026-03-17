@@ -120,53 +120,29 @@ class AdminSettingsModule extends Module
     }
 
     /**
-     * Resolve localized value (string or array with locale keys)
-     */
-    private function resolveLocalizedValue($value)
-    {
-        if (is_string($value)) {
-            return $value;
-        }
-
-        if (is_array($value)) {
-            $lang = config()->get('locale.default_language', 'en');
-            if (isset($value[$lang])) {
-                return (string)$value[$lang];
-            }
-            if (isset($value['en'])) {
-                return (string)$value['en'];
-            }
-            $first = reset($value);
-            return is_string($first) ? $first : '';
-        }
-
-        return '';
-    }
-
-    /**
      * Get list of modules with settings (id => title)
      */
     private function getModulesWithSettings()
     {
         $modules = array();
         $moduleManager = app()->modules();
-        
+
         foreach ($moduleManager->getModules() as $moduleId => $data) {
             $module = $data['instance'];
-            
+
             if (!$module->hasSettings()) {
                 continue;
             }
-            
+
             // Try to get translated name using module_id.name key
             $nameKey = $moduleId . '.name';
             $translatedName = t($nameKey);
-            
+
             // If translation not found, fallback to manifest name
             if ($translatedName === $nameKey) {
                 $translatedName = $module->getName();
             }
-            
+
             $modules[$moduleId] = $translatedName;
         }
 
@@ -287,17 +263,17 @@ class AdminSettingsModule extends Module
     {
         $cards = array();
         $moduleManager = app()->modules();
-        
+
         // Get all available modules (including disabled)
         $allModules = $moduleManager->discoverModules();
-        
+
         foreach ($allModules as $moduleId => $moduleData) {
             $isEnabled = $moduleData['enabled'];
             $manifest = $moduleData['manifest'];
-            
+
             // Get module instance if loaded
             $module = $isEnabled ? $moduleManager->getModule($moduleId) : null;
-            
+
             // Use module API if available, otherwise parse manifest
             if ($module) {
                 $title = $module->getName();
@@ -311,11 +287,11 @@ class AdminSettingsModule extends Module
                 $canDelete = $module->isDeletable();
             } else {
                 // Parse from manifest for disabled modules
-                $title = $manifest['name'] ?? $moduleId;
+                $title = resolve_localized($manifest['name'] ?? $moduleId);
                 $version = $manifest['version'] ?? '';
                 $author = $manifest['author'] ?? '';
                 $homepage = $manifest['homepage'] ?? '';
-                $description = $manifest['description'] ?? '';
+                $description = resolve_localized($manifest['description'] ?? '');
                 $type = $manifest['type'] ?? 'custom';
                 $hasSettings = file_exists($moduleData['path'] . '/settings.schema.php');
 
@@ -330,13 +306,13 @@ class AdminSettingsModule extends Module
                     $canDelete = $adminConfig['deletable'] ?? true;
                 }
             }
-            
+
             // Check if any enabled module depends on this one
             $requiredByEnabled = false;
             if ($isEnabled) {
                 $enabled = config_settings()->get('modules.enabled', array('admin'));
                 $graph = $this->collectModuleDependencyGraph();
-                
+
                 foreach ($enabled as $enabledMod) {
                     if ($enabledMod !== $moduleId && $this->dependsOnTransitive($enabledMod, $moduleId, $graph)) {
                         $requiredByEnabled = true;
@@ -344,18 +320,18 @@ class AdminSettingsModule extends Module
                     }
                 }
             }
-            
+
             // Override permissions if required by other modules
             if ($requiredByEnabled) {
                 $canDisable = false;
                 $canDelete = false;
             }
-            
+
             // Can't delete if enabled
             if ($isEnabled) {
                 $canDelete = false;
             }
-            
+
             $cards[] = array(
                 'id' => $moduleId,
                 'title' => $title,
@@ -541,17 +517,17 @@ class AdminSettingsModule extends Module
         }
 
         $moduleManager = app()->modules();
-        
+
         // Check if module is loaded
         $module = $moduleManager->getModule($deleteId);
-        
+
         if ($module) {
             // Use module API for loaded modules
             if (!$module->isDeletable()) {
                 $error = 'This module cannot be deleted';
                 return true;
             }
-            
+
             if ($moduleManager->isLoaded($deleteId)) {
                 $error = 'Disable the module before deleting it';
                 return true;
@@ -564,13 +540,13 @@ class AdminSettingsModule extends Module
                     $manifest = JsonFile::read($manifestPath);
                     $type = $manifest['type'] ?? 'custom';
                     $adminConfig = $manifest['admin'] ?? array();
-                    
+
                     // CORE modules cannot be deleted
                     if ($type === ModuleType::CORE) {
                         $error = 'Core modules cannot be deleted';
                         return true;
                     }
-                    
+
                     // Check admin.deletable flag
                     if (isset($adminConfig['deletable']) && $adminConfig['deletable'] === false) {
                         $error = 'This module cannot be deleted';
@@ -641,7 +617,7 @@ class AdminSettingsModule extends Module
         foreach ($beingDisabled as $modId) {
             // Use module API if loaded
             $module = $moduleManager->getModule($modId);
-            
+
             if ($module) {
                 if (!$module->isDisableable()) {
                     $type = $module->getType();
@@ -657,12 +633,12 @@ class AdminSettingsModule extends Module
                     try {
                         $manifest = JsonFile::read($manifestPath);
                         $type = $manifest['type'] ?? 'custom';
-                        
+
                         // CORE modules cannot be disabled
                         if ($type === ModuleType::CORE) {
                             return "Cannot disable core module '{$modId}'";
                         }
-                        
+
                         $adminConfig = $manifest['admin'] ?? array();
                         if (isset($adminConfig['disableable']) && $adminConfig['disableable'] === false) {
                             return "Cannot disable module '{$modId}': protected by policy";
@@ -698,7 +674,7 @@ class AdminSettingsModule extends Module
             } catch (JsonFileException $e) {
                 return "Cannot read module manifest: '{$modId}'";
             }
-            
+
             if (isset($manifest['dependencies']) && is_array($manifest['dependencies'])) {
                 foreach ($manifest['dependencies'] as $dep) {
                     if (!is_string($dep)) {
