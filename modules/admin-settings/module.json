@@ -1,7 +1,10 @@
 {
   "id": "admin-settings",
   "name": "Settings Management",
-  "description": "System settings and configuration management",
+  "description": {
+    "en": "System settings and configuration management",
+    "ru": "Управление системными настройками и конфигурацией"
+  },
   "version": "1.0.0",
   "author": "Mantra CMS",
   "license": "MIT",

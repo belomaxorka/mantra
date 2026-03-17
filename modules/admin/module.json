@@ -1,7 +1,10 @@
 {
   "id": "admin",
   "name": "Admin Panel",
-  "description": "Core admin panel functionality",
+  "description": {
+    "en": "Core admin panel functionality",
+    "ru": "Основной функционал панели администратора"
+  },
   "version": "1.0.0",
   "author": "Mantra CMS",
   "license": "MIT",

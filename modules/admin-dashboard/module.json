@@ -1,7 +1,10 @@
 {
   "id": "admin-dashboard",
   "name": "Dashboard",
-  "description": "Admin dashboard with system overview and quick actions",
+  "description": {
+    "en": "Admin dashboard with system overview and quick actions",
+    "ru": "Панель управления с обзором системы и быстрыми действиями"
+  },
   "version": "1.0.0",
   "author": "Mantra CMS",
   "license": "MIT",

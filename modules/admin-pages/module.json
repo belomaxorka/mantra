@@ -1,7 +1,10 @@
 {
   "id": "admin-pages",
   "name": "Pages Management",
-  "description": "Admin interface for managing static pages",
+  "description": {
+    "en": "Admin interface for managing static pages",
+    "ru": "Административный интерфейс для управления статическими страницами"
+  },
   "version": "1.0.0",
   "author": "Mantra CMS",
   "license": "MIT",

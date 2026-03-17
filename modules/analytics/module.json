@@ -1,7 +1,10 @@
 {
   "id": "analytics",
   "name": "Analytics",
-  "description": "Analytics integration - Google Analytics, Yandex Metrika, and custom tracking",
+  "description": {
+    "en": "Analytics integration - Google Analytics, Yandex Metrika, and custom tracking",
+    "ru": "Интеграция аналитики - Google Analytics, Яндекс.Метрика и пользовательское отслеживание"
+  },
   "version": "1.0.0",
   "author": "Mantra CMS",
   "license": "MIT",

@@ -1,7 +1,10 @@
 {
   "id": "admin-posts",
   "name": "Posts Management",
-  "description": "Admin interface for managing blog posts",
+  "description": {
+    "en": "Admin interface for managing blog posts",
+    "ru": "Административный интерфейс для управления записями блога"
+  },
   "version": "1.0.0",
   "author": "Mantra CMS",
   "license": "MIT",
