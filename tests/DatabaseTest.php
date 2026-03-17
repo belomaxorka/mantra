@@ -78,6 +78,12 @@ class DatabaseTest {
         $this->testErrorHandling();
         $this->testLogging();
 
+        // Advanced tests
+        $this->testSchemaMigrationWithCallback();
+        $this->testCollectionAutoCreation();
+        $this->testReadCollectionWithPartialErrors();
+        $this->testFileSizeLimit();
+
         $this->printResults();
     }
     
@@ -1211,7 +1217,163 @@ class DatabaseTest {
         $db->write('test_logging', $id2, array('name' => 'Test'));
         $this->assert(true, 'Successful operations complete without errors');
     }
-    
+
+    private function testSchemaMigrationWithCallback() {
+        echo "\n--- Test: Schema Migration - With Migrate Callback ---\n";
+
+        // Create initial schema v1 with old field name
+        $this->createTestSchema('test_migrate_cb', array(
+            'version' => 1,
+            'defaults' => array('old_name' => ''),
+            'fields' => array(
+                'old_name' => array('type' => 'string', 'required' => true)
+            )
+        ));
+
+        $db1 = new Database($this->testDir);
+        $id = $db1->generateId();
+
+        // Write document with v1 schema
+        $db1->write('test_migrate_cb', $id, array('old_name' => 'Test Value'));
+
+        // Update schema to v2 with migrate callback that renames field
+        // Must write closure directly as PHP code, not via var_export
+        $schemaPath = MANTRA_CORE . '/schemas/test_migrate_cb.php';
+        $schemaContent = <<<'PHP'
+<?php
+return array(
+    'version' => 2,
+    'defaults' => array('new_name' => ''),
+    'fields' => array(
+        'new_name' => array('type' => 'string', 'required' => true)
+    ),
+    'migrate' => function($doc, $from, $to) {
+        if ($from < 2 && isset($doc['old_name'])) {
+            $doc['new_name'] = $doc['old_name'];
+            unset($doc['old_name']);
+        }
+        $doc['schema_version'] = 2;
+        return $doc;
+    }
+);
+PHP;
+        file_put_contents($schemaPath, $schemaContent);
+
+        // Read with new schema - should trigger migration
+        $db2 = new Database($this->testDir);
+        $read = $db2->read('test_migrate_cb', $id);
+
+        $this->assert(!isset($read['old_name']), 'Old field removed by migration');
+        $this->assert(isset($read['new_name']), 'New field added by migration');
+        $this->assert($read['new_name'] === 'Test Value', 'Data preserved during migration');
+        $this->assert($read['schema_version'] === 2, 'Schema version updated to 2');
+
+        // Read again - should not re-migrate
+        $read2 = $db2->read('test_migrate_cb', $id);
+        $this->assert($read2['new_name'] === 'Test Value', 'Migration persisted correctly');
+    }
+
+    private function testCollectionAutoCreation() {
+        echo "\n--- Test: Collection Auto-Creation ---\n";
+
+        $this->createTestSchema('test_autocreate', array(
+            'version' => 1,
+            'defaults' => array('name' => ''),
+            'fields' => array('name' => array('type' => 'string', 'required' => true))
+        ));
+
+        $db = new Database($this->testDir);
+
+        // Verify collection directory doesn't exist
+        $collectionPath = $this->testDir . '/test_autocreate';
+        if (is_dir($collectionPath)) {
+            $this->removeDirectory($collectionPath);
+        }
+        $this->assert(!is_dir($collectionPath), 'Collection directory does not exist initially');
+
+        // Write to non-existent collection
+        $id = $db->generateId();
+        $written = $db->write('test_autocreate', $id, array('name' => 'Auto Created'));
+
+        $this->assert($written === true, 'Write to non-existent collection succeeds');
+        $this->assert(is_dir($collectionPath), 'Collection directory created automatically');
+
+        // Verify data was written
+        $read = $db->read('test_autocreate', $id);
+        $this->assert($read !== null, 'Data readable from auto-created collection');
+        $this->assert($read['name'] === 'Auto Created', 'Data correct in auto-created collection');
+    }
+
+    private function testReadCollectionWithPartialErrors() {
+        echo "\n--- Test: Read Collection - With Partial Errors ---\n";
+
+        $this->createTestSchema('test_partial', array(
+            'version' => 1,
+            'defaults' => array('name' => ''),
+            'fields' => array('name' => array('type' => 'string', 'required' => true))
+        ));
+
+        $db = new Database($this->testDir);
+
+        // Create multiple valid documents
+        $db->write('test_partial', 'valid1', array('name' => 'Valid 1'));
+        $db->write('test_partial', 'valid2', array('name' => 'Valid 2'));
+        $db->write('test_partial', 'valid3', array('name' => 'Valid 3'));
+
+        // Corrupt one document
+        $collectionPath = $this->testDir . '/test_partial';
+        $corruptedFile = $collectionPath . '/valid2.json';
+        file_put_contents($corruptedFile, '{invalid json content}');
+
+        // Query collection - should skip corrupted file
+        $results = $db->query('test_partial');
+
+        $this->assert(count($results) === 2, 'Query returns only valid documents');
+
+        $names = array();
+        foreach ($results as $item) {
+            $names[] = $item['name'];
+        }
+        $this->assert(in_array('Valid 1', $names), 'First valid document included');
+        $this->assert(in_array('Valid 3', $names), 'Third valid document included');
+        $this->assert(!in_array('Valid 2', $names), 'Corrupted document excluded');
+    }
+
+    private function testFileSizeLimit() {
+        echo "\n--- Test: File Size Limit ---\n";
+
+        $this->createTestSchema('test_filesize', array(
+            'version' => 1,
+            'defaults' => array('data' => ''),
+            'fields' => array('data' => array('type' => 'string', 'required' => false))
+        ));
+
+        $db = new Database($this->testDir);
+
+        // Create data larger than 10MB limit
+        $largeData = str_repeat('x', 11 * 1024 * 1024); // 11MB
+
+        $id = $db->generateId();
+        $exceptionThrown = false;
+        $correctException = false;
+
+        try {
+            $db->write('test_filesize', $id, array('data' => $largeData));
+        } catch (JsonFileException $e) {
+            $exceptionThrown = true;
+            $correctException = strpos($e->getMessage(), 'exceeds maximum size') !== false;
+        } catch (Exception $e) {
+            $exceptionThrown = true;
+        }
+
+        $this->assert($exceptionThrown, 'Exception thrown for oversized data');
+        $this->assert($correctException, 'Correct exception message for size limit');
+
+        // Verify file was not created
+        $exists = $db->exists('test_filesize', $id);
+        $this->assert($exists === false, 'Oversized document not written to disk');
+    }
+
     private function createTestSchema($collection, $schema) {
         $schemaPath = MANTRA_CORE . '/schemas/' . $collection . '.php';
         $schemaContent = "<?php\nreturn " . var_export($schema, true) . ";\n";
