@@ -59,6 +59,16 @@ class DatabaseTest {
         $this->testSanitization();
         $this->testValidationMultipleErrors();
         
+        // Database operations tests
+        $this->testDelete();
+        $this->testExists();
+        $this->testQuery();
+        $this->testQueryWithFilters();
+        $this->testQueryWithSort();
+        $this->testQueryWithLimit();
+        $this->testMetadata();
+        $this->testSecurity();
+        
         $this->printResults();
     }
     
@@ -701,6 +711,232 @@ class DatabaseTest {
         $db3->write('test_sanitize_nested', $id3, $data3);
         $read3 = $db3->read('test_sanitize_nested', $id3);
         $this->assert($read3['data']['key'] === 'value', 'Nested array values sanitized');
+    }
+    
+    private function testDelete() {
+        echo "\n--- Test: Delete Operations ---\n";
+        
+        $this->createTestSchema('test_delete', array(
+            'version' => 1,
+            'defaults' => array('name' => ''),
+            'fields' => array(
+                'name' => array('type' => 'string', 'required' => true)
+            )
+        ));
+        
+        $db = new Database($this->testDir);
+        
+        // Create and delete
+        $id = $db->generateId();
+        $db->write('test_delete', $id, array('name' => 'To Delete'));
+        
+        $exists = $db->exists('test_delete', $id);
+        $this->assert($exists === true, 'Document exists after creation');
+        
+        $deleted = $db->delete('test_delete', $id);
+        $this->assert($deleted === true, 'Delete operation returns true');
+        
+        $existsAfter = $db->exists('test_delete', $id);
+        $this->assert($existsAfter === false, 'Document does not exist after deletion');
+        
+        $read = $db->read('test_delete', $id);
+        $this->assert($read === null, 'Read returns null for deleted document');
+    }
+    
+    private function testExists() {
+        echo "\n--- Test: Exists Check ---\n";
+        
+        $this->createTestSchema('test_exists', array(
+            'version' => 1,
+            'defaults' => array('name' => ''),
+            'fields' => array(
+                'name' => array('type' => 'string', 'required' => true)
+            )
+        ));
+        
+        $db = new Database($this->testDir);
+        
+        $id = $db->generateId();
+        
+        $existsBefore = $db->exists('test_exists', $id);
+        $this->assert($existsBefore === false, 'Non-existent document returns false');
+        
+        $db->write('test_exists', $id, array('name' => 'Test'));
+        
+        $existsAfter = $db->exists('test_exists', $id);
+        $this->assert($existsAfter === true, 'Existing document returns true');
+    }
+    
+    private function testQuery() {
+        echo "\n--- Test: Query - Basic Collection Read ---\n";
+        
+        $this->createTestSchema('test_query', array(
+            'defaults' => array('name' => ''),
+            'fields' => array(
+                'name' => array('type' => 'string', 'required' => true)
+            )
+        ));
+        
+        $db = new Database($this->testDir);
+        
+        // Create multiple items
+        $db->write('test_query', 'item1', array('name' => 'First'));
+        $db->write('test_query', 'item2', array('name' => 'Second'));
+        $db->write('test_query', 'item3', array('name' => 'Third'));
+        
+        $results = $db->query('test_query');
+        
+        $this->assert(count($results) === 3, 'Query returns all items');
+        $this->assert(isset($results[0]['_id']), 'Query results include _id');
+    }
+    
+    private function testQueryWithFilters() {
+        echo "\n--- Test: Query - With Filters ---\n";
+        
+        $this->createTestSchema('test_filter', array(
+            'version' => 1,
+            'defaults' => array('name' => '', 'status' => 'active'),
+            'fields' => array(
+                'name' => array('type' => 'string', 'required' => true),
+                'status' => array('type' => 'string', 'required' => true)
+            )
+        ));
+        
+        $db = new Database($this->testDir);
+        
+        $db->write('test_filter', 'f1', array('name' => 'Active 1', 'status' => 'active'));
+        $db->write('test_filter', 'f2', array('name' => 'Inactive', 'status' => 'inactive'));
+        $db->write('test_filter', 'f3', array('name' => 'Active 2', 'status' => 'active'));
+        
+        $results = $db->query('test_filter', array('status' => 'active'));
+        
+        $this->assert(count($results) === 2, 'Filter returns correct count');
+        $this->assert($results[0]['status'] === 'active', 'Filtered results match criteria');
+        $this->assert($results[1]['status'] === 'active', 'All filtered results match');
+    }
+    
+    private function testQueryWithSort() {
+        echo "\n--- Test: Query - With Sorting ---\n";
+        
+        $this->createTestSchema('test_sort', array(
+            'version' => 1,
+            'defaults' => array('name' => '', 'order' => 0),
+            'fields' => array(
+                'name' => array('type' => 'string', 'required' => true),
+                'order' => array('type' => 'integer', 'required' => false)
+            )
+        ));
+        
+        $db = new Database($this->testDir);
+        
+        $db->write('test_sort', 's1', array('name' => 'Charlie', 'order' => 3));
+        $db->write('test_sort', 's2', array('name' => 'Alice', 'order' => 1));
+        $db->write('test_sort', 's3', array('name' => 'Bob', 'order' => 2));
+        
+        // Sort ascending
+        $resultsAsc = $db->query('test_sort', array(), array('sort' => 'name', 'order' => 'asc'));
+        $this->assert($resultsAsc[0]['name'] === 'Alice', 'Sort ascending works');
+        $this->assert($resultsAsc[2]['name'] === 'Charlie', 'Sort ascending order correct');
+        
+        // Sort descending
+        $resultsDesc = $db->query('test_sort', array(), array('sort' => 'name', 'order' => 'desc'));
+        $this->assert($resultsDesc[0]['name'] === 'Charlie', 'Sort descending works');
+        $this->assert($resultsDesc[2]['name'] === 'Alice', 'Sort descending order correct');
+    }
+    
+    private function testQueryWithLimit() {
+        echo "\n--- Test: Query - With Limit and Offset ---\n";
+        
+        $this->createTestSchema('test_limit', array(
+            'version' => 1,
+            'defaults' => array('name' => ''),
+            'fields' => array(
+                'name' => array('type' => 'string', 'required' => true)
+            )
+        ));
+        
+        $db = new Database($this->testDir);
+        
+        for ($i = 1; $i <= 10; $i++) {
+            $db->write('test_limit', 'item' . $i, array('name' => 'Item ' . $i));
+        }
+        
+        // Test limit
+        $limited = $db->query('test_limit', array(), array('limit' => 3));
+        $this->assert(count($limited) === 3, 'Limit restricts result count');
+        
+        // Test offset
+        $offset = $db->query('test_limit', array(), array('limit' => 3, 'offset' => 5));
+        $this->assert(count($offset) === 3, 'Offset with limit returns correct count');
+    }
+    
+    private function testMetadata() {
+        echo "\n--- Test: Metadata (created_at, updated_at) ---\n";
+        
+        $this->createTestSchema('test_metadata', array(
+            'version' => 1,
+            'defaults' => array('name' => ''),
+            'fields' => array(
+                'name' => array('type' => 'string', 'required' => true)
+            )
+        ));
+        
+        $db = new Database($this->testDir);
+        
+        $id = $db->generateId();
+        $db->write('test_metadata', $id, array('name' => 'Test'));
+        $read = $db->read('test_metadata', $id);
+        
+        $this->assert(isset($read['created_at']), 'created_at is set');
+        $this->assert(isset($read['updated_at']), 'updated_at is set');
+        $this->assert(!empty($read['created_at']), 'created_at has value');
+        $this->assert(!empty($read['updated_at']), 'updated_at has value');
+        
+        $createdAt = $read['created_at'];
+        
+        // Update document
+        sleep(1);
+        $db->write('test_metadata', $id, array('name' => 'Updated'));
+        $readUpdated = $db->read('test_metadata', $id);
+        
+        $this->assert($readUpdated['created_at'] === $createdAt, 'created_at unchanged on update');
+        $this->assert($readUpdated['updated_at'] !== $createdAt, 'updated_at changed on update');
+    }
+    
+    private function testSecurity() {
+        echo "\n--- Test: Security - Directory Traversal Prevention ---\n";
+        
+        $db = new Database($this->testDir);
+        
+        // Test invalid collection name (directory traversal)
+        $exceptionThrown = false;
+        try {
+            $db->write('../evil', 'test', array('data' => 'hack'));
+        } catch (Exception $e) {
+            $exceptionThrown = true;
+            $this->assert(strpos($e->getMessage(), 'Invalid collection name') !== false, 'Correct error message for invalid collection');
+        }
+        $this->assert($exceptionThrown, 'Directory traversal in collection name blocked');
+        
+        // Test invalid ID (directory traversal)
+        $this->createTestSchema('test_security', array(
+            'version' => 1,
+            'defaults' => array('name' => ''),
+            'fields' => array('name' => array('type' => 'string', 'required' => true))
+        ));
+        
+        $exceptionThrown = false;
+        try {
+            $db->write('test_security', '../evil-id', array('name' => 'hack'));
+        } catch (Exception $e) {
+            $exceptionThrown = true;
+            $this->assert(strpos($e->getMessage(), 'Invalid ID') !== false, 'Correct error message for invalid ID');
+        }
+        $this->assert($exceptionThrown, 'Directory traversal in ID blocked');
+        
+        // Test valid collection and ID
+        $validWrite = $db->write('test_security', 'valid-id_123', array('name' => 'Safe'));
+        $this->assert($validWrite === true, 'Valid collection and ID names work');
     }
     
     private function testValidationMultipleErrors() {
