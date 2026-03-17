@@ -46,6 +46,11 @@ return array(
 
     // Theme settings
     'admin-settings.theme.active' => 'Active theme',
+    'admin-settings.theme.active_theme_info' => 'Active theme information',
+    'admin-settings.theme.name' => 'Name',
+    'admin-settings.theme.version' => 'Version',
+    'admin-settings.theme.author' => 'Author',
+    'admin-settings.theme.description' => 'Description',
 
     // Content settings
     'admin-settings.content.format' => 'Content format',

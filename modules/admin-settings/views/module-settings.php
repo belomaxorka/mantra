@@ -65,6 +65,48 @@
                 <?php endforeach; ?>
               </select>
 
+              <?php if ($field['path'] === 'theme.active' && !empty($field['theme_metadata']) && !empty($field['value'])): ?>
+                <?php
+                  $activeThemeId = (string)$field['value'];
+                  $themeInfo = isset($field['theme_metadata'][$activeThemeId]) ? $field['theme_metadata'][$activeThemeId] : null;
+                ?>
+                <?php if ($themeInfo): ?>
+                  <div class="card mt-3">
+                    <div class="card-body">
+                      <h6 class="card-subtitle mb-2 text-muted"><?php echo e(t('admin-settings.theme.active_theme_info')); ?></h6>
+                      <div class="mb-2">
+                        <strong><?php echo e(t('admin-settings.theme.name')); ?>:</strong> <?php echo e($themeInfo['name']); ?>
+                      </div>
+                      <?php if (!empty($themeInfo['version'])): ?>
+                        <div class="mb-2">
+                          <strong><?php echo e(t('admin-settings.theme.version')); ?>:</strong> <?php echo e($themeInfo['version']); ?>
+                        </div>
+                      <?php endif; ?>
+                      <?php if (!empty($themeInfo['author'])): ?>
+                        <div class="mb-2">
+                          <strong><?php echo e(t('admin-settings.theme.author')); ?>:</strong> <?php echo e($themeInfo['author']); ?>
+                        </div>
+                      <?php endif; ?>
+                      <?php if (!empty($themeInfo['description'])): ?>
+                        <div class="mb-0">
+                          <strong><?php echo e(t('admin-settings.theme.description')); ?>:</strong>
+                          <?php
+                            $desc = $themeInfo['description'];
+                            if (is_array($desc)) {
+                              $lang = config()->get('locale.default_language', 'en');
+                              $descText = isset($desc[$lang]) ? $desc[$lang] : (isset($desc['en']) ? $desc['en'] : reset($desc));
+                            } else {
+                              $descText = (string)$desc;
+                            }
+                            echo e($descText);
+                          ?>
+                        </div>
+                      <?php endif; ?>
+                    </div>
+                  </div>
+                <?php endif; ?>
+              <?php endif; ?>
+
             <?php elseif ($field['type'] === 'module_cards'): ?>
               <label class="form-label d-block"><?php echo e($field['title']); ?></label>
               <?php

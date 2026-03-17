@@ -197,6 +197,34 @@ class AdminSettingsModule extends Module
         return $options;
     }
 
+    private function getAllThemesMetadata()
+    {
+        $themes = array();
+        $base = MANTRA_THEMES;
+        if (!is_dir($base)) {
+            return $themes;
+        }
+
+        foreach (glob($base . '/*/theme.json') as $path) {
+            $dir = basename(dirname($path));
+            try {
+                $meta = JsonFile::read($path);
+            } catch (JsonFileException $e) {
+                continue;
+            }
+
+            $themes[$dir] = array(
+                'id' => $dir,
+                'name' => isset($meta['name']) && is_string($meta['name']) ? (string)$meta['name'] : $dir,
+                'version' => isset($meta['version']) && is_string($meta['version']) ? (string)$meta['version'] : '',
+                'author' => isset($meta['author']) && is_string($meta['author']) ? (string)$meta['author'] : '',
+                'description' => isset($meta['description']) ? $meta['description'] : '',
+            );
+        }
+
+        return $themes;
+    }
+
     private function availableLocaleOptions()
     {
         $locales = array();
@@ -449,6 +477,7 @@ class AdminSettingsModule extends Module
 
                 if ($path === 'theme.active' && (string)$field['type'] === 'select') {
                     $field['options'] = $this->availableThemeOptions();
+                    $field['theme_metadata'] = $this->getAllThemesMetadata();
                 }
 
                 if ($path === 'logging.level' && (string)$field['type'] === 'select') {
@@ -831,6 +860,11 @@ class AdminSettingsModule extends Module
                     'value' => $store->get($path, array_key_exists('default', $field) ? $field['default'] : null),
                     'options' => $options,
                 );
+
+                // Pass through theme_metadata if present
+                if (isset($field['theme_metadata'])) {
+                    $f['theme_metadata'] = $field['theme_metadata'];
+                }
 
                 // Resolve option labels if they are i18n specs.
                 if ($f['type'] === 'select' && is_array($f['options'])) {

@@ -46,6 +46,11 @@ return array(
 
     // Theme settings
     'admin-settings.theme.active' => 'Активная тема',
+    'admin-settings.theme.active_theme_info' => 'Информация об активной теме',
+    'admin-settings.theme.name' => 'Название',
+    'admin-settings.theme.version' => 'Версия',
+    'admin-settings.theme.author' => 'Автор',
+    'admin-settings.theme.description' => 'Описание',
 
     // Content settings
     'admin-settings.content.format' => 'Формат контента',
