@@ -1,28 +1,18 @@
-# Mantra CMS - Git Ignore
-
-# Content (user data)
 /content/pages/*
 !/content/pages/demo-*.json
 /content/posts/*
 !/content/posts/demo-*.json
-/content/products/*
-!/content/products/demo-*.json
 /content/users/*
 /content/settings/*
 !/content/languages/
 
-# Storage (cache, logs, sessions)
-/storage/cache/*
+/core/schemas/test_*.php
+
 /storage/logs/*
 /storage/sessions/*
 
-# Uploads
-/uploads/*
-
-# Keep directory structure
 !.gitkeep
 
-# IDE
 .cursor/
 .kiro/
 .claude/
@@ -30,13 +20,10 @@
 .idea/
 *.sublime-*
 
-# OS
 .DS_Store
 Thumbs.db
 desktop.ini
 
-# Temporary files
-*.tmp
 *.tmp.*
 *.bak*
 *.swp

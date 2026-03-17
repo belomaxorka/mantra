@@ -95,8 +95,17 @@ class Database {
         // Sanitize input data
         $data = SchemaValidator::sanitize($data);
 
-        // Validate against schema
+        // Get schema and apply defaults BEFORE validation
         $schema = $this->getCollectionSchema($collection);
+        if ($schema && !empty($schema['defaults']) && is_array($schema['defaults'])) {
+            foreach ($schema['defaults'] as $key => $value) {
+                if (!array_key_exists($key, $data)) {
+                    $data[$key] = $value;
+                }
+            }
+        }
+
+        // Validate against schema
         if ($schema && isset($schema['fields'])) {
             try {
                 SchemaValidator::validateOrThrow($data, $schema);

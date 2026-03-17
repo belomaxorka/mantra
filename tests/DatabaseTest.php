@@ -45,6 +45,7 @@ class DatabaseTest {
         $this->testValidationEnum();
         $this->testSchemaVersion();
         $this->testOptionalEmail();
+        $this->testSchemaMigration();
         
         $this->printResults();
     }
@@ -75,13 +76,16 @@ class DatabaseTest {
             )
         ));
         
-        $id = $this->db->generateId();
+        // Create new Database instance to clear schema cache
+        $db = new Database($this->testDir);
+        
+        $id = $db->generateId();
         $data = array('name' => 'Test Item', 'count' => 5);
         
-        $written = $this->db->write('test_items', $id, $data);
+        $written = $db->write('test_items', $id, $data);
         $this->assert($written === true, 'Write operation returns true');
         
-        $read = $this->db->read('test_items', $id);
+        $read = $db->read('test_items', $id);
         $this->assert($read !== null, 'Read returns data');
         $this->assert($read['name'] === 'Test Item', 'Read data matches written data');
         $this->assert($read['_id'] === $id, 'Read data includes _id');
@@ -104,14 +108,17 @@ class DatabaseTest {
             )
         ));
         
-        $id = $this->db->generateId();
+        // Create new Database instance to clear schema cache
+        $db = new Database($this->testDir);
+        
+        $id = $db->generateId();
         // Only provide name, status and count should get defaults
         $data = array('name' => 'Test');
         
-        $written = $this->db->write('test_defaults', $id, $data);
+        $written = $db->write('test_defaults', $id, $data);
         $this->assert($written === true, 'Write with partial data succeeds');
         
-        $read = $this->db->read('test_defaults', $id);
+        $read = $db->read('test_defaults', $id);
         $this->assert($read['status'] === 'active', 'Default status applied');
         $this->assert($read['count'] === 0, 'Default count applied');
     }
@@ -127,12 +134,15 @@ class DatabaseTest {
             )
         ));
         
-        $id = $this->db->generateId();
+        // Create new Database instance to clear schema cache
+        $db = new Database($this->testDir);
+        
+        $id = $db->generateId();
         $data = array(); // Missing required field
         
         $exceptionThrown = false;
         try {
-            $this->db->write('test_required', $id, $data);
+            $db->write('test_required', $id, $data);
         } catch (SchemaValidationException $e) {
             $exceptionThrown = true;
             $errors = $e->getErrors();
@@ -153,19 +163,22 @@ class DatabaseTest {
             )
         ));
         
+        // Create new Database instance to clear schema cache
+        $db = new Database($this->testDir);
+        
         // Test valid email
-        $id1 = $this->db->generateId();
+        $id1 = $db->generateId();
         $data1 = array('email' => 'user@example.com');
-        $written1 = $this->db->write('test_email', $id1, $data1);
+        $written1 = $db->write('test_email', $id1, $data1);
         $this->assert($written1 === true, 'Valid email passes validation');
         
         // Test invalid email
-        $id2 = $this->db->generateId();
+        $id2 = $db->generateId();
         $data2 = array('email' => 'invalid-email');
         
         $exceptionThrown = false;
         try {
-            $this->db->write('test_email', $id2, $data2);
+            $db->write('test_email', $id2, $data2);
         } catch (SchemaValidationException $e) {
             $exceptionThrown = true;
         }
@@ -173,9 +186,9 @@ class DatabaseTest {
         $this->assert($exceptionThrown, 'Invalid email fails validation');
         
         // Test empty email (should pass since not required)
-        $id3 = $this->db->generateId();
+        $id3 = $db->generateId();
         $data3 = array('email' => '');
-        $written3 = $this->db->write('test_email', $id3, $data3);
+        $written3 = $db->write('test_email', $id3, $data3);
         $this->assert($written3 === true, 'Empty email passes when not required');
     }
     
@@ -194,19 +207,22 @@ class DatabaseTest {
             )
         ));
         
+        // Create new Database instance to clear schema cache
+        $db = new Database($this->testDir);
+        
         // Test valid enum
-        $id1 = $this->db->generateId();
+        $id1 = $db->generateId();
         $data1 = array('role' => 'admin');
-        $written1 = $this->db->write('test_enum', $id1, $data1);
+        $written1 = $db->write('test_enum', $id1, $data1);
         $this->assert($written1 === true, 'Valid enum value passes');
         
         // Test invalid enum
-        $id2 = $this->db->generateId();
+        $id2 = $db->generateId();
         $data2 = array('role' => 'superadmin');
         
         $exceptionThrown = false;
         try {
-            $this->db->write('test_enum', $id2, $data2);
+            $db->write('test_enum', $id2, $data2);
         } catch (SchemaValidationException $e) {
             $exceptionThrown = true;
         }
@@ -225,11 +241,14 @@ class DatabaseTest {
             )
         ));
         
-        $id = $this->db->generateId();
+        // Create new Database instance to clear schema cache
+        $db = new Database($this->testDir);
+        
+        $id = $db->generateId();
         $data = array('name' => 'Test');
         
-        $this->db->write('test_version', $id, $data);
-        $read = $this->db->read('test_version', $id);
+        $db->write('test_version', $id, $data);
+        $read = $db->read('test_version', $id);
         
         $this->assert(isset($read['schema_version']), 'Schema version is set');
         $this->assert($read['schema_version'] === 2, 'Schema version matches schema');
@@ -257,6 +276,50 @@ class DatabaseTest {
         $this->assert($read['username'] === 'testuser', 'Username is correct');
         $this->assert($read['email'] === '', 'Email defaults to empty string');
         $this->assert($read['role'] === 'admin', 'Role is correct');
+    }
+    
+    private function testSchemaMigration() {
+        echo "\n--- Test: Schema Migration on Read ---\n";
+        
+        // Create initial schema v1
+        $this->createTestSchema('test_migrate', array(
+            'version' => 1,
+            'defaults' => array('name' => ''),
+            'fields' => array(
+                'name' => array('type' => 'string', 'required' => true)
+            )
+        ));
+        
+        $db1 = new Database($this->testDir);
+        $id = $db1->generateId();
+        
+        // Write document with v1 schema
+        $db1->write('test_migrate', $id, array('name' => 'Old Document'));
+        
+        // Update schema to v2 with new field
+        $this->createTestSchema('test_migrate', array(
+            'version' => 2,
+            'defaults' => array(
+                'name' => '',
+                'status' => 'migrated'
+            ),
+            'fields' => array(
+                'name' => array('type' => 'string', 'required' => true),
+                'status' => array('type' => 'string', 'required' => true)
+            )
+        ));
+        
+        // Read with new schema - should apply new defaults
+        $db2 = new Database($this->testDir);
+        $read = $db2->read('test_migrate', $id);
+        
+        $this->assert($read['name'] === 'Old Document', 'Original data preserved');
+        $this->assert($read['status'] === 'migrated', 'New field added from defaults on read');
+        $this->assert($read['schema_version'] === 2, 'Schema version updated on read');
+        
+        // Read again - should still have the migrated field
+        $read2 = $db2->read('test_migrate', $id);
+        $this->assert($read2['status'] === 'migrated', 'Migrated field persisted');
     }
     
     private function createTestSchema($collection, $schema) {
