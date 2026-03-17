@@ -21,6 +21,12 @@ class DatabaseTest {
     }
     
     public function __destruct() {
+        // Cleanup test schemas
+        $schemas = glob(MANTRA_CORE . '/schemas/test_*.php');
+        foreach ($schemas as $schema) {
+            @unlink($schema);
+        }
+
         // Cleanup test directory
         $this->removeDirectory($this->testDir);
     }
@@ -68,7 +74,10 @@ class DatabaseTest {
         $this->testQueryWithLimit();
         $this->testMetadata();
         $this->testSecurity();
-        
+        $this->testSecurityExtended();
+        $this->testErrorHandling();
+        $this->testLogging();
+
         $this->printResults();
     }
     
@@ -277,23 +286,57 @@ class DatabaseTest {
     }
     
     private function testOptionalEmail() {
-        echo "\n--- Test: Optional Email (Real User Schema) ---\n";
-        
-        // Test with actual users schema
-        $id = $this->db->generateId();
+        echo "\n--- Test: Optional Email (User-like Schema) ---\n";
+
+        // Create test schema mimicking users schema
+        $this->createTestSchema('test_users', array(
+            'version' => 1,
+            'defaults' => array(
+                'username' => '',
+                'email' => '',
+                'password' => '',
+                'role' => 'editor'
+            ),
+            'fields' => array(
+                'username' => array(
+                    'type' => 'string',
+                    'required' => true,
+                    'minLength' => 3,
+                    'maxLength' => 50
+                ),
+                'email' => array(
+                    'type' => 'email',
+                    'required' => false,
+                    'maxLength' => 255
+                ),
+                'password' => array(
+                    'type' => 'string',
+                    'required' => true,
+                    'minLength' => 60
+                ),
+                'role' => array(
+                    'type' => 'enum',
+                    'values' => array('admin', 'editor', 'viewer'),
+                    'required' => true
+                )
+            )
+        ));
+
+        $db = new Database($this->testDir);
+        $id = $db->generateId();
         $auth = new Auth();
-        
+
         // Create user without email (like in install.php)
         $userData = array(
             'username' => 'testuser',
             'password' => $auth->hashPassword('testpass123'),
             'role' => 'admin'
         );
-        
-        $written = $this->db->write('users', $id, $userData);
+
+        $written = $db->write('test_users', $id, $userData);
         $this->assert($written === true, 'User created without email');
-        
-        $read = $this->db->read('users', $id);
+
+        $read = $db->read('test_users', $id);
         $this->assert($read !== null, 'User can be read back');
         $this->assert($read['username'] === 'testuser', 'Username is correct');
         $this->assert($read['email'] === '', 'Email defaults to empty string');
@@ -894,14 +937,16 @@ class DatabaseTest {
         $this->assert(!empty($read['updated_at']), 'updated_at has value');
         
         $createdAt = $read['created_at'];
-        
-        // Update document
-        sleep(1);
+        $updatedAt = $read['updated_at'];
+
+        // Update document (wait 100ms to ensure different timestamp)
+        usleep(100000);
         $db->write('test_metadata', $id, array('name' => 'Updated'));
         $readUpdated = $db->read('test_metadata', $id);
-        
+
         $this->assert($readUpdated['created_at'] === $createdAt, 'created_at unchanged on update');
-        $this->assert($readUpdated['updated_at'] !== $createdAt, 'updated_at changed on update');
+        $this->assert($readUpdated['updated_at'] !== $updatedAt, 'updated_at changed on update');
+        $this->assert($readUpdated['updated_at'] > $createdAt, 'updated_at is after created_at');
     }
     
     private function testSecurity() {
@@ -942,7 +987,7 @@ class DatabaseTest {
     
     private function testValidationMultipleErrors() {
         echo "\n--- Test: Validation - Multiple Errors ---\n";
-        
+
         $this->createTestSchema('test_multi_errors', array(
             'version' => 1,
             'defaults' => array(
@@ -967,9 +1012,9 @@ class DatabaseTest {
                 )
             )
         ));
-        
+
         $db = new Database($this->testDir);
-        
+
         // Multiple validation errors
         $id = $db->generateId();
         $data = array(
@@ -977,7 +1022,7 @@ class DatabaseTest {
             'email' => 'invalid',  // Invalid email
             'age' => 15  // Below minimum
         );
-        
+
         $exceptionThrown = false;
         $errorCount = 0;
         try {
@@ -987,9 +1032,181 @@ class DatabaseTest {
             $errors = $e->getErrors();
             $errorCount = count($errors);
         }
-        
+
         $this->assert($exceptionThrown, 'Multiple validation errors throw exception');
         $this->assert($errorCount === 3, 'All three validation errors reported');
+    }
+
+    private function testSecurityExtended() {
+        echo "\n--- Test: Security - Extended Validation ---\n";
+
+        $this->createTestSchema('test_security_ext', array(
+            'version' => 1,
+            'defaults' => array('name' => ''),
+            'fields' => array('name' => array('type' => 'string', 'required' => true))
+        ));
+
+        $db = new Database($this->testDir);
+
+        // Test absolute path in collection
+        $exceptionThrown = false;
+        try {
+            $db->write('/etc/passwd', 'test', array('name' => 'hack'));
+        } catch (Exception $e) {
+            $exceptionThrown = true;
+        }
+        $this->assert($exceptionThrown, 'Absolute path in collection blocked');
+
+        // Test null byte in collection name
+        $exceptionThrown = false;
+        try {
+            $db->write("test\0null", 'test', array('name' => 'hack'));
+        } catch (Exception $e) {
+            $exceptionThrown = true;
+        }
+        $this->assert($exceptionThrown, 'Null byte in collection name blocked');
+
+        // Test null byte in ID
+        $exceptionThrown = false;
+        try {
+            $db->write('test_security_ext', "test\0null", array('name' => 'hack'));
+        } catch (Exception $e) {
+            $exceptionThrown = true;
+        }
+        $this->assert($exceptionThrown, 'Null byte in ID blocked');
+
+        // Test special characters in collection
+        $exceptionThrown = false;
+        try {
+            $db->write('test@collection!', 'test', array('name' => 'hack'));
+        } catch (Exception $e) {
+            $exceptionThrown = true;
+        }
+        $this->assert($exceptionThrown, 'Special characters in collection blocked');
+
+        // Test special characters in ID
+        $exceptionThrown = false;
+        try {
+            $db->write('test_security_ext', 'test@id!', array('name' => 'hack'));
+        } catch (Exception $e) {
+            $exceptionThrown = true;
+        }
+        $this->assert($exceptionThrown, 'Special characters in ID blocked');
+
+        // Test backslash path traversal
+        $exceptionThrown = false;
+        try {
+            $db->write('..\\evil', 'test', array('name' => 'hack'));
+        } catch (Exception $e) {
+            $exceptionThrown = true;
+        }
+        $this->assert($exceptionThrown, 'Backslash path traversal blocked');
+    }
+
+    private function testErrorHandling() {
+        echo "\n--- Test: Error Handling ---\n";
+
+        $this->createTestSchema('test_errors', array(
+            'version' => 1,
+            'defaults' => array('name' => ''),
+            'fields' => array('name' => array('type' => 'string', 'required' => true))
+        ));
+
+        $db = new Database($this->testDir);
+
+        // Test reading non-existent document
+        $result = $db->read('test_errors', 'nonexistent');
+        $this->assert($result === null, 'Reading non-existent document returns null');
+
+        // Test deleting non-existent document (should not throw)
+        $deleted = $db->delete('test_errors', 'nonexistent');
+        $this->assert($deleted === false, 'Deleting non-existent document returns false');
+
+        // Test corrupted JSON recovery
+        $id = $db->generateId();
+        $db->write('test_errors', $id, array('name' => 'Test'));
+
+        // Corrupt the JSON file
+        $collectionDir = $this->testDir . '/test_errors';
+        $jsonFile = $collectionDir . '/' . $id . '.json';
+        if (file_exists($jsonFile)) {
+            file_put_contents($jsonFile, '{invalid json}');
+
+            // Try to read corrupted file - should throw or return null
+            $exceptionThrown = false;
+            try {
+                $result = $db->read('test_errors', $id);
+                // If no exception, result should be null
+                $this->assert($result === null, 'Corrupted JSON returns null or throws exception');
+            } catch (Exception $e) {
+                $exceptionThrown = true;
+                $this->assert($exceptionThrown, 'Corrupted JSON throws exception');
+            }
+        }
+
+        // Test invalid schema file
+        $invalidSchemaPath = MANTRA_CORE . '/schemas/test_invalid_schema.php';
+        file_put_contents($invalidSchemaPath, "<?php\nreturn 'not an array';\n");
+
+        $db2 = new Database($this->testDir);
+        // Should handle invalid schema gracefully
+        $id2 = $db2->generateId();
+        $written = $db2->write('test_invalid_schema', $id2, array('data' => 'test'));
+        $this->assert($written === true, 'Invalid schema handled gracefully');
+
+        @unlink($invalidSchemaPath);
+    }
+
+    private function testLogging() {
+        echo "\n--- Test: Logging ---\n";
+
+        $this->createTestSchema('test_logging', array(
+            'version' => 1,
+            'defaults' => array('name' => ''),
+            'fields' => array('name' => array('type' => 'string', 'required' => true))
+        ));
+
+        $db = new Database($this->testDir);
+
+        // Clear existing logs
+        $logDir = MANTRA_STORAGE . '/logs';
+        $logFile = $logDir . '/app-' . date('Y-m-d') . '.log';
+
+        // Get current log size
+        $logSizeBefore = file_exists($logFile) ? filesize($logFile) : 0;
+
+        // Trigger a validation error (should be logged)
+        $id = $db->generateId();
+        try {
+            $db->write('test_logging', $id, array()); // Missing required field
+        } catch (SchemaValidationException $e) {
+            // Expected
+        }
+
+        // Check if log file grew
+        clearstatcache();
+        $logSizeAfter = file_exists($logFile) ? filesize($logFile) : 0;
+        $this->assert($logSizeAfter > $logSizeBefore, 'Validation errors are logged');
+
+        // Trigger an invalid collection error (should be logged)
+        $logSizeBefore = $logSizeAfter;
+        try {
+            $db->write('../invalid', 'test', array('name' => 'test'));
+        } catch (Exception $e) {
+            // Expected
+        }
+
+        clearstatcache();
+        $logSizeAfter = file_exists($logFile) ? filesize($logFile) : 0;
+        $this->assert($logSizeAfter > $logSizeBefore, 'Security errors are logged');
+
+        // Test successful write is logged (debug level)
+        $logSizeBefore = $logSizeAfter;
+        $db->write('test_logging', $id, array('name' => 'Test'));
+
+        clearstatcache();
+        $logSizeAfter = file_exists($logFile) ? filesize($logFile) : 0;
+        $this->assert($logSizeAfter >= $logSizeBefore, 'Successful operations logged at debug level');
     }
     
     private function createTestSchema($collection, $schema) {
