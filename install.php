@@ -24,7 +24,7 @@ if (!empty($missingExtensions)) {
 if (file_exists(MANTRA_CONTENT . '/users')) {
     $users = glob(MANTRA_CONTENT . '/users/*.json');
     if (!empty($users)) {
-        die('Mantra CMS is already installed. Delete users to reinstall.');
+        die(MANTRA_PROJECT_INFO['name'] . ' is already installed. Delete users to reinstall.');
     }
 }
 
@@ -33,7 +33,7 @@ if (request()->method() === 'POST') {
     $username = trim((string)request()->post('username', ''));
     $password = (string)request()->post('password', '');
     $email = trim((string)request()->post('email', ''));
-    $siteName = trim((string)request()->post('site_name', 'Mantra CMS'));
+    $siteName = trim((string)request()->post('site_name', MANTRA_PROJECT_INFO['name']));
     $language = (string)request()->post('language', 'en');
 
     if (empty($username) || empty($password)) {
@@ -103,7 +103,7 @@ if (request()->method() === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title data-i18n="page_title">Install Mantra CMS</title>
+    <title data-i18n="page_title">Install <?php echo e(MANTRA_PROJECT_INFO['name']); ?></title>
     <link href="/core/assets/bootstrap/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
@@ -124,7 +124,7 @@ if (request()->method() === 'POST') {
             <div class="col-md-6 col-lg-5">
                 <div class="card install-card">
                     <div class="card-body p-4">
-                        <h1 class="card-title text-center mb-4" data-i18n="title">Install Mantra CMS</h1>
+                        <h1 class="card-title text-center mb-4" data-i18n="title">Install <?php echo e(MANTRA_PROJECT_INFO['name']); ?></h1>
 
                         <?php if (isset($success)): ?>
                             <div class="alert alert-success" role="alert">
@@ -143,7 +143,7 @@ if (request()->method() === 'POST') {
                             <form method="POST">
                                 <div class="mb-3">
                                     <label for="site_name" class="form-label" data-i18n="label_site_name">Site Name</label>
-                                    <input type="text" class="form-control" id="site_name" name="site_name" value="Mantra CMS" required>
+                                    <input type="text" class="form-control" id="site_name" name="site_name" value="<?php echo e(MANTRA_PROJECT_INFO['name']); ?>" required>
                                 </div>
 
                                 <div class="mb-3">
@@ -184,8 +184,8 @@ if (request()->method() === 'POST') {
     <script>
         const translations = {
             en: {
-                page_title: 'Install Mantra CMS',
-                title: 'Install Mantra CMS',
+                page_title: 'Install <?php echo e(MANTRA_PROJECT_INFO['name']); ?>',
+                title: 'Install <?php echo e(MANTRA_PROJECT_INFO['name']); ?>',
                 success_heading: 'Installation successful!',
                 success_message: 'Your CMS is ready to use.',
                 success_button: 'Go to admin panel',
@@ -197,8 +197,8 @@ if (request()->method() === 'POST') {
                 button_install: 'Install'
             },
             ru: {
-                page_title: 'Установка Mantra CMS',
-                title: 'Установка Mantra CMS',
+                page_title: 'Установка <?php echo e(MANTRA_PROJECT_INFO['name']); ?>',
+                title: 'Установка <?php echo e(MANTRA_PROJECT_INFO['name']); ?>',
                 success_heading: 'Установка завершена!',
                 success_message: 'Ваша CMS готова к использованию.',
                 success_button: 'Перейти в админ-панель',
