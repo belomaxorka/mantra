@@ -6,39 +6,59 @@
 
 class Database {
     private $basePath = '';
+    private $jsonDriver = null;
+    private $markdownDriver = null;
 
     // Schema cache: collection => schema array
     private $collectionSchemas = array();
 
     public function __construct($basePath = null) {
         $this->basePath = $basePath ? $basePath : MANTRA_CONTENT;
+        $this->jsonDriver = new JsonStorageDriver($this->basePath);
+        $this->markdownDriver = new MarkdownStorageDriver($this->basePath);
+    }
+
+    /**
+     * Get storage driver for collection
+     * Only pages and posts use Markdown (if enabled), everything else uses JSON
+     */
+    private function getDriver($collection) {
+        $format = config('content.format', 'json');
+
+        // Only pages and posts can use Markdown
+        $contentCollections = array('pages', 'posts');
+
+        if ($format === 'markdown' && in_array($collection, $contentCollections)) {
+            return $this->markdownDriver;
+        }
+
+        return $this->jsonDriver;
     }
 
     /**
      * Read data from file
      */
     public function read($collection, $id = null) {
-        $path = $this->getPath($collection, $id);
-
         if ($id === null) {
             // Read all items in collection
             return $this->readCollection($collection);
         }
 
-        if (!file_exists($path)) {
-            return null;
-        }
+        $driver = $this->getDriver($collection);
 
         try {
-            $data = JsonFile::read($path);
-        } catch (JsonFileException $e) {
-            logger()->error('Failed to read JSON document', array(
+            $data = $driver->read($collection, $id);
+        } catch (Exception $e) {
+            logger()->error('Failed to read document', array(
                 'collection' => $collection,
                 'id' => $id,
-                'path' => $path,
                 'error' => $e->getMessage()
             ));
             throw $e;
+        }
+
+        if ($data === null) {
+            return null;
         }
 
         $normalized = $this->normalizeDocument($collection, $id, $data);
@@ -69,8 +89,6 @@ class Database {
             throw new Exception('Invalid ID');
         }
 
-        $path = $this->getPath($collection, $id);
-
         // Add metadata
         if (!isset($data['created_at'])) {
             $data['created_at'] = date('Y-m-d H:i:s');
@@ -85,13 +103,14 @@ class Database {
             }
         }
 
+        $driver = $this->getDriver($collection);
+
         try {
-            $result = JsonFile::write($path, $data);
-        } catch (JsonFileException $e) {
-            logger()->error('Failed to write JSON document', array(
+            $result = $driver->write($collection, $id, $data);
+        } catch (Exception $e) {
+            logger()->error('Failed to write document', array(
                 'collection' => $collection,
                 'id' => $id,
-                'path' => $path,
                 'error' => $e->getMessage()
             ));
             throw $e;
@@ -122,52 +141,27 @@ class Database {
      * Delete data file
      */
     public function delete($collection, $id) {
-        $path = $this->getPath($collection, $id);
-        
-        if (file_exists($path)) {
-            return unlink($path);
-        }
-        
-        return false;
+        $driver = $this->getDriver($collection);
+        return $driver->delete($collection, $id);
     }
-    
+
     /**
      * Check if item exists
      */
     public function exists($collection, $id) {
-        $path = $this->getPath($collection, $id);
-        return file_exists($path);
+        $driver = $this->getDriver($collection);
+        return $driver->exists($collection, $id);
     }
     
     /**
      * Read entire collection
      */
     private function readCollection($collection) {
-        $collectionPath = $this->basePath . '/' . $collection;
-
-        if (!is_dir($collectionPath)) {
-            return array();
-        }
-
+        $driver = $this->getDriver($collection);
         $items = array();
-        $files = glob($collectionPath . '/*.json');
+        $documents = $driver->readCollection($collection);
 
-        foreach ($files as $file) {
-            $id = basename($file, '.json');
-
-            try {
-                $data = JsonFile::read($file);
-            } catch (JsonFileException $e) {
-                logger()->error('Failed to read JSON document in collection', array(
-                    'collection' => $collection,
-                    'id' => $id,
-                    'path' => $file,
-                    'error' => $e->getMessage()
-                ));
-                // Skip corrupted/unrecoverable documents.
-                continue;
-            }
-
+        foreach ($documents as $id => $data) {
             $normalized = $this->normalizeDocument($collection, $id, $data);
             if ($normalized !== $data) {
                 $this->write($collection, $id, $normalized);
@@ -222,15 +216,6 @@ class Database {
         return array_values($items);
     }
     
-    /**
-     * Get file path
-     */
-    private function getPath($collection, $id = null) {
-        if ($id === null) {
-            return $this->basePath . '/' . $collection;
-        }
-        return $this->basePath . '/' . $collection . '/' . $id . '.json';
-    }
     
     private function getCollectionSchema($collection)
     {

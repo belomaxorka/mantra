@@ -81,6 +81,13 @@ spl_autoload_register(function ($class) {
         return;
     }
 
+    // Try core/classes/Storage/ for storage driver classes
+    $storageFile = MANTRA_CORE . '/classes/Storage/' . $relative . '.php';
+    if (file_exists($storageFile)) {
+        require_once $storageFile;
+        return;
+    }
+
     // Try direct in core/classes/ (for classes without namespace-like structure)
     $directFile = MANTRA_CORE . '/classes/' . basename($relative) . '.php';
     if (file_exists($directFile)) {
