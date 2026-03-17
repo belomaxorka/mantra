@@ -58,6 +58,8 @@ return array(
 
     // Modules settings
     'admin-settings.modules.enabled_modules' => 'Enabled modules',
+    'admin-settings.modules.core_modules' => 'Core Modules',
+    'admin-settings.modules.other_modules' => 'Other Modules',
 
     // Security settings
     'admin-settings.security.password_hash_algo' => 'Password hash algorithm',

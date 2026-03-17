@@ -58,6 +58,8 @@ return array(
 
     // Modules settings
     'admin-settings.modules.enabled_modules' => 'Включенные модули',
+    'admin-settings.modules.core_modules' => 'Основные модули',
+    'admin-settings.modules.other_modules' => 'Другие модули',
 
     // Security settings
     'admin-settings.security.password_hash_algo' => 'Алгоритм хеширования паролей',
