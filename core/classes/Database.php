@@ -4,7 +4,8 @@
  * Provides CRUD operations for JSON-based storage
  */
 
-class Database {
+class Database
+{
     private $basePath = '';
     private $jsonDriver = null;
     private $markdownDriver = null;
@@ -12,7 +13,8 @@ class Database {
     // Schema cache: collection => schema array
     private $collectionSchemas = array();
 
-    public function __construct($basePath = null) {
+    public function __construct($basePath = null)
+    {
         $this->basePath = $basePath ? $basePath : MANTRA_CONTENT;
         $this->jsonDriver = new JsonStorageDriver($this->basePath);
         $this->markdownDriver = new MarkdownStorageDriver($this->basePath);
@@ -22,7 +24,8 @@ class Database {
      * Get storage driver for collection
      * Only pages and posts use Markdown (if enabled), everything else uses JSON
      */
-    private function getDriver($collection) {
+    private function getDriver($collection)
+    {
         $format = config('content.format', 'json');
 
         // Only pages and posts can use Markdown
@@ -38,7 +41,8 @@ class Database {
     /**
      * Read data from file
      */
-    public function read($collection, $id = null) {
+    public function read($collection, $id = null)
+    {
         if ($id === null) {
             // Read all items in collection
             return $this->readCollection($collection);
@@ -76,7 +80,8 @@ class Database {
     /**
      * Write data to file
      */
-    public function write($collection, $id, $data) {
+    public function write($collection, $id, $data)
+    {
         // Validate collection name (prevent directory traversal)
         if (!$this->isValidCollectionName($collection)) {
             logger()->error('Invalid collection name', array('collection' => $collection));
@@ -91,7 +96,7 @@ class Database {
 
         // Clone data to avoid modifying original
         $data = array_merge(array(), $data);
-        
+
         // Sanitize input data
         $data = SchemaValidator::sanitize($data);
 
@@ -120,17 +125,20 @@ class Database {
         }
 
         // Add metadata
-        // Preserve created_at from existing document if updating
-        if (!isset($data['created_at'])) {
-            $driver = $this->getDriver($collection);
-            if ($driver->exists($collection, $id)) {
-                $existing = $driver->read($collection, $id);
-                if ($existing && isset($existing['created_at'])) {
-                    $data['created_at'] = $existing['created_at'];
-                } else {
-                    $data['created_at'] = date('Y-m-d H:i:s');
-                }
+        // Always preserve created_at from existing document on update (immutable)
+        $driver = $this->getDriver($collection);
+        if ($driver->exists($collection, $id)) {
+            // Updating existing document - preserve original created_at
+            $existing = $driver->read($collection, $id);
+            if ($existing && isset($existing['created_at'])) {
+                $data['created_at'] = $existing['created_at'];
             } else {
+                // Existing document missing created_at - set it now
+                $data['created_at'] = date('Y-m-d H:i:s');
+            }
+        } else {
+            // New document - use provided created_at or generate new
+            if (!isset($data['created_at'])) {
                 $data['created_at'] = date('Y-m-d H:i:s');
             }
         }
@@ -145,11 +153,12 @@ class Database {
 
         return $this->writeRaw($collection, $id, $data);
     }
-    
+
     /**
      * Write data without normalization (internal use)
      */
-    private function writeRaw($collection, $id, $data) {
+    private function writeRaw($collection, $id, $data)
+    {
         $driver = $this->getDriver($collection);
 
         try {
@@ -169,25 +178,28 @@ class Database {
 
         return $result;
     }
-    
+
     /**
      * Validate collection name
      */
-    private function isValidCollectionName($name) {
+    private function isValidCollectionName($name)
+    {
         return preg_match('/^[a-zA-Z0-9_-]+$/', $name) === 1;
     }
-    
+
     /**
      * Validate ID
      */
-    private function isValidId($id) {
+    private function isValidId($id)
+    {
         return preg_match('/^[a-zA-Z0-9_-]+$/', $id) === 1;
     }
-    
+
     /**
      * Delete data file
      */
-    public function delete($collection, $id) {
+    public function delete($collection, $id)
+    {
         $driver = $this->getDriver($collection);
         return $driver->delete($collection, $id);
     }
@@ -195,15 +207,17 @@ class Database {
     /**
      * Check if item exists
      */
-    public function exists($collection, $id) {
+    public function exists($collection, $id)
+    {
         $driver = $this->getDriver($collection);
         return $driver->exists($collection, $id);
     }
-    
+
     /**
      * Read entire collection
      */
-    private function readCollection($collection) {
+    private function readCollection($collection)
+    {
         $driver = $this->getDriver($collection);
         $items = array();
         $documents = $driver->readCollection($collection);
@@ -221,16 +235,17 @@ class Database {
 
         return $items;
     }
-    
+
     /**
      * Query collection with filters
      */
-    public function query($collection, $filters = array(), $options = array()) {
+    public function query($collection, $filters = array(), $options = array())
+    {
         $items = $this->readCollection($collection);
-        
+
         // Apply filters
         if (!empty($filters)) {
-            $items = array_filter($items, function($item) use ($filters) {
+            $items = array_filter($items, function ($item) use ($filters) {
                 foreach ($filters as $key => $value) {
                     if (!isset($item[$key]) || $item[$key] !== $value) {
                         return false;
@@ -239,31 +254,38 @@ class Database {
                 return true;
             });
         }
-        
+
         // Apply sorting
         if (isset($options['sort'])) {
             $sortField = $options['sort'];
             $sortOrder = isset($options['order']) ? $options['order'] : 'asc';
-            
-            usort($items, function($a, $b) use ($sortField, $sortOrder) {
+
+            usort($items, function ($a, $b) use ($sortField, $sortOrder) {
                 $valA = isset($a[$sortField]) ? $a[$sortField] : '';
                 $valB = isset($b[$sortField]) ? $b[$sortField] : '';
-                
-                $cmp = strcmp($valA, $valB);
+
+                // Type-aware comparison
+                if (is_numeric($valA) && is_numeric($valB)) {
+                    // Numeric comparison
+                    $cmp = ($valA < $valB) ? -1 : (($valA > $valB) ? 1 : 0);
+                } else {
+                    // String comparison
+                    $cmp = strcmp($valA, $valB);
+                }
+
                 return $sortOrder === 'desc' ? -$cmp : $cmp;
             });
         }
-        
+
         // Apply limit
         if (isset($options['limit'])) {
             $offset = isset($options['offset']) ? $options['offset'] : 0;
             $items = array_slice($items, $offset, $options['limit']);
         }
-        
+
         return array_values($items);
     }
-    
-    
+
     private function getCollectionSchema($collection)
     {
         if (isset($this->collectionSchemas[$collection])) {
@@ -328,18 +350,19 @@ class Database {
     /**
      * Generate unique ID (cryptographically secure)
      */
-    public function generateId() {
+    public function generateId()
+    {
         if (function_exists('random_bytes')) {
             return bin2hex(random_bytes(8)) . '-' . dechex(time());
         }
-        
+
         if (function_exists('openssl_random_pseudo_bytes')) {
             $bytes = openssl_random_pseudo_bytes(8, $strong);
             if ($strong) {
                 return bin2hex($bytes) . '-' . dechex(time());
             }
         }
-        
+
         // Fallback (less secure)
         return uniqid() . '-' . mt_rand(1000, 9999);
     }
