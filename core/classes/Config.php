@@ -24,7 +24,7 @@ class Config {
 
         if ($path && file_exists($path)) {
             try {
-                $decoded = JsonFile::read($path, array('recover' => true));
+                $decoded = JsonFile::read($path);
                 if (is_array($decoded)) {
                     $json = $decoded;
                 }
@@ -149,7 +149,7 @@ class Config {
 
         if (file_exists($this->configPath)) {
             try {
-                $decoded = JsonFile::read($this->configPath, array('recover' => true));
+                $decoded = JsonFile::read($this->configPath);
                 if (is_array($decoded)) {
                     $this->config = self::deepMerge($this->config, $decoded);
                 }

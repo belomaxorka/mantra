@@ -63,8 +63,8 @@ class Database {
 
         $normalized = $this->normalizeDocument($collection, $id, $data);
         if ($normalized !== $data) {
-            // Persist migrated defaults.
-            $this->write($collection, $id, $normalized);
+            // Persist migrated defaults using raw write to avoid recursion
+            $this->writeRaw($collection, $id, $normalized);
             $normalized['_id'] = $id;
             return $normalized;
         }
@@ -89,6 +89,27 @@ class Database {
             throw new Exception('Invalid ID');
         }
 
+        // Clone data to avoid modifying original
+        $data = array_merge(array(), $data);
+        
+        // Sanitize input data
+        $data = SchemaValidator::sanitize($data);
+
+        // Validate against schema
+        $schema = $this->getCollectionSchema($collection);
+        if ($schema && isset($schema['fields'])) {
+            try {
+                SchemaValidator::validateOrThrow($data, $schema);
+            } catch (SchemaValidationException $e) {
+                logger()->error('Schema validation failed', array(
+                    'collection' => $collection,
+                    'id' => $id,
+                    'errors' => $e->getErrors()
+                ));
+                throw $e;
+            }
+        }
+
         // Add metadata
         if (!isset($data['created_at'])) {
             $data['created_at'] = date('Y-m-d H:i:s');
@@ -97,12 +118,18 @@ class Database {
 
         // Ensure schema version is present (for future migrations)
         if (!isset($data['schema_version'])) {
-            $schema = $this->getCollectionSchema($collection);
             if ($schema) {
                 $data['schema_version'] = (int)$schema['version'];
             }
         }
 
+        return $this->writeRaw($collection, $id, $data);
+    }
+    
+    /**
+     * Write data without normalization (internal use)
+     */
+    private function writeRaw($collection, $id, $data) {
         $driver = $this->getDriver($collection);
 
         try {
@@ -279,9 +306,21 @@ class Database {
     }
 
     /**
-     * Generate unique ID
+     * Generate unique ID (cryptographically secure)
      */
     public function generateId() {
+        if (function_exists('random_bytes')) {
+            return bin2hex(random_bytes(8)) . '-' . dechex(time());
+        }
+        
+        if (function_exists('openssl_random_pseudo_bytes')) {
+            $bytes = openssl_random_pseudo_bytes(8, $strong);
+            if ($strong) {
+                return bin2hex($bytes) . '-' . dechex(time());
+            }
+        }
+        
+        // Fallback (less secure)
         return uniqid() . '-' . mt_rand(1000, 9999);
     }
 }

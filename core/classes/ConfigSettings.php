@@ -65,7 +65,7 @@ class ConfigSettings
 
         if (file_exists($this->path)) {
             try {
-                $decoded = JsonFile::read($this->path, array('recover' => true));
+                $decoded = JsonFile::read($this->path);
                 if (is_array($decoded)) {
                     $raw = $decoded;
                 }

@@ -60,11 +60,36 @@ class JsonStorageDriver implements StorageDriverInterface {
     public function delete($collection, $id) {
         $path = $this->getPath($collection, $id);
         
-        if (file_exists($path)) {
-            return unlink($path);
+        if (!file_exists($path)) {
+            return false;
         }
         
-        return false;
+        // Use locking to prevent deletion during read
+        $lockPath = $path . '.lock';
+        $lockHandle = @fopen($lockPath, 'c');
+        if ($lockHandle === false) {
+            return false;
+        }
+        
+        if (!flock($lockHandle, LOCK_EX)) {
+            fclose($lockHandle);
+            return false;
+        }
+        
+        try {
+            $result = @unlink($path);
+            
+            // Clean up lock file
+            flock($lockHandle, LOCK_UN);
+            fclose($lockHandle);
+            @unlink($lockPath);
+            
+            return $result;
+        } catch (Exception $e) {
+            flock($lockHandle, LOCK_UN);
+            fclose($lockHandle);
+            return false;
+        }
     }
     
     public function exists($collection, $id) {

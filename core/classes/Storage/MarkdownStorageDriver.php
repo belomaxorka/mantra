@@ -46,20 +46,48 @@ class MarkdownStorageDriver implements StorageDriverInterface {
         // Ensure directory exists
         $dir = dirname($path);
         if (!is_dir($dir)) {
-            mkdir($dir, 0755, true);
+            if (!mkdir($dir, 0755, true) && !is_dir($dir)) {
+                throw new Exception('Failed to create directory');
+            }
+        }
+
+        // Build content first to validate before acquiring lock
+        $content = $this->buildMarkdown($data);
+        
+        // Validate size (10MB limit like JsonFile)
+        if (strlen($content) > 10485760) {
+            throw new Exception('Markdown content exceeds maximum size (10MB)');
+        }
+
+        // Use same locking mechanism as JsonFile
+        $lockPath = $path . '.lock';
+        $lockHandle = @fopen($lockPath, 'c');
+        if ($lockHandle === false) {
+            throw new Exception('Failed to open lock file');
+        }
+        
+        if (!flock($lockHandle, LOCK_EX)) {
+            fclose($lockHandle);
+            throw new Exception('Failed to acquire exclusive lock');
         }
 
         try {
-            $content = $this->buildMarkdown($data);
-
             // Atomic write with temp file
-            $tempPath = $path . '.tmp';
-            if (file_put_contents($tempPath, $content, LOCK_EX) === false) {
+            $tmp = $path . '.tmp.' . $this->randomSuffix();
+            if (file_put_contents($tmp, $content) === false) {
                 throw new Exception('Failed to write temp file');
             }
 
-            if (!rename($tempPath, $path)) {
-                @unlink($tempPath);
+            // Handle Windows compatibility
+            if (DIRECTORY_SEPARATOR === '\\' && file_exists($path)) {
+                if (!@unlink($path)) {
+                    @unlink($tmp);
+                    throw new Exception('Failed to remove existing file for replacement');
+                }
+            }
+
+            if (!@rename($tmp, $path)) {
+                @unlink($tmp);
                 throw new Exception('Failed to rename temp file');
             }
 
@@ -74,17 +102,45 @@ class MarkdownStorageDriver implements StorageDriverInterface {
                 'error' => $e->getMessage()
             ));
             throw $e;
+        } finally {
+            flock($lockHandle, LOCK_UN);
+            fclose($lockHandle);
         }
     }
     
     public function delete($collection, $id) {
         $path = $this->getPath($collection, $id);
         
-        if (file_exists($path)) {
-            return unlink($path);
+        if (!file_exists($path)) {
+            return false;
         }
         
-        return false;
+        // Use locking to prevent deletion during read
+        $lockPath = $path . '.lock';
+        $lockHandle = @fopen($lockPath, 'c');
+        if ($lockHandle === false) {
+            return false;
+        }
+        
+        if (!flock($lockHandle, LOCK_EX)) {
+            fclose($lockHandle);
+            return false;
+        }
+        
+        try {
+            $result = @unlink($path);
+            
+            // Clean up lock file
+            flock($lockHandle, LOCK_UN);
+            fclose($lockHandle);
+            @unlink($lockPath);
+            
+            return $result;
+        } catch (Exception $e) {
+            flock($lockHandle, LOCK_UN);
+            fclose($lockHandle);
+            return false;
+        }
     }
     
     public function exists($collection, $id) {
@@ -280,5 +336,15 @@ class MarkdownStorageDriver implements StorageDriverInterface {
      */
     private function isHtml($content) {
         return preg_match('/<[^>]+>/', $content) === 1;
+    }
+    
+    /**
+     * Generate random suffix for temp files
+     */
+    private function randomSuffix() {
+        if (function_exists('random_bytes')) {
+            return bin2hex(random_bytes(8));
+        }
+        return uniqid('', true);
     }
 }
