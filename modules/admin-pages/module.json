@@ -8,7 +8,7 @@
   "version": "1.0.0",
   "author": "Mantra CMS",
   "license": "MIT",
-  "type": "admin",
+  "type": "core",
   "capabilities": [
     "routes",
     "admin_ui",
@@ -17,9 +17,5 @@
     "translations"
   ],
   "dependencies": ["admin"],
-  "tags": ["admin", "pages", "content", "management"],
-  "admin": {
-    "disableable": false,
-    "deletable": false
-  }
+  "tags": ["admin", "pages", "content", "management"]
 }
