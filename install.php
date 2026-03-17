@@ -221,13 +221,19 @@ if (request()->method() === 'POST') {
             document.getElementById('html-root').setAttribute('lang', lang);
         }
 
-        document.getElementById('language').addEventListener('change', function() {
-            setLanguage(this.value);
-        });
-
         // Set initial language on page load
         const initialLang = '<?php echo e($selectedLanguage); ?>';
-        document.getElementById('language').value = initialLang;
+        const languageSelect = document.getElementById('language');
+
+        if (languageSelect) {
+            // Form page: add event listener and set value
+            languageSelect.value = initialLang;
+            languageSelect.addEventListener('change', function() {
+                setLanguage(this.value);
+            });
+        }
+
+        // Apply translations for current language
         setLanguage(initialLang);
     </script>
 </body>
