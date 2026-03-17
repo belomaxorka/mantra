@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Language - i18n translator (module/theme scoped)
  *
@@ -18,7 +19,8 @@
  *   - Parent namespace translations take precedence over child modules
  *   - Supports both "admin.dashboard.*" (legacy) and "admin-dashboard.*" (new) formats
  */
-class Language {
+class Language
+{
     private $locale;
     private $fallbackLocale;
     private $theme;
@@ -27,7 +29,8 @@ class Language {
     private $moduleTranslations = array(); // [module => [locale => array]]
     private $childModulesCache = array(); // [parent => [child1, child2, ...]]
 
-    public function __construct() {
+    public function __construct()
+    {
         // Prefer config() helper when available (no Application dependency),
         // but fall back to early-loaded $GLOBALS['MANTRA_CONFIG'] during bootstrap.
         if (function_exists('config')) {
@@ -52,18 +55,21 @@ class Language {
         }
     }
 
-    public function getLocale() {
+    public function getLocale()
+    {
         return $this->locale;
     }
 
-    public function getFallbackLocale() {
+    public function getFallbackLocale()
+    {
         return $this->fallbackLocale;
     }
 
     /**
      * Translate a key with optional {param} interpolation.
      */
-    public function translate($key, $params = array()) {
+    public function translate($key, $params = array())
+    {
         $key = (string)$key;
 
         $value = $this->lookup($key, $this->locale);
@@ -82,7 +88,8 @@ class Language {
         return $value;
     }
 
-    private function lookup($key, $locale) {
+    private function lookup($key, $locale)
+    {
         $domain = $this->domainFromKey($key);
         if ($domain === 'theme') {
             $dict = $this->loadTheme($locale);
@@ -97,7 +104,8 @@ class Language {
         return null;
     }
 
-    private function domainFromKey($key) {
+    private function domainFromKey($key)
+    {
         $pos = strpos($key, '.');
         if ($pos === false) {
             return null;
@@ -105,7 +113,8 @@ class Language {
         return substr($key, 0, $pos);
     }
 
-    private function loadTheme($locale) {
+    private function loadTheme($locale)
+    {
         if (isset($this->themeTranslations[$locale])) {
             return $this->themeTranslations[$locale];
         }
@@ -115,7 +124,8 @@ class Language {
         return $this->themeTranslations[$locale];
     }
 
-    private function loadModule($module, $locale) {
+    private function loadModule($module, $locale)
+    {
         if (!isset($this->moduleTranslations[$module])) {
             $this->moduleTranslations[$module] = array();
         }
@@ -126,7 +136,7 @@ class Language {
         // Primary: Load from exact module match
         $file = MANTRA_MODULES . '/' . $module . '/lang/' . $locale . '.php';
         $translations = $this->loadTranslationFile($file);
-        
+
         // Secondary: For parent namespaces (without hyphen), also check child modules
         // Example: "admin" key can load from "admin-dashboard", "admin-pages", etc.
         if (strpos($module, '-') === false) {
@@ -140,7 +150,7 @@ class Language {
                 $translations = array_merge($childTranslations, $translations);
             }
         }
-        
+
         $this->moduleTranslations[$module][$locale] = $translations;
         return $this->moduleTranslations[$module][$locale];
     }
@@ -148,40 +158,42 @@ class Language {
     /**
      * Find child modules for a parent namespace
      * Example: "admin" -> ["admin-dashboard", "admin-pages", "admin-posts", "admin-settings"]
-     * 
+     *
      * @param string $parentNamespace Parent namespace (e.g., "admin")
      * @return array Array of child module names
      */
-    private function findChildModules($parentNamespace) {
+    private function findChildModules($parentNamespace)
+    {
         // Check cache first
         if (isset($this->childModulesCache[$parentNamespace])) {
             return $this->childModulesCache[$parentNamespace];
         }
-        
+
         $children = array();
         $modulesDir = MANTRA_MODULES;
-        
+
         if (!is_dir($modulesDir)) {
             $this->childModulesCache[$parentNamespace] = $children;
             return $children;
         }
-        
+
         // Find all directories matching pattern: {parent}-*
         $pattern = $modulesDir . '/' . $parentNamespace . '-*';
         $dirs = glob($pattern, GLOB_ONLYDIR);
-        
+
         if (is_array($dirs)) {
             foreach ($dirs as $dir) {
                 $children[] = basename($dir);
             }
         }
-        
+
         // Cache the result
         $this->childModulesCache[$parentNamespace] = $children;
         return $children;
     }
 
-    private function loadTranslationFile($filePath) {
+    private function loadTranslationFile($filePath)
+    {
         if (!is_string($filePath) || $filePath === '' || !file_exists($filePath)) {
             return array();
         }
