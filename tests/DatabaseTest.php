@@ -1176,34 +1176,35 @@ class DatabaseTest {
 
         $db = new Database($this->testDir);
 
-        $logFile = $logDir . '/app-' . date('Y-m-d') . '.log';
+        $errorLogFile = $logDir . '/error-' . date('Y-m-d') . '.log';
 
-        // Trigger a validation error (should be logged)
+        // Trigger a validation error (should be logged to error log)
         $id = $db->generateId();
         $errorLogged = false;
         try {
             $db->write('test_logging', $id, array()); // Missing required field
         } catch (SchemaValidationException $e) {
             // Check if error was logged
-            if (file_exists($logFile)) {
-                $logContent = file_get_contents($logFile);
-                $errorLogged = strpos($logContent, 'Schema validation failed') !== false;
+            if (file_exists($errorLogFile)) {
+                $logContent = file_get_contents($errorLogFile);
+                $errorLogged = strpos($logContent, 'Schema validation failed') !== false
+                    && strpos($logContent, 'test_logging') !== false;
             }
         }
-        $this->assert($errorLogged || !file_exists($logFile), 'Validation errors logged or logging disabled');
+        $this->assert($errorLogged, 'Validation errors are logged to error log');
 
-        // Trigger an invalid collection error (should be logged)
+        // Trigger an invalid collection error (should be logged to error log)
         $securityErrorLogged = false;
         try {
             $db->write('../invalid', 'test', array('name' => 'test'));
         } catch (Exception $e) {
             // Check if error was logged
-            if (file_exists($logFile)) {
-                $logContent = file_get_contents($logFile);
+            if (file_exists($errorLogFile)) {
+                $logContent = file_get_contents($errorLogFile);
                 $securityErrorLogged = strpos($logContent, 'Invalid collection name') !== false;
             }
         }
-        $this->assert($securityErrorLogged || !file_exists($logFile), 'Security errors logged or logging disabled');
+        $this->assert($securityErrorLogged, 'Security errors are logged to error log');
 
         // Test successful write
         $id2 = $db->generateId();
