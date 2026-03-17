@@ -97,10 +97,6 @@ class Config {
                 'name' => 'mantra_session',
                 'lifetime' => 7200,
             ),
-            'cache' => array(
-                'enabled' => true,
-                'lifetime' => 3600,
-            ),
             'logging' => array(
                 'level' => 'debug',
                 'retention_days' => 30,

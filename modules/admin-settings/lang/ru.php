@@ -31,7 +31,6 @@ return array(
     'admin-settings.group.modules' => 'Модули',
     'admin-settings.group.security' => 'Безопасность',
     'admin-settings.group.session' => 'Сессия',
-    'admin-settings.group.cache' => 'Кэш',
     'admin-settings.group.logging' => 'Логирование',
     'admin-settings.group.proxy' => 'Прокси',
     'admin-settings.group.debug' => 'Отладка',
@@ -62,10 +61,6 @@ return array(
     // Session settings
     'admin-settings.session.name' => 'Имя сессии',
     'admin-settings.session.lifetime' => 'Время жизни сессии',
-
-    // Cache settings
-    'admin-settings.cache.enabled' => 'Включить кэш',
-    'admin-settings.cache.lifetime' => 'Время жизни кэша',
 
     // Logging settings
     'admin-settings.logging.level' => 'Уровень логирования',

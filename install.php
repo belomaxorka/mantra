@@ -45,7 +45,6 @@ if (request()->method() === 'POST') {
             MANTRA_CONTENT . '/posts',
             MANTRA_CONTENT . '/users',
             MANTRA_CONTENT . '/settings',
-            MANTRA_STORAGE . '/cache',
             MANTRA_STORAGE . '/logs',
             MANTRA_UPLOADS
         );

@@ -31,7 +31,6 @@ return array(
     'admin-settings.group.modules' => 'Modules',
     'admin-settings.group.security' => 'Security',
     'admin-settings.group.session' => 'Session',
-    'admin-settings.group.cache' => 'Cache',
     'admin-settings.group.logging' => 'Logging',
     'admin-settings.group.proxy' => 'Proxy',
     'admin-settings.group.debug' => 'Debug',
@@ -62,10 +61,6 @@ return array(
     // Session settings
     'admin-settings.session.name' => 'Session name',
     'admin-settings.session.lifetime' => 'Session lifetime',
-
-    // Cache settings
-    'admin-settings.cache.enabled' => 'Enable cache',
-    'admin-settings.cache.lifetime' => 'Cache lifetime',
 
     // Logging settings
     'admin-settings.logging.level' => 'Log level',

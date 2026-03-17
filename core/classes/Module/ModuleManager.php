@@ -205,8 +205,7 @@ class ModuleManager
      * @param string $capability ModuleCapability constant
      * @return array
      */
-    public
-    function getModulesByCapability($capability)
+    public function getModulesByCapability($capability)
     {
         $result = array();
         foreach ($this->modules as $name => $data) {
@@ -223,8 +222,7 @@ class ModuleManager
      * @param string $moduleName
      * @return bool
      */
-    public
-    function enableModule($moduleName)
+    public function enableModule($moduleName)
     {
         $this->assertValidModuleName($moduleName, 'enableModule');
 
@@ -287,8 +285,7 @@ class ModuleManager
      * @param string $moduleName
      * @return bool
      */
-    public
-    function disableModule($moduleName)
+    public function disableModule($moduleName)
     {
         $this->assertValidModuleName($moduleName, 'disableModule');
 
@@ -341,8 +338,7 @@ class ModuleManager
      * @param string $moduleName
      * @return bool
      */
-    public
-    function uninstallModule($moduleName)
+    public function uninstallModule($moduleName)
     {
         $this->assertValidModuleName($moduleName, 'uninstallModule');
 
@@ -376,8 +372,7 @@ class ModuleManager
      * Discover all available modules (installed but not necessarily enabled)
      * @return array Array of module manifests keyed by module ID
      */
-    public
-    function discoverModules()
+    public function discoverModules()
     {
         $discovered = array();
 
@@ -430,8 +425,7 @@ class ModuleManager
      * @param string $moduleName
      * @return array|null
      */
-    public
-    function getModuleInfo($moduleName)
+    public function getModuleInfo($moduleName)
     {
         $this->assertValidModuleName($moduleName, 'getModuleInfo');
 

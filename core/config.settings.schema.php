@@ -149,24 +149,6 @@ return array(
             ),
         ),
         array(
-            'id' => 'cache',
-            'title' => 'admin-settings.group.cache',
-            'fields' => array(
-                array(
-                    'path' => 'cache.enabled',
-                    'type' => 'toggle',
-                    'title' => 'admin-settings.cache.enabled',
-                    'default' => true,
-                ),
-                array(
-                    'path' => 'cache.lifetime',
-                    'type' => 'number',
-                    'title' => 'admin-settings.cache.lifetime',
-                    'default' => 3600,
-                ),
-            ),
-        ),
-        array(
             'id' => 'logging',
             'title' => 'admin-settings.group.logging',
             'fields' => array(

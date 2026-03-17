@@ -22,17 +22,6 @@ function db() {
 }
 
 /**
- * Get cache instance
- */
-function cache() {
-    static $cache = null;
-    if ($cache === null) {
-        $cache = new Cache();
-    }
-    return $cache;
-}
-
-/**
  * Get auth instance
  */
 function auth() {
@@ -392,13 +381,13 @@ function slugify($text) {
         'Ш' => 'Sh', 'Щ' => 'Sch', 'Ъ' => '', 'Ы' => 'Y', 'Ь' => '',
         'Э' => 'E', 'Ю' => 'Yu', 'Я' => 'Ya'
     );
-    
+
     // Transliterate Cyrillic
     $text = strtr($text, $cyrillic);
-    
+
     // Replace non letter or digits by -
     $text = preg_replace('~[^\pL\d]+~u', '-', $text);
-    
+
     // Transliterate remaining characters
     if (function_exists('iconv')) {
         $converted = @iconv('utf-8', 'us-ascii//TRANSLIT//IGNORE', $text);
@@ -406,19 +395,19 @@ function slugify($text) {
             $text = $converted;
         }
     }
-    
+
     // Remove unwanted characters
     $text = preg_replace('~[^-\w]+~', '', $text);
-    
+
     // Trim
     $text = trim($text, '-');
-    
+
     // Remove duplicate -
     $text = preg_replace('~-+~', '-', $text);
-    
+
     // Lowercase
     $text = strtolower($text);
-    
+
     return empty($text) ? 'n-a' : $text;
 }
 
@@ -477,11 +466,11 @@ function widget($name, $params = array()) {
  */
 function view($template = null, $data = array()) {
     $view = new View();
-    
+
     if ($template === null) {
         return $view;
     }
-    
+
     return $view->render($template, $data);
 }
 
@@ -505,7 +494,7 @@ function verify_csrf() {
     if (request()->method() !== 'POST') {
         return true;
     }
-    
+
     $token = request()->post('csrf_token', '');
     if (!auth()->verifyCsrfToken($token)) {
         http_response_code(403);
