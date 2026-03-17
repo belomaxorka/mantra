@@ -83,6 +83,10 @@ class DatabaseTest {
         $this->testCollectionAutoCreation();
         $this->testReadCollectionWithPartialErrors();
         $this->testFileSizeLimit();
+        $this->testQueryNonExistentCollection();
+        $this->testEmptyStringRequiredField();
+        $this->testMetadataOverride();
+        $this->testLargeCollectionPerformance();
 
         $this->printResults();
     }
@@ -1374,6 +1378,167 @@ PHP;
         $this->assert($exists === false, 'Oversized document not written to disk');
     }
 
+    private function testQueryNonExistentCollection() {
+        echo "\n--- Test: Query Non-Existent Collection ---\n";
+
+        $db = new Database($this->testDir);
+
+        // Query collection that doesn't exist
+        $results = $db->query('nonexistent_collection');
+
+        $this->assert(is_array($results), 'Query returns array for non-existent collection');
+        $this->assert(count($results) === 0, 'Query returns empty array for non-existent collection');
+
+        // Query with filters on non-existent collection
+        $resultsFiltered = $db->query('nonexistent_collection', array('status' => 'active'));
+        $this->assert(count($resultsFiltered) === 0, 'Filtered query returns empty array');
+
+        // Read from non-existent collection
+        $read = $db->read('nonexistent_collection', 'some-id');
+        $this->assert($read === null, 'Read returns null for non-existent collection');
+
+        // Exists check on non-existent collection
+        $exists = $db->exists('nonexistent_collection', 'some-id');
+        $this->assert($exists === false, 'Exists returns false for non-existent collection');
+    }
+
+    private function testEmptyStringRequiredField() {
+        echo "\n--- Test: Empty String for Required Field ---\n";
+
+        $this->createTestSchema('test_empty_required', array(
+            'version' => 1,
+            'defaults' => array('name' => '', 'description' => ''),
+            'fields' => array(
+                'name' => array('type' => 'string', 'required' => true),
+                'description' => array('type' => 'string', 'required' => false)
+            )
+        ));
+
+        $db = new Database($this->testDir);
+
+        // Test empty string for required field - should fail
+        $id = $db->generateId();
+        $exceptionThrown = false;
+
+        try {
+            $db->write('test_empty_required', $id, array('name' => ''));
+        } catch (SchemaValidationException $e) {
+            $exceptionThrown = true;
+            $errors = $e->getErrors();
+            $this->assert(isset($errors['name']), 'Validation error for empty required field');
+        }
+
+        $this->assert($exceptionThrown, 'Empty string fails validation for required field');
+
+        // Test empty string for optional field - should pass
+        $id2 = $db->generateId();
+        $written = $db->write('test_empty_required', $id2, array('name' => 'Valid Name', 'description' => ''));
+        $this->assert($written === true, 'Empty string allowed for optional field');
+
+        $read = $db->read('test_empty_required', $id2);
+        $this->assert($read['description'] === '', 'Empty string preserved for optional field');
+    }
+
+    private function testMetadataOverride() {
+        echo "\n--- Test: Metadata Override Protection ---\n";
+
+        $this->createTestSchema('test_metadata_override', array(
+            'version' => 1,
+            'defaults' => array('name' => ''),
+            'fields' => array('name' => array('type' => 'string', 'required' => true))
+        ));
+
+        $db = new Database($this->testDir);
+
+        // Try to manually set created_at and updated_at
+        $id = $db->generateId();
+        $customCreatedAt = '2020-01-01 00:00:00';
+        $customUpdatedAt = '2020-01-01 00:00:00';
+
+        $db->write('test_metadata_override', $id, array(
+            'name' => 'Test',
+            'created_at' => $customCreatedAt,
+            'updated_at' => $customUpdatedAt
+        ));
+
+        $read = $db->read('test_metadata_override', $id);
+
+        // Check if custom timestamps were preserved or overwritten
+        $createdAtPreserved = ($read['created_at'] === $customCreatedAt);
+        $updatedAtOverwritten = ($read['updated_at'] !== $customUpdatedAt);
+
+        $this->assert($createdAtPreserved, 'Manually provided created_at is preserved on create');
+        $this->assert($updatedAtOverwritten, 'updated_at is always set to current time');
+
+        // Update document with custom created_at - should preserve original
+        sleep(1);
+        $newCustomCreatedAt = '2021-01-01 00:00:00';
+        $db->write('test_metadata_override', $id, array(
+            'name' => 'Updated',
+            'created_at' => $newCustomCreatedAt
+        ));
+
+        $readUpdated = $db->read('test_metadata_override', $id);
+
+        // On update, created_at from existing document should be preserved, not the new custom value
+        $this->assert($readUpdated['created_at'] === $customCreatedAt, 'Original created_at preserved on update (custom value ignored)');
+        $this->assert($readUpdated['updated_at'] > $read['updated_at'], 'updated_at updated to current time');
+    }
+
+    private function testLargeCollectionPerformance() {
+        echo "\n--- Test: Large Collection Performance ---\n";
+
+        $this->createTestSchema('test_performance', array(
+            'version' => 1,
+            'defaults' => array('name' => '', 'value' => 0),
+            'fields' => array(
+                'name' => array('type' => 'string', 'required' => true),
+                'value' => array('type' => 'integer', 'required' => false)
+            )
+        ));
+
+        $db = new Database($this->testDir);
+
+        // Create 100 documents
+        $itemCount = 100;
+        $startTime = microtime(true);
+
+        for ($i = 1; $i <= $itemCount; $i++) {
+            $db->write('test_performance', 'item' . $i, array(
+                'name' => 'Item ' . $i,
+                'value' => $i
+            ));
+        }
+
+        $writeTime = microtime(true) - $startTime;
+        $this->assert($writeTime < 10, 'Writing ' . $itemCount . ' documents completes in reasonable time');
+
+        // Query all documents
+        $startTime = microtime(true);
+        $results = $db->query('test_performance');
+        $queryTime = microtime(true) - $startTime;
+
+        $this->assert(count($results) === $itemCount, 'Query returns all ' . $itemCount . ' documents');
+        $this->assert($queryTime < 5, 'Querying ' . $itemCount . ' documents completes in reasonable time');
+
+        // Query with filter
+        $startTime = microtime(true);
+        $filtered = $db->query('test_performance', array(), array('sort' => 'value', 'order' => 'desc', 'limit' => 10));
+        $filterTime = microtime(true) - $startTime;
+
+        $this->assert(count($filtered) === 10, 'Filtered query returns correct count');
+        $this->assert($filtered[0]['value'] === $itemCount, 'Sorting works correctly on large collection');
+        $this->assert($filterTime < 5, 'Filtered query completes in reasonable time');
+
+        // Individual reads
+        $startTime = microtime(true);
+        for ($i = 1; $i <= 10; $i++) {
+            $db->read('test_performance', 'item' . $i);
+        }
+        $readTime = microtime(true) - $startTime;
+
+        $this->assert($readTime < 2, 'Individual reads complete in reasonable time');
+    }
     private function createTestSchema($collection, $schema) {
         $schemaPath = MANTRA_CORE . '/schemas/' . $collection . '.php';
         $schemaContent = "<?php\nreturn " . var_export($schema, true) . ";\n";
