@@ -21,7 +21,7 @@
     <header class="bg-dark text-white">
         <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
             <div class="container">
-                <a class="navbar-brand" href="<?php echo base_url(); ?>"><?php echo e(MANTRA_PROJECT_INFO['name']); ?></a>
+                <a class="navbar-brand" href="<?php echo base_url(); ?>"><?php echo e(config('site.name', MANTRA_PROJECT_INFO['name'])); ?></a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                     <span class="navbar-toggler-icon"></span>
                 </button>

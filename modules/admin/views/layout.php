@@ -70,7 +70,7 @@
   <aside class="admin-sidebar border-end bg-body-tertiary p-3">
     <div class="d-flex align-items-center mb-3">
       <a href="<?php echo e(base_url('/admin')); ?>" class="text-decoration-none text-dark">
-        <span class="fs-5 fw-semibold"><?php echo e(config('site.name', 'My Site')); ?></span>
+        <span class="fs-5 fw-semibold"><?php echo e(MANTRA_PROJECT_INFO['name']); ?></span>
       </a>
     </div>
 
