@@ -1,0 +1,11 @@
+{
+  "name": "Example: Theme Assets",
+  "description": "Demonstrates loading CSS and JS files in public theme",
+  "version": "1.0.0",
+  "author": "Mantra CMS",
+  "type": "example",
+  "admin": {
+    "disableable": true,
+    "deletable": true
+  }
+}
