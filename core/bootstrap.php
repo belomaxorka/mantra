@@ -35,9 +35,6 @@ if (!defined('MANTRA_CORE')) {
 if (!defined('MANTRA_MODULES')) {
     define('MANTRA_MODULES', MANTRA_ROOT . '/modules');
 }
-if (!defined('MANTRA_MODULES_URL')) {
-    define('MANTRA_MODULES_URL', '/modules');
-}
 if (!defined('MANTRA_CONTENT')) {
     define('MANTRA_CONTENT', MANTRA_ROOT . '/content');
 }
@@ -46,9 +43,6 @@ if (!defined('MANTRA_STORAGE')) {
 }
 if (!defined('MANTRA_THEMES')) {
     define('MANTRA_THEMES', MANTRA_ROOT . '/themes');
-}
-if (!defined('MANTRA_THEMES_URL')) {
-    define('MANTRA_THEMES_URL', '/themes');
 }
 if (!defined('MANTRA_UPLOADS')) {
     define('MANTRA_UPLOADS', MANTRA_STORAGE . '/uploads');

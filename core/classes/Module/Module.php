@@ -228,7 +228,7 @@ abstract class Module implements ModuleInterface {
      * @return string Module URL (e.g., "/modules/my-module")
      */
     public function getUrl() {
-        return MANTRA_MODULES_URL . '/' . $this->getId();
+        return '/' . basename(MANTRA_MODULES) . '/' . $this->getId();
     }
 
     /**

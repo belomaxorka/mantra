@@ -158,6 +158,6 @@ class View {
     public function asset($path) {
         $app = Application::getInstance();
         $baseUrl = $app->config('site.url', '');
-        return $baseUrl . '/themes/' . basename($this->themePath) . '/assets/' . ltrim($path, '/');
+        return $baseUrl . '/' . basename(MANTRA_THEMES) . '/' . basename($this->themePath) . '/assets/' . ltrim($path, '/');
     }
 }
