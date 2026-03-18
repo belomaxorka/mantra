@@ -1,3 +1,22 @@
+<style>
+    @media (max-width: 575.98px) {
+        .card-body .btn-group {
+            flex-direction: column;
+        }
+        .card-body .btn-group .btn {
+            border-radius: 0.375rem !important;
+        }
+        .module-card-actions {
+            flex-direction: column !important;
+            align-items: stretch !important;
+        }
+        .module-card-actions .btn {
+            width: 100%;
+            margin-top: 0.5rem;
+        }
+    }
+</style>
+
 <form method="post" action="<?php echo e($action); ?>">
   <input type="hidden" name="csrf_token" value="<?php echo e($csrf_token); ?>">
 

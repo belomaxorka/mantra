@@ -1,7 +1,23 @@
+<style>
+    @media (max-width: 575.98px) {
+        .post-header-actions {
+            flex-direction: column;
+            align-items: stretch !important;
+            gap: 0.75rem;
+        }
+        .post-header-actions h1 {
+            font-size: 1.5rem;
+        }
+        .post-header-actions .btn {
+            width: 100%;
+        }
+    }
+</style>
+
 <div class="container-fluid">
     <div class="row mb-4">
         <div class="col">
-            <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex justify-content-between align-items-center post-header-actions">
                 <h1 class="h3"><?php echo $isNew ? t('admin-posts.new_post') : t('admin-posts.edit_post'); ?></h1>
                 <a href="<?php echo base_url('/admin/posts'); ?>" class="btn btn-outline-secondary">
                     <i class="bi bi-arrow-left me-2"></i><?php echo t('admin.common.back'); ?>
