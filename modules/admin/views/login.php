@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title><?php echo t('admin.login.title'); ?> - <?php echo e(MANTRA_PROJECT_INFO['name']); ?></title>
 
-  <link href="/core/assets/bootstrap/bootstrap.min.css" rel="stylesheet">
+  <link href="/<?php echo basename(MANTRA_CORE); ?>/assets/bootstrap/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
 
   <style>
@@ -72,6 +72,6 @@
     </div>
   </div>
 
-  <script src="/core/assets/bootstrap/bootstrap.min.js"></script>
+  <script src="/<?php echo basename(MANTRA_CORE); ?>/assets/bootstrap/bootstrap.min.js"></script>
 </body>
 </html>
