@@ -2,7 +2,8 @@
 /**
  * JsonStorageDriver - JSON file storage implementation
  *
- * Stores content as JSON files (original Database behavior)
+ * Stores content as JSON files with atomic writes and file locking.
+ * Uses JsonCodec for format handling and AbstractFileStorage for file operations.
  */
 
 class JsonStorageDriver extends AbstractFileStorage implements StorageDriverInterface
@@ -23,9 +24,26 @@ class JsonStorageDriver extends AbstractFileStorage implements StorageDriverInte
             return null;
         }
 
+        // Validate file size before reading
+        $size = @filesize($path);
+        if ($size === false) {
+            throw new Exception('Failed to get file size');
+        }
+        self::validateFileSize($size);
+
+        // Acquire shared lock for reading
+        $lockHandle = self::acquireLock($path, LOCK_SH);
+
         try {
-            $data = JsonFile::read($path);
-        } catch (JsonFileException $e) {
+            $raw = file_get_contents($path);
+            if ($raw === false) {
+                throw new Exception('Failed to read file');
+            }
+
+            $data = JsonCodec::decode($raw);
+            return $data;
+
+        } catch (Exception $e) {
             logger()->error('Failed to read JSON document', array(
                 'collection' => $collection,
                 'id' => $id,
@@ -33,18 +51,65 @@ class JsonStorageDriver extends AbstractFileStorage implements StorageDriverInte
                 'error' => $e->getMessage()
             ));
             throw $e;
+        } finally {
+            self::releaseLock($lockHandle);
         }
-
-        return $data;
     }
 
     public function write($collection, $id, $data)
     {
         $path = $this->getPath($collection, $id);
 
+        // Ensure directory exists
+        $dir = dirname($path);
+        if (!is_dir($dir)) {
+            if (!mkdir($dir, 0755, true) && !is_dir($dir)) {
+                throw new Exception('Failed to create directory');
+            }
+        }
+
+        // Encode content first to validate before acquiring lock
         try {
-            $result = JsonFile::write($path, $data);
-        } catch (JsonFileException $e) {
+            $content = JsonCodec::encode($data);
+        } catch (JsonCodecException $e) {
+            logger()->error('Failed to encode JSON document', array(
+                'collection' => $collection,
+                'id' => $id,
+                'error' => $e->getMessage()
+            ));
+            throw $e;
+        }
+
+        // Validate size
+        self::validateFileSize(strlen($content));
+
+        // Acquire exclusive lock
+        $lockHandle = self::acquireLock($path, LOCK_EX);
+
+        try {
+            // Atomic write with temp file
+            $tmp = $path . '.tmp.' . self::randomSuffix();
+            if (file_put_contents($tmp, $content) === false) {
+                throw new Exception('Failed to write temp file');
+            }
+
+            // Handle Windows compatibility
+            if (DIRECTORY_SEPARATOR === '\\' && file_exists($path)) {
+                if (!@unlink($path)) {
+                    @unlink($tmp);
+                    throw new Exception('Failed to remove existing file for replacement');
+                }
+            }
+
+            if (!@rename($tmp, $path)) {
+                @unlink($tmp);
+                throw new Exception('Failed to rename temp file');
+            }
+
+            logger()->debug('Data written', array('collection' => $collection, 'id' => $id));
+            return true;
+
+        } catch (Exception $e) {
             logger()->error('Failed to write JSON document', array(
                 'collection' => $collection,
                 'id' => $id,
@@ -52,13 +117,9 @@ class JsonStorageDriver extends AbstractFileStorage implements StorageDriverInte
                 'error' => $e->getMessage()
             ));
             throw $e;
+        } finally {
+            self::releaseLock($lockHandle);
         }
-
-        if ($result) {
-            logger()->debug('Data written', array('collection' => $collection, 'id' => $id));
-        }
-
-        return $result;
     }
 
     public function delete($collection, $id)
@@ -110,8 +171,13 @@ class JsonStorageDriver extends AbstractFileStorage implements StorageDriverInte
             $id = basename($file, self::getExtension());
 
             try {
-                $data = JsonFile::read($file);
-            } catch (JsonFileException $e) {
+                $raw = file_get_contents($file);
+                if ($raw === false) {
+                    throw new Exception('Failed to read file');
+                }
+
+                $data = JsonCodec::decode($raw);
+            } catch (Exception $e) {
                 logger()->error('Failed to read JSON document in collection', array(
                     'collection' => $collection,
                     'id' => $id,

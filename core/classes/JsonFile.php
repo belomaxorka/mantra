@@ -3,11 +3,15 @@
 /**
  * JsonFile - Safe JSON file read/write helper.
  *
- * Provides:
- * - shared/exclusive locking via a dedicated .lock file
- * - atomic writes (tmp + rename)
- * - file size validation
- * - improved error handling
+ * @deprecated This class is deprecated. Use JsonCodec for encoding/decoding
+ *             and storage drivers for file operations.
+ *
+ * Provides backward compatibility for existing code.
+ * New code should use:
+ * - JsonCodec::encode() / JsonCodec::decode() for format handling
+ * - JsonStorageDriver or direct file operations for storage
+ *
+ * This class will be removed in a future version.
  */
 class JsonFileException extends Exception
 {
@@ -31,6 +35,7 @@ class JsonFile extends AbstractFileStorage
     /**
      * Read and decode a JSON file.
      *
+     * @deprecated Use JsonCodec::decode() with file_get_contents() or JsonStorageDriver
      * @return array
      * @throws JsonFileException
      */
@@ -55,7 +60,13 @@ class JsonFile extends AbstractFileStorage
                 throw new JsonFileException('Failed to read JSON file', $path);
             }
 
-            $data = self::decode($raw, $path);
+            // Use JsonCodec for decoding
+            try {
+                $data = JsonCodec::decode($raw);
+            } catch (JsonCodecException $e) {
+                throw new JsonFileException($e->getMessage(), $path);
+            }
+
             return $data;
         } finally {
             self::releaseLock($lockHandle);
@@ -65,6 +76,7 @@ class JsonFile extends AbstractFileStorage
     /**
      * Encode and atomically write a JSON file.
      *
+     * @deprecated Use JsonCodec::encode() with atomic file operations or JsonStorageDriver
      * @return bool
      * @throws JsonFileException
      */
@@ -77,8 +89,12 @@ class JsonFile extends AbstractFileStorage
             }
         }
 
-        // Encode first to validate before acquiring lock
-        $json = self::encode($data, $path);
+        // Use JsonCodec for encoding
+        try {
+            $json = JsonCodec::encode($data);
+        } catch (JsonCodecException $e) {
+            throw new JsonFileException($e->getMessage(), $path);
+        }
 
         // Validate size before writing
         self::validateFileSize(strlen($json));
@@ -110,31 +126,6 @@ class JsonFile extends AbstractFileStorage
         } finally {
             self::releaseLock($lockHandle);
         }
-    }
-
-    private static function decode($raw, $path)
-    {
-        // json_decode() exceptions require PHP 7.3+ (JSON_THROW_ON_ERROR).
-        // The project supports PHP 5.5+, so use json_last_error().
-        $data = json_decode($raw, true);
-        if (!is_array($data)) {
-            $err = json_last_error();
-            if ($err !== JSON_ERROR_NONE) {
-                throw new JsonFileException('Invalid JSON: ' . json_last_error_msg(), $path);
-            }
-            // Valid JSON but not an object/array.
-            throw new JsonFileException('JSON root must be an object', $path);
-        }
-        return $data;
-    }
-
-    private static function encode($data, $path)
-    {
-        $json = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-        if ($json === false) {
-            throw new JsonFileException('Failed to encode JSON: ' . json_last_error_msg(), $path);
-        }
-        return $json;
     }
 
     /**
@@ -198,6 +189,8 @@ class JsonFile extends AbstractFileStorage
 
     /**
      * Read JSON file with fallback on error
+     *
+     * @deprecated Use JsonCodec with error handling
      * @param string $path File path
      * @param mixed $default Default value if file doesn't exist or is invalid
      * @return mixed
@@ -217,6 +210,8 @@ class JsonFile extends AbstractFileStorage
 
     /**
      * Write JSON file with error handling
+     *
+     * @deprecated Use JsonCodec with error handling
      * @param string $path File path
      * @param mixed $data Data to write
      * @return bool Success status
