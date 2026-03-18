@@ -5,7 +5,7 @@
  * Stores content as JSON files (original Database behavior)
  */
 
-class JsonStorageDriver implements StorageDriverInterface
+class JsonStorageDriver extends AbstractFileStorage implements StorageDriverInterface
 {
 
     private $basePath;
@@ -70,29 +70,26 @@ class JsonStorageDriver implements StorageDriverInterface
         }
 
         // Use locking to prevent deletion during read
-        $lockPath = $path . '.lock';
-        $lockHandle = @fopen($lockPath, 'c');
-        if ($lockHandle === false) {
+        try {
+            $lockHandle = self::openLock($path);
+        } catch (Exception $e) {
             return false;
         }
 
         if (!flock($lockHandle, LOCK_EX)) {
-            fclose($lockHandle);
+            self::releaseLock($lockHandle);
             return false;
         }
 
         try {
             $result = @unlink($path);
 
-            // Clean up lock file
-            flock($lockHandle, LOCK_UN);
-            fclose($lockHandle);
-            @unlink($lockPath);
+            // Clean up lock file and release
+            self::releaseLock($lockHandle, $path, true);
 
             return $result;
         } catch (Exception $e) {
-            flock($lockHandle, LOCK_UN);
-            fclose($lockHandle);
+            self::releaseLock($lockHandle);
             return false;
         }
     }
@@ -112,10 +109,10 @@ class JsonStorageDriver implements StorageDriverInterface
         }
 
         $items = array();
-        $files = glob($collectionPath . '/*.json');
+        $files = glob($collectionPath . '/*' . self::getExtension());
 
         foreach ($files as $file) {
-            $id = basename($file, '.json');
+            $id = basename($file, self::getExtension());
 
             try {
                 $data = JsonFile::read($file);
@@ -137,11 +134,11 @@ class JsonStorageDriver implements StorageDriverInterface
 
     public function getExtension()
     {
-        return 'json';
+        return '.json';
     }
 
     private function getPath($collection, $id)
     {
-        return $this->basePath . '/' . $collection . '/' . $id . '.json';
+        return $this->basePath . '/' . $collection . '/' . $id . self::getExtension();
     }
 }
