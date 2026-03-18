@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo isset($title) ? $this->escape($title) : e(MANTRA_PROJECT_INFO['name']); ?></title>
-    <link href="/core/assets/bootstrap/bootstrap.min.css" rel="stylesheet">
+    <link href="/<?php echo basename(MANTRA_CORE); ?>/assets/bootstrap/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="<?php echo $this->asset('css/style.css'); ?>">
     <?php
     // Hook: allow modules to add content to <head>
@@ -151,7 +151,7 @@
         </div>
     </footer>
 
-    <script src="/core/assets/bootstrap/bootstrap.min.js"></script>
+    <script src="/<?php echo basename(MANTRA_CORE); ?>/assets/bootstrap/bootstrap.min.js"></script>
     <?php
     // Hook: allow modules to add scripts before </body>
     echo $app->hooks()->fire('theme.footer', '');

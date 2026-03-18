@@ -49,24 +49,24 @@ if (request()->method() === 'POST') {
             MANTRA_STORAGE . '/logs',
             MANTRA_UPLOADS
         );
-        
+
         foreach ($dirs as $dir) {
             if (!is_dir($dir)) {
                 mkdir($dir, 0755, true);
             }
         }
-        
+
         // Auto-detect base URL
         $protocol = is_https() ? 'https' : 'http';
         $host = (string)request()->header('Host', 'localhost');
         $scriptPath = dirname((string)request()->server('SCRIPT_NAME', ''));
         $baseUrl = $protocol . '://' . $host . ($scriptPath !== '/' ? $scriptPath : '');
-        
+
         // Create configuration
         $config = Config::buildInstallConfig($siteName, $language, $baseUrl);
         $defaults = Config::defaults();
         $overrides = Config::diffOverrides($defaults, $config);
-        
+
         // Add schema version
         $schemaPath = MANTRA_CORE . '/config.settings.schema.php';
         if (file_exists($schemaPath)) {
@@ -75,20 +75,20 @@ if (request()->method() === 'POST') {
                 $overrides['schema_version'] = (int)$schema['version'];
             }
         }
-        
+
         // Save configuration
         JsonFile::write(MANTRA_CONTENT . '/settings/config.json', $overrides);
-        
+
         // Create admin user
         $db = new Database();
         $auth = new Auth();
-        
+
         $userData = array(
             'username' => $username,
             'password' => $auth->hashPassword($password),
             'role' => 'admin'
         );
-        
+
         if ($db->write('users', $db->generateId(), $userData)) {
             $success = true;
             $adminUrl = rtrim($baseUrl, '/') . '/admin';
@@ -104,7 +104,7 @@ if (request()->method() === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title data-i18n="page_title">Install <?php echo e(MANTRA_PROJECT_INFO['name']); ?></title>
-    <link href="/core/assets/bootstrap/bootstrap.min.css" rel="stylesheet">
+    <link href="/<?php echo basename(MANTRA_CORE); ?>/assets/bootstrap/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
             background: #f8f9fa;
