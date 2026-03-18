@@ -14,8 +14,8 @@ if (version_compare(PHP_VERSION, '5.5.0', '<')) {
 if (!defined('MANTRA_PROJECT_INFO')) {
     define('MANTRA_PROJECT_INFO', array(
         'name' => 'Mantra CMS',
-        'version' => '1.0.0',
-        'github' => 'https://github.com/yourusername/mantra-cms',
+        'version' => '1.1.0',
+        'github' => 'https://github.com/belomaxorka/mantra',
         'release_date' => '2026-03-17'
     ));
 }
@@ -48,11 +48,11 @@ if (!defined('MANTRA_UPLOADS')) {
     define('MANTRA_UPLOADS', MANTRA_STORAGE . '/uploads');
 }
 
-// Load vendored PSR-3 interfaces (no Composer) - in subfolder, autoloader won't find them
+// Load logger classes BEFORE autoloader
 require_once MANTRA_CORE . '/classes/Psr/Log/LoggerInterface.php';
 require_once MANTRA_CORE . '/classes/Psr/Log/LogLevel.php';
 
-// Load config classes BEFORE autoloader (needed to read config and set up debug mode)
+// Load config classes BEFORE autoloader
 require_once MANTRA_CORE . '/classes/Storage/AbstractFileStorage.php';
 require_once MANTRA_CORE . '/classes/JsonFile.php';
 require_once MANTRA_CORE . '/classes/Config.php';
@@ -63,37 +63,23 @@ if (!defined('MANTRA_DEBUG')) {
     define('MANTRA_DEBUG', !empty(Config::getNested($config, 'debug.enabled', false)));
 }
 
-// Autoloader for core classes (Logger/ErrorHandler/Application/Module/etc.)
+// Autoloader for core classes
 spl_autoload_register(function ($class) {
     $relative = str_replace("\0", '', $class);
     $relative = str_replace('\\', '/', $relative);
 
-    // Try core/classes/ with full path (handles Http\Request, etc.)
-    $classFile = MANTRA_CORE . '/classes/' . $relative . '.php';
-    if (file_exists($classFile)) {
-        require_once $classFile;
-        return;
-    }
+    $subdirs = ['', 'Module', 'Storage'];
+    foreach ($subdirs as $subdir) {
+        $path = MANTRA_CORE . '/classes/';
+        if ($subdir !== '') {
+            $path .= $subdir . '/';
+        }
+        $path .= $relative . '.php';
 
-    // Try core/classes/Module/ for module-related classes
-    $moduleFile = MANTRA_CORE . '/classes/Module/' . $relative . '.php';
-    if (file_exists($moduleFile)) {
-        require_once $moduleFile;
-        return;
-    }
-
-    // Try core/classes/Storage/ for storage driver classes
-    $storageFile = MANTRA_CORE . '/classes/Storage/' . $relative . '.php';
-    if (file_exists($storageFile)) {
-        require_once $storageFile;
-        return;
-    }
-
-    // Try direct in core/classes/ (for classes without namespace-like structure)
-    $directFile = MANTRA_CORE . '/classes/' . basename($relative) . '.php';
-    if (file_exists($directFile)) {
-        require_once $directFile;
-        return;
+        if (file_exists($path)) {
+            require_once $path;
+            return;
+        }
     }
 });
 
