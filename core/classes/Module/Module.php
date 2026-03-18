@@ -296,6 +296,52 @@ abstract class Module implements ModuleInterface {
     }
 
     /**
+     * Enqueue CSS file in public theme
+     * @param string $path Path relative to assets directory (e.g., "css/style.css")
+     * @param int $priority Hook priority (default: 10)
+     */
+    protected function enqueueStyle($path, $priority = 10) {
+        $url = $this->asset($path);
+        $this->hook('theme.head', function($content) use ($url) {
+            return $content . "\n    <link rel=\"stylesheet\" href=\"" . e($url) . "\">";
+        }, $priority);
+    }
+
+    /**
+     * Enqueue JS file in public theme
+     * @param string $path Path relative to assets directory (e.g., "js/script.js")
+     * @param int $priority Hook priority (default: 10)
+     */
+    protected function enqueueScript($path, $priority = 10) {
+        $url = $this->asset($path);
+        $this->hook('theme.footer', function($content) use ($url) {
+            return $content . "\n    <script src=\"" . e($url) . "\"></script>";
+        }, $priority);
+    }
+
+    /**
+     * Add inline CSS to public theme
+     * @param string $css CSS code
+     * @param int $priority Hook priority (default: 10)
+     */
+    protected function addInlineStyle($css, $priority = 10) {
+        $this->hook('theme.head', function($content) use ($css) {
+            return $content . "\n    <style>\n" . $css . "\n    </style>";
+        }, $priority);
+    }
+
+    /**
+     * Add inline JS to public theme
+     * @param string $js JavaScript code
+     * @param int $priority Hook priority (default: 10)
+     */
+    protected function addInlineScript($js, $priority = 10) {
+        $this->hook('theme.footer', function($content) use ($js) {
+            return $content . "\n    <script>\n" . $js . "\n    </script>";
+        }, $priority);
+    }
+
+    /**
      * Resolve admin string (translate if needed)
      * @param string $spec Translation key
      * @return string
