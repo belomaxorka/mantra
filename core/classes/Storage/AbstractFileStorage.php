@@ -12,6 +12,7 @@ abstract class AbstractFileStorage
 {
 
     const MAX_FILE_SIZE = 10485760; // 10MB
+    const LOCK_EXTENSION = '.lock';
 
     /**
      * Open lock file for the given path
@@ -22,12 +23,31 @@ abstract class AbstractFileStorage
      */
     protected static function openLock($path)
     {
-        $lockPath = $path . '.lock';
+        $lockPath = $path . static::LOCK_EXTENSION;
         $handle = @fopen($lockPath, 'c');
         if ($handle === false) {
             throw new Exception('Failed to open lock file: ' . $lockPath);
         }
         return $handle;
+    }
+
+    /**
+     * Release lock and close file handle
+     *
+     * @param resource $lockHandle Lock file handle
+     * @param string|null $path Optional file path for lock cleanup
+     * @param bool $cleanup Whether to delete lock file after release
+     */
+    protected static function releaseLock($lockHandle, $path = null, $cleanup = false)
+    {
+        if (is_resource($lockHandle)) {
+            flock($lockHandle, LOCK_UN);
+            fclose($lockHandle);
+        }
+
+        if ($cleanup && $path !== null) {
+            @unlink($path . static::LOCK_EXTENSION);
+        }
     }
 
     /**

@@ -23,6 +23,13 @@ class MarkdownStorageDriver extends AbstractFileStorage implements StorageDriver
             return null;
         }
 
+        // Validate file size before reading
+        $size = @filesize($path);
+        if ($size === false) {
+            throw new Exception('Failed to get file size');
+        }
+        self::validateFileSize($size);
+
         try {
             $content = file_get_contents($path);
             if ($content === false) {
@@ -101,8 +108,7 @@ class MarkdownStorageDriver extends AbstractFileStorage implements StorageDriver
             ));
             throw $e;
         } finally {
-            flock($lockHandle, LOCK_UN);
-            fclose($lockHandle);
+            self::releaseLock($lockHandle);
         }
     }
 
@@ -129,15 +135,12 @@ class MarkdownStorageDriver extends AbstractFileStorage implements StorageDriver
         try {
             $result = @unlink($path);
 
-            // Clean up lock file
-            flock($lockHandle, LOCK_UN);
-            fclose($lockHandle);
-            @unlink($path . '.lock');
+            // Clean up lock file and release
+            self::releaseLock($lockHandle, $path, true);
 
             return $result;
         } catch (Exception $e) {
-            flock($lockHandle, LOCK_UN);
-            fclose($lockHandle);
+            self::releaseLock($lockHandle);
             return false;
         }
     }

@@ -62,8 +62,7 @@ class JsonFile extends AbstractFileStorage
             $data = self::decode($raw, $path);
             return $data;
         } finally {
-            flock($lockHandle, LOCK_UN);
-            fclose($lockHandle);
+            self::releaseLock($lockHandle);
         }
     }
 
@@ -117,8 +116,7 @@ class JsonFile extends AbstractFileStorage
 
             return true;
         } finally {
-            flock($lockHandle, LOCK_UN);
-            fclose($lockHandle);
+            self::releaseLock($lockHandle);
         }
     }
 
@@ -157,7 +155,7 @@ class JsonFile extends AbstractFileStorage
     public static function cleanOrphanedLocks($directory, $maxAge = 3600)
     {
         $cleaned = 0;
-        $pattern = $directory . '/*.lock';
+        $pattern = $directory . '/*' . static::LOCK_EXTENSION;
 
         foreach (glob($pattern) as $lockFile) {
             if (!file_exists($lockFile)) {
@@ -187,7 +185,7 @@ class JsonFile extends AbstractFileStorage
 
     protected static function openLock($path)
     {
-        $lockPath = $path . '.lock';
+        $lockPath = $path . static::LOCK_EXTENSION;
         $handle = @fopen($lockPath, 'c');
         if ($handle === false) {
             throw new JsonFileException('Failed to open lock file', $lockPath);
