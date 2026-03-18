@@ -32,6 +32,26 @@ abstract class AbstractFileStorage
     }
 
     /**
+     * Acquire lock on file handle
+     *
+     * @param string $path File path to lock
+     * @param int $lockType Lock type (LOCK_SH or LOCK_EX)
+     * @return resource File handle with acquired lock
+     * @throws Exception If lock cannot be acquired
+     */
+    protected static function acquireLock($path, $lockType = LOCK_EX)
+    {
+        $lockHandle = static::openLock($path);
+
+        if (!flock($lockHandle, $lockType)) {
+            fclose($lockHandle);
+            throw new Exception('Failed to acquire lock on file: ' . $path);
+        }
+
+        return $lockHandle;
+    }
+
+    /**
      * Release lock and close file handle
      *
      * @param resource $lockHandle Lock file handle

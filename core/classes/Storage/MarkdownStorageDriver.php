@@ -69,12 +69,7 @@ class MarkdownStorageDriver extends AbstractFileStorage implements StorageDriver
         self::validateFileSize(strlen($content));
 
         // Acquire exclusive lock
-        $lockHandle = self::openLock($path);
-
-        if (!flock($lockHandle, LOCK_EX)) {
-            fclose($lockHandle);
-            throw new Exception('Failed to acquire exclusive lock');
-        }
+        $lockHandle = self::acquireLock($path, LOCK_EX);
 
         try {
             // Atomic write with temp file
@@ -122,13 +117,8 @@ class MarkdownStorageDriver extends AbstractFileStorage implements StorageDriver
 
         // Use locking to prevent deletion during read
         try {
-            $lockHandle = self::openLock($path);
+            $lockHandle = self::acquireLock($path, LOCK_EX);
         } catch (Exception $e) {
-            return false;
-        }
-
-        if (!flock($lockHandle, LOCK_EX)) {
-            fclose($lockHandle);
             return false;
         }
 

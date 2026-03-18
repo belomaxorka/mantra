@@ -47,11 +47,7 @@ class JsonFile extends AbstractFileStorage
         }
         self::validateFileSize($size);
 
-        $lockHandle = self::openLock($path);
-        if (!flock($lockHandle, LOCK_SH)) {
-            fclose($lockHandle);
-            throw new JsonFileException('Failed to acquire shared lock for JSON file', $path);
-        }
+        $lockHandle = self::acquireLock($path, LOCK_SH);
 
         try {
             $raw = file_get_contents($path);
@@ -87,11 +83,7 @@ class JsonFile extends AbstractFileStorage
         // Validate size before writing
         self::validateFileSize(strlen($json));
 
-        $lockHandle = self::openLock($path);
-        if (!flock($lockHandle, LOCK_EX)) {
-            fclose($lockHandle);
-            throw new JsonFileException('Failed to acquire exclusive lock for JSON file', $path);
-        }
+        $lockHandle = self::acquireLock($path, LOCK_EX);
 
         try {
             $tmp = $path . '.tmp.' . self::randomSuffix();

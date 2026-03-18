@@ -71,13 +71,8 @@ class JsonStorageDriver extends AbstractFileStorage implements StorageDriverInte
 
         // Use locking to prevent deletion during read
         try {
-            $lockHandle = self::openLock($path);
+            $lockHandle = self::acquireLock($path, LOCK_EX);
         } catch (Exception $e) {
-            return false;
-        }
-
-        if (!flock($lockHandle, LOCK_EX)) {
-            self::releaseLock($lockHandle);
             return false;
         }
 
