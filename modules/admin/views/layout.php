@@ -10,7 +10,14 @@
 
   <style>
     .admin-shell { min-height: 100vh; }
-    .admin-sidebar { width: 280px; }
+    .admin-sidebar {
+      width: 280px;
+      flex-shrink: 0;
+      overflow-y: auto;
+      max-height: 100vh;
+      position: sticky;
+      top: 0;
+    }
     .admin-sidebar .nav-link.active { font-weight: 600; }
     .admin-sidebar .nav-link.level-1 { padding-left: 1.5rem; }
     .admin-sidebar .nav-link.level-2 { padding-left: 2.5rem; }
@@ -47,13 +54,106 @@
     .admin-sidebar .nav-subtree.collapsed {
       display: none;
     }
+
+    /* Mobile header */
+    .admin-mobile-header {
+      display: none;
+      position: sticky;
+      top: 0;
+      z-index: 1020;
+      background: var(--bs-body-bg);
+      border-bottom: 1px solid var(--bs-border-color);
+      padding: 0.75rem 1rem;
+    }
+
+    .admin-mobile-toggle {
+      border: none;
+      background: none;
+      font-size: 1.5rem;
+      padding: 0.25rem 0.5rem;
+      cursor: pointer;
+      color: var(--bs-body-color);
+    }
+
     @media (prefers-reduced-motion: no-preference) {
       .admin-sidebar .nav-link.is-parent.expanded .caret {
         transition: transform 0.15s ease-in-out;
       }
+      .admin-sidebar {
+        transition: transform 0.3s ease-in-out;
+      }
     }
+
+    /* Mobile responsive styles */
     @media (max-width: 991.98px) {
-      .admin-sidebar { width: 100%; }
+      .admin-mobile-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .admin-sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        width: 280px;
+        max-width: 85vw;
+        z-index: 1030;
+        transform: translateX(-100%);
+        box-shadow: 2px 0 8px rgba(0,0,0,0.1);
+      }
+
+      .admin-sidebar.show {
+        transform: translateX(0);
+      }
+
+      .admin-sidebar-backdrop {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 1025;
+      }
+
+      .admin-sidebar-backdrop.show {
+        display: block;
+      }
+
+      .admin-shell {
+        flex-direction: column;
+      }
+
+      main.flex-fill {
+        width: 100%;
+        padding: 1rem !important;
+      }
+    }
+
+    /* Touch-friendly targets */
+    @media (max-width: 991.98px) {
+      .admin-sidebar .nav-link {
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+      }
+
+      .admin-sidebar .nav-link.level-1 { padding-left: 1.75rem; }
+      .admin-sidebar .nav-link.level-2 { padding-left: 2.75rem; }
+      .admin-sidebar .nav-link.level-3 { padding-left: 3.75rem; }
+    }
+
+    /* Small mobile adjustments */
+    @media (max-width: 575.98px) {
+      main.flex-fill {
+        padding: 0.75rem !important;
+      }
+
+      .admin-sidebar {
+        max-width: 90vw;
+      }
     }
   </style>
 
@@ -66,8 +166,17 @@
   ?>
 </head>
 <body>
+<div class="admin-mobile-header">
+  <span class="fs-5 fw-semibold"><?php echo e(MANTRA_PROJECT_INFO['name']); ?></span>
+  <button class="admin-mobile-toggle" id="adminMenuToggle" aria-label="Toggle menu">
+    <i class="bi bi-list"></i>
+  </button>
+</div>
+
+<div class="admin-sidebar-backdrop" id="adminSidebarBackdrop"></div>
+
 <div class="admin-shell d-flex">
-  <aside class="admin-sidebar border-end bg-body-tertiary p-3">
+  <aside class="admin-sidebar border-end bg-body-tertiary p-3" id="adminSidebar">
     <div class="d-flex align-items-center mb-3">
       <a href="<?php echo e(base_url('/admin')); ?>" class="text-decoration-none text-dark">
         <span class="fs-5 fw-semibold"><?php echo e(MANTRA_PROJECT_INFO['name']); ?></span>
@@ -233,6 +342,54 @@
       if (!a) return;
       e.preventDefault();
       toggle(a.getAttribute('data-admin-collapse'));
+    });
+  })();
+
+  // Mobile sidebar toggle
+  (function () {
+    var sidebar = document.getElementById('adminSidebar');
+    var backdrop = document.getElementById('adminSidebarBackdrop');
+    var toggle = document.getElementById('adminMenuToggle');
+
+    if (!sidebar || !backdrop || !toggle) return;
+
+    function openSidebar() {
+      sidebar.classList.add('show');
+      backdrop.classList.add('show');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeSidebar() {
+      sidebar.classList.remove('show');
+      backdrop.classList.remove('show');
+      document.body.style.overflow = '';
+    }
+
+    // Toggle button click
+    toggle.addEventListener('click', function () {
+      if (sidebar.classList.contains('show')) {
+        closeSidebar();
+      } else {
+        openSidebar();
+      }
+    });
+
+    // Backdrop click
+    backdrop.addEventListener('click', closeSidebar);
+
+    // Close sidebar when clicking on navigation links (on mobile)
+    sidebar.addEventListener('click', function (e) {
+      var link = e.target.closest('a.nav-link:not(.is-parent)');
+      if (link && window.innerWidth <= 991.98) {
+        closeSidebar();
+      }
+    });
+
+    // Close sidebar on window resize to desktop
+    window.addEventListener('resize', function () {
+      if (window.innerWidth > 991.98) {
+        closeSidebar();
+      }
     });
   })();
 </script>

@@ -15,10 +15,24 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      padding: 1rem;
     }
     .login-card {
       max-width: 420px;
       width: 100%;
+    }
+
+    /* Mobile responsive adjustments */
+    @media (max-width: 575.98px) {
+      body {
+        padding: 0.5rem;
+      }
+      .login-card .card-body {
+        padding: 1.5rem !important;
+      }
+      .login-card h1 {
+        font-size: 1.5rem;
+      }
     }
   </style>
 </head>
