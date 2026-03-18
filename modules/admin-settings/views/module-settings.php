@@ -88,9 +88,15 @@
                         </div>
                       <?php endif; ?>
                       <?php if (!empty($themeInfo['description'])): ?>
-                        <div class="mb-0">
+                        <div class="mb-2">
                           <strong><?php echo e(t('admin-settings.theme.description')); ?>:</strong>
                           <?php echo e($themeInfo['description']); ?>
+                        </div>
+                      <?php endif; ?>
+                      <?php if (!empty($themeInfo['homepage'])): ?>
+                        <div class="mb-0">
+                          <strong><?php echo e(t('admin.modules.homepage')); ?>:</strong>
+                          <a href="<?php echo e($themeInfo['homepage']); ?>" target="_blank" rel="noopener noreferrer"><?php echo e($themeInfo['homepage']); ?></a>
                         </div>
                       <?php endif; ?>
                     </div>
@@ -162,7 +168,7 @@
                                 <span class="me-1"><strong><?php echo e(t('admin.modules.author')); ?></strong>: <?php echo e((string)$m['author']); ?></span>
                               <?php endif; ?>
                               <?php if ($homepage !== ''): ?>
-                                <span class="me-1"><strong><?php echo e(t('admin.modules.homepage')); ?></strong> <a href="<?php echo e($homepage); ?>" target="_blank" rel="noopener noreferrer"><?php echo e($homepage); ?></a></span>
+                                <span class="me-1"><strong><?php echo e(t('admin.modules.homepage')); ?></strong>: <a href="<?php echo e($homepage); ?>" target="_blank" rel="noopener noreferrer"><?php echo e($homepage); ?></a></span>
                               <?php endif; ?>
                             </div>
 

@@ -219,6 +219,7 @@ class AdminSettingsModule extends Module
                 'version' => isset($meta['version']) && is_string($meta['version']) ? (string)$meta['version'] : '',
                 'author' => isset($meta['author']) && is_string($meta['author']) ? (string)$meta['author'] : '',
                 'description' => isset($meta['description']) ? resolve_localized($meta['description']) : '',
+                'homepage' => isset($meta['homepage']) && is_string($meta['homepage']) ? (string)$meta['homepage'] : '',
             );
         }
 
