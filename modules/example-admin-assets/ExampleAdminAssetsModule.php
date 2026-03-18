@@ -3,31 +3,18 @@
  * Example: Admin Assets Module
  *
  * Demonstrates how to load custom CSS and JS files in the admin panel
- * using admin.head and admin.footer hooks.
+ * using the new Module API methods.
  */
 
 class ExampleAdminAssetsModule extends Module {
 
     public function init() {
-        // Hook into admin head to add CSS
-        $this->hook('admin.head', array($this, 'addAdminStyles'));
+        // Method 1: Use the new enqueue methods (recommended)
+        $this->enqueueAdminStyle('css/admin-custom.css');
+        $this->enqueueAdminScript('js/admin-custom.js');
 
-        // Hook into admin footer to add JS
-        $this->hook('admin.footer', array($this, 'addAdminScripts'));
-    }
-
-    /**
-     * Add custom CSS to admin panel
-     * This hook fires in <head> section
-     */
-    public function addAdminStyles($content) {
-        $moduleUrl = base_url('/modules/example-admin-assets');
-
-        $styles = <<<HTML
-
-    <!-- Example Admin Assets: Custom Styles -->
-    <link rel="stylesheet" href="{$moduleUrl}/assets/css/admin-custom.css">
-    <style>
+        // Method 2: Add inline styles
+        $this->addAdminInlineStyle('
         /* Inline styles example */
         .example-highlight {
             background-color: #fff3cd;
@@ -35,24 +22,10 @@ class ExampleAdminAssetsModule extends Module {
             padding: 0.75rem;
             margin-bottom: 1rem;
         }
-    </style>
-HTML;
+        ');
 
-        return $content . $styles;
-    }
-
-    /**
-     * Add custom JS to admin panel
-     * This hook fires before </body>
-     */
-    public function addAdminScripts($content) {
-        $moduleUrl = base_url('/modules/example-admin-assets');
-
-        $scripts = <<<HTML
-
-    <!-- Example Admin Assets: Custom Scripts -->
-    <script src="{$moduleUrl}/assets/js/admin-custom.js"></script>
-    <script>
+        // Method 3: Add inline scripts
+        $this->addAdminInlineScript("
         // Inline script example
         console.log('Example Admin Assets module loaded');
 
@@ -63,9 +36,27 @@ HTML;
                 card.classList.add('example-enhanced');
             });
         });
-    </script>
-HTML;
+        ");
 
-        return $content . $scripts;
+        // Method 4: Manual hook (for advanced use cases)
+        // $this->hook('admin.head', array($this, 'customHeadContent'));
+    }
+
+    /**
+     * Example of manual hook for advanced use cases
+     */
+    public function customHeadContent($content) {
+        // You can still use manual hooks if you need more control
+        // For example, conditional loading based on current page
+        $request = request();
+        $path = $request->path();
+
+        if (strpos($path, '/admin/pages') === 0) {
+            // Only load on pages admin
+            $url = $this->asset('css/pages-specific.css');
+            return $content . "\n    <link rel=\"stylesheet\" href=\"" . e($url) . "\">";
+        }
+
+        return $content;
     }
 }

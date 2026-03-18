@@ -222,7 +222,79 @@ abstract class Module implements ModuleInterface {
         $viewsPath = $this->getPath() . '/views';
         return is_dir($viewsPath) ? $viewsPath : null;
     }
-    
+
+    /**
+     * Get module URL (web-accessible path)
+     * @return string Module URL (e.g., "/modules/my-module")
+     */
+    public function getUrl() {
+        return '/modules/' . $this->getId();
+    }
+
+    /**
+     * Get full module URL with base URL
+     * @return string Full module URL (e.g., "http://example.com/modules/my-module")
+     */
+    public function getBaseUrl() {
+        return base_url($this->getUrl());
+    }
+
+    /**
+     * Get asset URL for a file in module's assets directory
+     * @param string $path Path relative to assets directory (e.g., "css/style.css")
+     * @return string Full asset URL
+     */
+    public function asset($path) {
+        $path = ltrim($path, '/');
+        return base_url($this->getUrl() . '/assets/' . $path);
+    }
+
+    /**
+     * Enqueue CSS file in admin panel
+     * @param string $path Path relative to assets directory (e.g., "css/admin.css")
+     * @param int $priority Hook priority (default: 10)
+     */
+    protected function enqueueAdminStyle($path, $priority = 10) {
+        $url = $this->asset($path);
+        $this->hook('admin.head', function($content) use ($url) {
+            return $content . "\n    <link rel=\"stylesheet\" href=\"" . e($url) . "\">";
+        }, $priority);
+    }
+
+    /**
+     * Enqueue JS file in admin panel
+     * @param string $path Path relative to assets directory (e.g., "js/admin.js")
+     * @param int $priority Hook priority (default: 10)
+     */
+    protected function enqueueAdminScript($path, $priority = 10) {
+        $url = $this->asset($path);
+        $this->hook('admin.footer', function($content) use ($url) {
+            return $content . "\n    <script src=\"" . e($url) . "\"></script>";
+        }, $priority);
+    }
+
+    /**
+     * Add inline CSS to admin panel
+     * @param string $css CSS code
+     * @param int $priority Hook priority (default: 10)
+     */
+    protected function addAdminInlineStyle($css, $priority = 10) {
+        $this->hook('admin.head', function($content) use ($css) {
+            return $content . "\n    <style>\n" . $css . "\n    </style>";
+        }, $priority);
+    }
+
+    /**
+     * Add inline JS to admin panel
+     * @param string $js JavaScript code
+     * @param int $priority Hook priority (default: 10)
+     */
+    protected function addAdminInlineScript($js, $priority = 10) {
+        $this->hook('admin.footer', function($content) use ($js) {
+            return $content . "\n    <script>\n" . $js . "\n    </script>";
+        }, $priority);
+    }
+
     /**
      * Resolve admin string (translate if needed)
      * @param string $spec Translation key

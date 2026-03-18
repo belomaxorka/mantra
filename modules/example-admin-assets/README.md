@@ -1,40 +1,70 @@
 # Example: Admin Assets Module
 
-Demonstrates how to load custom CSS and JavaScript files in the admin panel.
+Demonstrates how to load custom CSS and JavaScript files in the admin panel using the Module API.
 
-## How It Works
+## Module API Methods
 
-### Loading CSS (admin.head hook)
+### 1. Enqueue External Files (Recommended)
 
 ```php
-public function addAdminStyles($content) {
-    $moduleUrl = base_url('/modules/your-module');
+public function init() {
+    // Load CSS file from assets/css/
+    $this->enqueueAdminStyle('css/admin.css');
 
-    $styles = <<<HTML
-    <link rel="stylesheet" href="{$moduleUrl}/assets/css/admin.css">
-    <style>
-        /* Inline styles */
-    </style>
-HTML;
-
-    return $content . $styles;
+    // Load JS file from assets/js/
+    $this->enqueueAdminScript('js/admin.js');
 }
 ```
 
-### Loading JS (admin.footer hook)
+### 2. Add Inline Styles
 
 ```php
-public function addAdminScripts($content) {
-    $moduleUrl = base_url('/modules/your-module');
+public function init() {
+    $this->addAdminInlineStyle('
+        .my-custom-class {
+            color: red;
+        }
+    ');
+}
+```
 
-    $scripts = <<<HTML
-    <script src="{$moduleUrl}/assets/js/admin.js"></script>
-    <script>
-        // Inline scripts
-    </script>
-HTML;
+### 3. Add Inline Scripts
 
-    return $content . $scripts;
+```php
+public function init() {
+    $this->addAdminInlineScript("
+        console.log('Module loaded');
+    ");
+}
+```
+
+### 4. Get Asset URLs
+
+```php
+// Get asset URL
+$cssUrl = $this->asset('css/style.css');
+// Returns: http://example.com/modules/your-module/assets/css/style.css
+
+// Get module URL
+$moduleUrl = $this->getUrl();
+// Returns: /modules/your-module
+
+// Get module base URL
+$baseUrl = $this->getBaseUrl();
+// Returns: http://example.com/modules/your-module
+```
+
+### 5. Manual Hooks (Advanced)
+
+```php
+public function init() {
+    // For conditional loading or complex scenarios
+    $this->hook('admin.head', array($this, 'customHeadContent'));
+}
+
+public function customHeadContent($content) {
+    $url = $this->asset('css/conditional.css');
+    return $content . "\n    <link rel=\"stylesheet\" href=\"" . e($url) . "\">";
 }
 ```
 
