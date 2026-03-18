@@ -25,9 +25,8 @@ class JsonFileException extends Exception
     }
 }
 
-class JsonFile
+class JsonFile extends AbstractFileStorage
 {
-    const MAX_FILE_SIZE = 10485760; // 10MB
 
     /**
      * Read and decode a JSON file.
@@ -46,9 +45,7 @@ class JsonFile
         if ($size === false) {
             throw new JsonFileException('Failed to get file size', $path);
         }
-        if ($size > self::MAX_FILE_SIZE) {
-            throw new JsonFileException('JSON file exceeds maximum size (' . self::MAX_FILE_SIZE . ' bytes)', $path);
-        }
+        self::validateFileSize($size);
 
         $lockHandle = self::openLock($path);
         if (!flock($lockHandle, LOCK_SH)) {
@@ -87,11 +84,9 @@ class JsonFile
 
         // Encode first to validate before acquiring lock
         $json = self::encode($data, $path);
-        
+
         // Validate size before writing
-        if (strlen($json) > self::MAX_FILE_SIZE) {
-            throw new JsonFileException('JSON data exceeds maximum size (' . self::MAX_FILE_SIZE . ' bytes)', $path);
-        }
+        self::validateFileSize(strlen($json));
 
         $lockHandle = self::openLock($path);
         if (!flock($lockHandle, LOCK_EX)) {
@@ -152,35 +147,9 @@ class JsonFile
         return $json;
     }
 
-    private static function openLock($path)
-    {
-        $lockPath = $path . '.lock';
-        $h = @fopen($lockPath, 'c');
-        if ($h === false) {
-            throw new JsonFileException('Failed to open lock file', $lockPath);
-        }
-        return $h;
-    }
-
-    private static function randomSuffix()
-    {
-        if (function_exists('random_bytes')) {
-            return bin2hex(random_bytes(8));
-        }
-
-        if (function_exists('openssl_random_pseudo_bytes')) {
-            $b = openssl_random_pseudo_bytes(8);
-            if ($b !== false) {
-                return bin2hex($b);
-            }
-        }
-
-        return str_replace('.', '', uniqid('', true));
-    }
-
     /**
      * Clean up orphaned lock files older than specified time
-     * 
+     *
      * @param string $directory Directory to clean
      * @param int $maxAge Maximum age in seconds (default: 1 hour)
      * @return int Number of files cleaned
@@ -189,12 +158,12 @@ class JsonFile
     {
         $cleaned = 0;
         $pattern = $directory . '/*.lock';
-        
+
         foreach (glob($pattern) as $lockFile) {
             if (!file_exists($lockFile)) {
                 continue;
             }
-            
+
             $age = time() - filemtime($lockFile);
             if ($age > $maxAge) {
                 // Try to acquire exclusive lock - if we can, it's orphaned
@@ -212,8 +181,18 @@ class JsonFile
                 }
             }
         }
-        
+
         return $cleaned;
+    }
+
+    protected static function openLock($path)
+    {
+        $lockPath = $path . '.lock';
+        $handle = @fopen($lockPath, 'c');
+        if ($handle === false) {
+            throw new JsonFileException('Failed to open lock file', $lockPath);
+        }
+        return $handle;
     }
 
     private static function logWarning($message, $context = array())
@@ -245,7 +224,7 @@ class JsonFile
             return $default;
         }
     }
-    
+
     /**
      * Write JSON file with error handling
      * @param string $path File path

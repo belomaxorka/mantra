@@ -5,7 +5,8 @@
  * Defines the contract for storage implementations (JSON, Markdown, etc.)
  */
 
-interface StorageDriverInterface {
+interface StorageDriverInterface
+{
 
     /**
      * Read a single document from storage

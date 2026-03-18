@@ -5,15 +5,18 @@
  * Stores content as Markdown files with YAML frontmatter
  */
 
-class MarkdownStorageDriver implements StorageDriverInterface {
+class MarkdownStorageDriver extends AbstractFileStorage implements StorageDriverInterface
+{
 
     private $basePath;
 
-    public function __construct($basePath = null) {
+    public function __construct($basePath = null)
+    {
         $this->basePath = $basePath ? $basePath : MANTRA_CONTENT;
     }
 
-    public function read($collection, $id) {
+    public function read($collection, $id)
+    {
         $path = $this->getPath($collection, $id);
 
         if (!file_exists($path)) {
@@ -40,7 +43,8 @@ class MarkdownStorageDriver implements StorageDriverInterface {
         return $data;
     }
 
-    public function write($collection, $id, $data) {
+    public function write($collection, $id, $data)
+    {
         $path = $this->getPath($collection, $id);
 
         // Ensure directory exists
@@ -53,19 +57,13 @@ class MarkdownStorageDriver implements StorageDriverInterface {
 
         // Build content first to validate before acquiring lock
         $content = $this->buildMarkdown($data);
-        
-        // Validate size (10MB limit like JsonFile)
-        if (strlen($content) > 10485760) {
-            throw new Exception('Markdown content exceeds maximum size (10MB)');
-        }
 
-        // Use same locking mechanism as JsonFile
-        $lockPath = $path . '.lock';
-        $lockHandle = @fopen($lockPath, 'c');
-        if ($lockHandle === false) {
-            throw new Exception('Failed to open lock file');
-        }
-        
+        // Validate size
+        self::validateFileSize(strlen($content));
+
+        // Acquire exclusive lock
+        $lockHandle = self::openLock($path);
+
         if (!flock($lockHandle, LOCK_EX)) {
             fclose($lockHandle);
             throw new Exception('Failed to acquire exclusive lock');
@@ -73,7 +71,7 @@ class MarkdownStorageDriver implements StorageDriverInterface {
 
         try {
             // Atomic write with temp file
-            $tmp = $path . '.tmp.' . $this->randomSuffix();
+            $tmp = $path . '.tmp.' . self::randomSuffix();
             if (file_put_contents($tmp, $content) === false) {
                 throw new Exception('Failed to write temp file');
             }
@@ -107,34 +105,35 @@ class MarkdownStorageDriver implements StorageDriverInterface {
             fclose($lockHandle);
         }
     }
-    
-    public function delete($collection, $id) {
+
+    public function delete($collection, $id)
+    {
         $path = $this->getPath($collection, $id);
-        
+
         if (!file_exists($path)) {
             return false;
         }
-        
+
         // Use locking to prevent deletion during read
-        $lockPath = $path . '.lock';
-        $lockHandle = @fopen($lockPath, 'c');
-        if ($lockHandle === false) {
+        try {
+            $lockHandle = self::openLock($path);
+        } catch (Exception $e) {
             return false;
         }
-        
+
         if (!flock($lockHandle, LOCK_EX)) {
             fclose($lockHandle);
             return false;
         }
-        
+
         try {
             $result = @unlink($path);
-            
+
             // Clean up lock file
             flock($lockHandle, LOCK_UN);
             fclose($lockHandle);
-            @unlink($lockPath);
-            
+            @unlink($path . '.lock');
+
             return $result;
         } catch (Exception $e) {
             flock($lockHandle, LOCK_UN);
@@ -142,31 +141,33 @@ class MarkdownStorageDriver implements StorageDriverInterface {
             return false;
         }
     }
-    
-    public function exists($collection, $id) {
+
+    public function exists($collection, $id)
+    {
         $path = $this->getPath($collection, $id);
         return file_exists($path);
     }
-    
-    public function readCollection($collection) {
+
+    public function readCollection($collection)
+    {
         $collectionPath = $this->basePath . '/' . $collection;
-        
+
         if (!is_dir($collectionPath)) {
             return array();
         }
-        
+
         $items = array();
-        $files = glob($collectionPath . '/*.md');
-        
+        $files = glob($collectionPath . '/*' . self::getExtension());
+
         foreach ($files as $file) {
-            $id = basename($file, '.md');
-            
+            $id = basename($file, self::getExtension());
+
             try {
                 $content = file_get_contents($file);
                 if ($content === false) {
                     throw new Exception('Failed to read file');
                 }
-                
+
                 $data = $this->parseMarkdown($content);
             } catch (Exception $e) {
                 logger()->error('Failed to read Markdown document in collection', array(
@@ -177,28 +178,31 @@ class MarkdownStorageDriver implements StorageDriverInterface {
                 ));
                 continue;
             }
-            
+
             $items[$id] = $data;
         }
-        
+
         return $items;
     }
-    
-    public function getExtension() {
-        return 'md';
+
+    public function getExtension()
+    {
+        return '.md';
     }
-    
-    private function getPath($collection, $id) {
-        return $this->basePath . '/' . $collection . '/' . $id . '.md';
+
+    private function getPath($collection, $id)
+    {
+        return $this->basePath . '/' . $collection . '/' . $id . self::getExtension();
     }
-    
+
     /**
      * Parse Markdown file with YAML frontmatter
      *
      * @param string $content File content
      * @return array Parsed data
      */
-    private function parseMarkdown($content) {
+    private function parseMarkdown($content)
+    {
         $data = array();
 
         // Check for YAML frontmatter
@@ -221,14 +225,15 @@ class MarkdownStorageDriver implements StorageDriverInterface {
 
         return $data;
     }
-    
+
     /**
      * Build Markdown file with YAML frontmatter
      *
      * @param array $data Document data
      * @return string Markdown content
      */
-    private function buildMarkdown($data) {
+    private function buildMarkdown($data)
+    {
         $frontmatter = array();
         $content = '';
 
@@ -258,28 +263,29 @@ class MarkdownStorageDriver implements StorageDriverInterface {
 
         return "---\n" . $yaml . "---\n\n" . $content;
     }
-    
+
     /**
      * Simple YAML parser for frontmatter
-     * 
+     *
      * @param string $yaml YAML content
      * @return array Parsed data
      */
-    private function parseYaml($yaml) {
+    private function parseYaml($yaml)
+    {
         $data = array();
         $lines = explode("\n", $yaml);
-        
+
         foreach ($lines as $line) {
             $line = trim($line);
             if (empty($line) || $line[0] === '#') {
                 continue;
             }
-            
+
             if (strpos($line, ':') !== false) {
                 list($key, $value) = explode(':', $line, 2);
                 $key = trim($key);
                 $value = trim($value);
-                
+
                 // Handle boolean values
                 if ($value === 'true') {
                     $value = true;
@@ -291,23 +297,24 @@ class MarkdownStorageDriver implements StorageDriverInterface {
                     // Remove quotes if present
                     $value = trim($value, '"\'');
                 }
-                
+
                 $data[$key] = $value;
             }
         }
-        
+
         return $data;
     }
-    
+
     /**
      * Simple YAML builder for frontmatter
-     * 
+     *
      * @param array $data Data to convert
      * @return string YAML content
      */
-    private function buildYaml($data) {
+    private function buildYaml($data)
+    {
         $yaml = '';
-        
+
         foreach ($data as $key => $value) {
             if (is_bool($value)) {
                 $value = $value ? 'true' : 'false';
@@ -321,30 +328,21 @@ class MarkdownStorageDriver implements StorageDriverInterface {
             } else {
                 continue; // Skip arrays and objects
             }
-            
+
             $yaml .= $key . ': ' . $value . "\n";
         }
-        
+
         return $yaml;
     }
-    
+
     /**
      * Check if content is HTML
      *
      * @param string $content Content to check
      * @return bool True if HTML
      */
-    private function isHtml($content) {
+    private function isHtml($content)
+    {
         return preg_match('/<[^>]+>/', $content) === 1;
-    }
-    
-    /**
-     * Generate random suffix for temp files
-     */
-    private function randomSuffix() {
-        if (function_exists('random_bytes')) {
-            return bin2hex(random_bytes(8));
-        }
-        return uniqid('', true);
     }
 }
