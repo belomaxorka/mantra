@@ -10,7 +10,7 @@
 
     <div class="meta text-muted mb-3">
         <?php if (isset($page['created_at'])): ?>
-            Published: <?php echo date('F j, Y', strtotime($page['created_at'])); ?>
+            Published: <?php echo format_date($page['created_at'], 'F j, Y'); ?>
         <?php endif; ?>
     </div>
 
