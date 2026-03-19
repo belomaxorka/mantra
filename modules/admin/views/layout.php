@@ -195,9 +195,9 @@
             continue;
           }
 
-          $url = $item['url'] ?? '#';
-          $title = $item['title'] ?? ($item['id'] ?? '');
-          $icon = $item['icon'] ?? '';
+          $url = isset($item['url']) ? $item['url'] : '#';
+          $title = isset($item['title']) ? $item['title'] : (isset($item['id']) ? $item['id'] : '');
+          $icon = isset($item['icon']) ? $item['icon'] : '';
           $active = !empty($item['active']);
           $expanded = !empty($item['expanded']);
           $children = isset($item['children']) && is_array($item['children']) ? $item['children'] : array();
@@ -218,7 +218,7 @@
           }
           $classes .= e($levelClass);
 
-          $nodeId = $item['id'] ?? '';
+          $nodeId = isset($item['id']) ? $item['id'] : '';
           $collapseId = 'admin-nav-' . preg_replace('/[^a-z0-9_-]/i', '-', (string)$nodeId) . '-' . (int)$level;
 
           if ($hasChildren) {
@@ -259,7 +259,7 @@
             continue;
           }
 
-          $group = $item['group'] ?? '';
+          $group = isset($item['group']) ? $item['group'] : '';
           if ($group !== $currentGroup) {
             $currentGroup = $group;
             if ($currentGroup !== '') {

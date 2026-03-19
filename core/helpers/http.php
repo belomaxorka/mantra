@@ -104,7 +104,7 @@ function is_https()
  */
 function client_ip()
 {
-    $remoteAddr = $_SERVER['REMOTE_ADDR'] ?? null;
+    $remoteAddr = isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : null;
     if (!$remoteAddr || !filter_var($remoteAddr, FILTER_VALIDATE_IP)) {
         return null;
     }
@@ -122,9 +122,9 @@ function client_ip()
     }
 
     $candidates = array(
-        $_SERVER['HTTP_CF_CONNECTING_IP'] ?? null,
-        $_SERVER['HTTP_FASTLY_CLIENT_IP'] ?? null,
-        $_SERVER['HTTP_X_REAL_IP'] ?? null,
+        isset($_SERVER['HTTP_CF_CONNECTING_IP']) ? $_SERVER['HTTP_CF_CONNECTING_IP'] : null,
+        isset($_SERVER['HTTP_FASTLY_CLIENT_IP']) ? $_SERVER['HTTP_FASTLY_CLIENT_IP'] : null,
+        isset($_SERVER['HTTP_X_REAL_IP']) ? $_SERVER['HTTP_X_REAL_IP'] : null,
     );
 
     if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {

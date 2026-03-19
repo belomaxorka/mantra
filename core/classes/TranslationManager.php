@@ -55,9 +55,9 @@ class TranslationManager {
      */
     private function get($domain, $key, $locale) {
         $this->loadDomain($domain, $locale);
-        
+
         $domainKey = "{$domain}:{$locale}";
-        return $this->translations[$domainKey][$key] ?? null;
+        return isset($this->translations[$domainKey][$key]) ? $this->translations[$domainKey][$key] : null;
     }
     
     /**
@@ -217,9 +217,9 @@ class TranslationManager {
     public function getDomainTranslations($domain, $locale = null) {
         $locale = $locale ?: $this->locale;
         $this->loadDomain($domain, $locale);
-        
+
         $domainKey = "{$domain}:{$locale}";
-        return $this->translations[$domainKey] ?? array();
+        return isset($this->translations[$domainKey]) ? $this->translations[$domainKey] : array();
     }
     
     /**

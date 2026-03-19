@@ -146,19 +146,19 @@ abstract class Module implements ModuleInterface {
     }
     
     public function getAuthor() {
-        return $this->manifest['author'] ?? '';
+        return isset($this->manifest['author']) ? $this->manifest['author'] : '';
     }
-    
+
     public function getHomepage() {
-        return $this->manifest['homepage'] ?? '';
+        return isset($this->manifest['homepage']) ? $this->manifest['homepage'] : '';
     }
-    
+
     public function getLicense() {
-        return $this->manifest['license'] ?? '';
+        return isset($this->manifest['license']) ? $this->manifest['license'] : '';
     }
-    
+
     public function getTags() {
-        return $this->manifest['tags'] ?? array();
+        return isset($this->manifest['tags']) ? $this->manifest['tags'] : array();
     }
     
     // ========== Helper Methods ==========

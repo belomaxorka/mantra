@@ -260,6 +260,26 @@ class AdminSettingsModule extends Module
         return $locales;
     }
 
+    private function getAvailablePasswordAlgorithms()
+    {
+        $algorithms = array(
+            'PASSWORD_DEFAULT' => 'PASSWORD_DEFAULT',
+            'PASSWORD_BCRYPT' => 'PASSWORD_BCRYPT',
+        );
+
+        // PASSWORD_ARGON2I available since PHP 7.2
+        if (defined('PASSWORD_ARGON2I')) {
+            $algorithms['PASSWORD_ARGON2I'] = 'PASSWORD_ARGON2I';
+        }
+
+        // PASSWORD_ARGON2ID available since PHP 7.3
+        if (defined('PASSWORD_ARGON2ID')) {
+            $algorithms['PASSWORD_ARGON2ID'] = 'PASSWORD_ARGON2ID';
+        }
+
+        return $algorithms;
+    }
+
     private function availableModuleCards()
     {
         $cards = array();
@@ -288,23 +308,23 @@ class AdminSettingsModule extends Module
                 $canDelete = $module->isDeletable();
             } else {
                 // Parse from manifest for disabled modules
-                $title = resolve_localized($manifest['name'] ?? $moduleId);
-                $version = $manifest['version'] ?? '';
-                $author = $manifest['author'] ?? '';
-                $homepage = $manifest['homepage'] ?? '';
-                $description = resolve_localized($manifest['description'] ?? '');
-                $type = $manifest['type'] ?? 'custom';
+                $title = resolve_localized(isset($manifest['name']) ? $manifest['name'] : $moduleId);
+                $version = isset($manifest['version']) ? $manifest['version'] : '';
+                $author = isset($manifest['author']) ? $manifest['author'] : '';
+                $homepage = isset($manifest['homepage']) ? $manifest['homepage'] : '';
+                $description = resolve_localized(isset($manifest['description']) ? $manifest['description'] : '');
+                $type = isset($manifest['type']) ? $manifest['type'] : 'custom';
                 $hasSettings = file_exists($moduleData['path'] . '/settings.schema.php');
 
                 // Check type for disableable/deletable
-                $adminConfig = $manifest['admin'] ?? array();
+                $adminConfig = isset($manifest['admin']) ? $manifest['admin'] : array();
 
                 if ($type === ModuleType::CORE) {
                     $canDisable = false;
                     $canDelete = false;
                 } else {
-                    $canDisable = $adminConfig['disableable'] ?? true;
-                    $canDelete = $adminConfig['deletable'] ?? true;
+                    $canDisable = isset($adminConfig['disableable']) ? $adminConfig['disableable'] : true;
+                    $canDelete = isset($adminConfig['deletable']) ? $adminConfig['deletable'] : true;
                 }
             }
 
@@ -349,7 +369,9 @@ class AdminSettingsModule extends Module
         }
 
         usort($cards, function ($a, $b) {
-            return strcasecmp($a['title'] ?? '', $b['title'] ?? '');
+            $aTitle = isset($a['title']) ? $a['title'] : '';
+            $bTitle = isset($b['title']) ? $b['title'] : '';
+            return strcasecmp($aTitle, $bTitle);
         });
 
         return $cards;
@@ -481,6 +503,10 @@ class AdminSettingsModule extends Module
                     $field['theme_metadata'] = $this->getAllThemesMetadata();
                 }
 
+                if ($path === 'security.password_hash_algo' && (string)$field['type'] === 'select') {
+                    $field['options'] = $this->getAvailablePasswordAlgorithms();
+                }
+
                 if ($path === 'logging.level' && (string)$field['type'] === 'select') {
                     $field['options'] = array(
                         Logger::DEBUG => 'debug',
@@ -539,8 +565,8 @@ class AdminSettingsModule extends Module
             if (file_exists($manifestPath)) {
                 try {
                     $manifest = JsonFile::read($manifestPath);
-                    $type = $manifest['type'] ?? 'custom';
-                    $adminConfig = $manifest['admin'] ?? array();
+                    $type = isset($manifest['type']) ? $manifest['type'] : 'custom';
+                    $adminConfig = isset($manifest['admin']) ? $manifest['admin'] : array();
 
                     // CORE modules cannot be deleted
                     if ($type === ModuleType::CORE) {
@@ -633,14 +659,14 @@ class AdminSettingsModule extends Module
                 if (file_exists($manifestPath)) {
                     try {
                         $manifest = JsonFile::read($manifestPath);
-                        $type = $manifest['type'] ?? 'custom';
+                        $type = isset($manifest['type']) ? $manifest['type'] : 'custom';
 
                         // CORE modules cannot be disabled
                         if ($type === ModuleType::CORE) {
                             return "Cannot disable core module '{$modId}'";
                         }
 
-                        $adminConfig = $manifest['admin'] ?? array();
+                        $adminConfig = isset($manifest['admin']) ? $manifest['admin'] : array();
                         if (isset($adminConfig['disableable']) && $adminConfig['disableable'] === false) {
                             return "Cannot disable module '{$modId}': protected by policy";
                         }

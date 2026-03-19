@@ -50,7 +50,7 @@
   <ul class="nav nav-tabs mb-3" role="tablist">
     <?php foreach ($tabs as $i => $tab): ?>
       <?php
-        $tabId = (string)($tab['id'] ?? 'tab');
+        $tabId = isset($tab['id']) ? (string)$tab['id'] : 'tab';
         $isActive = ($activeTab !== '') ? ($activeTab === $tabId) : ($i === 0);
       ?>
       <li class="nav-item" role="presentation">
@@ -64,7 +64,7 @@
   <div class="tab-content">
     <?php foreach ($tabs as $i => $tab): ?>
       <?php
-        $tabId = (string)($tab['id'] ?? 'tab');
+        $tabId = isset($tab['id']) ? (string)$tab['id'] : 'tab';
         $isActive = ($activeTab !== '') ? ($activeTab === $tabId) : ($i === 0);
       ?>
       <div class="tab-pane fade <?php echo $isActive ? 'show active' : ''; ?>" id="tab-<?php echo e($tabId); ?>" role="tabpanel">
@@ -167,7 +167,7 @@
                   <div class="border rounded" style="overflow:hidden;">
                     <?php foreach ($coreModules as $m): ?>
                       <?php
-                        $id = (string)($m['id'] ?? '');
+                        $id = isset($m['id']) ? (string)$m['id'] : '';
                         if ($id === '') {
                             continue;
                         }
@@ -175,7 +175,7 @@
                         $canToggle = !empty($m['disableable']);
                         $canDelete = !empty($m['deletable']);
                         $hasSettings = !empty($m['has_settings']);
-                        $homepage = (string)($m['homepage'] ?? '');
+                        $homepage = isset($m['homepage']) ? (string)$m['homepage'] : '';
                       ?>
 
                       <div class="p-3 border-bottom module-card-wrapper">
@@ -186,7 +186,7 @@
                                 <input class="form-check-input" type="checkbox" id="f-mod-<?php echo e($id); ?>" name="modules.enabled[]" value="<?php echo e($id); ?>" <?php echo $isEnabled ? 'checked' : ''; ?> <?php echo $canToggle ? '' : 'disabled'; ?>>
                               </div>
                               <div>
-                                <div class="fw-semibold"><?php echo e((string)($m['title'] ?? $id)); ?></div>
+                                <div class="fw-semibold"><?php echo e(isset($m['title']) ? (string)$m['title'] : $id); ?></div>
                                 <?php if (!empty($m['description'])): ?>
                                   <div class="text-muted small"><?php echo e((string)$m['description']); ?></div>
                                 <?php endif; ?>
@@ -233,7 +233,7 @@
                   <div class="border rounded" style="overflow:hidden;">
                     <?php foreach ($otherModules as $m): ?>
                       <?php
-                        $id = (string)($m['id'] ?? '');
+                        $id = isset($m['id']) ? (string)$m['id'] : '';
                         if ($id === '') {
                             continue;
                         }
@@ -241,7 +241,7 @@
                         $canToggle = !empty($m['disableable']);
                         $canDelete = !empty($m['deletable']);
                         $hasSettings = !empty($m['has_settings']);
-                        $homepage = (string)($m['homepage'] ?? '');
+                        $homepage = isset($m['homepage']) ? (string)$m['homepage'] : '';
                       ?>
 
                       <div class="p-3 border-bottom module-card-wrapper">
@@ -252,7 +252,7 @@
                                 <input class="form-check-input" type="checkbox" id="f-mod-<?php echo e($id); ?>" name="modules.enabled[]" value="<?php echo e($id); ?>" <?php echo $isEnabled ? 'checked' : ''; ?> <?php echo $canToggle ? '' : 'disabled'; ?>>
                               </div>
                               <div>
-                                <div class="fw-semibold"><?php echo e((string)($m['title'] ?? $id)); ?></div>
+                                <div class="fw-semibold"><?php echo e(isset($m['title']) ? (string)$m['title'] : $id); ?></div>
                                 <?php if (!empty($m['description'])): ?>
                                   <div class="text-muted small"><?php echo e((string)$m['description']); ?></div>
                                 <?php endif; ?>

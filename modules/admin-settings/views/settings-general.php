@@ -20,19 +20,19 @@
 <form method="post" action="<?php echo e($action); ?>">
   <input type="hidden" name="csrf_token" value="<?php echo e($csrf_token); ?>">
 
-  <?php foreach (($groups ?? array()) as $group): ?>
+  <?php foreach ((isset($groups) && is_array($groups)) ? $groups : array() as $group): ?>
     <div class="card mb-4">
       <div class="card-header">
-        <strong><?php echo e($group['title'] ?? ''); ?></strong>
+        <strong><?php echo e(isset($group['title']) ? $group['title'] : ''); ?></strong>
       </div>
       <div class="card-body">
-        <?php foreach (($group['fields'] ?? array()) as $field): ?>
+        <?php foreach ((isset($group['fields']) && is_array($group['fields'])) ? $group['fields'] : array() as $field): ?>
           <?php
-            $name = (string)($field['name'] ?? '');
-            $type = (string)($field['type'] ?? 'text');
-            $title = (string)($field['title'] ?? $name);
-            $help = (string)($field['help'] ?? '');
-            $value = $field['value'] ?? null;
+            $name = isset($field['name']) ? (string)$field['name'] : '';
+            $type = isset($field['type']) ? (string)$field['type'] : 'text';
+            $title = isset($field['title']) ? (string)$field['title'] : $name;
+            $help = isset($field['help']) ? (string)$field['help'] : '';
+            $value = isset($field['value']) ? $field['value'] : null;
           ?>
 
           <div class="mb-3">
