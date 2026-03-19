@@ -11,7 +11,7 @@
                         </a>
                     </h2>
                     <div class="meta text-muted mb-2">
-                        <?php echo format_date_localized($post['created_at'], 'long'); ?>
+                        <?php echo time_ago($post['created_at'], true); ?>
                     </div>
                     <?php if (isset($post['excerpt'])): ?>
                         <div class="excerpt">
