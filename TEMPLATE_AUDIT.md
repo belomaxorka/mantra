@@ -7,10 +7,10 @@
 
 ## Executive Summary
 
-✅ **Status:** System is well-architected with minor improvements applied
+✅ **Status:** System is well-architected with all improvements applied
 🐛 **Critical Issues:** 0
 ⚠️ **Warnings:** 2 (documented below)
-✨ **Improvements Applied:** 5
+✨ **Improvements Applied:** 6
 
 ---
 
@@ -73,6 +73,13 @@ echo $content
 **Fix:** Added Application::startOutputCompression() with safety checks
 **Commit:** 207ebd6
 
+### 6. ✅ FIXED: Architectural issue - modules using ob_start()
+**Problem:** SeoModule used ob_start() in hook to render widget HTML
+**Impact:** Mixed concerns, manual buffer management, harder to customize
+**Fix:** Created modules/seo/widgets/breadcrumbs.php template file
+**Architecture:** Widgets should use template files, View handles buffers
+**Commit:** 1049913
+
 ---
 
 ## Current State Analysis
@@ -83,11 +90,14 @@ echo $content
    - Controllers handle logic
    - View handles rendering
    - Templates handle presentation
+   - Modules provide data, templates render HTML
 
 2. **Proper output buffering**
-   - All ob_start() calls protected with try-catch
+   - All ob_start() calls centralized in View class
+   - All buffers protected with try-catch
    - Buffers cleaned on errors (ob_end_clean)
    - No buffer leaks
+   - Modules don't manage buffers directly
 
 3. **Extensibility via hooks**
    - `view.render` - Transform output before display
@@ -195,6 +205,44 @@ echo '<h1>404 - Page Not Found</h1>'; // Fallback if view() fails
 - Add PHPDoc for View methods
 - Document extract() safety assumptions
 - Add examples for custom widgets
+
+---
+
+## Widget Architecture
+
+### Correct Pattern ✅
+```php
+// Module provides data via hook
+$this->hook('page.single.data', function($data) {
+    $data['breadcrumbs'] = array(/* ... */);
+    return $data;
+});
+
+// Template renders HTML
+// modules/seo/widgets/breadcrumbs.php
+<nav aria-label="breadcrumb">
+    <?php foreach ($breadcrumbs as $item): ?>
+        <!-- HTML here -->
+    <?php endforeach; ?>
+</nav>
+```
+
+### Incorrect Pattern ❌
+```php
+// DON'T: Module manages buffers
+$this->hook('widget.render', function($data) {
+    ob_start();
+    echo '<nav>...</nav>';
+    $data['output'] = ob_get_clean();
+    return $data;
+});
+```
+
+**Why?**
+- View class handles all buffer management
+- Modules focus on business logic
+- Templates can be overridden by themes
+- Consistent error handling
 
 ---
 
