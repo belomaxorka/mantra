@@ -38,10 +38,9 @@ return array(
             'fields' => array(
                 array(
                     'path' => 'locale.timezone',
-                    'type' => 'select',
+                    'type' => 'text',
                     'title' => 'admin-settings.locale.timezone',
                     'default' => 'UTC',
-                    'options' => array(),
                 ),
                 array(
                     'path' => 'locale.default_language',
