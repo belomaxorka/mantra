@@ -42,7 +42,9 @@ class AdminDashboardModule extends BaseAdminModule
             'quickActions' => $quickActions
         ));
 
-        return $this->renderAdmin('Dashboard', $content, array(
+        $title = $this->resolveAdminString('admin-dashboard.title');
+
+        return $this->renderAdmin($title, $content, array(
             'user' => $this->getUser(),
         ));
     }

@@ -7,6 +7,7 @@ return array(
     // Pages list
     'admin-pages.title' => 'Pages',
     'admin-pages.new' => 'New Page',
+    'admin-pages.edit_page' => 'Edit Page',
     'admin-pages.no_pages' => 'No pages yet. Create your first page!',
     'admin-pages.back_to_list' => 'Back to Pages',
 

@@ -7,6 +7,7 @@ return array(
     // Pages list
     'admin-pages.title' => 'Страницы',
     'admin-pages.new' => 'Новая страница',
+    'admin-pages.edit_page' => 'Редактировать страницу',
     'admin-pages.no_pages' => 'Пока нет страниц. Создайте свою первую страницу!',
     'admin-pages.back_to_list' => 'Вернуться к страницам',
 

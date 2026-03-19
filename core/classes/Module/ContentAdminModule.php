@@ -93,14 +93,17 @@ abstract class ContentAdminModule extends BaseAdminModule {
             'sort' => 'updated_at',
             'order' => 'desc'
         ));
-        
+
         $content = $this->renderView($this->getListTemplate(), array(
             strtolower($this->getCollectionName()) => $items
         ));
-        
-        return $this->renderAdmin($this->getName(), $content);
+
+        $titleKey = $this->getId() . '.title';
+        $title = $this->resolveAdminString($titleKey);
+
+        return $this->renderAdmin($title, $content);
     }
-    
+
     /**
      * Show new item form
      */
@@ -110,8 +113,11 @@ abstract class ContentAdminModule extends BaseAdminModule {
             'isNew' => true,
             'csrf_token' => auth()->generateCsrfToken()
         ));
-        
-        return $this->renderAdmin('New ' . $this->getContentType(), $content);
+
+        $titleKey = $this->getId() . '.new';
+        $title = $this->resolveAdminString($titleKey);
+
+        return $this->renderAdmin($title, $content);
     }
     
     /**
@@ -141,19 +147,23 @@ abstract class ContentAdminModule extends BaseAdminModule {
     public function editItem($params) {
         $id = $params['id'] ?? '';
         $item = db()->read($this->getCollectionName(), $id);
-        
+
         if (!$item) {
             http_response_code(404);
             return $this->renderAdmin('Not Found', '<div class="alert alert-danger alert-dismissible fade show alert-permanent" role="alert">' . $this->getContentType() . ' not found<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>');
         }
-        
+
         $content = $this->renderView($this->getEditTemplate(), array(
             strtolower($this->getContentType()) => $item,
             'isNew' => false,
             'csrf_token' => auth()->generateCsrfToken()
         ));
-        
-        return $this->renderAdmin('Edit ' . $this->getContentType(), $content);
+
+        // Try module-specific edit key first (e.g., admin-posts.edit_post, admin-pages.edit_page)
+        $titleKey = $this->getId() . '.edit_' . strtolower($this->getContentType());
+        $title = $this->resolveAdminString($titleKey);
+
+        return $this->renderAdmin($title, $content);
     }
     
     /**
