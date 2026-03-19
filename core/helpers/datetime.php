@@ -78,10 +78,9 @@ function format_date($time = null, $format = 'Y-m-d H:i:s')
  * Get relative time string (e.g., "2 hours ago", "in 3 days")
  *
  * @param int|string|DateTime $time Unix timestamp, date string, or DateTime object
- * @param bool $detailed If true, shows "today at 14:30" instead of "2 hours ago" for recent dates
  * @return string Relative time string
  */
-function time_ago($time, $detailed = false)
+function time_ago($time)
 {
     if ($time instanceof DateTime) {
         $dt = clone $time;
@@ -102,29 +101,6 @@ function time_ago($time, $detailed = false)
     // Just now (less than 10 seconds)
     if (abs($diff) < 10) {
         return t('datetime.just_now', 'just now');
-    }
-
-    // Check for today/yesterday/tomorrow if detailed mode
-    if ($detailed) {
-        $dateStr = $dt->format('Y-m-d');
-        $todayStr = $now->format('Y-m-d');
-
-        if ($dateStr === $todayStr) {
-            $timeStr = format_date($dt, 'H:i');
-            return sprintf(t('datetime.today_at', 'today at %s'), $timeStr);
-        }
-
-        $yesterdayStr = $now->modify('-1 day')->format('Y-m-d');
-        if ($dateStr === $yesterdayStr) {
-            $timeStr = format_date($dt, 'H:i');
-            return sprintf(t('datetime.yesterday_at', 'yesterday at %s'), $timeStr);
-        }
-
-        $tomorrowStr = $now->modify('+2 days')->format('Y-m-d');
-        if ($dateStr === $tomorrowStr) {
-            $timeStr = format_date($dt, 'H:i');
-            return sprintf(t('datetime.tomorrow_at', 'tomorrow at %s'), $timeStr);
-        }
     }
 
     if ($diff < 0) {

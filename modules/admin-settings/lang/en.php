@@ -100,9 +100,6 @@ return array(
     'datetime.ago' => '%s ago',
     'datetime.in_future' => 'in %s',
     'datetime.just_now' => 'just now',
-    'datetime.today_at' => 'today at %s',
-    'datetime.yesterday_at' => 'yesterday at %s',
-    'datetime.tomorrow_at' => 'tomorrow at %s',
 
     // Time units (English has 2 forms: one/other)
     'datetime.second.one' => 'second',

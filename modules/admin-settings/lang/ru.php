@@ -100,9 +100,6 @@ return array(
     'datetime.ago' => '%s назад',
     'datetime.in_future' => 'через %s',
     'datetime.just_now' => 'только что',
-    'datetime.today_at' => 'сегодня в %s',
-    'datetime.yesterday_at' => 'вчера в %s',
-    'datetime.tomorrow_at' => 'завтра в %s',
 
     // Time units (Russian has 3 forms: one/few/many)
     'datetime.second.one' => 'секунду',
