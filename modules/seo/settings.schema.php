@@ -35,7 +35,7 @@ return array(
                     'type' => 'text',
                     'title' => 'seo.settings.og.default_image',
                     'help' => 'seo.settings.og.default_image.help',
-                    'default' => '/' . basename(MANTRA_THEMES) . '/default/assets/images/og-image.jpg'
+                    'default' => '/' . basename(MANTRA_CORE) . '/assets/images/og-image.jpg'
                 ),
                 array(
                     'path' => 'og.site_name',

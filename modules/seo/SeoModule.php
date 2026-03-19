@@ -44,7 +44,7 @@ class SeoModule extends Module
         $keywords = $settings->get('meta.default_keywords', '');
 
         // Open Graph
-        $ogImage = $settings->get('og.default_image', '/' . basename(MANTRA_THEMES) . '/default/assets/images/og-image.jpg');
+        $ogImage = $settings->get('og.default_image', '');
         if (strpos($ogImage, 'http') !== 0) {
             $ogImage = base_url($ogImage);
         }
