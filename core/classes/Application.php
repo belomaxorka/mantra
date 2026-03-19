@@ -84,24 +84,27 @@ class Application {
     public function run() {
         try {
             logger()->info('Application started');
-            
+
             // Clean old logs periodically (once per day)
             $this->cleanOldLogsIfNeeded();
-            
+
+            // Start output compression if enabled
+            $this->startOutputCompression();
+
             // Initialize hook manager first (modules will register hooks)
             $this->hookManager = new HookManager();
-            
+
             // Initialize module manager
             $this->moduleManager = new ModuleManager($this->config);
             $this->moduleManager->loadModules();
-            
+
             logger()->debug('Modules loaded', array(
                 'count' => count($this->moduleManager->getModules())
             ));
-            
+
             // Fire init hook
             $this->hookManager->fire('system.init');
-            
+
             // Initialize router
             $this->router = new Router();
 
@@ -113,10 +116,10 @@ class Application {
 
             // Dispatch request
             $this->router->dispatch();
-            
+
             // Fire shutdown hook
             $this->hookManager->fire('system.shutdown');
-            
+
             logger()->debug('Application finished');
         } catch (Exception $e) {
             $this->handleError($e);
@@ -148,7 +151,7 @@ class Application {
     private function cleanOldLogsIfNeeded() {
         $markerFile = MANTRA_STORAGE . '/logs/.last_cleanup';
         $now = time();
-        
+
         // Check if cleanup was done today
         if (file_exists($markerFile)) {
             $lastCleanup = (int)file_get_contents($markerFile);
@@ -156,17 +159,51 @@ class Application {
                 return;
             }
         }
-        
+
         // Perform cleanup
         $retentionDays = (int)$this->config('logging.retention_days', 30);
         $deleted = logger()->clearOldLogs($retentionDays);
-        
+
         if ($deleted > 0) {
             logger()->info('Old logs cleaned', array('deleted' => $deleted, 'days' => $retentionDays));
         }
-        
+
         // Update marker
         file_put_contents($markerFile, $now);
+    }
+
+    /**
+     * Start output compression if enabled and supported
+     */
+    private function startOutputCompression() {
+        // Check if compression is enabled in config
+        $compressionEnabled = (bool)$this->config('performance.gzip_compression', false);
+
+        if (!$compressionEnabled) {
+            return;
+        }
+
+        // Check if already compressed by web server
+        if (headers_sent() || ini_get('zlib.output_compression')) {
+            return;
+        }
+
+        // Check if client supports gzip
+        $acceptEncoding = isset($_SERVER['HTTP_ACCEPT_ENCODING']) ? $_SERVER['HTTP_ACCEPT_ENCODING'] : '';
+        if (strpos($acceptEncoding, 'gzip') === false) {
+            return;
+        }
+
+        // Check if ob_gzhandler is available
+        if (!function_exists('ob_gzhandler')) {
+            logger()->warning('gzip compression enabled but ob_gzhandler not available');
+            return;
+        }
+
+        // Start compression
+        ob_start('ob_gzhandler');
+
+        logger()->debug('Output compression started');
     }
     
     /**

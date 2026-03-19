@@ -33,6 +33,7 @@ return array(
     'admin-settings.group.session' => 'Сессия',
     'admin-settings.group.logging' => 'Логирование',
     'admin-settings.group.proxy' => 'Прокси',
+    'admin-settings.group.performance' => 'Производительность',
     'admin-settings.group.debug' => 'Отладка',
 
     // Site settings
@@ -76,6 +77,10 @@ return array(
     // Proxy settings
     'admin-settings.proxy.trusted_proxies' => 'Доверенные прокси',
     'admin-settings.proxy.trusted_proxies.help' => 'Один IP или CIDR на строку.',
+
+    // Performance settings
+    'admin-settings.performance.gzip_compression' => 'Включить gzip сжатие',
+    'admin-settings.performance.gzip_compression.help' => 'Сжимать HTML вывод для уменьшения трафика. Лучше настраивать на уровне веб-сервера (Apache/Nginx).',
 
     // Debug settings
     'admin-settings.debug.enabled' => 'Включить режим отладки',

@@ -181,6 +181,19 @@ return array(
             ),
         ),
         array(
+            'id' => 'performance',
+            'title' => 'admin-settings.group.performance',
+            'fields' => array(
+                array(
+                    'path' => 'performance.gzip_compression',
+                    'type' => 'toggle',
+                    'title' => 'admin-settings.performance.gzip_compression',
+                    'default' => false,
+                    'help' => 'admin-settings.performance.gzip_compression.help',
+                ),
+            ),
+        ),
+        array(
             'id' => 'debug',
             'title' => 'admin-settings.group.debug',
             'fields' => array(

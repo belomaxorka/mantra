@@ -33,6 +33,7 @@ return array(
     'admin-settings.group.session' => 'Session',
     'admin-settings.group.logging' => 'Logging',
     'admin-settings.group.proxy' => 'Proxy',
+    'admin-settings.group.performance' => 'Performance',
     'admin-settings.group.debug' => 'Debug',
 
     // Site settings
@@ -76,6 +77,10 @@ return array(
     // Proxy settings
     'admin-settings.proxy.trusted_proxies' => 'Trusted proxies',
     'admin-settings.proxy.trusted_proxies.help' => 'One IP or CIDR per line.',
+
+    // Performance settings
+    'admin-settings.performance.gzip_compression' => 'Enable gzip compression',
+    'admin-settings.performance.gzip_compression.help' => 'Compress HTML output to reduce bandwidth. Best configured at web server level (Apache/Nginx).',
 
     // Debug settings
     'admin-settings.debug.enabled' => 'Enable debug mode',
