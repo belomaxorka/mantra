@@ -10,9 +10,11 @@
  * - Using module settings (settings.schema.php)
  */
 
-class SeoModule extends Module {
+class SeoModule extends Module
+{
 
-    public function init() {
+    public function init()
+    {
         // Hook into theme head to add meta tags
         $this->hook('theme.head', array($this, 'addMetaTags'));
 
@@ -28,7 +30,8 @@ class SeoModule extends Module {
     /**
      * Add meta tags to <head>
      */
-    public function addMetaTags($content) {
+    public function addMetaTags($content)
+    {
         $request = request();
         $path = $request->path();
 
@@ -95,7 +98,8 @@ class SeoModule extends Module {
     /**
      * Add SEO data to page/post/product view
      */
-    public function addSeoData($data) {
+    public function addSeoData($data)
+    {
         $settings = module_settings('seo');
 
         // Check if breadcrumbs are enabled
@@ -131,7 +135,8 @@ class SeoModule extends Module {
     /**
      * Render widgets provided by this module
      */
-    public function renderWidget($widgetData) {
+    public function renderWidget($widgetData)
+    {
         // No need to handle widget rendering here anymore
         // Widget templates are loaded automatically by View::widget()
         return $widgetData;

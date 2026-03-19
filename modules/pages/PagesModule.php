@@ -5,9 +5,11 @@
  * Adds published pages with show_in_navigation flag to the site navigation menu.
  */
 
-class PagesModule extends Module {
+class PagesModule extends Module
+{
 
-    public function init() {
+    public function init()
+    {
         // Hook into theme navigation to add pages
         $this->hook('theme.navigation', array($this, 'addPagesToNavigation'));
     }
@@ -15,7 +17,8 @@ class PagesModule extends Module {
     /**
      * Add published pages to navigation menu
      */
-    public function addPagesToNavigation($navItems) {
+    public function addPagesToNavigation($navItems)
+    {
         if (!is_array($navItems)) {
             $navItems = array();
         }

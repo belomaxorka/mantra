@@ -1,4 +1,5 @@
 <?php
+
 /**
  * SEO Module Settings Schema
  */

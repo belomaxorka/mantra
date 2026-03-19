@@ -8,9 +8,10 @@
  * - Conditional script loading
  */
 
-class AnalyticsModule extends Module {
-
-    public function init() {
+class AnalyticsModule extends Module
+{
+    public function init()
+    {
         // Hook into theme footer to add analytics scripts
         $this->hook('theme.footer', array($this, 'addAnalyticsScripts'));
     }
@@ -18,7 +19,8 @@ class AnalyticsModule extends Module {
     /**
      * Add analytics scripts to footer
      */
-    public function addAnalyticsScripts($content) {
+    public function addAnalyticsScripts($content)
+    {
         $scripts = array();
 
         // Google Analytics
@@ -49,7 +51,8 @@ class AnalyticsModule extends Module {
     /**
      * Get Google Analytics script
      */
-    private function getGoogleAnalyticsScript($gaId) {
+    private function getGoogleAnalyticsScript($gaId)
+    {
         $gaId = e($gaId);
         return <<<HTML
 <!-- Google Analytics -->
@@ -66,7 +69,8 @@ HTML;
     /**
      * Get Yandex Metrika script
      */
-    private function getYandexMetrikaScript($ymId) {
+    private function getYandexMetrikaScript($ymId)
+    {
         $ymId = e($ymId);
         return <<<HTML
 <!-- Yandex.Metrika -->

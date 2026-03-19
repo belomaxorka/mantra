@@ -3,13 +3,15 @@
  * AdminModule - Admin panel functionality
  */
 
-class AdminModule extends Module {
-
-    public function init() {
+class AdminModule extends Module
+{
+    public function init()
+    {
         $this->hook('routes.register', array($this, 'registerRoutes'));
     }
 
-    public function adminRoute($method, $pattern, $callback) {
+    public function adminRoute($method, $pattern, $callback)
+    {
         $router = $this->app->router();
         $pattern = '/admin' . ($pattern === '' ? '' : ('/' . ltrim($pattern, '/')));
 
@@ -25,7 +27,8 @@ class AdminModule extends Module {
     /**
      * Register admin routes
      */
-    public function registerRoutes($data) {
+    public function registerRoutes($data)
+    {
         $router = $data['router'];
 
         // Auth
@@ -33,12 +36,11 @@ class AdminModule extends Module {
         $router->post('/admin/login', array($this, 'loginProcess'));
         $router->get('/admin/logout', array($this, 'logout'));
 
-        // Admin modules register their own /admin/* routes via $admin->adminRoute(...)
-
         return $data;
     }
 
-    private function normalizeSidebarItem($item) {
+    private function normalizeSidebarItem($item)
+    {
         if (!is_array($item)) {
             $item = array();
         }
@@ -75,7 +77,8 @@ class AdminModule extends Module {
         return $item;
     }
 
-    private function sortSidebarTree(&$items) {
+    private function sortSidebarTree(&$items)
+    {
         if (!is_array($items)) {
             $items = array();
             return;
@@ -101,7 +104,8 @@ class AdminModule extends Module {
         unset($item);
     }
 
-    private function computeSidebarActive(&$item, $path) {
+    private function computeSidebarActive(&$item, $path)
+    {
         $selfMatch = false;
         $childMatch = false;
 
@@ -150,7 +154,8 @@ class AdminModule extends Module {
         return $item['active'] || $item['expanded'];
     }
 
-    private function buildSidebarItems() {
+    private function buildSidebarItems()
+    {
         $items = $this->fireHook('admin.sidebar', array());
         if (!is_array($items)) {
             $items = array();
@@ -193,15 +198,18 @@ class AdminModule extends Module {
         return $normalized;
     }
 
-    public function render($title, $content, $extra = array()) {
+    public function render($title, $content, $extra = array())
+    {
         return $this->renderAdminLayout($title, $content, $extra);
     }
 
-    public function getSidebarItems() {
+    public function getSidebarItems()
+    {
         return $this->buildSidebarItems();
     }
 
-    private function renderAdminLayout($title, $content, $extra = array()) {
+    private function renderAdminLayout($title, $content, $extra = array())
+    {
         $data = array_merge(array(
             'title' => $title,
             'content' => $content,
@@ -212,26 +220,11 @@ class AdminModule extends Module {
         return view('admin:layout', $data);
     }
 
-    private function admin404($message) {
-        http_response_code(404);
-        $html = '<div class="alert alert-danger alert-dismissible fade show alert-permanent" role="alert">' 
-              . e($message) 
-              . '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>'
-              . '</div>';
-        return $this->renderAdminLayout('Not found', $html);
-    }
-
-    // Settings UI is provided by the admin-settings module.
-    // AdminModule provides the platform (layout, auth, sidebar, adminRoute).
-
-    // (settings implementation removed)
-
-
-
     /**
      * Auth middleware
      */
-    public function requireAuth() {
+    public function requireAuth()
+    {
         if (!auth()->check()) {
             redirect(base_url('/admin/login'));
             return false;
@@ -239,14 +232,11 @@ class AdminModule extends Module {
         return true;
     }
 
-    // Dashboard route is registered by the admin-dashboard module.
-
-    // (requireAuth is defined above with admin layout rendering)
-
     /**
      * Login form
      */
-    public function loginForm() {
+    public function loginForm()
+    {
         if (auth()->check()) {
             redirect(base_url('/admin'));
             return;
@@ -258,7 +248,8 @@ class AdminModule extends Module {
     /**
      * Process login
      */
-    public function loginProcess() {
+    public function loginProcess()
+    {
         $username = (string)request()->post('username', '');
         $password = (string)request()->post('password', '');
 
@@ -270,13 +261,13 @@ class AdminModule extends Module {
             ));
         }
     }
-    
+
     /**
      * Logout
      */
-    public function logout() {
+    public function logout()
+    {
         auth()->logout();
         redirect(base_url('/admin/login'));
     }
-    
 }

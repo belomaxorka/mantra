@@ -1,16 +1,19 @@
 <?php
 
-class AdminPagesModule extends ContentAdminModule {
-
-    protected function getContentType() {
+class AdminPagesModule extends ContentAdminModule
+{
+    protected function getContentType()
+    {
         return 'Page';
     }
-    
-    protected function getCollectionName() {
+
+    protected function getCollectionName()
+    {
         return 'pages';
     }
-    
-    protected function getDefaultItem() {
+
+    protected function getDefaultItem()
+    {
         return array(
             'title' => '',
             'slug' => '',
@@ -24,8 +27,9 @@ class AdminPagesModule extends ContentAdminModule {
             'updated_at' => ''
         );
     }
-    
-    protected function extractFormData() {
+
+    protected function extractFormData()
+    {
         return array(
             'title' => trim(request()->post('title', '')),
             'slug' => trim(request()->post('slug', '')),
@@ -37,7 +41,8 @@ class AdminPagesModule extends ContentAdminModule {
         );
     }
 
-    public function init() {
+    public function init()
+    {
         $this->registerSidebarItem(array(
             'id' => 'pages',
             'title' => 'admin-pages.title',
@@ -46,7 +51,7 @@ class AdminPagesModule extends ContentAdminModule {
             'order' => 10,
             'url' => base_url('/admin/pages'),
         ));
-        
+
         $this->registerQuickAction(array(
             'id' => 'new-page',
             'title' => 'admin-pages.new',
@@ -54,7 +59,7 @@ class AdminPagesModule extends ContentAdminModule {
             'url' => base_url('/admin/pages/new'),
             'order' => 20,
         ));
-        
+
         $this->registerAdminRoute('GET', 'pages', array($this, 'listItems'));
         $this->registerAdminRoute('GET', 'pages/new', array($this, 'newItem'));
         $this->registerAdminRoute('POST', 'pages/new', array($this, 'createItem'));
