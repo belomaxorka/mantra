@@ -92,8 +92,8 @@ class AdminSettingsModule extends Module
         }
 
         if ($contentHtml === null) {
-            http_response_code(404);
-            return $admin->render('Settings', '<div class="alert alert-danger alert-dismissible fade show alert-permanent" role="alert">Settings not found<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>');
+            not_found('admin', 'Settings not found');
+            return;
         }
 
         $page = view()->fetch('admin-settings:settings', array(

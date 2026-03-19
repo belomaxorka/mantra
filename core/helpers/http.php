@@ -217,3 +217,38 @@ function ip_matches($ip, $entry)
     $mask = chr((0xFF << (8 - $remainder)) & 0xFF);
     return (ord($ipBin[$bytes]) & ord($mask)) === (ord($subnetBin[$bytes]) & ord($mask));
 }
+
+/**
+ * Unified 404 Not Found handler
+ *
+ * @param string $context Context: 'public' or 'admin'
+ * @param string $message Custom error message (optional)
+ */
+function not_found($context = 'public', $message = '')
+{
+    http_response_code(404);
+
+    if ($context === 'admin') {
+        // Admin context: render admin layout with error
+        $admin = admin();
+        if ($admin && method_exists($admin, 'render')) {
+            $errorMessage = $message ?: 'Not found';
+            $html = '<div class="alert alert-danger alert-dismissible fade show alert-permanent" role="alert">'
+                  . e($errorMessage)
+                  . '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>'
+                  . '</div>';
+            echo $admin->render('Not found', $html);
+            return;
+        }
+        // Fallback if admin module not available
+        echo '<h1>404 - Not Found</h1>';
+        return;
+    }
+
+    // Public context: try to render 404 template
+    try {
+        view('404', array('title' => '404 - Page Not Found'));
+    } catch (Exception $e) {
+        echo '<h1>404 - Page Not Found</h1>';
+    }
+}
