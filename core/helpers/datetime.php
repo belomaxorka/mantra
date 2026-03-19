@@ -98,6 +98,11 @@ function time_ago($time)
     $now = now();
     $diff = $now->getTimestamp() - $dt->getTimestamp();
 
+    // Just now (less than 10 seconds)
+    if (abs($diff) < 10) {
+        return t('datetime.just_now', 'just now');
+    }
+
     if ($diff < 0) {
         // Future time
         $diff = abs($diff);
@@ -109,22 +114,22 @@ function time_ago($time)
     // Calculate time difference
     if ($diff < 60) {
         $value = $diff;
-        $unit = $value === 1 ? t('datetime.second', 'second') : t('datetime.seconds', 'seconds');
+        $unit = pluralize($value, 'datetime.second');
     } elseif ($diff < 3600) {
         $value = floor($diff / 60);
-        $unit = $value === 1 ? t('datetime.minute', 'minute') : t('datetime.minutes', 'minutes');
+        $unit = pluralize($value, 'datetime.minute');
     } elseif ($diff < 86400) {
         $value = floor($diff / 3600);
-        $unit = $value === 1 ? t('datetime.hour', 'hour') : t('datetime.hours', 'hours');
+        $unit = pluralize($value, 'datetime.hour');
     } elseif ($diff < 2592000) {
         $value = floor($diff / 86400);
-        $unit = $value === 1 ? t('datetime.day', 'day') : t('datetime.days', 'days');
+        $unit = pluralize($value, 'datetime.day');
     } elseif ($diff < 31536000) {
         $value = floor($diff / 2592000);
-        $unit = $value === 1 ? t('datetime.month', 'month') : t('datetime.months', 'months');
+        $unit = pluralize($value, 'datetime.month');
     } else {
         $value = floor($diff / 31536000);
-        $unit = $value === 1 ? t('datetime.year', 'year') : t('datetime.years', 'years');
+        $unit = pluralize($value, 'datetime.year');
     }
 
     return sprintf($suffix, $value . ' ' . $unit);
