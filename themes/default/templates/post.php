@@ -10,7 +10,7 @@
 
     <div class="meta text-muted mb-3">
         <?php if (isset($post['created_at'])): ?>
-            Published: <?php echo format_date($post['created_at'], 'F j, Y'); ?>
+            Published: <?php echo format_date_localized($post['created_at'], 'long'); ?>
         <?php endif; ?>
         <?php if (isset($post['author'])): ?>
             by <?php echo $this->escape($post['author']); ?>
