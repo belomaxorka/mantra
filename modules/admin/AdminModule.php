@@ -203,11 +203,6 @@ class AdminModule extends Module
         return $this->renderAdminLayout($title, $content, $extra);
     }
 
-    public function getSidebarItems()
-    {
-        return $this->buildSidebarItems();
-    }
-
     private function renderAdminLayout($title, $content, $extra = array())
     {
         $data = array_merge(array(
