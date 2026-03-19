@@ -97,17 +97,25 @@ class AdminSettingsModule extends Module
             return $admin->render($title, '<div class="alert alert-danger alert-dismissible fade show alert-permanent" role="alert">Settings not found<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>');
         }
 
+        // Determine page title based on active tab
+        $settingsPrefix = $this->translateOrFallback('admin-settings.title', 'Settings');
+        $pageTitle = $settingsPrefix;
+        foreach ($tabs as $tab) {
+            if (!empty($tab['active'])) {
+                $pageTitle = $settingsPrefix . ' - ' . $tab['title'];
+                break;
+            }
+        }
+
         $page = view()->fetch('admin-settings:settings', array(
-            'pageTitle' => $this->translateOrFallback('admin-settings.title', 'Settings'),
+            'pageTitle' => $pageTitle,
             'tabs' => $tabs,
             'contentHtml' => $contentHtml,
             'notice' => $notice,
             'error' => $error,
         ));
 
-        $title = $this->translateOrFallback('admin-settings.title', 'Settings');
-
-        return $admin->render($title, $page, array(
+        return $admin->render($pageTitle, $page, array(
             'user' => auth()->user(),
         ));
     }
