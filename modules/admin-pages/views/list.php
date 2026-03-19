@@ -95,10 +95,12 @@
                                                        class="btn btn-outline-primary" title="<?php echo t('admin-pages.edit'); ?>">
                                                         <i class="bi bi-pencil"></i>
                                                     </a>
-                                                    <a href="<?php echo base_url('/' . $page['slug']); ?>"
-                                                       class="btn btn-outline-secondary" title="<?php echo t('admin-pages.view'); ?>" target="_blank">
-                                                        <i class="bi bi-eye"></i>
-                                                    </a>
+                                                    <?php if ($page['status'] === 'published'): ?>
+                                                        <a href="<?php echo base_url('/' . $page['slug']); ?>"
+                                                           class="btn btn-outline-secondary" title="<?php echo t('admin-pages.view'); ?>" target="_blank">
+                                                            <i class="bi bi-eye"></i>
+                                                        </a>
+                                                    <?php endif; ?>
                                                     <button type="button"
                                                             class="btn btn-outline-danger"
                                                             title="<?php echo t('admin-pages.delete'); ?>"

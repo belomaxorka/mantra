@@ -96,12 +96,14 @@
                                        title="<?php echo t('admin-posts.edit'); ?>">
                                         <i class="bi bi-pencil"></i>
                                     </a>
-                                    <a href="<?php echo base_url('/post/' . $post['slug']); ?>"
-                                       class="btn btn-outline-secondary"
-                                       title="<?php echo t('admin-posts.view'); ?>"
-                                       target="_blank">
-                                        <i class="bi bi-eye"></i>
-                                    </a>
+                                    <?php if ($post['status'] === 'published'): ?>
+                                        <a href="<?php echo base_url('/post/' . $post['slug']); ?>"
+                                           class="btn btn-outline-secondary"
+                                           title="<?php echo t('admin-posts.view'); ?>"
+                                           target="_blank">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    <?php endif; ?>
                                     <button type="button"
                                             class="btn btn-outline-danger"
                                             onclick="deletePost('<?php echo e($post['_id']); ?>')"

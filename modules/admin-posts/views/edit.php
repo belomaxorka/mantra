@@ -122,7 +122,7 @@
                             <i class="bi bi-check-circle"></i>
                             <?php echo $isNew ? t('admin-posts.create') : t('admin-posts.update'); ?>
                         </button>
-                        <?php if (!$isNew): ?>
+                        <?php if (!$isNew && $post['status'] === 'published'): ?>
                             <a href="<?php echo base_url('/post/' . $post['slug']); ?>"
                                class="btn btn-outline-secondary"
                                target="_blank">
