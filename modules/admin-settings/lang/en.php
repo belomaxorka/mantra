@@ -68,7 +68,18 @@ return array(
 
     // Session settings
     'admin-settings.session.name' => 'Session name',
-    'admin-settings.session.lifetime' => 'Session lifetime',
+    'admin-settings.session.lifetime' => 'Session lifetime (seconds)',
+    'admin-settings.session.lifetime.help' => 'Session duration in seconds. 0 means until browser closes.',
+    'admin-settings.session.cookie_secure' => 'Secure cookie flag',
+    'admin-settings.session.cookie_secure.help' => 'Auto detects HTTPS. Always secure requires HTTPS. Never secure is insecure.',
+    'admin-settings.session.cookie_httponly' => 'HttpOnly cookie flag',
+    'admin-settings.session.cookie_httponly.help' => 'Prevents JavaScript access to session cookies (recommended for security).',
+    'admin-settings.session.cookie_samesite' => 'SameSite cookie attribute',
+    'admin-settings.session.cookie_samesite.help' => 'Controls cross-site cookie behavior. Lax is recommended. Requires PHP 7.3+.',
+    'admin-settings.session.cookie_path' => 'Cookie path',
+    'admin-settings.session.cookie_path.help' => 'Path where cookie is valid. Use / for entire site.',
+    'admin-settings.session.cookie_domain' => 'Cookie domain',
+    'admin-settings.session.cookie_domain.help' => 'Domain where cookie is valid. Leave empty for current domain.',
 
     // Logging settings
     'admin-settings.logging.level' => 'Log level',

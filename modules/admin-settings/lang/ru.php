@@ -68,7 +68,18 @@ return array(
 
     // Session settings
     'admin-settings.session.name' => 'Имя сессии',
-    'admin-settings.session.lifetime' => 'Время жизни сессии',
+    'admin-settings.session.lifetime' => 'Время жизни сессии (секунды)',
+    'admin-settings.session.lifetime.help' => 'Длительность сессии в секундах. 0 означает до закрытия браузера.',
+    'admin-settings.session.cookie_secure' => 'Флаг Secure для cookie',
+    'admin-settings.session.cookie_secure.help' => 'Auto определяет HTTPS автоматически. Always требует HTTPS. Never небезопасно.',
+    'admin-settings.session.cookie_httponly' => 'Флаг HttpOnly для cookie',
+    'admin-settings.session.cookie_httponly.help' => 'Запрещает доступ к cookie сессии из JavaScript (рекомендуется для безопасности).',
+    'admin-settings.session.cookie_samesite' => 'Атрибут SameSite для cookie',
+    'admin-settings.session.cookie_samesite.help' => 'Контролирует поведение cookie между сайтами. Рекомендуется Lax. Требует PHP 7.3+.',
+    'admin-settings.session.cookie_path' => 'Путь cookie',
+    'admin-settings.session.cookie_path.help' => 'Путь, где cookie действителен. Используйте / для всего сайта.',
+    'admin-settings.session.cookie_domain' => 'Домен cookie',
+    'admin-settings.session.cookie_domain.help' => 'Домен, где cookie действителен. Оставьте пустым для текущего домена.',
 
     // Logging settings
     'admin-settings.logging.level' => 'Уровень логирования',

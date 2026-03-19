@@ -280,6 +280,23 @@ class AdminSettingsModule extends Module
         return $algorithms;
     }
 
+    private function getAvailableSameSiteOptions()
+    {
+        // SameSite attribute is supported since PHP 7.3
+        if (defined('PHP_VERSION_ID') && PHP_VERSION_ID >= 70300) {
+            return array(
+                'Lax' => 'Lax (recommended)',
+                'Strict' => 'Strict',
+                'None' => 'None',
+            );
+        }
+
+        // PHP < 7.3 doesn't support SameSite
+        return array(
+            'not_supported' => 'Not supported (PHP 7.3+ required)',
+        );
+    }
+
     private function availableModuleCards()
     {
         $cards = array();
@@ -505,6 +522,10 @@ class AdminSettingsModule extends Module
 
                 if ($path === 'security.password_hash_algo' && (string)$field['type'] === 'select') {
                     $field['options'] = $this->getAvailablePasswordAlgorithms();
+                }
+
+                if ($path === 'session.cookie_samesite' && (string)$field['type'] === 'select') {
+                    $field['options'] = $this->getAvailableSameSiteOptions();
                 }
 
                 if ($path === 'logging.level' && (string)$field['type'] === 'select') {

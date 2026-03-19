@@ -28,19 +28,41 @@ class Session {
         session_name($sessionName);
 
         // Configure session cookie params before start
-        $lifetime = (int)config('session.lifetime', 0);
-        $secure = is_https();
+        $lifetime = (int)config('session.lifetime', 7200);
+        $path = config('session.cookie_path', '/');
+        $domain = config('session.cookie_domain', '');
+        $httponly = (bool)config('session.cookie_httponly', true);
+
+        // Determine secure flag
+        $secureConfig = config('session.cookie_secure', 'auto');
+        if ($secureConfig === 'true' || $secureConfig === true) {
+            $secure = true;
+        } elseif ($secureConfig === 'false' || $secureConfig === false) {
+            $secure = false;
+        } else {
+            // auto
+            $secure = is_https();
+        }
 
         if (defined('PHP_VERSION_ID') && PHP_VERSION_ID >= 70300) {
+            $samesite = config('session.cookie_samesite', 'Lax');
+
+            // Validate SameSite value
+            $validSameSite = array('Lax', 'Strict', 'None');
+            if (!in_array($samesite, $validSameSite, true)) {
+                $samesite = 'Lax';
+            }
+
             session_set_cookie_params(array(
                 'lifetime' => $lifetime,
-                'path' => '/',
+                'path' => $path,
+                'domain' => $domain,
                 'secure' => $secure,
-                'httponly' => true,
-                'samesite' => 'Lax'
+                'httponly' => $httponly,
+                'samesite' => $samesite
             ));
         } else {
-            session_set_cookie_params($lifetime, '/', '', $secure, true);
+            session_set_cookie_params($lifetime, $path, $domain, $secure, $httponly);
         }
 
         @ini_set('session.gc_maxlifetime', (string)$lifetime);

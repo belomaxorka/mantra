@@ -27,16 +27,31 @@ class Cookie {
         }
 
         $expires = isset($options['expires']) ? (int)$options['expires'] : 0;
-        $path = isset($options['path']) ? $options['path'] : '/';
-        $domain = isset($options['domain']) ? $options['domain'] : '';
-        $httponly = array_key_exists('httponly', $options) ? (bool)$options['httponly'] : true;
-        $samesite = isset($options['samesite']) ? $options['samesite'] : 'Lax';
+        $path = isset($options['path']) ? $options['path'] : config('session.cookie_path', '/');
+        $domain = isset($options['domain']) ? $options['domain'] : config('session.cookie_domain', '');
+        $httponly = array_key_exists('httponly', $options) ? (bool)$options['httponly'] : (bool)config('session.cookie_httponly', true);
 
+        // Determine SameSite
+        if (isset($options['samesite'])) {
+            $samesite = $options['samesite'];
+        } else {
+            $samesite = config('session.cookie_samesite', 'Lax');
+        }
+
+        // Determine secure flag
         $secure = null;
         if (array_key_exists('secure', $options)) {
             $secure = (bool)$options['secure'];
         } else {
-            $secure = is_https();
+            $secureConfig = config('session.cookie_secure', 'auto');
+            if ($secureConfig === 'true' || $secureConfig === true) {
+                $secure = true;
+            } elseif ($secureConfig === 'false' || $secureConfig === false) {
+                $secure = false;
+            } else {
+                // auto
+                $secure = is_https();
+            }
         }
 
         // PHP 7.3+ supports options array with SameSite
