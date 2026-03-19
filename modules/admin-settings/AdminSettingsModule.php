@@ -93,7 +93,8 @@ class AdminSettingsModule extends Module
 
         if ($contentHtml === null) {
             http_response_code(404);
-            return $admin->render('Settings', '<div class="alert alert-danger alert-dismissible fade show alert-permanent" role="alert">Settings not found<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>');
+            $title = $this->translateOrFallback('admin-settings.title', 'Settings');
+            return $admin->render($title, '<div class="alert alert-danger alert-dismissible fade show alert-permanent" role="alert">Settings not found<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>');
         }
 
         $page = view()->fetch('admin-settings:settings', array(
@@ -104,7 +105,9 @@ class AdminSettingsModule extends Module
             'error' => $error,
         ));
 
-        return $admin->render('Settings', $page, array(
+        $title = $this->translateOrFallback('admin-settings.title', 'Settings');
+
+        return $admin->render($title, $page, array(
             'user' => auth()->user(),
         ));
     }
