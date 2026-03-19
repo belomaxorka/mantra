@@ -132,48 +132,8 @@ class SeoModule extends Module {
      * Render widgets provided by this module
      */
     public function renderWidget($widgetData) {
-        $name = $widgetData['name'];
-
-        // Handle breadcrumbs widget
-        if ($name === 'seo:breadcrumbs') {
-            $params = $widgetData['params'];
-            $breadcrumbs = isset($params['breadcrumbs']) ? $params['breadcrumbs'] : array();
-
-            if (empty($breadcrumbs)) {
-                return $widgetData;
-            }
-
-            ob_start();
-            try {
-                ?>
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb">
-                        <?php foreach ($breadcrumbs as $item): ?>
-                            <?php if ($item['url']): ?>
-                                <li class="breadcrumb-item">
-                                    <a href="<?php echo e($item['url']); ?>">
-                                        <?php echo e($item['title']); ?>
-                                    </a>
-                                </li>
-                            <?php else: ?>
-                                <li class="breadcrumb-item active" aria-current="page">
-                                    <?php echo e($item['title']); ?>
-                                </li>
-                            <?php endif; ?>
-                        <?php endforeach; ?>
-                    </ol>
-                </nav>
-                <?php
-                $widgetData['output'] = ob_get_clean();
-            } catch (Exception $e) {
-                if (ob_get_level() > 0) {
-                    ob_end_clean();
-                }
-                logger()->error('SEO breadcrumbs widget error', array('exception' => $e));
-                $widgetData['output'] = '<!-- SEO breadcrumbs error -->';
-            }
-        }
-
+        // No need to handle widget rendering here anymore
+        // Widget templates are loaded automatically by View::widget()
         return $widgetData;
     }
 }
