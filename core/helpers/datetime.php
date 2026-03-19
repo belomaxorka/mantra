@@ -3,7 +3,6 @@
  * Date and time helpers
  *
  * All functions respect the timezone configured in admin settings (locale.timezone).
- * Database timestamps are stored in UTC and converted to configured timezone for display.
  */
 
 /**
@@ -25,19 +24,9 @@ function now()
 }
 
 /**
- * Get current UTC DateTime object
- *
- * @return DateTime
- */
-function now_utc()
-{
-    return new DateTime('now', new DateTimeZone('UTC'));
-}
-
-/**
  * Format a timestamp or DateTime according to configured timezone
  *
- * @param int|string|DateTime $time Unix timestamp, date string (assumed UTC), or DateTime object
+ * @param int|string|DateTime $time Unix timestamp, date string, or DateTime object
  * @param string $format PHP date format (default: 'Y-m-d H:i:s')
  * @return string Formatted date string
  */
@@ -57,14 +46,10 @@ function format_date($time = null, $format = 'Y-m-d H:i:s')
         $dt = now();
         $dt->setTimestamp((int)$time);
     } else {
-        // String input - assume UTC and convert to configured timezone
         try {
-            $utc = new DateTimeZone('UTC');
-            $dt = new DateTime($time, $utc);
-
             $tz = config('locale.timezone', 'UTC');
             $timezone = new DateTimeZone($tz);
-            $dt->setTimezone($timezone);
+            $dt = new DateTime($time, $timezone);
         } catch (Exception $e) {
             logger()->warning('Invalid date string', array('time' => $time, 'error' => $e->getMessage()));
             return '';

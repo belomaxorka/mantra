@@ -125,8 +125,8 @@ abstract class ContentAdminModule extends BaseAdminModule {
         $data = $this->extractFormData();
         $data = $this->ensureSlug($data);
         $data['author'] = $this->getUser()['username'] ?? 'Unknown';
-        $data['created_at'] = now_utc()->format('Y-m-d H:i:s');
-        $data['updated_at'] = now_utc()->format('Y-m-d H:i:s');
+        $data['created_at'] = date('Y-m-d H:i:s');
+        $data['updated_at'] = date('Y-m-d H:i:s');
         
         $id = $this->generateId($data);
         
@@ -175,11 +175,11 @@ abstract class ContentAdminModule extends BaseAdminModule {
         
         $data = $this->extractFormData();
         $data = $this->ensureSlug($data);
-        $data['updated_at'] = now_utc()->format('Y-m-d H:i:s');
-
+        $data['updated_at'] = date('Y-m-d H:i:s');
+        
         // Preserve original fields
         $data['author'] = $item['author'] ?? 'Unknown';
-        $data['created_at'] = $item['created_at'] ?? now_utc()->format('Y-m-d H:i:s');
+        $data['created_at'] = $item['created_at'] ?? date('Y-m-d H:i:s');
         
         db()->write($this->getCollectionName(), $id, $data);
         
