@@ -141,10 +141,10 @@ abstract class ContentAdminModule extends BaseAdminModule {
     public function editItem($params) {
         $id = $params['id'] ?? '';
         $item = db()->read($this->getCollectionName(), $id);
-
+        
         if (!$item) {
-            not_found('admin', $this->getContentType() . ' not found');
-            return;
+            http_response_code(404);
+            return $this->renderAdmin('Not Found', '<div class="alert alert-danger alert-dismissible fade show alert-permanent" role="alert">' . $this->getContentType() . ' not found<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>');
         }
         
         $content = $this->renderView($this->getEditTemplate(), array(
@@ -163,12 +163,13 @@ abstract class ContentAdminModule extends BaseAdminModule {
         if (!$this->verifyCsrf()) {
             return;
         }
-
+        
         $id = $params['id'] ?? '';
         $item = db()->read($this->getCollectionName(), $id);
-
+        
         if (!$item) {
-            not_found('admin', $this->getContentType() . ' not found');
+            http_response_code(404);
+            echo $this->getContentType() . ' not found';
             return;
         }
         

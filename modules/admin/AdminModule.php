@@ -212,6 +212,15 @@ class AdminModule extends Module {
         return view('admin:layout', $data);
     }
 
+    private function admin404($message) {
+        http_response_code(404);
+        $html = '<div class="alert alert-danger alert-dismissible fade show alert-permanent" role="alert">' 
+              . e($message) 
+              . '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>'
+              . '</div>';
+        return $this->renderAdminLayout('Not found', $html);
+    }
+
     // Settings UI is provided by the admin-settings module.
     // AdminModule provides the platform (layout, auth, sidebar, adminRoute).
 

@@ -234,6 +234,11 @@ class PageController {
      * 404 Not Found
      */
     private function notFound() {
-        not_found('public');
+        http_response_code(404);
+        try {
+            view('404', array('title' => '404 - Page Not Found'));
+        } catch (Exception $e) {
+            echo '<h1>404 - Page Not Found</h1>';
+        }
     }
 }

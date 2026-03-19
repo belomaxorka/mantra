@@ -180,7 +180,8 @@ class Router {
      * 404 handler
      */
     private function notFound() {
-        not_found('public');
+        http_response_code(404);
+        echo '<h1>404 - Page Not Found</h1>';
     }
     
     /**
