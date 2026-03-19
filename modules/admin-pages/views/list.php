@@ -86,7 +86,7 @@
                                             </td>
                                             <td>
                                                 <small class="text-muted">
-                                                    <?php echo $this->escape(format_date($page['updated_at'], 'Y-m-d H:i')); ?>
+                                                    <?php echo $this->escape(date('Y-m-d H:i', strtotime($page['updated_at']))); ?>
                                                 </small>
                                             </td>
                                             <td>
