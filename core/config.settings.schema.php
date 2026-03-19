@@ -115,12 +115,7 @@ return array(
                     'type' => 'select',
                     'title' => 'admin-settings.security.password_hash_algo',
                     'default' => 'PASSWORD_DEFAULT',
-                    'options' => array(
-                        'PASSWORD_DEFAULT' => 'PASSWORD_DEFAULT',
-                        'PASSWORD_BCRYPT' => 'PASSWORD_BCRYPT',
-                        'PASSWORD_ARGON2I' => 'PASSWORD_ARGON2I',
-                        'PASSWORD_ARGON2ID' => 'PASSWORD_ARGON2ID',
-                    ),
+                    'options' => array(),
                 ),
                 array(
                     'path' => 'security.csrf_token_name',
