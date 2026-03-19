@@ -889,8 +889,7 @@ class AdminSettingsModule extends Module
             );
         }
 
-        $view = new View();
-        return $view->fetch('admin-settings:module-settings', array(
+        return view()->fetch('admin-settings:module-settings', array(
             'title' => '',
             'tabs' => $tabs,
             'active_tab' => $activeInnerTab,

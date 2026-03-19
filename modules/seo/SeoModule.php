@@ -144,26 +144,34 @@ class SeoModule extends Module {
             }
 
             ob_start();
-            ?>
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb">
-                    <?php foreach ($breadcrumbs as $item): ?>
-                        <?php if ($item['url']): ?>
-                            <li class="breadcrumb-item">
-                                <a href="<?php echo e($item['url']); ?>">
+            try {
+                ?>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <?php foreach ($breadcrumbs as $item): ?>
+                            <?php if ($item['url']): ?>
+                                <li class="breadcrumb-item">
+                                    <a href="<?php echo e($item['url']); ?>">
+                                        <?php echo e($item['title']); ?>
+                                    </a>
+                                </li>
+                            <?php else: ?>
+                                <li class="breadcrumb-item active" aria-current="page">
                                     <?php echo e($item['title']); ?>
-                                </a>
-                            </li>
-                        <?php else: ?>
-                            <li class="breadcrumb-item active" aria-current="page">
-                                <?php echo e($item['title']); ?>
-                            </li>
-                        <?php endif; ?>
-                    <?php endforeach; ?>
-                </ol>
-            </nav>
-            <?php
-            $widgetData['output'] = ob_get_clean();
+                                </li>
+                            <?php endif; ?>
+                        <?php endforeach; ?>
+                    </ol>
+                </nav>
+                <?php
+                $widgetData['output'] = ob_get_clean();
+            } catch (Exception $e) {
+                if (ob_get_level() > 0) {
+                    ob_end_clean();
+                }
+                logger()->error('SEO breadcrumbs widget error', array('exception' => $e));
+                $widgetData['output'] = '<!-- SEO breadcrumbs error -->';
+            }
         }
 
         return $widgetData;

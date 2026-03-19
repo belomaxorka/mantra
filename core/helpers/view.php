@@ -4,14 +4,18 @@
  */
 
 /**
- * Get view instance or render template
+ * Get shared view instance or render template
  * @param string|null $template Template name
  * @param array $data Template data
  * @return View|string
  */
 function view($template = null, $data = array())
 {
-    $view = new View();
+    static $view = null;
+
+    if ($view === null) {
+        $view = new View();
+    }
 
     if ($template === null) {
         return $view;
@@ -29,8 +33,7 @@ function view($template = null, $data = array())
  */
 function widget($name, $params = array())
 {
-    $view = new View();
-    return $view->widget($name, $params);
+    return view()->widget($name, $params);
 }
 
 /**

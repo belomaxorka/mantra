@@ -104,6 +104,9 @@ class Config {
             'proxy' => array(
                 'trusted_proxies' => array(),
             ),
+            'performance' => array(
+                'gzip_compression' => false,
+            ),
             'debug' => array(
                 'enabled' => true,
             ),

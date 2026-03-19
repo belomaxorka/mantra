@@ -185,7 +185,7 @@ abstract class Module implements ModuleInterface {
     }
     
     protected function view($template, $data = array()) {
-        return (new View())->render($template, $data);
+        return view($template, $data);
     }
     
     public function getPath() {
