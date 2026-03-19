@@ -2,10 +2,10 @@
   "id": "admin-pages",
   "name": "Pages Management",
   "description": {
-    "en": "Admin interface for managing static pages",
-    "ru": "Административный интерфейс для управления статическими страницами"
+    "en": "Admin interface for managing static pages and navigation integration",
+    "ru": "Административный интерфейс для управления статическими страницами и интеграция с навигацией"
   },
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": "Mantra CMS",
   "license": "MIT",
   "type": "core",
@@ -14,8 +14,9 @@
     "admin_ui",
     "hooks",
     "templates",
-    "translations"
+    "translations",
+    "content_type"
   ],
   "dependencies": ["admin"],
-  "tags": ["admin", "pages", "content", "management"]
+  "tags": ["admin", "pages", "content", "management", "navigation"]
 }

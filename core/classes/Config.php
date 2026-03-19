@@ -86,7 +86,7 @@ class Config {
                 'posts_per_page' => 10,
             ),
             'modules' => array(
-                'enabled' => array('admin', 'admin-dashboard', 'admin-pages', 'admin-posts', 'admin-settings', 'pages'),
+                'enabled' => array('admin', 'admin-dashboard', 'admin-pages', 'admin-posts', 'admin-settings'),
             ),
             'security' => array(
                 // Stored as string identifier; interpreted by Auth when hashing.

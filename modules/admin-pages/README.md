@@ -28,9 +28,10 @@
 ## Структура файлов
 
 ```
-modules/admin-modules/pages/
-├── PagesAdminModule.php      # Основной класс модуля
+modules/admin-pages/
+├── AdminPagesModule.php      # Основной класс модуля
 ├── module.json                # Манифест модуля
+├── README.md                  # Документация
 ├── lang/
 │   ├── en.php                # Английские переводы
 │   └── ru.php                # Русские переводы
@@ -78,14 +79,9 @@ core/schemas/
 
 Страницы с включенным флагом `show_in_navigation` автоматически добавляются в навигационное меню сайта.
 
-Это реализовано через отдельный модуль `pages` (не путать с `admin-modules/pages`), который:
-- Загружается на всех страницах сайта (не только в админке)
-- Подключается к хуку `theme.navigation`
-- Добавляет опубликованные страницы с `show_in_navigation: true` в меню
+Модуль подключается к хуку `theme.navigation` и добавляет опубликованные страницы с `show_in_navigation: true` в меню.
 
 Порядок отображения определяется полем `navigation_order` (меньшее число = выше в списке).
-
-**Важно:** Модуль `pages` должен быть включен в `content/settings/config.json` → `modules.enabled`.
 
 ## Схема данных
 
