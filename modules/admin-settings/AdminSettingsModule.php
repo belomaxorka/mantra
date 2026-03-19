@@ -507,6 +507,10 @@ class AdminSettingsModule extends Module
 
                 $path = (string)$field['path'];
 
+                if ($path === 'locale.timezone' && (string)$field['type'] === 'select') {
+                    $field['options'] = get_timezones();
+                }
+
                 if ($path === 'locale.default_language' && (string)$field['type'] === 'select') {
                     $field['options'] = $this->availableLocaleOptions();
                 }

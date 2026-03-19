@@ -95,4 +95,20 @@ return array(
 
     // Debug settings
     'admin-settings.debug.enabled' => 'Включить режим отладки',
+
+    // Datetime strings
+    'datetime.ago' => '%s назад',
+    'datetime.in_future' => 'через %s',
+    'datetime.second' => 'секунду',
+    'datetime.seconds' => 'секунд',
+    'datetime.minute' => 'минуту',
+    'datetime.minutes' => 'минут',
+    'datetime.hour' => 'час',
+    'datetime.hours' => 'часов',
+    'datetime.day' => 'день',
+    'datetime.days' => 'дней',
+    'datetime.month' => 'месяц',
+    'datetime.months' => 'месяцев',
+    'datetime.year' => 'год',
+    'datetime.years' => 'лет',
 );

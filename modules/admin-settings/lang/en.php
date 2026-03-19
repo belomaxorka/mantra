@@ -95,4 +95,20 @@ return array(
 
     // Debug settings
     'admin-settings.debug.enabled' => 'Enable debug mode',
+
+    // Datetime strings
+    'datetime.ago' => '%s ago',
+    'datetime.in_future' => 'in %s',
+    'datetime.second' => 'second',
+    'datetime.seconds' => 'seconds',
+    'datetime.minute' => 'minute',
+    'datetime.minutes' => 'minutes',
+    'datetime.hour' => 'hour',
+    'datetime.hours' => 'hours',
+    'datetime.day' => 'day',
+    'datetime.days' => 'days',
+    'datetime.month' => 'month',
+    'datetime.months' => 'months',
+    'datetime.year' => 'year',
+    'datetime.years' => 'years',
 );
