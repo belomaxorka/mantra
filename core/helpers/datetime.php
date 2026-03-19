@@ -78,7 +78,7 @@ function format_date($time = null, $format = 'Y-m-d H:i:s')
  * Get relative time string (e.g., "2 hours ago", "in 3 days")
  *
  * @param int|string|DateTime $time Unix timestamp, date string, or DateTime object
- * @param bool $detailed If true, shows "today at 14:30" for recent dates, full date for older
+ * @param bool $detailed If true, shows "today at 14:30" instead of "2 hours ago" for recent dates
  * @return string Relative time string
  */
 function time_ago($time, $detailed = false)
@@ -104,7 +104,7 @@ function time_ago($time, $detailed = false)
         return t('datetime.just_now', 'just now');
     }
 
-    // Check for today/yesterday if detailed mode
+    // Check for today/yesterday/tomorrow if detailed mode
     if ($detailed) {
         $dateStr = $dt->format('Y-m-d');
         $todayStr = $now->format('Y-m-d');
@@ -120,8 +120,11 @@ function time_ago($time, $detailed = false)
             return sprintf(t('datetime.yesterday_at', 'yesterday at %s'), $timeStr);
         }
 
-        // For dates older than yesterday, show full localized date
-        return format_date_localized($dt, 'long');
+        $tomorrowStr = $now->modify('+2 days')->format('Y-m-d');
+        if ($dateStr === $tomorrowStr) {
+            $timeStr = format_date($dt, 'H:i');
+            return sprintf(t('datetime.tomorrow_at', 'tomorrow at %s'), $timeStr);
+        }
     }
 
     if ($diff < 0) {

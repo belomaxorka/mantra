@@ -10,10 +10,10 @@
 
     <div class="meta text-muted mb-3">
         <?php if (isset($post['created_at'])): ?>
-            <?php echo time_ago($post['created_at'], true); ?>
+            Published: <?php echo format_date_localized($post['created_at'], 'long'); ?>
         <?php endif; ?>
         <?php if (isset($post['author'])): ?>
-            — <?php echo $this->escape($post['author']); ?>
+            by <?php echo $this->escape($post['author']); ?>
         <?php endif; ?>
     </div>
 
