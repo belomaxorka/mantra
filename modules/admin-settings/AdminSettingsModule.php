@@ -65,7 +65,7 @@ class AdminSettingsModule extends Module
         $tabs = array();
         $tabs[] = array(
             'id' => 'general',
-            'title' => $this->translateOrFallback('admin-settings.general', 'General'),
+            'title' => t('admin-settings.general'),
             'url' => base_url('/admin/settings?tab=general'),
             'active' => ($activeTab === 'general'),
         );
@@ -93,12 +93,12 @@ class AdminSettingsModule extends Module
 
         if ($contentHtml === null) {
             http_response_code(404);
-            $title = $this->translateOrFallback('admin-settings.title', 'Settings');
+            $title = t('admin-settings.title');
             return $admin->render($title, '<div class="alert alert-danger alert-dismissible fade show alert-permanent" role="alert">Settings not found<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>');
         }
 
         // Determine page title based on active tab
-        $settingsPrefix = $this->translateOrFallback('admin-settings.title', 'Settings');
+        $settingsPrefix = t('admin-settings.title');
         $pageTitle = $settingsPrefix;
         foreach ($tabs as $tab) {
             if (!empty($tab['active'])) {
@@ -120,15 +120,6 @@ class AdminSettingsModule extends Module
         ));
     }
 
-    private function translateOrFallback($key, $fallback)
-    {
-        $translated = t($key);
-        // If translation not found (returns key), use provided fallback
-        if ($translated === $key) {
-            return (string)$fallback;
-        }
-        return $translated;
-    }
 
     /**
      * Get list of modules with settings (id => title)
