@@ -11,7 +11,7 @@
                         </a>
                     </h2>
                     <div class="meta text-muted mb-2">
-                        <?php echo format_date_localized($post['created_at'], 'long'); ?>
+                        <?php echo format_date($post['created_at'], 'F j, Y'); ?>
                     </div>
                     <?php if (isset($post['excerpt'])): ?>
                         <div class="excerpt">
