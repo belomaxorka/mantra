@@ -25,7 +25,7 @@ function now()
 }
 
 /**
- * Get current UTC DateTime object (for database storage)
+ * Get current UTC DateTime object
  *
  * @return DateTime
  */
@@ -75,7 +75,7 @@ function format_date($time = null, $format = 'Y-m-d H:i:s')
 }
 
 /**
- * Get relative time string with smart display
+ * Get relative time string (e.g., "2 hours ago", "in 3 days")
  *
  * @param int|string|DateTime $time Unix timestamp, date string, or DateTime object
  * @param bool $detailed If true, shows "today at 14:30" for recent dates, full date for older
@@ -157,7 +157,7 @@ function time_ago($time, $detailed = false)
 }
 
 /**
- * Get list of all available timezones
+ * Get list of common timezones grouped by region
  *
  * @return array Associative array of timezone identifiers => display names
  */
@@ -193,4 +193,239 @@ function get_timezones()
     }
 
     return $timezones;
+}
+
+/**
+ * Convert a date string from one timezone to another
+ *
+ * @param string $dateString Date string to convert
+ * @param string $fromTz Source timezone (default: UTC)
+ * @param string $toTz Target timezone (default: configured timezone)
+ * @return DateTime|false DateTime object in target timezone, or false on error
+ */
+function convert_timezone($dateString, $fromTz = 'UTC', $toTz = null)
+{
+    if ($toTz === null) {
+        $toTz = config('locale.timezone', 'UTC');
+    }
+
+    try {
+        $fromTimezone = new DateTimeZone($fromTz);
+        $toTimezone = new DateTimeZone($toTz);
+
+        $dt = new DateTime($dateString, $fromTimezone);
+        $dt->setTimezone($toTimezone);
+
+        return $dt;
+    } catch (Exception $e) {
+        logger()->warning('Timezone conversion failed', array(
+            'date' => $dateString,
+            'from' => $fromTz,
+            'to' => $toTz,
+            'error' => $e->getMessage()
+        ));
+        return false;
+    }
+}
+
+/**
+ * Parse a date string into DateTime object
+ *
+ * @param string $dateString Date string to parse
+ * @param string $format PHP date format (default: 'Y-m-d H:i:s')
+ * @param string|null $timezone Timezone for the parsed date (default: configured timezone)
+ * @return DateTime|false DateTime object or false on error
+ */
+function parse_date($dateString, $format = 'Y-m-d H:i:s', $timezone = null)
+{
+    if ($timezone === null) {
+        $timezone = config('locale.timezone', 'UTC');
+    }
+
+    try {
+        $tz = new DateTimeZone($timezone);
+        $dt = DateTime::createFromFormat($format, $dateString, $tz);
+
+        if ($dt === false) {
+            logger()->debug('Failed to parse date', array(
+                'string' => $dateString,
+                'format' => $format
+            ));
+            return false;
+        }
+
+        return $dt;
+    } catch (Exception $e) {
+        logger()->warning('Date parsing failed', array(
+            'string' => $dateString,
+            'format' => $format,
+            'error' => $e->getMessage()
+        ));
+        return false;
+    }
+}
+
+/**
+ * Get timezone information
+ *
+ * @param string|null $timezone Timezone identifier (default: configured timezone)
+ * @return array|false Array with timezone info or false on error
+ */
+function get_timezone_info($timezone = null)
+{
+    if ($timezone === null) {
+        $timezone = config('locale.timezone', 'UTC');
+    }
+
+    try {
+        $tz = new DateTimeZone($timezone);
+        $now = new DateTime('now', $tz);
+
+        $offset = $tz->getOffset($now);
+        $hours = floor(abs($offset) / 3600);
+        $minutes = floor((abs($offset) % 3600) / 60);
+        $sign = $offset >= 0 ? '+' : '-';
+
+        return array(
+            'name' => $timezone,
+            'offset' => $offset,
+            'offset_seconds' => $offset,
+            'offset_string' => sprintf('%s%02d:%02d', $sign, $hours, $minutes),
+            'abbreviation' => $now->format('T'),
+            'is_dst' => (bool)$now->format('I'),
+        );
+    } catch (Exception $e) {
+        logger()->warning('Failed to get timezone info', array(
+            'timezone' => $timezone,
+            'error' => $e->getMessage()
+        ));
+        return false;
+    }
+}
+
+/**
+ * Check if a timezone identifier is valid
+ *
+ * @param string $timezone Timezone identifier to validate
+ * @return bool True if valid, false otherwise
+ */
+function is_valid_timezone($timezone)
+{
+    try {
+        new DateTimeZone($timezone);
+        return true;
+    } catch (Exception $e) {
+        return false;
+    }
+}
+
+/**
+ * Get start of day for a given date
+ *
+ * @param DateTime|string|null $date Date (default: today)
+ * @return DateTime DateTime object set to 00:00:00
+ */
+function start_of_day($date = null)
+{
+    if ($date === null) {
+        $dt = now();
+    } elseif ($date instanceof DateTime) {
+        $dt = clone $date;
+    } else {
+        $dt = new DateTime($date, new DateTimeZone(config('locale.timezone', 'UTC')));
+    }
+
+    $dt->setTime(0, 0, 0);
+    return $dt;
+}
+
+/**
+ * Get end of day for a given date
+ *
+ * @param DateTime|string|null $date Date (default: today)
+ * @return DateTime DateTime object set to 23:59:59
+ */
+function end_of_day($date = null)
+{
+    if ($date === null) {
+        $dt = now();
+    } elseif ($date instanceof DateTime) {
+        $dt = clone $date;
+    } else {
+        $dt = new DateTime($date, new DateTimeZone(config('locale.timezone', 'UTC')));
+    }
+
+    $dt->setTime(23, 59, 59);
+    return $dt;
+}
+
+/**
+ * Check if a date is today
+ *
+ * @param DateTime|string $date Date to check
+ * @return bool True if date is today
+ */
+function is_today($date)
+{
+    if ($date instanceof DateTime) {
+        $dt = clone $date;
+    } else {
+        try {
+            $dt = new DateTime($date);
+        } catch (Exception $e) {
+            return false;
+        }
+    }
+
+    $today = now()->format('Y-m-d');
+    return $dt->format('Y-m-d') === $today;
+}
+
+/**
+ * Check if a date is yesterday
+ *
+ * @param DateTime|string $date Date to check
+ * @return bool True if date is yesterday
+ */
+function is_yesterday($date)
+{
+    if ($date instanceof DateTime) {
+        $dt = clone $date;
+    } else {
+        try {
+            $dt = new DateTime($date);
+        } catch (Exception $e) {
+            return false;
+        }
+    }
+
+    $yesterday = now()->modify('-1 day')->format('Y-m-d');
+    return $dt->format('Y-m-d') === $yesterday;
+}
+
+/**
+ * Get difference between two dates in days
+ *
+ * @param DateTime|string $date1 First date
+ * @param DateTime|string|null $date2 Second date (default: now)
+ * @return int|false Number of days or false on error
+ */
+function days_between($date1, $date2 = null)
+{
+    try {
+        if (!($date1 instanceof DateTime)) {
+            $date1 = new DateTime($date1);
+        }
+
+        if ($date2 === null) {
+            $date2 = now();
+        } elseif (!($date2 instanceof DateTime)) {
+            $date2 = new DateTime($date2);
+        }
+
+        $interval = $date1->diff($date2);
+        return (int)$interval->format('%r%a');
+    } catch (Exception $e) {
+        return false;
+    }
 }
