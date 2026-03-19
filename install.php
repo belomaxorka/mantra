@@ -116,6 +116,54 @@ if (request()->method() === 'POST') {
         .install-card {
             box-shadow: 0 10px 40px rgba(0,0,0,0.1);
         }
+
+        /* Mobile optimizations */
+        @media (max-width: 576px) {
+            body {
+                padding: 15px;
+                align-items: flex-start;
+                padding-top: 30px;
+            }
+            .install-card {
+                box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            }
+            .install-card .card-body {
+                padding: 1.5rem !important;
+            }
+            .install-card .card-title {
+                font-size: 1.5rem;
+                margin-bottom: 1.5rem !important;
+            }
+            .form-label {
+                font-size: 0.95rem;
+            }
+            .form-control, .form-select {
+                font-size: 16px; /* Prevents zoom on iOS */
+                padding: 0.625rem 0.75rem;
+            }
+            .btn-lg {
+                padding: 0.75rem 1rem;
+                font-size: 1.1rem;
+            }
+            .alert {
+                font-size: 0.95rem;
+            }
+        }
+
+        @media (max-width: 400px) {
+            body {
+                padding: 10px;
+            }
+            .install-card .card-body {
+                padding: 1rem !important;
+            }
+            .install-card .card-title {
+                font-size: 1.25rem;
+            }
+            .mb-3 {
+                margin-bottom: 0.875rem !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -131,7 +179,9 @@ if (request()->method() === 'POST') {
                                 <h5 class="alert-heading" data-i18n="success_heading">Installation successful!</h5>
                                 <p class="mb-0" data-i18n="success_message">Your CMS is ready to use.</p>
                                 <hr>
-                                <a href="<?php echo e($adminUrl); ?>" class="btn btn-success" data-i18n="success_button">Go to admin panel</a>
+                                <div class="d-grid">
+                                    <a href="<?php echo e($adminUrl); ?>" class="btn btn-success btn-lg" data-i18n="success_button">Go to admin panel</a>
+                                </div>
                             </div>
                         <?php else: ?>
                             <?php if (isset($error)): ?>
