@@ -96,6 +96,11 @@ class Config {
             'session' => array(
                 'name' => 'mantra_session',
                 'lifetime' => 7200,
+                'cookie_secure' => 'auto',
+                'cookie_httponly' => true,
+                'cookie_samesite' => 'Lax',
+                'cookie_path' => '/',
+                'cookie_domain' => '',
             ),
             'logging' => array(
                 'level' => 'debug',
