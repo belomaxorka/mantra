@@ -17,37 +17,53 @@ class Auth {
      */
     public function login($username, $password) {
         logger()->info('Login attempt', array('username' => $username));
-        
+
         $users = $this->db->query('users', array('username' => $username));
-        
+
         if (empty($users)) {
             logger()->warning('Login failed: user not found', array('username' => $username));
             return false;
         }
-        
+
         $user = $users[0];
-        
+
         // Verify password
         if (!$this->verifyPassword($password, $user['password'])) {
             logger()->warning('Login failed: invalid password', array('username' => $username));
             return false;
         }
-        
+
+        // Check if password needs rehashing (algorithm changed in config)
+        if ($this->needsRehash($user['password'])) {
+            $newHash = $this->hashPassword($password);
+            $user['password'] = $newHash;
+
+            // Remove _id before writing (it's metadata, not part of the document)
+            $userData = $user;
+            unset($userData['_id']);
+
+            $this->db->write('users', $user['_id'], $userData);
+            logger()->info('Password rehashed with new algorithm', array(
+                'username' => $username,
+                'user_id' => $user['_id']
+            ));
+        }
+
         // Regenerate session ID to prevent session fixation
         session()->regenerate(true);
 
         // Set session
         session()->set('user_id', $user['_id']);
         session()->set('user_role', $user['role']);
-        
+
         $this->currentUser = $user;
-        
+
         logger()->info('Login successful', array(
             'username' => $username,
             'user_id' => $user['_id'],
             'role' => $user['role']
         ));
-        
+
         return true;
     }
     
@@ -131,6 +147,36 @@ class Auth {
      */
     private function verifyPassword($password, $hash) {
         return password_verify($password, $hash);
+    }
+
+    /**
+     * Check if password hash needs rehashing with current algorithm
+     */
+    private function needsRehash($hash) {
+        $algo = config('security.password_hash_algo', 'PASSWORD_DEFAULT');
+
+        if (!is_string($algo) || $algo === '') {
+            $algo = 'PASSWORD_DEFAULT';
+        }
+
+        $phpAlgo = PASSWORD_DEFAULT;
+        switch ($algo) {
+            case 'PASSWORD_BCRYPT':
+                $phpAlgo = PASSWORD_BCRYPT;
+                break;
+            case 'PASSWORD_ARGON2I':
+                $phpAlgo = defined('PASSWORD_ARGON2I') ? PASSWORD_ARGON2I : PASSWORD_DEFAULT;
+                break;
+            case 'PASSWORD_ARGON2ID':
+                $phpAlgo = defined('PASSWORD_ARGON2ID') ? PASSWORD_ARGON2ID : PASSWORD_DEFAULT;
+                break;
+            case 'PASSWORD_DEFAULT':
+            default:
+                $phpAlgo = PASSWORD_DEFAULT;
+                break;
+        }
+
+        return password_needs_rehash($hash, $phpAlgo);
     }
 
     /**
