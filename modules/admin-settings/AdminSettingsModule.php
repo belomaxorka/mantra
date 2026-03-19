@@ -882,7 +882,7 @@ class AdminSettingsModule extends Module
             }
 
             $tabId = isset($tab['id']) ? (string)$tab['id'] : 'tab';
-            $tabTitle = $this->resolveAdminString($tab['title'] ?? $tab['label'] ?? $tabId);
+            $tabTitle = t($tab['title'] ?? $tab['label'] ?? $tabId);
 
             if ($activeInnerTab === '' && $tabId !== '') {
                 $activeInnerTab = $tabId;
@@ -905,8 +905,8 @@ class AdminSettingsModule extends Module
                     'path' => $path,
                     'name' => $name,
                     'type' => $type,
-                    'title' => $this->resolveAdminString($field['title'] ?? $field['label'] ?? $path),
-                    'help' => isset($field['help']) ? $this->resolveAdminString($field['help']) : '',
+                    'title' => t($field['title'] ?? $field['label'] ?? $path),
+                    'help' => isset($field['help']) ? t($field['help']) : '',
                     'value' => $store->get($path, array_key_exists('default', $field) ? $field['default'] : null),
                     'options' => $options,
                 );
@@ -919,7 +919,7 @@ class AdminSettingsModule extends Module
                 // Resolve option labels if they are i18n specs.
                 if ($f['type'] === 'select' && is_array($f['options'])) {
                     foreach ($f['options'] as $k => $v) {
-                        $f['options'][$k] = $this->resolveAdminString($v);
+                        $f['options'][$k] = t($v);
                     }
                 }
 

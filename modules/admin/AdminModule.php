@@ -49,10 +49,10 @@ class AdminModule extends Module
         $item['id'] = $id;
 
         if (isset($item['title'])) {
-            $item['title'] = $this->resolveAdminString($item['title']);
+            $item['title'] = t($item['title']);
         }
         if (isset($item['group'])) {
-            $item['group'] = $this->resolveAdminString($item['group']);
+            $item['group'] = t($item['group']);
         }
 
         if (!isset($item['order'])) {

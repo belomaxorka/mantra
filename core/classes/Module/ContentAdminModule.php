@@ -99,7 +99,7 @@ abstract class ContentAdminModule extends BaseAdminModule {
         ));
 
         $titleKey = $this->getId() . '.title';
-        $title = $this->resolveAdminString($titleKey);
+        $title = t($titleKey);
 
         return $this->renderAdmin($title, $content);
     }
@@ -115,7 +115,7 @@ abstract class ContentAdminModule extends BaseAdminModule {
         ));
 
         $titleKey = $this->getId() . '.new';
-        $title = $this->resolveAdminString($titleKey);
+        $title = t($titleKey);
 
         return $this->renderAdmin($title, $content);
     }
@@ -161,7 +161,7 @@ abstract class ContentAdminModule extends BaseAdminModule {
 
         // Try module-specific edit key first (e.g., admin-posts.edit_post, admin-pages.edit_page)
         $titleKey = $this->getId() . '.edit_' . strtolower($this->getContentType());
-        $title = $this->resolveAdminString($titleKey);
+        $title = t($titleKey);
 
         return $this->renderAdmin($title, $content);
     }
