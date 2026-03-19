@@ -186,27 +186,35 @@
                                 <input class="form-check-input" type="checkbox" id="f-mod-<?php echo e($id); ?>" name="modules.enabled[]" value="<?php echo e($id); ?>" <?php echo $isEnabled ? 'checked' : ''; ?> <?php echo $canToggle ? '' : 'disabled'; ?>>
                               </div>
                               <div>
-                                <div class="fw-semibold"><?php echo e(isset($m['title']) ? (string)$m['title'] : $id); ?></div>
+                                <div class="fw-semibold">
+                                  <?php echo e(isset($m['title']) ? (string)$m['title'] : $id); ?>
+                                  <?php if (!empty($m['version'])): ?>
+                                    <span class="text-muted fw-normal">v<?php echo e((string)$m['version']); ?></span>
+                                  <?php endif; ?>
+                                </div>
                                 <?php if (!empty($m['description'])): ?>
                                   <div class="text-muted small"><?php echo e((string)$m['description']); ?></div>
                                 <?php endif; ?>
                               </div>
                             </div>
 
-                            <div class="text-muted small mt-2">
-                              <?php if (!empty($m['type'])): ?>
-                                <span class="me-1"><strong><?php echo e(t('admin.modules.type')); ?>:</strong> <?php echo e(t('admin.modules.type.' . (string)$m['type'])); ?></span>
-                              <?php endif; ?>
-                              <?php if (!empty($m['version'])): ?>
-                                <span class="me-1">v<?php echo e((string)$m['version']); ?></span>
-                              <?php endif; ?>
-                              <?php if (!empty($m['author'])): ?>
-                                <span class="me-1"><strong><?php echo e(t('admin.modules.author')); ?></strong>: <?php echo e((string)$m['author']); ?></span>
-                              <?php endif; ?>
-                              <?php if ($homepage !== ''): ?>
-                                <span class="me-1"><strong><?php echo e(t('admin.modules.homepage')); ?></strong>: <a href="<?php echo e($homepage); ?>" target="_blank" rel="noopener noreferrer"><?php echo e($homepage); ?></a></span>
-                              <?php endif; ?>
-                            </div>
+                            <?php
+                              $metaParts = array();
+                              if (!empty($m['type'])) {
+                                $metaParts[] = '<strong>' . e(t('admin.modules.type')) . ':</strong> ' . e(t('admin.modules.type.' . (string)$m['type']));
+                              }
+                              if (!empty($m['author'])) {
+                                $metaParts[] = '<strong>' . e(t('admin.modules.author')) . ':</strong> ' . e((string)$m['author']);
+                              }
+                              if ($homepage !== '') {
+                                $metaParts[] = '<strong>' . e(t('admin.modules.homepage')) . ':</strong> <a href="' . e($homepage) . '" target="_blank" rel="noopener noreferrer">' . e($homepage) . '</a>';
+                              }
+                            ?>
+                            <?php if (!empty($metaParts)): ?>
+                              <div class="text-muted small mt-2">
+                                <?php echo implode(' <span class="text-secondary">|</span> ', $metaParts); ?>
+                              </div>
+                            <?php endif; ?>
 
                             <?php if ($hasSettings && $isEnabled): ?>
                               <div class="mt-2">
@@ -252,27 +260,35 @@
                                 <input class="form-check-input" type="checkbox" id="f-mod-<?php echo e($id); ?>" name="modules.enabled[]" value="<?php echo e($id); ?>" <?php echo $isEnabled ? 'checked' : ''; ?> <?php echo $canToggle ? '' : 'disabled'; ?>>
                               </div>
                               <div>
-                                <div class="fw-semibold"><?php echo e(isset($m['title']) ? (string)$m['title'] : $id); ?></div>
+                                <div class="fw-semibold">
+                                  <?php echo e(isset($m['title']) ? (string)$m['title'] : $id); ?>
+                                  <?php if (!empty($m['version'])): ?>
+                                    <span class="text-muted fw-normal">v<?php echo e((string)$m['version']); ?></span>
+                                  <?php endif; ?>
+                                </div>
                                 <?php if (!empty($m['description'])): ?>
                                   <div class="text-muted small"><?php echo e((string)$m['description']); ?></div>
                                 <?php endif; ?>
                               </div>
                             </div>
 
-                            <div class="text-muted small mt-2">
-                              <?php if (!empty($m['type'])): ?>
-                                <span class="me-1"><strong><?php echo e(t('admin.modules.type')); ?>:</strong> <?php echo e(t('admin.modules.type.' . (string)$m['type'])); ?></span>
-                              <?php endif; ?>
-                              <?php if (!empty($m['version'])): ?>
-                                <span class="me-1">v<?php echo e((string)$m['version']); ?></span>
-                              <?php endif; ?>
-                              <?php if (!empty($m['author'])): ?>
-                                <span class="me-1"><strong><?php echo e(t('admin.modules.author')); ?></strong>: <?php echo e((string)$m['author']); ?></span>
-                              <?php endif; ?>
-                              <?php if ($homepage !== ''): ?>
-                                <span class="me-1"><strong><?php echo e(t('admin.modules.homepage')); ?></strong> <a href="<?php echo e($homepage); ?>" target="_blank" rel="noopener noreferrer"><?php echo e($homepage); ?></a></span>
-                              <?php endif; ?>
-                            </div>
+                            <?php
+                              $metaParts = array();
+                              if (!empty($m['type'])) {
+                                $metaParts[] = '<strong>' . e(t('admin.modules.type')) . ':</strong> ' . e(t('admin.modules.type.' . (string)$m['type']));
+                              }
+                              if (!empty($m['author'])) {
+                                $metaParts[] = '<strong>' . e(t('admin.modules.author')) . ':</strong> ' . e((string)$m['author']);
+                              }
+                              if ($homepage !== '') {
+                                $metaParts[] = '<strong>' . e(t('admin.modules.homepage')) . ':</strong> <a href="' . e($homepage) . '" target="_blank" rel="noopener noreferrer">' . e($homepage) . '</a>';
+                              }
+                            ?>
+                            <?php if (!empty($metaParts)): ?>
+                              <div class="text-muted small mt-2">
+                                <?php echo implode(' <span class="text-secondary">|</span> ', $metaParts); ?>
+                              </div>
+                            <?php endif; ?>
 
                             <?php if ($hasSettings && $isEnabled): ?>
                               <div class="mt-2">
