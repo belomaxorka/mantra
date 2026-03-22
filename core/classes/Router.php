@@ -122,8 +122,7 @@ class Router {
 
         // Remove base path if in subdirectory
         $scriptName = dirname((string)request()->server('SCRIPT_NAME', ''));
-        // Normalize backslashes to forward slashes (Windows compatibility)
-        $scriptName = str_replace('\\', '/', $scriptName);
+        $scriptName = Config::normalizeScriptPath($scriptName);
         if ($scriptName !== '/' && strpos($uri, $scriptName) === 0) {
             $uri = substr($uri, strlen($scriptName));
         }

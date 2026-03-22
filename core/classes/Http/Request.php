@@ -28,8 +28,7 @@ class Request {
         }
 
         $scriptName = isset($_SERVER['SCRIPT_NAME']) ? dirname($_SERVER['SCRIPT_NAME']) : '';
-        // Normalize backslashes to forward slashes (Windows compatibility)
-        $scriptName = str_replace('\\', '/', $scriptName);
+        $scriptName = \Config::normalizeScriptPath($scriptName);
         if ($scriptName && $scriptName !== '/' && strpos($uri, $scriptName) === 0) {
             $uri = substr($uri, strlen($scriptName));
         }

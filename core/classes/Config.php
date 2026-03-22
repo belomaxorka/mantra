@@ -63,6 +63,17 @@ class Config {
     }
 
     /**
+     * Normalize script path for cross-platform URL compatibility.
+     * Converts backslashes to forward slashes (Windows compatibility).
+     *
+     * @param string $path Script path from dirname($_SERVER['SCRIPT_NAME'])
+     * @return string Normalized path with forward slashes
+     */
+    public static function normalizeScriptPath($path) {
+        return str_replace('\\', '/', $path);
+    }
+
+    /**
      * Default configuration (nested).
      */
     public static function defaults() {
@@ -140,8 +151,7 @@ class Config {
         $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
         $host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'localhost';
         $scriptPath = isset($_SERVER['SCRIPT_NAME']) ? dirname($_SERVER['SCRIPT_NAME']) : '';
-        // Normalize backslashes to forward slashes (Windows compatibility)
-        $scriptPath = str_replace('\\', '/', $scriptPath);
+        $scriptPath = self::normalizeScriptPath($scriptPath);
         $baseUrl = $protocol . '://' . $host . (($scriptPath && $scriptPath !== '/') ? $scriptPath : '');
         return $baseUrl;
     }
