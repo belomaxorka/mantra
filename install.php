@@ -56,14 +56,8 @@ if (request()->method() === 'POST') {
             }
         }
 
-        // Auto-detect base URL
-        $protocol = is_https() ? 'https' : 'http';
-        $host = (string)request()->header('Host', 'localhost');
-        $scriptPath = dirname((string)request()->server('SCRIPT_NAME', ''));
-        $scriptPath = Config::normalizeScriptPath($scriptPath);
-        $baseUrl = $protocol . '://' . $host . ($scriptPath !== '/' ? $scriptPath : '');
-
         // Create configuration
+        $baseUrl = Config::detectBaseUrl();
         $config = Config::buildInstallConfig($siteName, $language, $baseUrl);
         $defaults = Config::defaults();
         $overrides = Config::diffOverrides($defaults, $config);

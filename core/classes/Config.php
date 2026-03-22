@@ -145,7 +145,7 @@ class Config {
         return $config;
     }
 
-    private static function detectBaseUrl() {
+    public static function detectBaseUrl() {
         // Note: Config::bootstrap() is called from core/bootstrap.php before helpers.php is loaded,
         // so this method must not depend on global helpers like is_https() or request().
         $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
