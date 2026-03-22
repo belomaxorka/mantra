@@ -74,22 +74,10 @@ class View {
      * @return string Rendered content
      */
     private function renderTemplate($templatePath, $data) {
-        // Extract data to variables
-        extract($data);
-
-        // Start output buffering with error handling
-        ob_start();
-
-        try {
+        return $this->captureOutput(function() use ($templatePath, $data) {
+            extract($data);
             include $templatePath;
-            return ob_get_clean();
-        } catch (Exception $e) {
-            // Clean buffer on error to prevent partial output
-            if (ob_get_level() > 0) {
-                ob_end_clean();
-            }
-            throw $e;
-        }
+        });
     }
 
     /**
@@ -101,13 +89,23 @@ class View {
      * @return string Rendered layout
      */
     private function renderLayout($layoutPath, $data, $content) {
-        // Extract data for layout
-        extract($data);
-
-        ob_start();
-
-        try {
+        return $this->captureOutput(function() use ($layoutPath, $data, $content) {
+            extract($data);
             include $layoutPath;
+        });
+    }
+
+    /**
+     * Capture output from callback with error handling
+     *
+     * @param callable $callback Function to execute
+     * @return string Captured output
+     * @throws Exception Re-throws any exception after cleaning buffer
+     */
+    private function captureOutput($callback) {
+        ob_start();
+        try {
+            $callback();
             return ob_get_clean();
         } catch (Exception $e) {
             if (ob_get_level() > 0) {
@@ -152,16 +150,12 @@ class View {
         }
 
         if (file_exists($widgetPath)) {
-            extract($params);
-
-            ob_start();
             try {
-                include $widgetPath;
-                return ob_get_clean();
+                return $this->captureOutput(function() use ($widgetPath, $params) {
+                    extract($params);
+                    include $widgetPath;
+                });
             } catch (Exception $e) {
-                if (ob_get_level() > 0) {
-                    ob_end_clean();
-                }
                 // Don't throw - widgets shouldn't break the page
                 logger()->error('Widget render error', array(
                     'widget' => $name,
@@ -178,16 +172,9 @@ class View {
      * Render and return as string
      */
     public function fetch($template, $data = array()) {
-        ob_start();
-        try {
+        return $this->captureOutput(function() use ($template, $data) {
             $this->render($template, $data);
-            return ob_get_clean();
-        } catch (Exception $e) {
-            if (ob_get_level() > 0) {
-                ob_end_clean();
-            }
-            throw $e;
-        }
+        });
     }
 
     /**
