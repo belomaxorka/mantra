@@ -216,7 +216,7 @@ class PageController {
      */
     private function findTemplate($templates) {
         $app = Application::getInstance();
-        $theme = $app->config('theme.active', 'default');
+        $theme = config('theme.active', 'default');
         $themePath = MANTRA_THEMES . '/' . $theme;
 
         foreach ($templates as $template) {

@@ -9,8 +9,7 @@ class View {
     private $themePath = '';
 
     public function __construct() {
-        $app = Application::getInstance();
-        $theme = $app->config('theme.active', 'default');
+        $theme = config('theme.active', 'default');
         $this->themePath = MANTRA_THEMES . '/' . $theme;
     }
 
@@ -57,7 +56,7 @@ class View {
         $content = $app->hooks()->fire('view.render', $content);
 
         // Wrap in layout if not a module template
-        if (strpos($template, ':') === false) {
+        if (!str_contains($template, ':')) {
             $layoutPath = $this->themePath . '/templates/layout.php';
             if (file_exists($layoutPath)) {
                 $content = $this->renderLayout($layoutPath, $this->data, $content);
@@ -212,8 +211,7 @@ class View {
      * Get asset URL
      */
     public function asset($path) {
-        $app = Application::getInstance();
-        $baseUrl = $app->config('site.url', '');
+        $baseUrl = config('site.url', '');
         return $baseUrl . '/' . basename(MANTRA_THEMES) . '/' . basename($this->themePath) . '/assets/' . ltrim($path, '/');
     }
 }
