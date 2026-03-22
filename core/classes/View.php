@@ -48,8 +48,11 @@ class View {
      * @return string Rendered layout
      */
     private function renderLayout($layoutPath, $data, $content) {
-        return $this->captureOutput(function() use ($layoutPath, $data, $content) {
-            extract($data);
+        // Merge content into data to prevent extract() conflicts
+        $layoutData = array_merge($data, array('content' => $content));
+
+        return $this->captureOutput(function() use ($layoutPath, $layoutData) {
+            extract($layoutData);
             include $layoutPath;
         });
     }
@@ -137,6 +140,7 @@ class View {
 
         // Try theme template first (allows theme to override)
         $templatePath = $this->themePath . '/templates/' . $template . '.php';
+        $isModuleTemplate = false;
 
         // Fallback to module template
         if (!file_exists($templatePath)) {
@@ -144,12 +148,14 @@ class View {
             if (str_contains($template, ':')) {
                 list($module, $tpl) = explode(':', $template, 2);
                 $templatePath = MANTRA_MODULES . '/' . $module . '/views/' . $tpl . '.php';
+                $isModuleTemplate = true;
             } else {
                 // Smart fallback: if module is specified in data, try module views
                 if (isset($data['_module']) && !empty($data['_module'])) {
                     $modulePath = MANTRA_MODULES . '/' . $data['_module'] . '/views/' . $template . '.php';
                     if (file_exists($modulePath)) {
                         $templatePath = $modulePath;
+                        $isModuleTemplate = true;
                     }
                 }
             }
@@ -162,17 +168,17 @@ class View {
         // Render content with error handling
         $content = $this->renderTemplate($templatePath, $this->data);
 
-        // Apply filters
-        $app = Application::getInstance();
-        $content = $app->hooks()->fire('view.render', $content);
-
         // Wrap in layout if not a module template
-        if (!str_contains($template, ':')) {
+        if (!$isModuleTemplate) {
             $layoutPath = $this->themePath . '/templates/layout.php';
             if (file_exists($layoutPath)) {
                 $content = $this->renderLayout($layoutPath, $this->data, $content);
             }
         }
+
+        // Apply filters to final output
+        $app = Application::getInstance();
+        $content = $app->hooks()->fire('view.render', $content);
 
         return $content;
     }
@@ -198,7 +204,7 @@ class View {
      * Get asset URL
      */
     public function asset($path) {
-        $baseUrl = config('site.url', '');
+        $baseUrl = rtrim(config('site.url', ''), '/');
         return $baseUrl . '/' . basename(MANTRA_THEMES) . '/' . basename($this->themePath) . '/assets/' . ltrim($path, '/');
     }
 }
