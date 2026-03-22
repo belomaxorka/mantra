@@ -22,48 +22,7 @@ class View {
      * 3. Smart fallback via _module parameter: modules/{_module}/views/{template}.php
      */
     public function render($template, $data = array()) {
-        $this->data = $data;
-
-        // Try theme template first (allows theme to override)
-        $templatePath = $this->themePath . '/templates/' . $template . '.php';
-
-        // Fallback to module template
-        if (!file_exists($templatePath)) {
-            // Template might be in format "module:template"
-            if (str_contains($template, ':')) {
-                list($module, $tpl) = explode(':', $template, 2);
-                $templatePath = MANTRA_MODULES . '/' . $module . '/views/' . $tpl . '.php';
-            } else {
-                // Smart fallback: if module is specified in data, try module views
-                if (isset($data['_module']) && !empty($data['_module'])) {
-                    $modulePath = MANTRA_MODULES . '/' . $data['_module'] . '/views/' . $template . '.php';
-                    if (file_exists($modulePath)) {
-                        $templatePath = $modulePath;
-                    }
-                }
-            }
-        }
-
-        if (!file_exists($templatePath)) {
-            throw new Exception("Template not found: $template");
-        }
-
-        // Render content with error handling
-        $content = $this->renderTemplate($templatePath, $this->data);
-
-        // Apply filters
-        $app = Application::getInstance();
-        $content = $app->hooks()->fire('view.render', $content);
-
-        // Wrap in layout if not a module template
-        if (!str_contains($template, ':')) {
-            $layoutPath = $this->themePath . '/templates/layout.php';
-            if (file_exists($layoutPath)) {
-                $content = $this->renderLayout($layoutPath, $this->data, $content);
-            }
-        }
-
-        echo $content;
+        echo $this->fetch($template, $data);
     }
 
     /**
@@ -103,12 +62,14 @@ class View {
      * @throws Exception Re-throws any exception after cleaning buffer
      */
     private function captureOutput($callback) {
+        $level = ob_get_level();
         ob_start();
         try {
             $callback();
             return ob_get_clean();
         } catch (Exception $e) {
-            if (ob_get_level() > 0) {
+            // Clean all buffers created by this call
+            while (ob_get_level() > $level) {
                 ob_end_clean();
             }
             throw $e;
@@ -169,12 +130,51 @@ class View {
     }
 
     /**
-     * Render and return as string
+     * Render and return as string (without output)
      */
     public function fetch($template, $data = array()) {
-        return $this->captureOutput(function() use ($template, $data) {
-            $this->render($template, $data);
-        });
+        $this->data = $data;
+
+        // Try theme template first (allows theme to override)
+        $templatePath = $this->themePath . '/templates/' . $template . '.php';
+
+        // Fallback to module template
+        if (!file_exists($templatePath)) {
+            // Template might be in format "module:template"
+            if (str_contains($template, ':')) {
+                list($module, $tpl) = explode(':', $template, 2);
+                $templatePath = MANTRA_MODULES . '/' . $module . '/views/' . $tpl . '.php';
+            } else {
+                // Smart fallback: if module is specified in data, try module views
+                if (isset($data['_module']) && !empty($data['_module'])) {
+                    $modulePath = MANTRA_MODULES . '/' . $data['_module'] . '/views/' . $template . '.php';
+                    if (file_exists($modulePath)) {
+                        $templatePath = $modulePath;
+                    }
+                }
+            }
+        }
+
+        if (!file_exists($templatePath)) {
+            throw new Exception("Template not found: $template");
+        }
+
+        // Render content with error handling
+        $content = $this->renderTemplate($templatePath, $this->data);
+
+        // Apply filters
+        $app = Application::getInstance();
+        $content = $app->hooks()->fire('view.render', $content);
+
+        // Wrap in layout if not a module template
+        if (!str_contains($template, ':')) {
+            $layoutPath = $this->themePath . '/templates/layout.php';
+            if (file_exists($layoutPath)) {
+                $content = $this->renderLayout($layoutPath, $this->data, $content);
+            }
+        }
+
+        return $content;
     }
 
     /**
