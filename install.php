@@ -60,6 +60,8 @@ if (request()->method() === 'POST') {
         $protocol = is_https() ? 'https' : 'http';
         $host = (string)request()->header('Host', 'localhost');
         $scriptPath = dirname((string)request()->server('SCRIPT_NAME', ''));
+        // Normalize backslashes to forward slashes (Windows compatibility)
+        $scriptPath = str_replace('\\', '/', $scriptPath);
         $baseUrl = $protocol . '://' . $host . ($scriptPath !== '/' ? $scriptPath : '');
 
         // Create configuration

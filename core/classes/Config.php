@@ -140,6 +140,8 @@ class Config {
         $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
         $host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'localhost';
         $scriptPath = isset($_SERVER['SCRIPT_NAME']) ? dirname($_SERVER['SCRIPT_NAME']) : '';
+        // Normalize backslashes to forward slashes (Windows compatibility)
+        $scriptPath = str_replace('\\', '/', $scriptPath);
         $baseUrl = $protocol . '://' . $host . (($scriptPath && $scriptPath !== '/') ? $scriptPath : '');
         return $baseUrl;
     }

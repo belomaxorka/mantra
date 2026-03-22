@@ -114,18 +114,20 @@ class Router {
      */
     private function getUri() {
         $uri = request()->uri();
-        
+
         // Remove query string
         if (($pos = strpos($uri, '?')) !== false) {
             $uri = substr($uri, 0, $pos);
         }
-        
+
         // Remove base path if in subdirectory
         $scriptName = dirname((string)request()->server('SCRIPT_NAME', ''));
+        // Normalize backslashes to forward slashes (Windows compatibility)
+        $scriptName = str_replace('\\', '/', $scriptName);
         if ($scriptName !== '/' && strpos($uri, $scriptName) === 0) {
             $uri = substr($uri, strlen($scriptName));
         }
-        
+
         return '/' . trim($uri, '/');
     }
     
