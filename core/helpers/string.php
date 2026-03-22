@@ -45,6 +45,22 @@ function str_starts_with($haystack, $needle)
 }
 
 /**
+ * Parse comma-separated string into array
+ * @param string|array $value Comma-separated string or array
+ * @return array Trimmed, filtered array
+ */
+function parse_csv($value)
+{
+    if (is_array($value)) {
+        return array_filter(array_map('trim', $value), 'strlen');
+    }
+    if (is_string($value)) {
+        return array_filter(array_map('trim', explode(',', $value)), 'strlen');
+    }
+    return array();
+}
+
+/**
  * Generate slug from string
  */
 function slugify($text)

@@ -110,12 +110,7 @@ function client_ip()
     }
 
     $trusted = config('proxy.trusted_proxies', array());
-    if (is_string($trusted)) {
-        $trusted = array_filter(array_map('trim', explode(',', $trusted)), 'strlen');
-    }
-    if (!is_array($trusted)) {
-        $trusted = array();
-    }
+    $trusted = parse_csv($trusted);
 
     if (empty($trusted) || !ip_matches_any($remoteAddr, $trusted)) {
         return $remoteAddr;
