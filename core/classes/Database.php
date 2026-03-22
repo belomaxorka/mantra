@@ -134,15 +134,15 @@ class Database
                 $data['created_at'] = $existing['created_at'];
             } else {
                 // Existing document missing created_at - set it now
-                $data['created_at'] = date('Y-m-d H:i:s');
+                $data['created_at'] = now();
             }
         } else {
             // New document - use provided created_at or generate new
             if (!isset($data['created_at'])) {
-                $data['created_at'] = date('Y-m-d H:i:s');
+                $data['created_at'] = now();
             }
         }
-        $data['updated_at'] = date('Y-m-d H:i:s');
+        $data['updated_at'] = now();
 
         // Ensure schema version is present (for future migrations)
         if (!isset($data['schema_version'])) {

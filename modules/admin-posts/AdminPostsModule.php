@@ -30,8 +30,8 @@ class AdminPostsModule extends ContentAdminModule
     protected function extractFormData()
     {
         return array(
-            'title' => trim(request()->post('title', '')),
-            'slug' => trim(request()->post('slug', '')),
+            'title' => post_trimmed('title'),
+            'slug' => post_trimmed('slug'),
             'content' => request()->post('content', ''),
             'excerpt' => request()->post('excerpt', ''),
             'status' => request()->post('status', 'draft'),

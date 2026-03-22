@@ -31,9 +31,9 @@ if (file_exists(MANTRA_CONTENT . '/users')) {
 // Handle form submission
 $selectedLanguage = 'en';
 if (request()->method() === 'POST') {
-    $username = trim((string)request()->post('username', ''));
+    $username = post_trimmed('username');
     $password = (string)request()->post('password', '');
-    $siteName = trim((string)request()->post('site_name', MANTRA_PROJECT_INFO['name']));
+    $siteName = post_trimmed('site_name', MANTRA_PROJECT_INFO['name']);
     $language = (string)request()->post('language', 'en');
     $selectedLanguage = $language;
 

@@ -635,7 +635,7 @@ class AdminSettingsModule extends Module
         $moduleDir = MANTRA_MODULES . '/' . $deleteId;
         $realModules = realpath(MANTRA_MODULES);
         $realModuleDir = realpath($moduleDir);
-        if ($realModules && $realModuleDir && strpos($realModuleDir, $realModules) === 0) {
+        if ($realModules && $realModuleDir && str_starts_with($realModuleDir, $realModules)) {
             $this->rrmdirSafe($realModuleDir);
         }
 

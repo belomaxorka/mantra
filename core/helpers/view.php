@@ -41,15 +41,7 @@ function widget($name, $params = array())
  */
 function base_url($path = '')
 {
-    $siteUrl = config('site.url');
-    if (!$siteUrl) {
-        $app = Application::getInstance();
-        $siteUrl = $app->config('site.url');
-    }
-
-    if (!$siteUrl) {
-        $siteUrl = '';
-    }
+    $siteUrl = config('site.url', '');
 
     // Normalize both forward and back slashes to avoid URLs like "//admin" or "\\admin".
     if ($siteUrl === '') {

@@ -29,7 +29,7 @@ class Request {
 
         $scriptName = isset($_SERVER['SCRIPT_NAME']) ? dirname($_SERVER['SCRIPT_NAME']) : '';
         $scriptName = \Config::normalizeScriptPath($scriptName);
-        if ($scriptName && $scriptName !== '/' && strpos($uri, $scriptName) === 0) {
+        if ($scriptName && $scriptName !== '/' && str_starts_with($uri, $scriptName)) {
             $uri = substr($uri, strlen($scriptName));
         }
 
@@ -52,7 +52,7 @@ class Request {
         // nested array shapes produced by PHP when dots are present.
         // Example: name="site.url" becomes $_POST['site']['url'].
         $key = (string)$key;
-        if (strpos($key, '.') !== false) {
+        if (str_contains($key, '.')) {
             $parts = explode('.', $key);
             $cur = $_POST;
             foreach ($parts as $part) {

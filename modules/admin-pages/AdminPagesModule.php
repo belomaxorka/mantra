@@ -31,11 +31,11 @@ class AdminPagesModule extends ContentAdminModule
     protected function extractFormData()
     {
         return array(
-            'title' => trim(request()->post('title', '')),
-            'slug' => trim(request()->post('slug', '')),
+            'title' => post_trimmed('title'),
+            'slug' => post_trimmed('slug'),
             'content' => request()->post('content', ''),
             'status' => request()->post('status', 'draft'),
-            'image' => trim(request()->post('image', '')),
+            'image' => post_trimmed('image'),
             'show_in_navigation' => (bool)request()->post('show_in_navigation', false),
             'navigation_order' => (int)request()->post('navigation_order', 50),
         );

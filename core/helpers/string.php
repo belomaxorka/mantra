@@ -23,6 +23,28 @@ function e($value)
 }
 
 /**
+ * Check if string contains substring
+ * @param string $haystack The string to search in
+ * @param string $needle The substring to search for
+ * @return bool
+ */
+function str_contains($haystack, $needle)
+{
+    return strpos($haystack, $needle) !== false;
+}
+
+/**
+ * Check if string starts with substring
+ * @param string $haystack The string to check
+ * @param string $needle The prefix to check for
+ * @return bool
+ */
+function str_starts_with($haystack, $needle)
+{
+    return strpos($haystack, $needle) === 0;
+}
+
+/**
  * Generate slug from string
  */
 function slugify($text)

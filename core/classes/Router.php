@@ -123,7 +123,7 @@ class Router {
         // Remove base path if in subdirectory
         $scriptName = dirname((string)request()->server('SCRIPT_NAME', ''));
         $scriptName = Config::normalizeScriptPath($scriptName);
-        if ($scriptName !== '/' && strpos($uri, $scriptName) === 0) {
+        if ($scriptName !== '/' && str_starts_with($uri, $scriptName)) {
             $uri = substr($uri, strlen($scriptName));
         }
 

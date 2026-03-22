@@ -114,7 +114,7 @@ class AdminModule extends Module
 
         if ($id !== '') {
             $prefix = '/admin/' . $id;
-            if (strpos($path, $prefix) === 0) {
+            if (str_starts_with($path, $prefix)) {
                 $selfMatch = true;
             }
         }
@@ -128,7 +128,7 @@ class AdminModule extends Module
                     if ($path === '/admin' || $path === '/admin/') {
                         $selfMatch = true;
                     }
-                } elseif (strpos($path, $parsed) === 0) {
+                } elseif (str_starts_with($path, $parsed)) {
                     $selfMatch = true;
                 }
             }

@@ -31,7 +31,7 @@ class View {
         // Fallback to module template
         if (!file_exists($templatePath)) {
             // Template might be in format "module:template"
-            if (strpos($template, ':') !== false) {
+            if (str_contains($template, ':')) {
                 list($module, $tpl) = explode(':', $template, 2);
                 $templatePath = MANTRA_MODULES . '/' . $module . '/views/' . $tpl . '.php';
             } else {
@@ -143,7 +143,7 @@ class View {
         }
 
         // Try to load widget template
-        if (strpos($name, ':') !== false) {
+        if (str_contains($name, ':')) {
             // Module widget: "module:widget"
             list($module, $widget) = explode(':', $name, 2);
             $widgetPath = MANTRA_MODULES . '/' . $module . '/widgets/' . $widget . '.php';
