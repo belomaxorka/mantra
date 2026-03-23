@@ -106,6 +106,7 @@ class ViewTest {
     public function run() {
         echo "Running View Tests...\n\n";
 
+        // Basic functionality
         $this->testBasicTemplateRendering();
         $this->testLayoutWrapping();
         $this->testModuleTemplateNoLayout();
@@ -115,6 +116,26 @@ class ViewTest {
         $this->testWidgetRendering();
         $this->testOutputBufferingErrorHandling();
         $this->testTemplateNotFound();
+
+        // Extended output buffering tests
+        $this->testNestedOutputBuffering();
+        $this->testOutputBufferingMultipleLevels();
+        $this->testWidgetExceptionHandling();
+        $this->testLayoutExceptionHandling();
+
+        // Hook integration tests
+        $this->testViewRenderHook();
+        $this->testWidgetRenderHook();
+        $this->testMultipleHooks();
+
+        // Edge cases
+        $this->testEmptyTemplate();
+        $this->testTemplateWithOnlyWhitespace();
+        $this->testRenderMethodEchoes();
+        $this->testEscapeEdgeCases();
+        $this->testAssetUrlEdgeCases();
+        $this->testTemplateWithUndefinedVariable();
+        $this->testNestedWidgets();
 
         $this->printSummary();
     }
@@ -401,6 +422,410 @@ class ViewTest {
         $this->assert(
             str_contains($exceptionMessage, 'Template not found'),
             'Exception message is descriptive'
+        );
+
+        config()->set('theme.active', $originalTheme);
+    }
+
+    private function testNestedOutputBuffering() {
+        echo "\nTest: Nested output buffering\n";
+
+        $originalTheme = config('theme.active');
+        $testThemeName = basename($this->themePath);
+
+        // Create nested template structure
+        file_put_contents($this->themePath . '/templates/outer.php',
+            '<outer><?php echo $view->fetch("inner", array("text" => "nested")); ?></outer>');
+        file_put_contents($this->themePath . '/templates/inner.php',
+            '<inner><?php echo $text; ?></inner>');
+
+        config()->set('theme.active', $testThemeName);
+
+        $view = new View();
+        $output = $view->fetch('outer', array('view' => $view));
+
+        $this->assert(
+            str_contains($output, '<outer>') && str_contains($output, '<inner>nested</inner>'),
+            'Nested templates render correctly'
+        );
+
+        config()->set('theme.active', $originalTheme);
+    }
+
+    private function testOutputBufferingMultipleLevels() {
+        echo "\nTest: Multiple output buffering levels\n";
+
+        $originalTheme = config('theme.active');
+        $testThemeName = basename($this->themePath);
+        config()->set('theme.active', $testThemeName);
+
+        // Create template that uses widgets (which also use output buffering)
+        file_put_contents($this->themePath . '/templates/with-widget.php',
+            '<page><?php echo $view->widget("sidebar"); ?></page>');
+
+        $view = new View();
+        $levelBefore = ob_get_level();
+        $output = $view->fetch('with-widget', array('view' => $view));
+        $levelAfter = ob_get_level();
+
+        $this->assert(
+            $levelBefore === $levelAfter,
+            'Output buffer level is restored after nested buffering'
+        );
+        $this->assert(
+            str_contains($output, '<page>') && str_contains($output, '<aside>'),
+            'Nested buffering produces correct output'
+        );
+
+        config()->set('theme.active', $originalTheme);
+    }
+
+    private function testWidgetExceptionHandling() {
+        echo "\nTest: Widget exception handling\n";
+
+        $originalTheme = config('theme.active');
+        $testThemeName = basename($this->themePath);
+
+        // Create widget that throws exception
+        file_put_contents($this->themePath . '/widgets/broken.php',
+            '<?php throw new Exception("Widget error"); ?>');
+
+        config()->set('theme.active', $testThemeName);
+
+        $view = new View();
+        $levelBefore = ob_get_level();
+        $output = $view->widget('broken');
+        $levelAfter = ob_get_level();
+
+        $this->assert(
+            str_contains($output, '<!-- Widget error:'),
+            'Widget exception returns error comment'
+        );
+        $this->assert(
+            $levelBefore === $levelAfter,
+            'Output buffer is cleaned after widget exception'
+        );
+
+        config()->set('theme.active', $originalTheme);
+    }
+
+    private function testLayoutExceptionHandling() {
+        echo "\nTest: Layout exception handling\n";
+
+        $originalTheme = config('theme.active');
+        $testThemeName = basename($this->themePath);
+
+        // Backup original layout
+        $layoutPath = $this->themePath . '/templates/layout.php';
+        $originalLayout = file_get_contents($layoutPath);
+
+        // Create layout that throws exception
+        file_put_contents($layoutPath,
+            '<?php throw new Exception("Layout error"); ?>');
+        file_put_contents($this->themePath . '/templates/simple.php',
+            '<p>Content</p>');
+
+        config()->set('theme.active', $testThemeName);
+
+        $view = new View();
+        $exceptionThrown = false;
+        $levelBefore = ob_get_level();
+
+        try {
+            $view->fetch('simple', array());
+        } catch (Exception $e) {
+            $exceptionThrown = true;
+        }
+
+        $levelAfter = ob_get_level();
+
+        $this->assert(
+            $exceptionThrown,
+            'Layout exception is thrown'
+        );
+        $this->assert(
+            $levelBefore === $levelAfter,
+            'Output buffer is cleaned after layout exception'
+        );
+
+        // Restore original layout
+        file_put_contents($layoutPath, $originalLayout);
+
+        config()->set('theme.active', $originalTheme);
+    }
+
+    private function testViewRenderHook() {
+        echo "\nTest: view.render hook integration\n";
+
+        $originalTheme = config('theme.active');
+        $testThemeName = basename($this->themePath);
+
+        file_put_contents($this->themePath . '/templates/hooktest.php',
+            '<p>Original</p>');
+
+        config()->set('theme.active', $testThemeName);
+
+        // Register hook to modify content
+        $app = Application::getInstance();
+        $app->hooks()->register('view.render', function($content) {
+            return str_replace('Original', 'Modified', $content);
+        });
+
+        $view = new View();
+        $output = $view->fetch('hooktest', array());
+
+        $this->assert(
+            str_contains($output, 'Modified') && !str_contains($output, 'Original'),
+            'view.render hook modifies content'
+        );
+
+        config()->set('theme.active', $originalTheme);
+    }
+
+    private function testWidgetRenderHook() {
+        echo "\nTest: widget.render hook integration\n";
+
+        $originalTheme = config('theme.active');
+        $testThemeName = basename($this->themePath);
+        config()->set('theme.active', $testThemeName);
+
+        // Register hook to provide widget output
+        $app = Application::getInstance();
+        $app->hooks()->register('widget.render', function($data) {
+            if ($data['name'] === 'custom') {
+                $data['output'] = '<div>Custom widget from hook</div>';
+            }
+            return $data;
+        });
+
+        $view = new View();
+        $output = $view->widget('custom');
+
+        $this->assert(
+            str_contains($output, 'Custom widget from hook'),
+            'widget.render hook provides output'
+        );
+
+        config()->set('theme.active', $originalTheme);
+    }
+
+    private function testMultipleHooks() {
+        echo "\nTest: Multiple hooks on same event\n";
+
+        $originalTheme = config('theme.active');
+        $testThemeName = basename($this->themePath);
+
+        file_put_contents($this->themePath . '/templates/multihook.php',
+            '<p>Text</p>');
+
+        config()->set('theme.active', $testThemeName);
+
+        // Register multiple hooks
+        $app = Application::getInstance();
+        $app->hooks()->register('view.render', function($content) {
+            return str_replace('Text', 'Step1', $content);
+        }, 10);
+        $app->hooks()->register('view.render', function($content) {
+            return str_replace('Step1', 'Step2', $content);
+        }, 20);
+
+        $view = new View();
+        $output = $view->fetch('multihook', array());
+
+        $this->assert(
+            str_contains($output, 'Step2'),
+            'Multiple hooks execute in order'
+        );
+
+        config()->set('theme.active', $originalTheme);
+    }
+
+    private function testEmptyTemplate() {
+        echo "\nTest: Empty template file\n";
+
+        $originalTheme = config('theme.active');
+        $testThemeName = basename($this->themePath);
+
+        file_put_contents($this->themePath . '/templates/empty.php', '');
+
+        config()->set('theme.active', $testThemeName);
+
+        $view = new View();
+        $output = $view->fetch('empty', array());
+
+        // Just check that layout wrapper is present
+        $hasDoctype = str_contains($output, '<!DOCTYPE html>');
+        $hasHtmlTag = str_contains($output, '<html>');
+        $hasBodyTag = str_contains($output, '<body>');
+
+        $this->assert(
+            $hasDoctype && $hasHtmlTag && $hasBodyTag,
+            'Empty template renders with layout'
+        );
+
+        config()->set('theme.active', $originalTheme);
+    }
+
+    private function testTemplateWithOnlyWhitespace() {
+        echo "\nTest: Template with only whitespace\n";
+
+        $originalTheme = config('theme.active');
+        $testThemeName = basename($this->themePath);
+
+        file_put_contents($this->themePath . '/templates/whitespace.php', "   \n\n   \t  ");
+
+        config()->set('theme.active', $testThemeName);
+
+        $view = new View();
+        $output = $view->fetch('whitespace', array());
+
+        $this->assert(
+            strlen($output) > 0,
+            'Whitespace template produces output'
+        );
+
+        config()->set('theme.active', $originalTheme);
+    }
+
+    private function testRenderMethodEchoes() {
+        echo "\nTest: render() method echoes output\n";
+
+        $originalTheme = config('theme.active');
+        $testThemeName = basename($this->themePath);
+
+        file_put_contents($this->themePath . '/templates/echo-test.php',
+            '<p>Echo test</p>');
+
+        config()->set('theme.active', $testThemeName);
+
+        $view = new View();
+
+        ob_start();
+        $view->render('echo-test', array());
+        $output = ob_get_clean();
+
+        $this->assert(
+            str_contains($output, '<p>Echo test</p>'),
+            'render() method echoes output'
+        );
+
+        config()->set('theme.active', $originalTheme);
+    }
+
+    private function testEscapeEdgeCases() {
+        echo "\nTest: Escape method edge cases\n";
+
+        $view = new View();
+
+        // Null value
+        $escaped = $view->escape(null);
+        $this->assert(
+            $escaped === '',
+            'Null is escaped to empty string'
+        );
+
+        // Nested arrays
+        $nested = array('a' => array('b' => '<script>'));
+        $escapedNested = $view->escape($nested);
+        $this->assert(
+            $escapedNested['a']['b'] === '&lt;script&gt;',
+            'Nested arrays are escaped recursively'
+        );
+
+        // Already escaped string (double escaping)
+        $alreadyEscaped = '&lt;div&gt;';
+        $doubleEscaped = $view->escape($alreadyEscaped);
+        $this->assert(
+            $doubleEscaped === '&amp;lt;div&amp;gt;',
+            'Already escaped strings are double-escaped'
+        );
+
+        // Empty string
+        $emptyEscaped = $view->escape('');
+        $this->assert(
+            $emptyEscaped === '',
+            'Empty string remains empty'
+        );
+    }
+
+    private function testAssetUrlEdgeCases() {
+        echo "\nTest: Asset URL edge cases\n";
+
+        $originalTheme = config('theme.active');
+        $originalUrl = config('site.url');
+        $testThemeName = basename($this->themePath);
+
+        config()->set('theme.active', $testThemeName);
+        config()->set('site.url', 'http://example.com');
+
+        $view = new View();
+
+        // Empty path
+        $url1 = $view->asset('');
+        $this->assert(
+            !str_contains($url1, '//assets'),
+            'Empty path does not create double slash'
+        );
+
+        // Path with leading slash
+        $url2 = $view->asset('/css/style.css');
+        $this->assert(
+            !str_contains($url2, '//css'),
+            'Leading slash is handled correctly'
+        );
+
+        // Path with multiple slashes
+        $url3 = $view->asset('css//style.css');
+        $this->assert(
+            str_contains($url3, 'css//style.css'),
+            'Multiple slashes in path are preserved'
+        );
+
+        config()->set('theme.active', $originalTheme);
+        config()->set('site.url', $originalUrl);
+    }
+
+    private function testTemplateWithUndefinedVariable() {
+        echo "\nTest: Template with undefined variable\n";
+
+        $originalTheme = config('theme.active');
+        $testThemeName = basename($this->themePath);
+
+        // Template references undefined variable
+        file_put_contents($this->themePath . '/templates/undefined.php',
+            '<p><?php echo isset($undefined) ? $undefined : "default"; ?></p>');
+
+        config()->set('theme.active', $testThemeName);
+
+        $view = new View();
+        $output = $view->fetch('undefined', array());
+
+        $this->assert(
+            str_contains($output, 'default'),
+            'Template handles undefined variables gracefully'
+        );
+
+        config()->set('theme.active', $originalTheme);
+    }
+
+    private function testNestedWidgets() {
+        echo "\nTest: Nested widgets\n";
+
+        $originalTheme = config('theme.active');
+        $testThemeName = basename($this->themePath);
+
+        // Widget that includes another widget
+        file_put_contents($this->themePath . '/widgets/outer-widget.php',
+            '<div><?php echo $view->widget("sidebar"); ?></div>');
+
+        config()->set('theme.active', $testThemeName);
+
+        $view = new View();
+        $output = $view->widget('outer-widget', array('view' => $view));
+
+        $this->assert(
+            str_contains($output, '<div>') && str_contains($output, '<aside>'),
+            'Nested widgets render correctly'
         );
 
         config()->set('theme.active', $originalTheme);

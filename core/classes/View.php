@@ -190,7 +190,10 @@ class View {
         if (is_array($value)) {
             return array_map(array($this, 'escape'), $value);
         }
-        return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
+        if ($value === null) {
+            return '';
+        }
+        return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
     }
 
     /**
