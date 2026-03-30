@@ -174,36 +174,32 @@ class Application {
 
     /**
      * Start output compression if enabled and supported
+     *
+     * Uses zlib.output_compression (SAPI-level) instead of ob_start('ob_gzhandler')
+     * so it does not interfere with the View output buffering stack and handles
+     * error output correctly without manual buffer cleanup.
      */
     private function startOutputCompression() {
         // Check if compression is enabled in config
-        $compressionEnabled = (bool)$this->config('performance.gzip_compression', false);
-
-        if (!$compressionEnabled) {
+        if (!(bool)$this->config('performance.gzip_compression', false)) {
             return;
         }
 
-        // Check if already compressed by web server
+        // Check if already compressed by web server or php.ini
         if (headers_sent() || ini_get('zlib.output_compression')) {
             return;
         }
 
-        // Check if client supports gzip
-        $acceptEncoding = isset($_SERVER['HTTP_ACCEPT_ENCODING']) ? $_SERVER['HTTP_ACCEPT_ENCODING'] : '';
-        if (strpos($acceptEncoding, 'gzip') === false) {
+        // Check if zlib extension is available
+        if (!extension_loaded('zlib')) {
+            logger()->warning('gzip compression enabled but zlib extension not available');
             return;
         }
 
-        // Check if ob_gzhandler is available
-        if (!function_exists('ob_gzhandler')) {
-            logger()->warning('gzip compression enabled but ob_gzhandler not available');
-            return;
-        }
+        // Enable SAPI-level compression (streamed, no extra ob_ layer)
+        ini_set('zlib.output_compression', 'On');
 
-        // Start compression
-        ob_start('ob_gzhandler');
-
-        logger()->debug('Output compression started');
+        logger()->debug('Output compression started (zlib)');
     }
     
     /**
@@ -216,10 +212,15 @@ class Application {
             'url' => (string)request()->server('REQUEST_URI', 'unknown'),
             'method' => (string)request()->server('REQUEST_METHOD', 'unknown')
         ));
-        
+
+        // Discard any partial output left in ob buffers (e.g. from View)
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+
         // Show error page
         http_response_code(500);
-        
+
         if (MANTRA_DEBUG) {
             echo '<h1>Error</h1>';
             echo '<p>' . htmlspecialchars($exception->getMessage()) . '</p>';

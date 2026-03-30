@@ -97,6 +97,9 @@ class ErrorHandler
             exit(1);
         }
 
+        // Discard any partial output left in ob buffers (e.g. from View)
+        self::cleanOutputBuffers();
+
         // Preserve existing application behavior: show a generic 500 if not in debug.
         http_response_code(500);
 
@@ -138,9 +141,22 @@ class ErrorHandler
             exit(1);
         }
 
+        // Discard any partial output left in ob buffers
+        self::cleanOutputBuffers();
+
         // Ensure a 500 response for fatals.
         if (!headers_sent()) {
             http_response_code(500);
+        }
+    }
+
+    /**
+     * Discard all open output buffers so error output reaches the client.
+     */
+    private static function cleanOutputBuffers()
+    {
+        while (ob_get_level() > 0) {
+            ob_end_clean();
         }
     }
 
