@@ -4,6 +4,9 @@
  * Provides CRUD operations for JSON-based storage
  */
 
+use Storage\JsonStorageDriver;
+use Storage\MarkdownStorageDriver;
+
 class Database
 {
     private $basePath = '';

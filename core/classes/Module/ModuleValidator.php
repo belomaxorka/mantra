@@ -3,6 +3,12 @@
  * ModuleValidator - Validates module manifests and structure
  */
 
+namespace Module;
+
+use JsonCodec;
+use InvalidArgumentException;
+use Exception;
+
 class ModuleValidator {
     
     /**

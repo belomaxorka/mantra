@@ -63,23 +63,18 @@ if (!defined('MANTRA_DEBUG')) {
     define('MANTRA_DEBUG', !empty(Config::getNested($config, 'debug.enabled', false)));
 }
 
-// Autoloader for core classes
+// PSR-4 autoloader for core classes (namespace maps to directory)
 spl_autoload_register(function ($class) {
     $relative = str_replace("\0", '', $class);
     $relative = str_replace('\\', '/', $relative);
 
-    $subdirs = ['', 'Module', 'Storage'];
-    foreach ($subdirs as $subdir) {
-        $path = MANTRA_CORE . '/classes/';
-        if ($subdir !== '') {
-            $path .= $subdir . '/';
-        }
-        $path .= $relative . '.php';
+    if (strpos($relative, '..') !== false) {
+        return;
+    }
 
-        if (file_exists($path)) {
-            require_once $path;
-            return;
-        }
+    $path = MANTRA_CORE . '/classes/' . $relative . '.php';
+    if (file_exists($path)) {
+        require_once $path;
     }
 });
 

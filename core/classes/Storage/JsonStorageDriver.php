@@ -6,6 +6,12 @@
  * Uses JsonCodec for format handling and FileIO for file operations.
  */
 
+namespace Storage;
+
+use JsonCodec;
+use JsonCodecException;
+use Exception;
+
 class JsonStorageDriver implements StorageDriverInterface
 {
 

@@ -10,6 +10,8 @@
  * - Using module settings (settings.schema.php)
  */
 
+use Module\Module;
+
 class SeoModule extends Module
 {
 

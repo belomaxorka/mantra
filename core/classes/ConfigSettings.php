@@ -6,6 +6,9 @@
  * - Schema stored at: core/config.settings.schema.php
  * - Persists config.json as overrides-only (diff from Config::defaults()).
  */
+
+use Storage\FileIO;
+
 class ConfigSettings
 {
     private $path;

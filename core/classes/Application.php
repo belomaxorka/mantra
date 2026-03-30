@@ -4,6 +4,8 @@
  * Orchestrates the entire CMS lifecycle
  */
 
+use Module\ModuleManager;
+
 class Application {
     private static $instance = null;
     private $config = array();

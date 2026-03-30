@@ -6,6 +6,8 @@
  * Reduces code duplication in admin modules
  */
 
+namespace Module;
+
 abstract class ContentAdminModule extends BaseAdminModule {
     
     /**

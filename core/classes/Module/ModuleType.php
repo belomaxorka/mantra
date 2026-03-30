@@ -4,6 +4,8 @@
  * Helps categorize modules for better organization
  */
 
+namespace Module;
+
 class ModuleType
 {
     const CORE = 'core';              // Core system modules (cannot be disabled)

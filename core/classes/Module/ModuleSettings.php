@@ -6,6 +6,14 @@
  * - Schema stored at: modules/<module>/settings.schema.php
  * - Uses FileIO for atomic writes and JsonCodec for encoding.
  */
+
+namespace Module;
+
+use Storage\FileIO;
+use Config;
+use JsonCodec;
+use Exception;
+
 class ModuleSettings
 {
     private $module;

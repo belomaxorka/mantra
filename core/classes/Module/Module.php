@@ -4,6 +4,10 @@
  * Provides common functionality and API access
  */
 
+namespace Module;
+
+use Application;
+
 abstract class Module implements ModuleInterface {
     protected $manifest = array();
     protected $app = null;

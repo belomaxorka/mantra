@@ -4,6 +4,8 @@
  * Modules can declare what features they provide
  */
 
+namespace Module;
+
 class ModuleCapability {
     // Core capabilities
     const ROUTES = 'routes';              // Registers routes

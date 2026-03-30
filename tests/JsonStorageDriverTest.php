@@ -6,6 +6,8 @@
 
 require_once __DIR__ . '/../core/bootstrap.php';
 
+use Storage\JsonStorageDriver;
+
 class JsonStorageDriverTest {
     private $testDir;
     private $driver;

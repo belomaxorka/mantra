@@ -1,5 +1,7 @@
 <?php
 
+use Module\ContentAdminModule;
+
 class AdminPagesModule extends ContentAdminModule
 {
     protected function getContentType()

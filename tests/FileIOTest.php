@@ -6,6 +6,9 @@
 
 require_once __DIR__ . '/../core/bootstrap.php';
 
+use Storage\FileIO;
+use Storage\FileIOException;
+
 class FileIOTest {
     private $testDir;
     private $results = array();

@@ -10,6 +10,8 @@
  * - CSRF protection
  */
 
+namespace Module;
+
 abstract class BaseAdminModule extends Module {
     
     /**

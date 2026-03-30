@@ -3,6 +3,8 @@
  * Configuration helpers
  */
 
+use Module\ModuleSettings;
+
 /**
  * Get config instance or value
  */

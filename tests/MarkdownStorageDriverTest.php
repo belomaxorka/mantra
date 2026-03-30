@@ -6,6 +6,8 @@
 
 require_once __DIR__ . '/../core/bootstrap.php';
 
+use Storage\MarkdownStorageDriver;
+
 class MarkdownStorageDriverTest {
     private $testDir;
     private $driver;

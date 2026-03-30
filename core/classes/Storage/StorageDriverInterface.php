@@ -5,6 +5,8 @@
  * Defines the contract for storage implementations (JSON, Markdown, etc.)
  */
 
+namespace Storage;
+
 interface StorageDriverInterface
 {
 

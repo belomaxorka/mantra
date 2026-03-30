@@ -8,6 +8,8 @@
  * - Conditional script loading
  */
 
+use Module\Module;
+
 class AnalyticsModule extends Module
 {
     public function init()

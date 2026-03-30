@@ -1,5 +1,7 @@
 <?php
 
+use Module\BaseAdminModule;
+
 class AdminDashboardModule extends BaseAdminModule
 {
     public function init()

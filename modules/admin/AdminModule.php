@@ -3,6 +3,8 @@
  * AdminModule - Admin panel functionality
  */
 
+use Module\Module;
+
 class AdminModule extends Module
 {
     public function init()

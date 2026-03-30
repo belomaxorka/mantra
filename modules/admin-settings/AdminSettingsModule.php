@@ -1,5 +1,9 @@
 <?php
 
+use Module\Module;
+use Module\ModuleValidator;
+use Module\ModuleType;
+
 class AdminSettingsModule extends Module
 {
     public function init()

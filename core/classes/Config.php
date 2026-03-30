@@ -8,6 +8,9 @@
  * - Auto-detects base URL (used as default site.url)
  * - Merges JSON over defaults
  */
+
+use Storage\FileIO;
+
 class Config {
     private $configPath = '';
     private $config = array();

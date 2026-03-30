@@ -6,6 +6,8 @@
 
 require_once __DIR__ . '/core/bootstrap.php';
 
+use Storage\FileIO;
+
 // Check required extensions
 $requiredExtensions = array('json', 'session', 'openssl');
 $missingExtensions = array();

@@ -10,6 +10,10 @@
  * - Windows compatibility (unlink before rename)
  */
 
+namespace Storage;
+
+use Exception;
+
 class FileIOException extends Exception
 {
     private $path;

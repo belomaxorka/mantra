@@ -5,6 +5,11 @@
  * Stores content as Markdown files with YAML frontmatter
  */
 
+namespace Storage;
+
+use MarkdownConverter;
+use Exception;
+
 class MarkdownStorageDriver implements StorageDriverInterface
 {
 

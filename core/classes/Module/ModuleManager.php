@@ -4,6 +4,13 @@
  * Loads, initializes, and provides access to modules
  */
 
+namespace Module;
+
+use Storage\FileIO;
+use Config;
+use JsonCodec;
+use Exception;
+
 class ModuleManager
 {
     private $modules = array();

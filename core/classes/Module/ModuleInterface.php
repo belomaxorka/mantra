@@ -4,6 +4,8 @@
  * Defines the standard interface that all modules must implement
  */
 
+namespace Module;
+
 interface ModuleInterface {
     /**
      * Initialize the module
