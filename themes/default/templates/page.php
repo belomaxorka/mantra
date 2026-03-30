@@ -2,7 +2,7 @@
     <?php
     // Display breadcrumbs if available (provided by SEO module)
     if (isset($breadcrumbs) && !empty($breadcrumbs)) {
-        echo widget('seo:breadcrumbs', array('breadcrumbs' => $breadcrumbs));
+        echo partial('seo:breadcrumbs', array('breadcrumbs' => $breadcrumbs));
     }
     ?>
 

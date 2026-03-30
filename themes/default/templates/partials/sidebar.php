@@ -1,7 +1,7 @@
 <?php
 /**
- * Sidebar widget example
- * Usage in template: <?php echo widget('sidebar'); ?>
+ * Sidebar partial
+ * Usage in template: <?php echo partial('sidebar'); ?>
  */
 ?>
 <aside class="sidebar">
@@ -10,7 +10,7 @@
             <h5 class="mb-0">About</h5>
         </div>
         <div class="card-body">
-            <p class="card-text">Welcome to our website. This is a sample sidebar widget.</p>
+            <p class="card-text">Welcome to our website. This is a sample sidebar partial.</p>
         </div>
     </div>
 

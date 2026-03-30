@@ -80,56 +80,62 @@ class View {
     }
 
     /**
-     * Render widget/component (for embedding in templates)
+     * Render a template partial (reusable fragment without layout wrapping)
      *
-     * @param string $name Widget name in format "module:widget" or just "widget"
-     * @param array $params Parameters to pass to widget
-     * @return string Rendered widget HTML
+     * Resolution order:
+     * 1. Theme partial: themes/{theme}/templates/partials/{name}.php
+     * 2. Module partial: modules/{module}/views/partials/{partial}.php (via "module:partial" syntax)
+     *
+     * @param string $name Partial name, e.g. "sidebar" or "seo:breadcrumbs"
+     * @param array $params Parameters to extract into partial scope
+     * @return string Rendered HTML
      */
-    public function widget($name, $params = array()) {
-        $app = Application::getInstance();
+    public function partial($name, $params = array()) {
+        $partialPath = $this->resolvePartialPath($name);
 
-        // Hook: allow modules to provide widgets
-        $widgetData = array(
-            'name' => $name,
-            'params' => $params,
-            'output' => ''
-        );
-
-        $widgetData = $app->hooks()->fire('widget.render', $widgetData);
-
-        // If hook provided output, return it
-        if (!empty($widgetData['output'])) {
-            return $widgetData['output'];
+        if ($partialPath === null) {
+            return '<!-- Partial not found: ' . htmlspecialchars($name) . ' -->';
         }
 
-        // Try to load widget template
+        try {
+            return $this->captureOutput(function() use ($partialPath, $params) {
+                extract($params);
+                include $partialPath;
+            });
+        } catch (Exception $e) {
+            // Don't throw - partials shouldn't break the page
+            logger()->error('Partial render error', array(
+                'partial' => $name,
+                'exception' => $e
+            ));
+            return '<!-- Partial error: ' . htmlspecialchars($name) . ' -->';
+        }
+    }
+
+    /**
+     * Resolve partial file path
+     *
+     * @param string $name Partial name
+     * @return string|null Resolved path or null if not found
+     */
+    private function resolvePartialPath($name) {
         if (str_contains($name, ':')) {
-            // Module widget: "module:widget"
-            list($module, $widget) = explode(':', $name, 2);
-            $widgetPath = MANTRA_MODULES . '/' . $module . '/widgets/' . $widget . '.php';
-        } else {
-            // Theme widget
-            $widgetPath = $this->themePath . '/widgets/' . $name . '.php';
-        }
+            // Module partial: "module:partial"
+            list($module, $partial) = explode(':', $name, 2);
 
-        if (file_exists($widgetPath)) {
-            try {
-                return $this->captureOutput(function() use ($widgetPath, $params) {
-                    extract($params);
-                    include $widgetPath;
-                });
-            } catch (Exception $e) {
-                // Don't throw - widgets shouldn't break the page
-                logger()->error('Widget render error', array(
-                    'widget' => $name,
-                    'exception' => $e
-                ));
-                return '<!-- Widget error: ' . htmlspecialchars($name) . ' -->';
+            // Theme can override module partials
+            $themePath = $this->themePath . '/templates/partials/' . $module . '/' . $partial . '.php';
+            if (file_exists($themePath)) {
+                return $themePath;
             }
+
+            $modulePath = MANTRA_MODULES . '/' . $module . '/views/partials/' . $partial . '.php';
+            return file_exists($modulePath) ? $modulePath : null;
         }
 
-        return '<!-- Widget not found: ' . htmlspecialchars($name) . ' -->';
+        // Theme partial
+        $path = $this->themePath . '/templates/partials/' . $name . '.php';
+        return file_exists($path) ? $path : null;
     }
 
     /**

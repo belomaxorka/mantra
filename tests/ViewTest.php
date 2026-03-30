@@ -45,10 +45,10 @@ class ViewTest {
         // Create directory structure
         $dirs = array(
             $this->themePath . '/templates',
-            $this->themePath . '/widgets',
+            $this->themePath . '/templates/partials',
             $this->themePath . '/assets',
             $this->modulePath . '/views',
-            $this->modulePath . '/widgets'
+            $this->modulePath . '/views/partials'
         );
 
         foreach ($dirs as $dir) {
@@ -74,12 +74,12 @@ class ViewTest {
         file_put_contents($this->modulePath . '/views/admin.php',
             '<div class="admin"><?php echo $message; ?></div>');
 
-        // Theme widget
-        file_put_contents($this->themePath . '/widgets/sidebar.php',
+        // Theme partial
+        file_put_contents($this->themePath . '/templates/partials/sidebar.php',
             '<aside><?php echo $content ?? "Sidebar"; ?></aside>');
 
-        // Module widget
-        file_put_contents($this->modulePath . '/widgets/menu.php',
+        // Module partial
+        file_put_contents($this->modulePath . '/views/partials/menu.php',
             '<nav><?php echo $items ?? "Menu"; ?></nav>');
     }
 
@@ -113,19 +113,18 @@ class ViewTest {
         $this->testContentVariableProtection();
         $this->testAssetUrlGeneration();
         $this->testEscapeMethod();
-        $this->testWidgetRendering();
+        $this->testPartialRendering();
         $this->testOutputBufferingErrorHandling();
         $this->testTemplateNotFound();
 
         // Extended output buffering tests
         $this->testNestedOutputBuffering();
         $this->testOutputBufferingMultipleLevels();
-        $this->testWidgetExceptionHandling();
+        $this->testPartialExceptionHandling();
         $this->testLayoutExceptionHandling();
 
         // Hook integration tests
         $this->testViewRenderHook();
-        $this->testWidgetRenderHook();
         $this->testMultipleHooks();
 
         // Edge cases
@@ -135,7 +134,7 @@ class ViewTest {
         $this->testEscapeEdgeCases();
         $this->testAssetUrlEdgeCases();
         $this->testTemplateWithUndefinedVariable();
-        $this->testNestedWidgets();
+        $this->testNestedPartials();
 
         $this->printSummary();
     }
@@ -320,8 +319,8 @@ class ViewTest {
         );
     }
 
-    private function testWidgetRendering() {
-        echo "\nTest: Widget rendering\n";
+    private function testPartialRendering() {
+        echo "\nTest: Partial rendering\n";
 
         $originalTheme = config('theme.active');
         $testThemeName = basename($this->themePath);
@@ -330,32 +329,32 @@ class ViewTest {
 
         $view = new View();
 
-        // Theme widget
-        $widget = $view->widget('sidebar');
+        // Theme partial
+        $partial = $view->partial('sidebar');
         $this->assert(
-            str_contains($widget, '<aside>Sidebar</aside>'),
-            'Theme widget renders'
+            str_contains($partial, '<aside>Sidebar</aside>'),
+            'Theme partial renders'
         );
 
-        // Theme widget with params
-        $widget2 = $view->widget('sidebar', array('content' => 'Custom'));
+        // Theme partial with params
+        $partial2 = $view->partial('sidebar', array('content' => 'Custom'));
         $this->assert(
-            str_contains($widget2, '<aside>Custom</aside>'),
-            'Theme widget renders with parameters'
+            str_contains($partial2, '<aside>Custom</aside>'),
+            'Theme partial renders with parameters'
         );
 
-        // Module widget
-        $widget3 = $view->widget($testModuleName . ':menu');
+        // Module partial
+        $partial3 = $view->partial($testModuleName . ':menu');
         $this->assert(
-            str_contains($widget3, '<nav>Menu</nav>'),
-            'Module widget renders'
+            str_contains($partial3, '<nav>Menu</nav>'),
+            'Module partial renders'
         );
 
-        // Non-existent widget
-        $widget4 = $view->widget('nonexistent');
+        // Non-existent partial
+        $partial4 = $view->partial('nonexistent');
         $this->assert(
-            str_contains($widget4, '<!-- Widget not found'),
-            'Non-existent widget returns comment'
+            str_contains($partial4, '<!-- Partial not found'),
+            'Non-existent partial returns comment'
         );
 
         config()->set('theme.active', $originalTheme);
@@ -459,13 +458,13 @@ class ViewTest {
         $testThemeName = basename($this->themePath);
         config()->set('theme.active', $testThemeName);
 
-        // Create template that uses widgets (which also use output buffering)
-        file_put_contents($this->themePath . '/templates/with-widget.php',
-            '<page><?php echo $view->widget("sidebar"); ?></page>');
+        // Create template that uses partials (which also use output buffering)
+        file_put_contents($this->themePath . '/templates/with-partial.php',
+            '<page><?php echo $view->partial("sidebar"); ?></page>');
 
         $view = new View();
         $levelBefore = ob_get_level();
-        $output = $view->fetch('with-widget', array('view' => $view));
+        $output = $view->fetch('with-partial', array('view' => $view));
         $levelAfter = ob_get_level();
 
         $this->assert(
@@ -480,30 +479,30 @@ class ViewTest {
         config()->set('theme.active', $originalTheme);
     }
 
-    private function testWidgetExceptionHandling() {
-        echo "\nTest: Widget exception handling\n";
+    private function testPartialExceptionHandling() {
+        echo "\nTest: Partial exception handling\n";
 
         $originalTheme = config('theme.active');
         $testThemeName = basename($this->themePath);
 
-        // Create widget that throws exception
-        file_put_contents($this->themePath . '/widgets/broken.php',
-            '<?php throw new Exception("Widget error"); ?>');
+        // Create partial that throws exception
+        file_put_contents($this->themePath . '/templates/partials/broken.php',
+            '<?php throw new Exception("Partial error"); ?>');
 
         config()->set('theme.active', $testThemeName);
 
         $view = new View();
         $levelBefore = ob_get_level();
-        $output = $view->widget('broken');
+        $output = $view->partial('broken');
         $levelAfter = ob_get_level();
 
         $this->assert(
-            str_contains($output, '<!-- Widget error:'),
-            'Widget exception returns error comment'
+            str_contains($output, '<!-- Partial error:'),
+            'Partial exception returns error comment'
         );
         $this->assert(
             $levelBefore === $levelAfter,
-            'Output buffer is cleaned after widget exception'
+            'Output buffer is cleaned after partial exception'
         );
 
         config()->set('theme.active', $originalTheme);
@@ -577,33 +576,6 @@ class ViewTest {
         $this->assert(
             str_contains($output, 'Modified') && !str_contains($output, 'Original'),
             'view.render hook modifies content'
-        );
-
-        config()->set('theme.active', $originalTheme);
-    }
-
-    private function testWidgetRenderHook() {
-        echo "\nTest: widget.render hook integration\n";
-
-        $originalTheme = config('theme.active');
-        $testThemeName = basename($this->themePath);
-        config()->set('theme.active', $testThemeName);
-
-        // Register hook to provide widget output
-        $app = Application::getInstance();
-        $app->hooks()->register('widget.render', function($data) {
-            if ($data['name'] === 'custom') {
-                $data['output'] = '<div>Custom widget from hook</div>';
-            }
-            return $data;
-        });
-
-        $view = new View();
-        $output = $view->widget('custom');
-
-        $this->assert(
-            str_contains($output, 'Custom widget from hook'),
-            'widget.render hook provides output'
         );
 
         config()->set('theme.active', $originalTheme);
@@ -808,24 +780,24 @@ class ViewTest {
         config()->set('theme.active', $originalTheme);
     }
 
-    private function testNestedWidgets() {
-        echo "\nTest: Nested widgets\n";
+    private function testNestedPartials() {
+        echo "\nTest: Nested partials\n";
 
         $originalTheme = config('theme.active');
         $testThemeName = basename($this->themePath);
 
-        // Widget that includes another widget
-        file_put_contents($this->themePath . '/widgets/outer-widget.php',
-            '<div><?php echo $view->widget("sidebar"); ?></div>');
+        // Partial that includes another partial
+        file_put_contents($this->themePath . '/templates/partials/outer.php',
+            '<div><?php echo $view->partial("sidebar"); ?></div>');
 
         config()->set('theme.active', $testThemeName);
 
         $view = new View();
-        $output = $view->widget('outer-widget', array('view' => $view));
+        $output = $view->partial('outer', array('view' => $view));
 
         $this->assert(
             str_contains($output, '<div>') && str_contains($output, '<aside>'),
-            'Nested widgets render correctly'
+            'Nested partials render correctly'
         );
 
         config()->set('theme.active', $originalTheme);

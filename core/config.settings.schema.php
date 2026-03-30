@@ -8,7 +8,7 @@
  * - Actual config values are stored in: content/settings/config.json
  * - Config is edited through the admin panel or programmatically via ConfigSettings class
  *
- * Options for dynamic selects and widgets (themes/modules list) are injected at runtime by AdminModule.
+ * Options for dynamic selects (themes/modules list) are injected at runtime by AdminModule.
  */
 
 return array(

@@ -1,6 +1,6 @@
 <?php
 /**
- * Breadcrumbs widget
+ * Breadcrumbs partial
  *
  * @var array $breadcrumbs Array of breadcrumb items
  */

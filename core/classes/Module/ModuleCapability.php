@@ -11,7 +11,7 @@ class ModuleCapability {
     const CONTENT_TYPE = 'content_type';  // Registers custom content types
     const ADMIN_UI = 'admin_ui';          // Provides admin interface
     const SETTINGS = 'settings';          // Has configurable settings
-    const WIDGETS = 'widgets';            // Provides widgets
+    const PARTIALS = 'partials';           // Provides template partials
     const TEMPLATES = 'templates';        // Provides templates
     const TRANSLATIONS = 'translations';  // Provides translations
     const API = 'api';                    // Provides API endpoints
@@ -30,7 +30,7 @@ class ModuleCapability {
             self::CONTENT_TYPE,
             self::ADMIN_UI,
             self::SETTINGS,
-            self::WIDGETS,
+            self::PARTIALS,
             self::TEMPLATES,
             self::TRANSLATIONS,
             self::API,

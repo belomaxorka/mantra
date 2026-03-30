@@ -25,15 +25,15 @@ function view($template = null, $data = array())
 }
 
 /**
- * Render widget/component
+ * Render a template partial (reusable fragment without layout)
  *
- * @param string $name Widget name (e.g., "sidebar", "module:widget")
- * @param array $params Parameters to pass to widget
- * @return string Rendered widget HTML
+ * @param string $name Partial name (e.g., "sidebar", "seo:breadcrumbs")
+ * @param array $params Parameters to extract into partial scope
+ * @return string Rendered HTML
  */
-function widget($name, $params = array())
+function partial($name, $params = array())
 {
-    return view()->widget($name, $params);
+    return view()->partial($name, $params);
 }
 
 /**

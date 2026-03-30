@@ -6,7 +6,7 @@
  * - Hooking into page rendering
  * - Adding meta tags to <head>
  * - Modifying page data
- * - Providing widgets
+ * - Providing partials
  * - Using module settings (settings.schema.php)
  */
 
@@ -23,8 +23,6 @@ class SeoModule extends Module
         $this->hook('post.single.data', array($this, 'addSeoData'));
         $this->hook('product.single.data', array($this, 'addSeoData'));
 
-        // Hook into widget rendering to provide breadcrumbs
-        $this->hook('widget.render', array($this, 'renderWidget'));
     }
 
     /**
@@ -132,13 +130,4 @@ class SeoModule extends Module
         return $data;
     }
 
-    /**
-     * Render widgets provided by this module
-     */
-    public function renderWidget($widgetData)
-    {
-        // No need to handle widget rendering here anymore
-        // Widget templates are loaded automatically by View::widget()
-        return $widgetData;
-    }
 }

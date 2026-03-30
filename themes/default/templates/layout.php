@@ -84,31 +84,29 @@
             </div>
             <aside class="col-lg-4">
                 <?php
-                // Hook: allow modules to add sidebar widgets
-                $sidebarWidgets = $app->hooks()->fire('theme.sidebar', array());
+                // Hook: allow modules to add sidebar content
+                $sidebarItems = $app->hooks()->fire('theme.sidebar', array());
 
-                if (is_array($sidebarWidgets) && !empty($sidebarWidgets)) {
+                if (is_array($sidebarItems) && !empty($sidebarItems)) {
                     // Sort by order
-                    usort($sidebarWidgets, function($a, $b) {
+                    usort($sidebarItems, function($a, $b) {
                         $orderA = isset($a['order']) ? (int)$a['order'] : 100;
                         $orderB = isset($b['order']) ? (int)$b['order'] : 100;
                         return $orderA - $orderB;
                     });
 
-                    // Render widgets
-                    foreach ($sidebarWidgets as $widget) {
-                        if (!is_array($widget)) {
+                    foreach ($sidebarItems as $item) {
+                        if (!is_array($item)) {
                             continue;
                         }
 
-                        echo '<div class="sidebar-widget mb-4">';
+                        echo '<div class="sidebar-item mb-4">';
 
-                        // Widget can provide direct content or reference a widget template
-                        if (!empty($widget['content'])) {
-                            echo $widget['content'];
-                        } elseif (!empty($widget['widget'])) {
-                            $params = isset($widget['params']) && is_array($widget['params']) ? $widget['params'] : array();
-                            echo widget($widget['widget'], $params);
+                        if (!empty($item['content'])) {
+                            echo $item['content'];
+                        } elseif (!empty($item['partial'])) {
+                            $params = isset($item['params']) && is_array($item['params']) ? $item['params'] : array();
+                            echo partial($item['partial'], $params);
                         }
 
                         echo '</div>';

@@ -140,7 +140,7 @@ Included modules (enabled by default in `core/Config.php`):
 - `example-integration` - Demonstrates integration points (navigation, footer, admin sidebar) (see `modules/example-integration/`)
 
 **Creating modules:**
-See `EXTENSIBILITY.md` for complete guide on hooks, widgets, and custom content types.
+See `EXTENSIBILITY.md` for complete guide on hooks, partials, and custom content types.
 See `docs/INTEGRATION_POINTS.md` for guide on integration points (navigation, footer, admin).
 
 ### Routing
@@ -182,15 +182,13 @@ Templates are resolved in order of specificity:
 Pages: `page-{template}.php` > `page-{slug}.php` > `page.php`
 Posts: `post-{template}.php` > `post-{category}.php` > `post-{slug}.php` > `post.php`
 
-**Widget System:**
+**Partials:**
 
-Widgets are reusable components embedded in templates:
-- Theme widgets: `themes/{theme}/widgets/{name}.php`
-- Module widgets: `modules/{module}/widgets/{name}.php`
-- Usage: `<?php echo widget('sidebar'); ?>` or `<?php echo widget('module:widget', $params); ?>`
-- Modules can provide widgets via `widget.render` hook
-
-See `EXTENSIBILITY.md` for complete guide.
+Partials are reusable template fragments embedded in templates (rendered without layout wrapping):
+- Theme partials: `themes/{theme}/templates/partials/{name}.php`
+- Module partials: `modules/{module}/views/partials/{name}.php`
+- Usage: `<?php echo partial('sidebar'); ?>` or `<?php echo partial('seo:breadcrumbs', $params); ?>`
+- Theme can override module partials: `themes/{theme}/templates/partials/{module}/{partial}.php`
 
 ### Persistence (flat-file DB)
 

@@ -12,7 +12,7 @@
   "capabilities": [
     "hooks",
     "settings",
-    "widgets"
+    "partials"
   ],
   "dependencies": [],
   "tags": ["seo", "meta", "opengraph", "optimization"]
