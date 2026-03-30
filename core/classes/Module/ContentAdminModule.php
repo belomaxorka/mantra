@@ -134,7 +134,8 @@ abstract class ContentAdminModule extends BaseAdminModule {
         
         $data = $this->extractFormData();
         $data = $this->ensureSlug($data);
-        $data['author'] = $this->getUser()['username'] ?? 'Unknown';
+        $user = $this->getUser();
+        $data['author'] = isset($user['username']) ? $user['username'] : 'Unknown';
         $data['created_at'] = now();
         $data['updated_at'] = now();
         
@@ -149,7 +150,7 @@ abstract class ContentAdminModule extends BaseAdminModule {
      * Show edit item form
      */
     public function editItem($params) {
-        $id = $params['id'] ?? '';
+        $id = isset($params['id']) ? $params['id'] : '';
         $item = db()->read($this->getCollectionName(), $id);
 
         if (!$item) {
@@ -178,21 +179,21 @@ abstract class ContentAdminModule extends BaseAdminModule {
             return;
         }
         
-        $id = $params['id'] ?? '';
+        $id = isset($params['id']) ? $params['id'] : '';
         $item = db()->read($this->getCollectionName(), $id);
-        
+
         if (!$item) {
             http_response_code(404);
             return $this->renderAdmin('Not Found', '<div class="alert alert-danger alert-dismissible fade show alert-permanent" role="alert">' . e($this->getContentType()) . ' not found<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>');
         }
-        
+
         $data = $this->extractFormData();
         $data = $this->ensureSlug($data);
         $data['updated_at'] = now();
         
         // Preserve original fields
-        $data['author'] = $item['author'] ?? 'Unknown';
-        $data['created_at'] = $item['created_at'] ?? now();
+        $data['author'] = isset($item['author']) ? $item['author'] : 'Unknown';
+        $data['created_at'] = isset($item['created_at']) ? $item['created_at'] : now();
         
         db()->write($this->getCollectionName(), $id, $data);
         
@@ -207,8 +208,8 @@ abstract class ContentAdminModule extends BaseAdminModule {
             return;
         }
         
-        $id = $params['id'] ?? '';
-        
+        $id = isset($params['id']) ? $params['id'] : '';
+
         if (db()->exists($this->getCollectionName(), $id)) {
             db()->delete($this->getCollectionName(), $id);
         }

@@ -238,7 +238,7 @@ function ip_matches($ip, $entry)
         $bits = $maxBits;
     }
 
-    $bytes = intdiv($bits, 8);
+    $bytes = (int)($bits / 8);
     $remainder = $bits % 8;
 
     if ($bytes > 0 && substr($ipBin, 0, $bytes) !== substr($subnetBin, 0, $bytes)) {

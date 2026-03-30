@@ -84,11 +84,11 @@ class ViewTest {
 
         // Theme partial
         file_put_contents($this->themePath . '/templates/partials/sidebar.php',
-            '<aside><?php echo $content ?? "Sidebar"; ?></aside>');
+            '<aside><?php echo isset($content) ? $content : "Sidebar"; ?></aside>');
 
         // Module partial
         file_put_contents($this->modulePath . '/views/partials/menu.php',
-            '<nav><?php echo $items ?? "Menu"; ?></nav>');
+            '<nav><?php echo isset($items) ? $items : "Menu"; ?></nav>');
     }
 
     private function removeDirectory($dir) {

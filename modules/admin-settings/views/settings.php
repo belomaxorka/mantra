@@ -18,7 +18,7 @@
 <div class="container-fluid">
   <div class="row mb-4">
     <div class="col">
-      <h1 class="h3 settings-title"><?php echo e($pageTitle ?? 'Settings'); ?></h1>
+      <h1 class="h3 settings-title"><?php echo e(isset($pageTitle) ? $pageTitle : 'Settings'); ?></h1>
     </div>
   </div>
 
@@ -39,11 +39,11 @@
       <?php endif; ?>
 
       <ul class="nav nav-tabs mb-3" role="tablist">
-        <?php foreach (($tabs ?? array()) as $tab): ?>
+        <?php foreach ((isset($tabs) ? $tabs : array()) as $tab): ?>
           <?php
-            $tabId = (string)($tab['id'] ?? 'tab');
-            $tabTitle = (string)($tab['title'] ?? $tabId);
-            $tabUrl = (string)($tab['url'] ?? '#');
+            $tabId = (string)(isset($tab['id']) ? $tab['id'] : 'tab');
+            $tabTitle = (string)(isset($tab['title']) ? $tab['title'] : $tabId);
+            $tabUrl = (string)(isset($tab['url']) ? $tab['url'] : '#');
             $isActive = !empty($tab['active']);
           ?>
           <li class="nav-item" role="presentation">
@@ -55,7 +55,7 @@
       </ul>
 
       <div>
-        <?php echo $contentHtml ?? ''; ?>
+        <?php echo isset($contentHtml) ? $contentHtml : ''; ?>
       </div>
     </div>
   </div>

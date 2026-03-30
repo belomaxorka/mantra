@@ -775,8 +775,10 @@ class AdminSettingsModule extends Module
                 if (empty($error) && !$handledAction) {
                     $updates = array();
 
-                    foreach (($schema['tabs'] ?? array()) as $tab) {
-                        foreach (($tab['fields'] ?? array()) as $field) {
+                    $schemaTabs = isset($schema['tabs']) ? $schema['tabs'] : array();
+                    foreach ($schemaTabs as $tab) {
+                        $tabFields = isset($tab['fields']) ? $tab['fields'] : array();
+                        foreach ($tabFields as $field) {
                             if (!is_array($field) || empty($field['path']) || empty($field['type'])) {
                                 continue;
                             }
@@ -833,8 +835,10 @@ class AdminSettingsModule extends Module
                     if (!empty($updates)) {
                         // Special-case: textarea fields that represent lists in config.
                         // Schema can declare default as array; we accept textarea lines.
-                        foreach (($schema['tabs'] ?? array()) as $tab) {
-                            foreach (($tab['fields'] ?? array()) as $field) {
+                        $schemaTabs2 = isset($schema['tabs']) ? $schema['tabs'] : array();
+                        foreach ($schemaTabs2 as $tab) {
+                            $tabFields2 = isset($tab['fields']) ? $tab['fields'] : array();
+                            foreach ($tabFields2 as $field) {
                                 if (!is_array($field) || empty($field['path']) || empty($field['type'])) {
                                     continue;
                                 }
@@ -880,20 +884,22 @@ class AdminSettingsModule extends Module
         }
 
         $tabs = array();
-        foreach (($schema['tabs'] ?? array()) as $tab) {
+        $schemaTabs3 = isset($schema['tabs']) ? $schema['tabs'] : array();
+        foreach ($schemaTabs3 as $tab) {
             if (!is_array($tab)) {
                 continue;
             }
 
             $tabId = isset($tab['id']) ? (string)$tab['id'] : 'tab';
-            $tabTitle = t($tab['title'] ?? $tab['label'] ?? $tabId);
+            $tabTitle = t(isset($tab['title']) ? $tab['title'] : (isset($tab['label']) ? $tab['label'] : $tabId));
 
             if ($activeInnerTab === '' && $tabId !== '') {
                 $activeInnerTab = $tabId;
             }
 
             $fields = array();
-            foreach (($tab['fields'] ?? array()) as $field) {
+            $tabFields3 = isset($tab['fields']) ? $tab['fields'] : array();
+            foreach ($tabFields3 as $field) {
                 if (!is_array($field) || empty($field['path']) || empty($field['type'])) {
                     continue;
                 }
@@ -909,7 +915,7 @@ class AdminSettingsModule extends Module
                     'path' => $path,
                     'name' => $name,
                     'type' => $type,
-                    'title' => t($field['title'] ?? $field['label'] ?? $path),
+                    'title' => t(isset($field['title']) ? $field['title'] : (isset($field['label']) ? $field['label'] : $path)),
                     'help' => isset($field['help']) ? t($field['help']) : '',
                     'value' => $store->get($path, array_key_exists('default', $field) ? $field['default'] : null),
                     'options' => $options,

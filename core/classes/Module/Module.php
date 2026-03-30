@@ -177,11 +177,14 @@ abstract class Module implements ModuleInterface {
     
     protected function route($method, $pattern, $callback) {
         $router = $this->app->router();
-        return match(strtoupper($method)) {
-            'GET' => $router->get($pattern, $callback),
-            'POST' => $router->post($pattern, $callback),
-            default => $router->any($pattern, $callback),
-        };
+        $m = strtoupper($method);
+        if ($m === 'GET') {
+            return $router->get($pattern, $callback);
+        } elseif ($m === 'POST') {
+            return $router->post($pattern, $callback);
+        } else {
+            return $router->any($pattern, $callback);
+        }
     }
     
     protected function config($key, $default = null) {
