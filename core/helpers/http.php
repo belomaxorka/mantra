@@ -52,6 +52,40 @@ function request()
 }
 
 /**
+ * Abort request with an HTTP error page
+ *
+ * Tries to render a theme template named after the status code (e.g. "404"),
+ * wrapped in the theme layout. Falls back to minimal HTML if no template exists.
+ *
+ * @param int    $code    HTTP status code (default 404)
+ * @param string $message Optional message (available as $message in template)
+ */
+function abort($code = 404, $message = '')
+{
+    http_response_code($code);
+
+    $titles = array(
+        403 => 'Forbidden',
+        404 => 'Page Not Found',
+        500 => 'Internal Server Error',
+    );
+    $title = isset($titles[$code]) ? $titles[$code] : 'Error';
+
+    try {
+        view((string)$code, array(
+            'title' => $code . ' - ' . $title,
+            'code' => $code,
+            'message' => $message,
+        ));
+    } catch (Exception $e) {
+        echo '<h1>' . $code . ' - ' . htmlspecialchars($title) . '</h1>';
+        if ($message !== '') {
+            echo '<p>' . htmlspecialchars($message) . '</p>';
+        }
+    }
+}
+
+/**
  * Redirect helper
  */
 function redirect($url, $code = 302)

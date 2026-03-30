@@ -179,8 +179,7 @@ abstract class ContentAdminModule extends BaseAdminModule {
         
         if (!$item) {
             http_response_code(404);
-            echo $this->getContentType() . ' not found';
-            return;
+            return $this->renderAdmin('Not Found', '<div class="alert alert-danger alert-dismissible fade show alert-permanent" role="alert">' . e($this->getContentType()) . ' not found<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>');
         }
         
         $data = $this->extractFormData();
