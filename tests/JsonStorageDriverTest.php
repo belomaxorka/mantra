@@ -47,10 +47,13 @@ class JsonStorageDriverTest {
         $this->testReadCollection();
         $this->testReadCollectionEmpty();
         $this->testReadCollectionWithCorruptedFile();
+        $this->testReadCollectionIgnoresNonJsonFiles();
         $this->testWriteCreatesDirectory();
         $this->testOverwriteExisting();
-        $this->testWriteInvalidData();
-        $this->testConcurrentWrites();
+        $this->testEmptyDocument();
+        $this->testDataTypePreservation();
+        $this->testWriteUtf8Data();
+        $this->testRepeatedWrites();
 
         $this->printResults();
     }
@@ -139,19 +142,34 @@ class JsonStorageDriverTest {
     }
 
     private function testReadCollectionWithCorruptedFile() {
-        // Write valid documents
-        $this->driver->write('mixed', 'valid-1', array('title' => 'Valid 1'));
-        $this->driver->write('mixed', 'valid-2', array('title' => 'Valid 2'));
+        $col = 'mixed-corrupt-' . time();
+        $this->driver->write($col, 'valid-1', array('title' => 'Valid 1'));
+        $this->driver->write($col, 'valid-2', array('title' => 'Valid 2'));
 
         // Create corrupted JSON file manually
-        $corruptedPath = $this->testDir . '/mixed/corrupted.json';
+        $corruptedPath = $this->testDir . '/' . $col . '/corrupted.json';
         file_put_contents($corruptedPath, '{invalid json content');
 
-        $collection = $this->driver->readCollection('mixed');
+        $collection = $this->driver->readCollection($col);
         $this->assert(is_array($collection), 'readCollection() returns array despite corrupted file');
         $this->assert(count($collection) === 2, 'readCollection() skips corrupted files');
         $this->assert(isset($collection['valid-1']), 'readCollection() includes valid documents');
         $this->assert(!isset($collection['corrupted']), 'readCollection() excludes corrupted documents');
+    }
+
+    private function testReadCollectionIgnoresNonJsonFiles() {
+        $col = 'mixed-files-' . time();
+        $this->driver->write($col, 'doc-1', array('title' => 'Doc 1'));
+
+        // Create non-json files that should be ignored
+        $colPath = $this->testDir . '/' . $col;
+        file_put_contents($colPath . '/notes.txt', 'plain text');
+        file_put_contents($colPath . '/doc-1.json.lock', '');
+        file_put_contents($colPath . '/doc-1.json.tmp.abc123', '{}');
+
+        $collection = $this->driver->readCollection($col);
+        $this->assert(count($collection) === 1, 'readCollection() ignores non-.json files');
+        $this->assert(isset($collection['doc-1']), 'readCollection() returns only .json documents');
     }
 
     private function testWriteCreatesDirectory() {
@@ -167,47 +185,82 @@ class JsonStorageDriverTest {
     }
 
     private function testOverwriteExisting() {
-        $this->driver->write('pages', 'overwrite-test', array('title' => 'Original', 'version' => 1));
+        $col = 'overwrite-' . time();
+        $this->driver->write($col, 'ow-test', array('title' => 'Original', 'version' => 1, 'old_field' => 'gone'));
 
-        $original = $this->driver->read('pages', 'overwrite-test');
+        $original = $this->driver->read($col, 'ow-test');
         $this->assert($original['title'] === 'Original', 'Original data written correctly');
+        $this->assert(isset($original['old_field']), 'Original has old_field');
 
-        $this->driver->write('pages', 'overwrite-test', array('title' => 'Updated', 'version' => 2));
+        // Overwrite without old_field
+        $this->driver->write($col, 'ow-test', array('title' => 'Updated', 'version' => 2));
 
-        $updated = $this->driver->read('pages', 'overwrite-test');
+        $updated = $this->driver->read($col, 'ow-test');
         $this->assert($updated['title'] === 'Updated', 'write() overwrites existing document');
-        $this->assert($updated['version'] === 2, 'write() replaces all data');
-        $this->assert(!isset($updated['version']) || $updated['version'] !== 1, 'Old data is replaced');
+        $this->assert($updated['version'] === 2, 'write() replaces version');
+        $this->assert(!isset($updated['old_field']), 'Old-only fields are removed after overwrite');
     }
 
-    private function testWriteInvalidData() {
-        // Test with UTF-8 data (should work)
-        $utf8Data = array('title' => 'Тест', 'content' => '日本語');
-        $result = $this->driver->write('pages', 'utf8-test', $utf8Data);
-        $this->assert($result === true, 'write() handles UTF-8 data correctly');
+    private function testEmptyDocument() {
+        $col = 'empty-doc-' . time();
+        $this->driver->write($col, 'empty', array());
 
-        $read = $this->driver->read('pages', 'utf8-test');
-        $this->assert($read['title'] === 'Тест', 'UTF-8 data preserved correctly');
-
-        // Test with special characters
-        $specialData = array('title' => 'Test "quotes" and \'apostrophes\'', 'path' => '/path/to/file');
-        $result = $this->driver->write('pages', 'special-test', $specialData);
-        $this->assert($result === true, 'write() handles special characters');
+        $read = $this->driver->read($col, 'empty');
+        $this->assert(is_array($read), 'Empty document read returns array');
+        $this->assert(count($read) === 0, 'Empty document has zero fields');
     }
 
-    private function testConcurrentWrites() {
-        // Simulate concurrent writes by writing to the same document multiple times
-        $id = 'concurrent-test';
+    private function testDataTypePreservation() {
+        $col = 'types-' . time();
+        $data = array(
+            'string' => 'hello',
+            'integer' => 42,
+            'float' => 3.14,
+            'bool_true' => true,
+            'bool_false' => false,
+            'null_val' => null,
+            'array_list' => array(1, 2, 3),
+            'nested' => array('a' => array('b' => 'c')),
+        );
+
+        $this->driver->write($col, 'types', $data);
+        $read = $this->driver->read($col, 'types');
+
+        $this->assert($read['string'] === 'hello', 'String type preserved');
+        $this->assert($read['integer'] === 42, 'Integer type preserved');
+        $this->assert(abs($read['float'] - 3.14) < 0.001, 'Float type preserved');
+        $this->assert($read['bool_true'] === true, 'Boolean true preserved');
+        $this->assert($read['bool_false'] === false, 'Boolean false preserved');
+        $this->assert($read['null_val'] === null, 'Null value preserved');
+        $this->assert($read['array_list'] === array(1, 2, 3), 'Array list preserved');
+        $this->assert($read['nested']['a']['b'] === 'c', 'Nested structure preserved');
+    }
+
+    private function testWriteUtf8Data() {
+        $col = 'utf8-' . time();
+        $data = array('title' => 'Тест', 'content' => '日本語', 'special' => 'Test "quotes" & \'apostrophes\'');
+
+        $result = $this->driver->write($col, 'utf8', $data);
+        $this->assert($result === true, 'write() handles UTF-8 data');
+
+        $read = $this->driver->read($col, 'utf8');
+        $this->assert($read['title'] === 'Тест', 'Cyrillic data preserved');
+        $this->assert($read['content'] === '日本語', 'CJK data preserved');
+        $this->assert($read['special'] === 'Test "quotes" & \'apostrophes\'', 'Special characters preserved');
+    }
+
+    private function testRepeatedWrites() {
+        $col = 'repeated-w-' . time();
+        $id = 'rw-test';
         $iterations = 5;
 
         for ($i = 1; $i <= $iterations; $i++) {
-            $result = $this->driver->write('pages', $id, array('iteration' => $i, 'timestamp' => microtime(true)));
-            $this->assert($result === true, "Concurrent write iteration $i succeeded");
+            $this->driver->write($col, $id, array('iteration' => $i));
         }
 
-        $final = $this->driver->read('pages', $id);
-        $this->assert($final !== null, 'Document exists after concurrent writes');
-        $this->assert($final['iteration'] === $iterations, 'Last write wins in concurrent scenario');
+        $final = $this->driver->read($col, $id);
+        $this->assert($final !== null, 'Document exists after repeated writes');
+        $this->assert($final['iteration'] === $iterations, 'Last write wins after repeated writes');
     }
 
     private function printResults() {

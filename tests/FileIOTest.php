@@ -39,13 +39,18 @@ class FileIOTest {
         $this->testWriteCreatesDirectory();
         $this->testAtomicWrite();
         $this->testDeleteLocked();
+        $this->testDeleteCleansLockFile();
         $this->testLockFileCreation();
+        $this->testValidateFileSizeOnWrite();
+        $this->testValidateFileSizeOnRead();
         $this->testEmptyContent();
+        $this->testBinaryContent();
         $this->testUnicodeContent();
         $this->testLargeContent();
-        $this->testConcurrentReads();
+        $this->testRepeatedReads();
         $this->testJsonCodecIntegration();
         $this->testCleanOrphanedLocks();
+        $this->testCleanOrphanedLocksPreservesFresh();
 
         $this->printResults();
     }
@@ -120,6 +125,17 @@ class FileIOTest {
         $this->assert($result === false, 'deleteLocked() returns false for non-existent file');
     }
 
+    private function testDeleteCleansLockFile() {
+        $path = $this->testDir . '/delete-lock-cleanup.txt';
+        FileIO::writeAtomic($path, 'data');
+        $lockPath = $path . '.lock';
+        $this->assert(file_exists($lockPath), 'Lock file exists before delete');
+
+        FileIO::deleteLocked($path);
+        $this->assert(!file_exists($path), 'Data file removed');
+        $this->assert(!file_exists($lockPath), 'Lock file cleaned up after delete');
+    }
+
     private function testLockFileCreation() {
         $path = $this->testDir . '/locked.txt';
         FileIO::writeAtomic($path, 'locked content');
@@ -136,11 +152,59 @@ class FileIOTest {
         $this->assert($read === 'updated', 'Can write file with existing lock file');
     }
 
+    private function testValidateFileSizeOnWrite() {
+        $path = $this->testDir . '/oversized-write.txt';
+        // Content exceeding 10MB limit
+        $oversized = str_repeat('X', FileIO::MAX_FILE_SIZE + 1);
+
+        try {
+            FileIO::writeAtomic($path, $oversized);
+            $this->assert(false, 'writeAtomic() should throw on oversized content');
+        } catch (FileIOException $e) {
+            $this->assert(
+                strpos($e->getMessage(), 'exceeds maximum') !== false,
+                'writeAtomic() throws FileIOException for oversized content'
+            );
+        }
+        $this->assert(!file_exists($path), 'Oversized file not created on disk');
+    }
+
+    private function testValidateFileSizeOnRead() {
+        $path = $this->testDir . '/oversized-read.txt';
+        // Create file bypassing FileIO to exceed the limit
+        $oversized = str_repeat('X', FileIO::MAX_FILE_SIZE + 1);
+        file_put_contents($path, $oversized);
+
+        try {
+            FileIO::readLocked($path);
+            $this->assert(false, 'readLocked() should throw on oversized file');
+        } catch (FileIOException $e) {
+            $this->assert(
+                strpos($e->getMessage(), 'exceeds maximum') !== false,
+                'readLocked() throws FileIOException for oversized file'
+            );
+        }
+
+        // Cleanup large file immediately to free disk space
+        @unlink($path);
+    }
+
     private function testEmptyContent() {
         $path = $this->testDir . '/empty.txt';
         FileIO::writeAtomic($path, '');
         $read = FileIO::readLocked($path);
         $this->assert($read === '', 'Empty content written and read correctly');
+    }
+
+    private function testBinaryContent() {
+        $path = $this->testDir . '/binary.bin';
+        // Content with null bytes and arbitrary binary data
+        $content = "before\x00middle\x00after\xFF\xFE\x01\x02";
+
+        FileIO::writeAtomic($path, $content);
+        $read = FileIO::readLocked($path);
+        $this->assert($read === $content, 'Binary content with null bytes preserved');
+        $this->assert(strlen($read) === strlen($content), 'Binary content length preserved');
     }
 
     private function testUnicodeContent() {
@@ -163,19 +227,18 @@ class FileIOTest {
         $this->assert($read === $content, 'Large content read correctly');
     }
 
-    private function testConcurrentReads() {
-        $path = $this->testDir . '/concurrent.txt';
+    private function testRepeatedReads() {
+        $path = $this->testDir . '/repeated.txt';
         FileIO::writeAtomic($path, 'shared value');
 
-        $results = array();
+        $allCorrect = true;
         for ($i = 0; $i < 5; $i++) {
-            $results[] = FileIO::readLocked($path);
+            if (FileIO::readLocked($path) !== 'shared value') {
+                $allCorrect = false;
+                break;
+            }
         }
-
-        $this->assert(count($results) === 5, 'Multiple concurrent reads succeeded');
-        foreach ($results as $result) {
-            $this->assert($result === 'shared value', 'Concurrent read returned correct data');
-        }
+        $this->assert($allCorrect, 'Repeated reads return consistent data');
     }
 
     private function testJsonCodecIntegration() {
@@ -202,7 +265,7 @@ class FileIOTest {
     }
 
     private function testCleanOrphanedLocks() {
-        $lockDir = $this->testDir . '/locks';
+        $lockDir = $this->testDir . '/locks-orphaned';
         mkdir($lockDir, 0755, true);
 
         // Create a fake orphaned lock file with old timestamp
@@ -213,6 +276,20 @@ class FileIOTest {
         $cleaned = FileIO::cleanOrphanedLocks($lockDir, 3600);
         $this->assert($cleaned === 1, 'cleanOrphanedLocks() cleaned 1 orphaned lock');
         $this->assert(!file_exists($lockFile), 'Orphaned lock file removed');
+    }
+
+    private function testCleanOrphanedLocksPreservesFresh() {
+        $lockDir = $this->testDir . '/locks-fresh';
+        mkdir($lockDir, 0755, true);
+
+        // Create a fresh lock file (just created)
+        $freshLock = $lockDir . '/fresh.json.lock';
+        file_put_contents($freshLock, '');
+        // Touch is not needed - default mtime is now
+
+        $cleaned = FileIO::cleanOrphanedLocks($lockDir, 3600);
+        $this->assert($cleaned === 0, 'cleanOrphanedLocks() does not clean fresh locks');
+        $this->assert(file_exists($freshLock), 'Fresh lock file preserved');
     }
 
     private function printResults() {

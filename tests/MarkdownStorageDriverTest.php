@@ -48,11 +48,16 @@ class MarkdownStorageDriverTest {
         $this->testYamlBooleanValues();
         $this->testYamlNumericValues();
         $this->testYamlSpecialCharacters();
+        $this->testYamlUtf8Values();
         $this->testMarkdownContent();
+        $this->testMarkdownFieldRoundtrip();
+        $this->testEmptyContent();
         $this->testContentWithoutFrontmatter();
+        $this->testContentWithHorizontalRule();
         $this->testHtmlToMarkdownConversion();
         $this->testReadCollection();
         $this->testReadCollectionEmpty();
+        $this->testReadCollectionWithCorruptedFile();
         $this->testWriteCreatesDirectory();
         $this->testOverwriteExisting();
 
@@ -89,7 +94,7 @@ class MarkdownStorageDriverTest {
         $this->assert($read !== null, 'read() returns data for existing document');
         $this->assert($read['title'] === 'Test Document', 'read() returns correct title');
         $this->assert($read['slug'] === 'test-doc', 'read() returns correct slug');
-        $this->assert(isset($read['content']), 'read() includes content field');
+        $this->assert(strpos($read['content'], 'This is test content') !== false, 'read() returns correct content text');
     }
 
     private function testReadNonExistent() {
@@ -191,25 +196,70 @@ class MarkdownStorageDriverTest {
         $this->assert($read['description'] === 'Text with "quotes" and colons:', 'Quotes and colons preserved');
     }
 
-    private function testMarkdownContent() {
+    private function testYamlUtf8Values() {
+        $col = 'utf8-yaml-' . time();
         $data = array(
-            'title' => 'Markdown Test',
-            'content' => '# Heading
-
-This is a paragraph with **bold** and *italic* text.
-
-- List item 1
-- List item 2'
+            'title' => 'Привет мир',
+            'author' => '日本語テスト',
+            'content' => 'Body text'
         );
 
-        $this->driver->write('posts', 'markdown-test', $data);
+        $this->driver->write($col, 'utf8-yaml', $data);
+        $read = $this->driver->read($col, 'utf8-yaml');
 
-        $read = $this->driver->read('posts', 'markdown-test');
+        $this->assert($read['title'] === 'Привет мир', 'Cyrillic value preserved in YAML');
+        $this->assert($read['author'] === '日本語テスト', 'CJK value preserved in YAML');
+    }
+
+    private function testMarkdownContent() {
+        $col = 'md-content-' . time();
+        $markdownBody = "# Heading\n\nThis is a paragraph with **bold** and *italic* text.\n\n- List item 1\n- List item 2";
+        $data = array(
+            'title' => 'Markdown Test',
+            'content' => $markdownBody
+        );
+
+        $this->driver->write($col, 'md-test', $data);
+
+        $read = $this->driver->read($col, 'md-test');
         $this->assert(isset($read['content']), 'Content field exists');
         $this->assert(isset($read['_markdown']), 'Original markdown preserved in _markdown field');
 
         // Content should be converted to HTML
         $this->assert(strpos($read['content'], '<h1>') !== false || strpos($read['content'], '<p>') !== false, 'Markdown converted to HTML');
+        $this->assert(strpos($read['content'], 'bold') !== false, 'HTML content contains original text');
+    }
+
+    private function testMarkdownFieldRoundtrip() {
+        $col = 'md-roundtrip-' . time();
+        $markdown = "Simple paragraph with **bold** text.";
+        $data = array(
+            'title' => 'Roundtrip',
+            'content' => $markdown
+        );
+
+        $this->driver->write($col, 'rt-test', $data);
+        $read = $this->driver->read($col, 'rt-test');
+
+        $this->assert(
+            strpos($read['_markdown'], 'bold') !== false,
+            '_markdown field contains original text'
+        );
+        $this->assert(
+            strpos($read['_markdown'], '<') === false,
+            '_markdown field does not contain HTML tags'
+        );
+    }
+
+    private function testEmptyContent() {
+        $col = 'empty-content-' . time();
+        $data = array('title' => 'No Body', 'content' => '');
+
+        $this->driver->write($col, 'empty-c', $data);
+        $read = $this->driver->read($col, 'empty-c');
+
+        $this->assert($read['title'] === 'No Body', 'Title preserved with empty content');
+        $this->assert(isset($read['content']), 'Content field exists even when empty');
     }
 
     private function testContentWithoutFrontmatter() {
@@ -232,23 +282,47 @@ This is content without YAML frontmatter.';
         $this->assert(isset($read['_markdown']), 'Original markdown preserved');
     }
 
+    private function testContentWithHorizontalRule() {
+        // Markdown horizontal rules use --- which conflicts with YAML frontmatter delimiter
+        $col = 'hr-test-' . time();
+        $data = array(
+            'title' => 'HR Test',
+            'content' => "First section\n\n---\n\nSecond section"
+        );
+
+        $this->driver->write($col, 'hr-doc', $data);
+        $read = $this->driver->read($col, 'hr-doc');
+
+        $this->assert($read['title'] === 'HR Test', 'Title preserved when content has ---');
+        $this->assert(
+            strpos($read['_markdown'], 'First section') !== false && strpos($read['_markdown'], 'Second section') !== false,
+            'Both sections preserved when content contains ---'
+        );
+    }
+
     private function testHtmlToMarkdownConversion() {
+        $col = 'html-conv-' . time();
         $data = array(
             'title' => 'HTML Test',
             'content' => '<h1>HTML Heading</h1><p>This is <strong>HTML</strong> content.</p>'
         );
 
-        $this->driver->write('posts', 'html-test', $data);
+        $this->driver->write($col, 'html-test', $data);
 
         // Check the raw file to see if HTML was converted to Markdown
-        $filePath = $this->testDir . '/posts/html-test.md';
+        $filePath = $this->testDir . '/' . $col . '/html-test.md';
         $rawContent = file_get_contents($filePath);
 
         $this->assert(strpos($rawContent, '---') === 0, 'File has YAML frontmatter');
 
-        // The content section should be markdown, not HTML
-        $contentSection = substr($rawContent, strpos($rawContent, "---\n\n") + 5);
+        // Extract content section (after second ---)
+        $parts = explode("---\n", $rawContent, 3);
+        $contentSection = isset($parts[2]) ? trim($parts[2]) : '';
+
         $this->assert(strlen($contentSection) > 0, 'Content section exists');
+        $this->assert(strpos($contentSection, '<h1>') === false, 'HTML h1 tag converted to markdown');
+        $this->assert(strpos($contentSection, '<p>') === false, 'HTML p tag converted to markdown');
+        $this->assert(strpos($contentSection, 'HTML Heading') !== false, 'Content text preserved after conversion');
     }
 
     private function testReadCollection() {
@@ -270,6 +344,23 @@ This is content without YAML frontmatter.';
         $collection = $this->driver->readCollection('non-existent-collection');
         $this->assert(is_array($collection), 'readCollection() returns array for non-existent collection');
         $this->assert(count($collection) === 0, 'readCollection() returns empty array for non-existent collection');
+    }
+
+    private function testReadCollectionWithCorruptedFile() {
+        $col = 'mixed-corrupt-md-' . time();
+        $this->driver->write($col, 'valid-1', array('title' => 'Valid 1', 'content' => 'Content 1'));
+        $this->driver->write($col, 'valid-2', array('title' => 'Valid 2', 'content' => 'Content 2'));
+
+        // Create a file with invalid content that will cause parseMarkdown to fail
+        // Write a binary file that might cause issues
+        $corruptedPath = $this->testDir . '/' . $col . '/corrupted.md';
+        file_put_contents($corruptedPath, "\x00\x01\x02\x03");
+
+        $collection = $this->driver->readCollection($col);
+        $this->assert(is_array($collection), 'readCollection() returns array despite corrupted file');
+        // The corrupted file may or may not parse (binary is still "content"), so check valid docs are present
+        $this->assert(isset($collection['valid-1']), 'readCollection() includes valid documents');
+        $this->assert(isset($collection['valid-2']), 'readCollection() includes second valid document');
     }
 
     private function testWriteCreatesDirectory() {
