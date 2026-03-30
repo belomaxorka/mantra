@@ -97,5 +97,5 @@ if (is_dir($helpersDir)) {
 
 // Register centralized PHP error handling (logs to channel "php")
 ErrorHandler::register(new Logger('php', array(
-    'minLevel' => MANTRA_DEBUG ? Logger::DEBUG : Logger::NOTICE
+    'minLevel' => resolve_log_level()
 )));

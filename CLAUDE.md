@@ -303,6 +303,6 @@ return array(
 
 ### Logging & error handling
 
-- `core/helpers.php` exposes `logger($channel = 'app')` plus `log_message()` / `log_debug()`.
-- Logs are written under `storage/logs/` with daily rotation (see `README.md` and `LOGGING_EXAMPLES.md`).
+- `core/helpers/logging.php` exposes `logger($channel = 'app')` and `resolve_log_level()`.
+- Logs are written under `storage/logs/` with daily rotation (see `README.md`).
 - `core/ErrorHandler.php` registers PHP error/exception/shutdown handlers early in `core/bootstrap.php` and logs to channel `php`.

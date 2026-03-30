@@ -119,9 +119,8 @@ logger()->debug('Debug information');
 // Using specific channel
 logger('security')->warning('Suspicious activity detected');
 
-// Quick helpers
-log_debug('This only logs in debug mode');
-log_message('error', 'Error message', array('context' => 'data'));
+// Log level is controlled by "logging.level" in config.json
+// Default level: "debug" (logs everything)
 ```
 
 Log levels (from highest to lowest priority):

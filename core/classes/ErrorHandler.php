@@ -54,7 +54,8 @@ class ErrorHandler
         }
 
         // Create a dedicated logger that does not depend on Application/config.
-        self::$logger = new Logger('php', array('minLevel' => Logger::DEBUG));
+        $minLevel = function_exists('resolve_log_level') ? resolve_log_level() : Logger::DEBUG;
+        self::$logger = new Logger('php', array('minLevel' => $minLevel));
         return self::$logger;
     }
 
