@@ -198,10 +198,12 @@ Partials are reusable template fragments embedded in templates (rendered without
 
 #### JSON storage safety
 
-- Low-level JSON file I/O goes through `core/JsonFile.php`.
+- JSON encoding/decoding goes through `core/JsonCodec.php` (pure format handling).
+- File I/O with locking and atomicity goes through `core/classes/Storage/FileIO.php`.
+  - `FileIO::readLocked()` — shared lock for concurrent reads.
+  - `FileIO::writeAtomic()` — exclusive lock + temp file + rename for safe writes.
   - Uses per-document lock files (`<file>.lock`) to support parallel reads/writes.
-  - Writes are atomic (tmp + rename) and create rotating backups (`.bak.1..bak.N`).
-  - On corrupted JSON reads, it will try to recover from backups and log a warning.
+- Storage drivers (`JsonStorageDriver`, `MarkdownStorageDriver`) use `FileIO` + `JsonCodec` internally.
 
 #### Document schemas & migrations (`core/schemas/*.php`)
 
@@ -225,7 +227,7 @@ Each schema file returns an array:
 - When `Database` reads a document (`read()` or `query()`), it loads the schema for that collection.
 - If the document is missing keys from `defaults`, they are added.
 - If `schema_version` is missing or less than `version`, `migrate()` is called (if present) and `schema_version` is bumped.
-- If any changes were made, the document is written back using `JsonFile` (atomic + backup).
+- If any changes were made, the document is written back using the storage driver (atomic + locked).
 
 **How to change JSON structure safely:**
 
@@ -268,8 +270,8 @@ Each schema file returns an array:
 
 **Troubleshooting:**
 
-- If a JSON file is corrupted, `JsonFile` will try to recover from `.bak.*` and log a warning.
-- If recovery and migration both fail, an exception will be logged by `ErrorHandler`.
+- If a JSON file is corrupted, `JsonCodec::decode()` will throw a `JsonCodecException`.
+- If migration fails, an exception will be logged by `ErrorHandler`.
 
 
 Example (rename `login` -> `username`):

@@ -5,7 +5,7 @@
  * Stores content as Markdown files with YAML frontmatter
  */
 
-class MarkdownStorageDriver extends AbstractFileStorage implements StorageDriverInterface
+class MarkdownStorageDriver implements StorageDriverInterface
 {
 
     private $basePath;
@@ -23,20 +23,9 @@ class MarkdownStorageDriver extends AbstractFileStorage implements StorageDriver
             return null;
         }
 
-        // Validate file size before reading
-        $size = @filesize($path);
-        if ($size === false) {
-            throw new Exception('Failed to get file size');
-        }
-        self::validateFileSize($size);
-
         try {
-            $content = file_get_contents($path);
-            if ($content === false) {
-                throw new Exception('Failed to read file');
-            }
-
-            $data = $this->parseMarkdown($content);
+            $raw = FileIO::readLocked($path);
+            return $this->parseMarkdown($raw);
         } catch (Exception $e) {
             logger()->error('Failed to read Markdown document', array(
                 'collection' => $collection,
@@ -46,54 +35,17 @@ class MarkdownStorageDriver extends AbstractFileStorage implements StorageDriver
             ));
             throw $e;
         }
-
-        return $data;
     }
 
     public function write($collection, $id, $data)
     {
         $path = $this->getPath($collection, $id);
-
-        // Ensure directory exists
-        $dir = dirname($path);
-        if (!is_dir($dir)) {
-            if (!mkdir($dir, 0755, true) && !is_dir($dir)) {
-                throw new Exception('Failed to create directory');
-            }
-        }
-
-        // Build content first to validate before acquiring lock
         $content = $this->buildMarkdown($data);
 
-        // Validate size
-        self::validateFileSize(strlen($content));
-
-        // Acquire exclusive lock
-        $lockHandle = self::acquireLock($path, LOCK_EX);
-
         try {
-            // Atomic write with temp file
-            $tmp = $path . '.tmp.' . self::randomSuffix();
-            if (file_put_contents($tmp, $content) === false) {
-                throw new Exception('Failed to write temp file');
-            }
-
-            // Handle Windows compatibility
-            if (DIRECTORY_SEPARATOR === '\\' && file_exists($path)) {
-                if (!@unlink($path)) {
-                    @unlink($tmp);
-                    throw new Exception('Failed to remove existing file for replacement');
-                }
-            }
-
-            if (!@rename($tmp, $path)) {
-                @unlink($tmp);
-                throw new Exception('Failed to rename temp file');
-            }
-
+            FileIO::writeAtomic($path, $content);
             logger()->debug('Markdown data written', array('collection' => $collection, 'id' => $id));
             return true;
-
         } catch (Exception $e) {
             logger()->error('Failed to write Markdown document', array(
                 'collection' => $collection,
@@ -102,37 +54,13 @@ class MarkdownStorageDriver extends AbstractFileStorage implements StorageDriver
                 'error' => $e->getMessage()
             ));
             throw $e;
-        } finally {
-            self::releaseLock($lockHandle);
         }
     }
 
     public function delete($collection, $id)
     {
         $path = $this->getPath($collection, $id);
-
-        if (!file_exists($path)) {
-            return false;
-        }
-
-        // Use locking to prevent deletion during read
-        try {
-            $lockHandle = self::acquireLock($path, LOCK_EX);
-        } catch (Exception $e) {
-            return false;
-        }
-
-        try {
-            $result = @unlink($path);
-
-            // Clean up lock file and release
-            self::releaseLock($lockHandle, $path, true);
-
-            return $result;
-        } catch (Exception $e) {
-            self::releaseLock($lockHandle);
-            return false;
-        }
+        return FileIO::deleteLocked($path);
     }
 
     public function exists($collection, $id)
@@ -150,10 +78,10 @@ class MarkdownStorageDriver extends AbstractFileStorage implements StorageDriver
         }
 
         $items = array();
-        $files = glob($collectionPath . '/*' . self::getExtension());
+        $files = glob($collectionPath . '/*' . $this->getExtension());
 
         foreach ($files as $file) {
-            $id = basename($file, self::getExtension());
+            $id = basename($file, $this->getExtension());
 
             try {
                 $content = file_get_contents($file);
@@ -185,7 +113,7 @@ class MarkdownStorageDriver extends AbstractFileStorage implements StorageDriver
 
     private function getPath($collection, $id)
     {
-        return $this->basePath . '/' . $collection . '/' . $id . self::getExtension();
+        return $this->basePath . '/' . $collection . '/' . $id . $this->getExtension();
     }
 
     /**

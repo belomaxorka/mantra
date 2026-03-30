@@ -4,7 +4,7 @@
  *
  * - Values stored at: content/settings/<module>.json
  * - Schema stored at: modules/<module>/settings.schema.php
- * - Uses JsonFile for atomic + backed-up writes.
+ * - Uses FileIO for atomic writes and JsonCodec for encoding.
  */
 class ModuleSettings
 {
@@ -67,7 +67,8 @@ class ModuleSettings
         $raw = array();
         if (file_exists($this->path)) {
             try {
-                $decoded = JsonFile::read($this->path);
+                $fileContent = FileIO::readLocked($this->path);
+                $decoded = JsonCodec::decode($fileContent);
                 if (is_array($decoded)) {
                     $raw = $decoded;
                 }
@@ -178,7 +179,7 @@ class ModuleSettings
             $overrides['schema_version'] = $schemaVersion;
         }
 
-        JsonFile::write($this->path, $overrides);
+        FileIO::writeAtomic($this->path, JsonCodec::encode($overrides));
         return true;
     }
 

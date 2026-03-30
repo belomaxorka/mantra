@@ -24,7 +24,8 @@ class Config {
 
         if ($path && file_exists($path)) {
             try {
-                $decoded = JsonFile::read($path);
+                $raw = FileIO::readLocked($path);
+                $decoded = JsonCodec::decode($raw);
                 if (is_array($decoded)) {
                     $json = $decoded;
                 }
@@ -169,7 +170,8 @@ class Config {
 
         if (file_exists($this->configPath)) {
             try {
-                $decoded = JsonFile::read($this->configPath);
+                $raw = FileIO::readLocked($this->configPath);
+                $decoded = JsonCodec::decode($raw);
                 if (is_array($decoded)) {
                     $this->config = self::deepMerge($this->config, $decoded);
                 }
@@ -243,7 +245,7 @@ class Config {
                 $overrides['schema_version'] = (int)$this->config['schema_version'];
             }
 
-            return JsonFile::write($this->configPath, $overrides);
+            return FileIO::writeAtomic($this->configPath, JsonCodec::encode($overrides));
         } catch (Exception $e) {
             logger('app')->error('Failed to write config.json', array(
                 'path' => $this->configPath,

@@ -114,7 +114,7 @@ class ModuleValidator {
             $errors[] = 'Missing module.json';
         } else {
             try {
-                $manifest = JsonFile::read($manifestPath);
+                $manifest = JsonCodec::decode(file_get_contents($manifestPath));
                 $manifestErrors = self::validateManifest($manifest);
                 $errors = array_merge($errors, $manifestErrors);
             } catch (Exception $e) {

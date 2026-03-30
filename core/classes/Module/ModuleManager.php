@@ -98,7 +98,7 @@ class ModuleManager
                 return false;
             }
 
-            $manifest = JsonFile::read($manifestPath);
+            $manifest = JsonCodec::decode(file_get_contents($manifestPath));
 
             // Validate required fields
             if (!isset($manifest['id']) || !isset($manifest['version'])) {
@@ -262,12 +262,12 @@ class ModuleManager
         // Update config file
         $configPath = MANTRA_CONTENT . '/settings/config.json';
         try {
-            $configData = JsonFile::read($configPath);
+            $configData = JsonCodec::decode(FileIO::readLocked($configPath));
             if (!isset($configData['modules'])) {
                 $configData['modules'] = array();
             }
             $configData['modules']['enabled'] = $enabledModules;
-            JsonFile::write($configPath, $configData);
+            FileIO::writeAtomic($configPath, JsonCodec::encode($configData));
 
             logger()->info('Module enabled', array('module' => $moduleName));
             return true;
@@ -315,12 +315,12 @@ class ModuleManager
         // Update config file
         $configPath = MANTRA_CONTENT . '/settings/config.json';
         try {
-            $configData = JsonFile::read($configPath);
+            $configData = JsonCodec::decode(FileIO::readLocked($configPath));
             if (!isset($configData['modules'])) {
                 $configData['modules'] = array();
             }
             $configData['modules']['enabled'] = $enabledModules;
-            JsonFile::write($configPath, $configData);
+            FileIO::writeAtomic($configPath, JsonCodec::encode($configData));
 
             logger()->info('Module disabled', array('module' => $moduleName));
             return true;
@@ -397,7 +397,7 @@ class ModuleManager
             }
 
             try {
-                $manifest = JsonFile::read($manifestPath);
+                $manifest = JsonCodec::decode(file_get_contents($manifestPath));
 
                 // Determine module ID
                 $moduleId = isset($manifest['id']) ? $manifest['id'] :

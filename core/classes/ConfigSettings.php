@@ -65,7 +65,8 @@ class ConfigSettings
 
         if (file_exists($this->path)) {
             try {
-                $decoded = JsonFile::read($this->path);
+                $fileContent = FileIO::readLocked($this->path);
+                $decoded = JsonCodec::decode($fileContent);
                 if (is_array($decoded)) {
                     $raw = $decoded;
                 }
@@ -153,7 +154,7 @@ class ConfigSettings
             mkdir($dir, 0755, true);
         }
 
-        return JsonFile::write($this->path, $overrides);
+        return FileIO::writeAtomic($this->path, JsonCodec::encode($overrides));
     }
 
     private function applyMigrations(&$data, $schema)

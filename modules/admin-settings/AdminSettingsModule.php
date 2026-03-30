@@ -184,8 +184,8 @@ class AdminSettingsModule extends Module
         foreach (glob($base . '/*/theme.json') as $path) {
             $dir = basename(dirname($path));
             try {
-                $meta = JsonFile::read($path);
-            } catch (JsonFileException $e) {
+                $meta = JsonCodec::decode(file_get_contents($path));
+            } catch (Exception $e) {
                 continue;
             }
             $name = $dir;
@@ -210,8 +210,8 @@ class AdminSettingsModule extends Module
         foreach (glob($base . '/*/theme.json') as $path) {
             $dir = basename(dirname($path));
             try {
-                $meta = JsonFile::read($path);
-            } catch (JsonFileException $e) {
+                $meta = JsonCodec::decode(file_get_contents($path));
+            } catch (Exception $e) {
                 continue;
             }
 
@@ -411,8 +411,8 @@ class AdminSettingsModule extends Module
             }
 
             try {
-                $meta = JsonFile::read($path);
-            } catch (JsonFileException $e) {
+                $meta = JsonCodec::decode(file_get_contents($path));
+            } catch (Exception $e) {
                 $meta = array();
             }
 
@@ -587,7 +587,7 @@ class AdminSettingsModule extends Module
             $manifestPath = MANTRA_MODULES . '/' . $deleteId . '/module.json';
             if (file_exists($manifestPath)) {
                 try {
-                    $manifest = JsonFile::read($manifestPath);
+                    $manifest = JsonCodec::decode(file_get_contents($manifestPath));
                     $type = isset($manifest['type']) ? $manifest['type'] : 'custom';
                     $adminConfig = isset($manifest['admin']) ? $manifest['admin'] : array();
 
@@ -602,7 +602,7 @@ class AdminSettingsModule extends Module
                         $error = 'This module cannot be deleted';
                         return true;
                     }
-                } catch (JsonFileException $e) {
+                } catch (Exception $e) {
                     // Continue with deletion if manifest is unreadable
                 }
             }
@@ -681,7 +681,7 @@ class AdminSettingsModule extends Module
                 $manifestPath = MANTRA_MODULES . '/' . $modId . '/module.json';
                 if (file_exists($manifestPath)) {
                     try {
-                        $manifest = JsonFile::read($manifestPath);
+                        $manifest = JsonCodec::decode(file_get_contents($manifestPath));
                         $type = isset($manifest['type']) ? $manifest['type'] : 'custom';
 
                         // CORE modules cannot be disabled
@@ -693,7 +693,7 @@ class AdminSettingsModule extends Module
                         if (isset($adminConfig['disableable']) && $adminConfig['disableable'] === false) {
                             return "Cannot disable module '{$modId}': protected by policy";
                         }
-                    } catch (JsonFileException $e) {
+                    } catch (Exception $e) {
                         // Skip policy check if manifest is unreadable
                     }
                 }
@@ -720,8 +720,8 @@ class AdminSettingsModule extends Module
             }
 
             try {
-                $manifest = JsonFile::read($manifestPath);
-            } catch (JsonFileException $e) {
+                $manifest = JsonCodec::decode(file_get_contents($manifestPath));
+            } catch (Exception $e) {
                 return "Cannot read module manifest: '{$modId}'";
             }
 

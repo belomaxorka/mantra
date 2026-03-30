@@ -72,7 +72,7 @@ if (request()->method() === 'POST') {
         }
 
         // Save configuration
-        JsonFile::write(MANTRA_CONTENT . '/settings/config.json', $overrides);
+        FileIO::writeAtomic(MANTRA_CONTENT . '/settings/config.json', JsonCodec::encode($overrides));
 
         // Create admin user
         $db = new Database();

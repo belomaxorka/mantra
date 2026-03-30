@@ -3,10 +3,10 @@
  * JsonStorageDriver - JSON file storage implementation
  *
  * Stores content as JSON files with atomic writes and file locking.
- * Uses JsonCodec for format handling and AbstractFileStorage for file operations.
+ * Uses JsonCodec for format handling and FileIO for file operations.
  */
 
-class JsonStorageDriver extends AbstractFileStorage implements StorageDriverInterface
+class JsonStorageDriver implements StorageDriverInterface
 {
 
     private $basePath;
@@ -24,25 +24,9 @@ class JsonStorageDriver extends AbstractFileStorage implements StorageDriverInte
             return null;
         }
 
-        // Validate file size before reading
-        $size = @filesize($path);
-        if ($size === false) {
-            throw new Exception('Failed to get file size');
-        }
-        self::validateFileSize($size);
-
-        // Acquire shared lock for reading
-        $lockHandle = self::acquireLock($path, LOCK_SH);
-
         try {
-            $raw = file_get_contents($path);
-            if ($raw === false) {
-                throw new Exception('Failed to read file');
-            }
-
-            $data = JsonCodec::decode($raw);
-            return $data;
-
+            $raw = FileIO::readLocked($path);
+            return JsonCodec::decode($raw);
         } catch (Exception $e) {
             logger()->error('Failed to read JSON document', array(
                 'collection' => $collection,
@@ -51,8 +35,6 @@ class JsonStorageDriver extends AbstractFileStorage implements StorageDriverInte
                 'error' => $e->getMessage()
             ));
             throw $e;
-        } finally {
-            self::releaseLock($lockHandle);
         }
     }
 
@@ -60,15 +42,6 @@ class JsonStorageDriver extends AbstractFileStorage implements StorageDriverInte
     {
         $path = $this->getPath($collection, $id);
 
-        // Ensure directory exists
-        $dir = dirname($path);
-        if (!is_dir($dir)) {
-            if (!mkdir($dir, 0755, true) && !is_dir($dir)) {
-                throw new Exception('Failed to create directory');
-            }
-        }
-
-        // Encode content first to validate before acquiring lock
         try {
             $content = JsonCodec::encode($data);
         } catch (JsonCodecException $e) {
@@ -80,35 +53,10 @@ class JsonStorageDriver extends AbstractFileStorage implements StorageDriverInte
             throw $e;
         }
 
-        // Validate size
-        self::validateFileSize(strlen($content));
-
-        // Acquire exclusive lock
-        $lockHandle = self::acquireLock($path, LOCK_EX);
-
         try {
-            // Atomic write with temp file
-            $tmp = $path . '.tmp.' . self::randomSuffix();
-            if (file_put_contents($tmp, $content) === false) {
-                throw new Exception('Failed to write temp file');
-            }
-
-            // Handle Windows compatibility
-            if (DIRECTORY_SEPARATOR === '\\' && file_exists($path)) {
-                if (!@unlink($path)) {
-                    @unlink($tmp);
-                    throw new Exception('Failed to remove existing file for replacement');
-                }
-            }
-
-            if (!@rename($tmp, $path)) {
-                @unlink($tmp);
-                throw new Exception('Failed to rename temp file');
-            }
-
+            FileIO::writeAtomic($path, $content);
             logger()->debug('Data written', array('collection' => $collection, 'id' => $id));
             return true;
-
         } catch (Exception $e) {
             logger()->error('Failed to write JSON document', array(
                 'collection' => $collection,
@@ -117,37 +65,13 @@ class JsonStorageDriver extends AbstractFileStorage implements StorageDriverInte
                 'error' => $e->getMessage()
             ));
             throw $e;
-        } finally {
-            self::releaseLock($lockHandle);
         }
     }
 
     public function delete($collection, $id)
     {
         $path = $this->getPath($collection, $id);
-
-        if (!file_exists($path)) {
-            return false;
-        }
-
-        // Use locking to prevent deletion during read
-        try {
-            $lockHandle = self::acquireLock($path, LOCK_EX);
-        } catch (Exception $e) {
-            return false;
-        }
-
-        try {
-            $result = @unlink($path);
-
-            // Clean up lock file and release
-            self::releaseLock($lockHandle, $path, true);
-
-            return $result;
-        } catch (Exception $e) {
-            self::releaseLock($lockHandle);
-            return false;
-        }
+        return FileIO::deleteLocked($path);
     }
 
     public function exists($collection, $id)
@@ -165,10 +89,10 @@ class JsonStorageDriver extends AbstractFileStorage implements StorageDriverInte
         }
 
         $items = array();
-        $files = glob($collectionPath . '/*' . self::getExtension());
+        $files = glob($collectionPath . '/*' . $this->getExtension());
 
         foreach ($files as $file) {
-            $id = basename($file, self::getExtension());
+            $id = basename($file, $this->getExtension());
 
             try {
                 $raw = file_get_contents($file);
@@ -200,6 +124,6 @@ class JsonStorageDriver extends AbstractFileStorage implements StorageDriverInte
 
     private function getPath($collection, $id)
     {
-        return $this->basePath . '/' . $collection . '/' . $id . self::getExtension();
+        return $this->basePath . '/' . $collection . '/' . $id . $this->getExtension();
     }
 }

@@ -53,9 +53,8 @@ require_once MANTRA_CORE . '/classes/Psr/Log/LoggerInterface.php';
 require_once MANTRA_CORE . '/classes/Psr/Log/LogLevel.php';
 
 // Load config classes BEFORE autoloader
-require_once MANTRA_CORE . '/classes/Storage/AbstractFileStorage.php';
+require_once MANTRA_CORE . '/classes/Storage/FileIO.php';
 require_once MANTRA_CORE . '/classes/JsonCodec.php';
-require_once MANTRA_CORE . '/classes/JsonFile.php';
 require_once MANTRA_CORE . '/classes/Config.php';
 $config = Config::bootstrap();
 $GLOBALS['MANTRA_CONFIG'] = $config;
