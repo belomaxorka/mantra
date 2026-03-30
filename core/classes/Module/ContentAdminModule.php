@@ -81,6 +81,8 @@ abstract class ContentAdminModule extends BaseAdminModule {
     protected function ensureSlug($data) {
         if (empty($data['slug']) && !empty($data['title'])) {
             $data['slug'] = slugify($data['title']);
+        } elseif (!empty($data['slug'])) {
+            $data['slug'] = slugify($data['slug']);
         }
         return $data;
     }
