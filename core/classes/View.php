@@ -34,7 +34,7 @@ class View {
      */
     private function renderTemplate($templatePath, $data) {
         return $this->captureOutput(function() use ($templatePath, $data) {
-            extract($data);
+            extract($data, EXTR_SKIP);
             include $templatePath;
         });
     }
@@ -52,7 +52,7 @@ class View {
         $layoutData = array_merge($data, array('content' => $content));
 
         return $this->captureOutput(function() use ($layoutPath, $layoutData) {
-            extract($layoutData);
+            extract($layoutData, EXTR_SKIP);
             include $layoutPath;
         });
     }
@@ -99,7 +99,7 @@ class View {
 
         try {
             return $this->captureOutput(function() use ($partialPath, $params) {
-                extract($params);
+                extract($params, EXTR_SKIP);
                 include $partialPath;
             });
         } catch (Exception $e) {

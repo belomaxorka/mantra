@@ -135,7 +135,7 @@ class Router {
      */
     private function matchPattern($pattern, $uri) {
         // Convert pattern to regex
-        $pattern = preg_replace('/\{([a-zA-Z0-9_]+)\}/', '(?P<$1>[^/]+)', $pattern);
+        $pattern = preg_replace('/\{([a-zA-Z0-9_]+)\}/', '(?P<$1>[a-zA-Z0-9_-]+)', $pattern);
         $pattern = '#^' . $pattern . '$#';
         
         if (preg_match($pattern, $uri, $matches)) {

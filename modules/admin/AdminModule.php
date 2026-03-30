@@ -34,7 +34,8 @@ class AdminModule extends Module
         // Auth
         $router->get('/admin/login', array($this, 'loginForm'));
         $router->post('/admin/login', array($this, 'loginProcess'));
-        $router->get('/admin/logout', array($this, 'logout'));
+        $router->post('/admin/logout', array($this, 'logout'));
+        $router->get('/admin/logout', function() { redirect(base_url('/admin')); });
 
         return $data;
     }
@@ -237,7 +238,9 @@ class AdminModule extends Module
             return;
         }
 
-        $this->view('admin:login', array());
+        $this->view('admin:login', array(
+            'csrf_token' => auth()->generateCsrfToken()
+        ));
     }
 
     /**
@@ -245,6 +248,12 @@ class AdminModule extends Module
      */
     public function loginProcess()
     {
+        $token = (string)request()->post('csrf_token', '');
+        if (!auth()->verifyCsrfToken($token)) {
+            abort(403);
+            return;
+        }
+
         $username = (string)request()->post('username', '');
         $password = (string)request()->post('password', '');
 
@@ -252,7 +261,8 @@ class AdminModule extends Module
             redirect(base_url('/admin'));
         } else {
             $this->view('admin:login', array(
-                'error' => 'Invalid credentials'
+                'error' => 'Invalid credentials',
+                'csrf_token' => auth()->generateCsrfToken()
             ));
         }
     }
@@ -262,6 +272,12 @@ class AdminModule extends Module
      */
     public function logout()
     {
+        $token = (string)request()->post('csrf_token', '');
+        if (!auth()->verifyCsrfToken($token)) {
+            abort(403);
+            return;
+        }
+
         auth()->logout();
         redirect(base_url('/admin/login'));
     }

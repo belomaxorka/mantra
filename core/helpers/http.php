@@ -113,9 +113,15 @@ function is_https()
     }
 
     if (!empty($_SERVER['HTTP_X_FORWARDED_PROTO'])) {
-        $proto = strtolower(trim(explode(',', $_SERVER['HTTP_X_FORWARDED_PROTO'])[0]));
-        if ($proto === 'https') {
-            return true;
+        $trusted = config('proxy.trusted_proxies', array());
+        $trusted = parse_csv($trusted);
+        $remoteAddr = isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '';
+
+        if (!empty($trusted) && ip_matches_any($remoteAddr, $trusted)) {
+            $proto = strtolower(trim(explode(',', $_SERVER['HTTP_X_FORWARDED_PROTO'])[0]));
+            if ($proto === 'https') {
+                return true;
+            }
         }
     }
 

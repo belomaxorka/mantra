@@ -17,6 +17,8 @@ class Response {
 
     public function redirect($url, $code = 302) {
         logger()->debug('Redirect', array('url' => $url, 'code' => $code));
+        // Strip CRLF to prevent header injection
+        $url = str_replace(array("\r", "\n", "\0"), '', $url);
         header('Location: ' . $url, true, (int)$code);
         exit;
     }

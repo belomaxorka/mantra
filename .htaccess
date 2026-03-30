@@ -4,15 +4,21 @@ AddDefaultCharset UTF-8
     RewriteEngine on
     RewriteBase /
 
+    # Block access to hidden files and directories (.git, .env, etc.)
+    RewriteRule (^\.|/\.) - [R=404,L]
+
     # Deny direct access to sensitive directories
-    RewriteRule ^content/(users|settings)/.*$ - [R=404,L]
-    RewriteRule ^storage/logs/.*$ - [R=404,L]
+    RewriteRule ^content/ - [R=404,L]
+    RewriteRule ^storage/ - [R=404,L]
 
     # Allow access to core assets (CSS, JS, images)
     RewriteCond %{REQUEST_URI} !^/core/assets/
     RewriteRule ^core/.*$ - [R=404,L]
 
     RewriteRule ^modules/.*/lang/.*$ - [R=404,L]
+
+    # Block access to sensitive file extensions
+    RewriteRule \.(json|md|lock|bak|sql|tmp|dist|log)$ - [R=404,L]
 
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
