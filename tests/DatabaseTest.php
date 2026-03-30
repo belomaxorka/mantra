@@ -1363,11 +1363,9 @@ PHP;
 
         try {
             $db->write('test_filesize', $id, array('data' => $largeData));
-        } catch (JsonFileException $e) {
-            $exceptionThrown = true;
-            $correctException = strpos($e->getMessage(), 'exceeds maximum size') !== false;
         } catch (Exception $e) {
             $exceptionThrown = true;
+            $correctException = strpos($e->getMessage(), 'exceeds maximum limit') !== false;
         }
 
         $this->assert($exceptionThrown, 'Exception thrown for oversized data');

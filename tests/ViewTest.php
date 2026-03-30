@@ -26,6 +26,14 @@ class ViewTest {
     private function initializeApplication() {
         // View class depends on Application::getInstance()->hooks()
         // We need to initialize HookManager
+        $this->resetHookManager();
+    }
+
+    /**
+     * Reset HookManager to a clean state.
+     * Call before any test that registers hooks to prevent leakage.
+     */
+    private function resetHookManager() {
         $app = Application::getInstance();
 
         // Use reflection to set hookManager since it's private
@@ -135,6 +143,10 @@ class ViewTest {
         $this->testAssetUrlEdgeCases();
         $this->testTemplateWithUndefinedVariable();
         $this->testNestedPartials();
+        $this->testThemeOverridesModulePartial();
+        $this->testModulePartialNonexistentModule();
+        $this->testAbortRendersThemeTemplate();
+        $this->testAbortFallbackWithoutTemplate();
 
         $this->printSummary();
     }
@@ -226,8 +238,12 @@ class ViewTest {
         $originalTheme = config('theme.active');
         $testThemeName = basename($this->themePath);
 
+        // Backup original layout
+        $layoutPath = $this->themePath . '/templates/layout.php';
+        $originalLayout = file_get_contents($layoutPath);
+
         // Create a layout that uses $content
-        file_put_contents($this->themePath . '/templates/layout.php',
+        file_put_contents($layoutPath,
             '<html><body><main><?php echo $content; ?></main></body></html>');
 
         // Create a template
@@ -253,6 +269,9 @@ class ViewTest {
             !str_contains($output, 'USER DATA'),
             'User data "content" does not override rendered content'
         );
+
+        // Restore original layout
+        file_put_contents($layoutPath, $originalLayout);
 
         config()->set('theme.active', $originalTheme);
     }
@@ -556,6 +575,9 @@ class ViewTest {
     private function testViewRenderHook() {
         echo "\nTest: view.render hook integration\n";
 
+        // Reset hooks to prevent leakage from/to other tests
+        $this->resetHookManager();
+
         $originalTheme = config('theme.active');
         $testThemeName = basename($this->themePath);
 
@@ -579,10 +601,16 @@ class ViewTest {
         );
 
         config()->set('theme.active', $originalTheme);
+
+        // Clean up hooks so they don't leak to subsequent tests
+        $this->resetHookManager();
     }
 
     private function testMultipleHooks() {
         echo "\nTest: Multiple hooks on same event\n";
+
+        // Reset hooks to prevent leakage from/to other tests
+        $this->resetHookManager();
 
         $originalTheme = config('theme.active');
         $testThemeName = basename($this->themePath);
@@ -592,7 +620,7 @@ class ViewTest {
 
         config()->set('theme.active', $testThemeName);
 
-        // Register multiple hooks
+        // Register multiple hooks with different priorities
         $app = Application::getInstance();
         $app->hooks()->register('view.render', function($content) {
             return str_replace('Text', 'Step1', $content);
@@ -610,6 +638,9 @@ class ViewTest {
         );
 
         config()->set('theme.active', $originalTheme);
+
+        // Clean up hooks so they don't leak to subsequent tests
+        $this->resetHookManager();
     }
 
     private function testEmptyTemplate() {
@@ -798,6 +829,132 @@ class ViewTest {
         $this->assert(
             str_contains($output, '<div>') && str_contains($output, '<aside>'),
             'Nested partials render correctly'
+        );
+
+        config()->set('theme.active', $originalTheme);
+    }
+
+    private function testThemeOverridesModulePartial() {
+        echo "\nTest: Theme overrides module partial\n";
+
+        $originalTheme = config('theme.active');
+        $testThemeName = basename($this->themePath);
+        $testModuleName = basename($this->modulePath);
+        config()->set('theme.active', $testThemeName);
+
+        // Create theme override for module partial
+        $overrideDir = $this->themePath . '/templates/partials/' . $testModuleName;
+        if (!is_dir($overrideDir)) {
+            mkdir($overrideDir, 0755, true);
+        }
+        file_put_contents($overrideDir . '/menu.php',
+            '<nav>Theme Override Menu</nav>');
+
+        $view = new View();
+
+        // Module partial should be overridden by theme
+        $output = $view->partial($testModuleName . ':menu');
+        $this->assert(
+            str_contains($output, 'Theme Override Menu'),
+            'Theme partial overrides module partial'
+        );
+        $this->assert(
+            !str_contains($output, '<nav>Menu</nav>'),
+            'Original module partial is not used when theme override exists'
+        );
+
+        // Clean up override
+        unlink($overrideDir . '/menu.php');
+        rmdir($overrideDir);
+
+        // Without override, module partial should render
+        $output2 = $view->partial($testModuleName . ':menu');
+        $this->assert(
+            str_contains($output2, '<nav>Menu</nav>'),
+            'Module partial renders when no theme override'
+        );
+
+        config()->set('theme.active', $originalTheme);
+    }
+
+    private function testModulePartialNonexistentModule() {
+        echo "\nTest: Module partial with nonexistent module\n";
+
+        $originalTheme = config('theme.active');
+        $testThemeName = basename($this->themePath);
+        config()->set('theme.active', $testThemeName);
+
+        $view = new View();
+
+        $output = $view->partial('nonexistent-module:some-partial');
+        $this->assert(
+            str_contains($output, '<!-- Partial not found: nonexistent-module:some-partial'),
+            'Nonexistent module partial returns not-found comment'
+        );
+
+        config()->set('theme.active', $originalTheme);
+    }
+
+    private function testAbortRendersThemeTemplate() {
+        echo "\nTest: abort() renders theme error template\n";
+
+        $originalTheme = config('theme.active');
+        $testThemeName = basename($this->themePath);
+
+        // Create a 404 template
+        file_put_contents($this->themePath . '/templates/404.php',
+            '<div class="error"><?php echo $code; ?> - <?php echo e($title); ?></div>');
+
+        config()->set('theme.active', $testThemeName);
+
+        // Capture abort() output
+        ob_start();
+        abort(404, 'test message');
+        $output = ob_get_clean();
+
+        $this->assert(
+            str_contains($output, '<div class="error">'),
+            'abort() renders theme 404 template'
+        );
+        $this->assert(
+            str_contains($output, '<!DOCTYPE html>'),
+            'abort() output is wrapped in layout'
+        );
+        $this->assert(
+            http_response_code() === 404,
+            'abort() sets correct HTTP status code'
+        );
+
+        config()->set('theme.active', $originalTheme);
+    }
+
+    private function testAbortFallbackWithoutTemplate() {
+        echo "\nTest: abort() fallback without theme template\n";
+
+        $originalTheme = config('theme.active');
+        $testThemeName = basename($this->themePath);
+        config()->set('theme.active', $testThemeName);
+
+        // No 403 template exists — should fall back to plain HTML
+        ob_start();
+        abort(403, 'Access denied');
+        $output = ob_get_clean();
+
+        $this->assert(
+            str_contains($output, '403'),
+            'abort() fallback contains status code'
+        );
+        $this->assert(
+            str_contains($output, 'Forbidden'),
+            'abort() fallback contains status title'
+        );
+        $this->assert(
+            str_contains($output, 'Access denied'),
+            'abort() fallback contains custom message'
+        );
+        $this->assert(
+            http_response_code() === 403,
+            'abort() sets correct HTTP status for fallback'
         );
 
         config()->set('theme.active', $originalTheme);
