@@ -97,10 +97,10 @@
                         </label>
                         <select class="form-select" id="status" name="status">
                             <option value="draft" <?php echo ($post['status'] === 'draft') ? 'selected' : ''; ?>>
-                                <?php echo t('admin-posts.status_draft'); ?>
+                                <?php echo t('admin-posts.status.draft'); ?>
                             </option>
                             <option value="published" <?php echo ($post['status'] === 'published') ? 'selected' : ''; ?>>
-                                <?php echo t('admin-posts.status_published'); ?>
+                                <?php echo t('admin-posts.status.published'); ?>
                             </option>
                         </select>
                     </div>

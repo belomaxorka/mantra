@@ -34,7 +34,7 @@
                 <div class="card mb-4">
                     <div class="card-body">
                         <div class="mb-3">
-                            <label for="title" class="form-label"><?php echo t('admin-pages.title_field'); ?> <span class="text-danger">*</span></label>
+                            <label for="title" class="form-label"><?php echo t('admin-pages.field.title'); ?> <span class="text-danger">*</span></label>
                             <input type="text"
                                    class="form-control form-control-lg"
                                    id="title"
@@ -45,7 +45,7 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="slug" class="form-label"><?php echo t('admin-pages.slug_field'); ?></label>
+                            <label for="slug" class="form-label"><?php echo t('admin-pages.field.slug'); ?></label>
                             <input type="text"
                                    class="form-control"
                                    id="slug"
@@ -56,7 +56,7 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="content" class="form-label"><?php echo t('admin-pages.content_field'); ?></label>
+                            <label for="content" class="form-label"><?php echo t('admin-pages.field.content'); ?></label>
                             <textarea id="content" name="content" class="form-control"><?php echo $this->escape($page['content']); ?></textarea>
                         </div>
                     </div>
@@ -70,7 +70,7 @@
                     </div>
                     <div class="card-body">
                         <div class="mb-3">
-                            <label class="form-label"><?php echo t('admin-pages.status'); ?></label>
+                            <label class="form-label"><?php echo t('admin-pages.field.status'); ?></label>
                             <div class="btn-group w-100" role="group">
                                 <input type="radio"
                                        class="btn-check"
@@ -79,7 +79,7 @@
                                        value="draft"
                                        <?php echo ($page['status'] === 'draft') ? 'checked' : ''; ?>>
                                 <label class="btn btn-outline-secondary" for="status_draft">
-                                    <i class="bi bi-file-earmark me-1"></i><?php echo t('admin-pages.draft'); ?>
+                                    <i class="bi bi-file-earmark me-1"></i><?php echo t('admin-pages.status.draft'); ?>
                                 </label>
 
                                 <input type="radio"
@@ -89,7 +89,7 @@
                                        value="published"
                                        <?php echo ($page['status'] === 'published') ? 'checked' : ''; ?>>
                                 <label class="btn btn-outline-success" for="status_published">
-                                    <i class="bi bi-check-circle me-1"></i><?php echo t('admin-pages.published'); ?>
+                                    <i class="bi bi-check-circle me-1"></i><?php echo t('admin-pages.status.published'); ?>
                                 </label>
                             </div>
                         </div>
@@ -132,7 +132,7 @@
 
                 <div class="card">
                     <div class="card-header">
-                        <strong><?php echo t('admin-pages.navigation'); ?></strong>
+                        <strong><?php echo t('admin-pages.field.navigation'); ?></strong>
                     </div>
                     <div class="card-body">
                         <div class="mb-3">

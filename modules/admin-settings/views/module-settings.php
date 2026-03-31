@@ -225,7 +225,7 @@
 
                           <div class="text-end">
                             <button class="btn btn-sm btn-outline-danger" type="submit" name="module_delete" value="<?php echo e($id); ?>" <?php echo $canDelete ? '' : 'disabled'; ?> onclick="return confirm('<?php echo e(t('admin.modules.delete_confirm')); ?>');">
-                              <?php echo e(t('admin.modules.delete')); ?>
+                              <?php echo e(t('admin.common.delete')); ?>
                             </button>
                           </div>
                         </div>
@@ -299,7 +299,7 @@
 
                           <div class="text-end">
                             <button class="btn btn-sm btn-outline-danger" type="submit" name="module_delete" value="<?php echo e($id); ?>" <?php echo $canDelete ? '' : 'disabled'; ?> onclick="return confirm('<?php echo e(t('admin.modules.delete_confirm')); ?>');">
-                              <?php echo e(t('admin.modules.delete')); ?>
+                              <?php echo e(t('admin.common.delete')); ?>
                             </button>
                           </div>
                         </div>

@@ -79,9 +79,9 @@
                             </td>
                             <td>
                                 <?php if ($post['status'] === 'published'): ?>
-                                    <span class="badge bg-success"><?php echo t('admin-posts.status_published'); ?></span>
+                                    <span class="badge bg-success"><?php echo t('admin-posts.status.published'); ?></span>
                                 <?php else: ?>
-                                    <span class="badge bg-secondary"><?php echo t('admin-posts.status_draft'); ?></span>
+                                    <span class="badge bg-secondary"><?php echo t('admin-posts.status.draft'); ?></span>
                                 <?php endif; ?>
                             </td>
                             <td>

@@ -12,11 +12,6 @@ return array(
     'admin-settings.saved' => 'Настройки успешно сохранены',
     'admin-settings.error' => 'Ошибка при сохранении настроек',
 
-    // Tabs
-    'admin-settings.tab.general' => 'Общие',
-    'admin-settings.tab.modules' => 'Модули',
-    'admin-settings.tab.advanced' => 'Дополнительно',
-
     // Module management
     'admin-settings.modules.enabled' => 'Включенные модули',
     'admin-settings.modules.available' => 'Доступные модули',
@@ -58,7 +53,6 @@ return array(
     'admin-settings.content.posts_per_page' => 'Постов на странице',
 
     // Modules settings
-    'admin-settings.modules.enabled_modules' => 'Включенные модули',
     'admin-settings.modules.core_modules' => 'Основные модули',
     'admin-settings.modules.other_modules' => 'Другие модули',
 

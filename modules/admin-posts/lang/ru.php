@@ -6,8 +6,6 @@ return array(
 
     // Posts list
     'admin-posts.title' => 'Посты',
-    'admin-posts.list_title' => 'Посты',
-    'admin-posts.new' => 'Новый пост',
     'admin-posts.new_post' => 'Новый пост',
     'admin-posts.no_posts' => 'Пока нет постов. Создайте свой первый пост!',
     'admin-posts.edit_post' => 'Редактировать пост',
@@ -24,8 +22,8 @@ return array(
     'admin-posts.field.content' => 'Содержимое',
 
     // Status
-    'admin-posts.status_draft' => 'Черновик',
-    'admin-posts.status_published' => 'Опубликовано',
+    'admin-posts.status.draft' => 'Черновик',
+    'admin-posts.status.published' => 'Опубликовано',
 
     // Actions
     'admin-posts.edit' => 'Редактировать',

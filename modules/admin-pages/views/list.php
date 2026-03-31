@@ -53,12 +53,12 @@
                             <table class="table table-hover">
                                 <thead>
                                     <tr>
-                                        <th><?php echo t('admin-pages.title_field'); ?></th>
-                                        <th><?php echo t('admin-pages.slug_field'); ?></th>
-                                        <th><?php echo t('admin-pages.status'); ?></th>
-                                        <th><?php echo t('admin-pages.navigation'); ?></th>
-                                        <th><?php echo t('admin-pages.updated'); ?></th>
-                                        <th><?php echo t('admin-pages.actions'); ?></th>
+                                        <th><?php echo t('admin-pages.field.title'); ?></th>
+                                        <th><?php echo t('admin-pages.field.slug'); ?></th>
+                                        <th><?php echo t('admin-pages.field.status'); ?></th>
+                                        <th><?php echo t('admin-pages.field.navigation'); ?></th>
+                                        <th><?php echo t('admin-pages.field.updated'); ?></th>
+                                        <th><?php echo t('admin-pages.field.actions'); ?></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -72,9 +72,9 @@
                                             </td>
                                             <td>
                                                 <?php if ($page['status'] === 'published'): ?>
-                                                    <span class="badge bg-success"><?php echo t('admin-pages.published'); ?></span>
+                                                    <span class="badge bg-success"><?php echo t('admin-pages.status.published'); ?></span>
                                                 <?php else: ?>
-                                                    <span class="badge bg-secondary"><?php echo t('admin-pages.draft'); ?></span>
+                                                    <span class="badge bg-secondary"><?php echo t('admin-pages.status.draft'); ?></span>
                                                 <?php endif; ?>
                                             </td>
                                             <td>

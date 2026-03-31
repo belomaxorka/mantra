@@ -6,8 +6,6 @@ return array(
 
     // Posts list
     'admin-posts.title' => 'Posts',
-    'admin-posts.list_title' => 'Posts',
-    'admin-posts.new' => 'New Post',
     'admin-posts.new_post' => 'New Post',
     'admin-posts.no_posts' => 'No posts yet. Create your first post!',
     'admin-posts.edit_post' => 'Edit Post',
@@ -24,8 +22,8 @@ return array(
     'admin-posts.field.content' => 'Content',
 
     // Status
-    'admin-posts.status_draft' => 'Draft',
-    'admin-posts.status_published' => 'Published',
+    'admin-posts.status.draft' => 'Draft',
+    'admin-posts.status.published' => 'Published',
 
     // Actions
     'admin-posts.edit' => 'Edit',

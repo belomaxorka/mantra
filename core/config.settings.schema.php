@@ -100,7 +100,7 @@ return array(
                 array(
                     'path' => 'modules.enabled',
                     'type' => 'module_cards',
-                    'title' => 'admin-settings.modules.enabled_modules',
+                    'title' => 'admin-settings.modules.enabled',
                     'default' => array('admin'),
                     'options' => array(),
                 ),

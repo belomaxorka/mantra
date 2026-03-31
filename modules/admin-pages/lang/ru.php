@@ -2,7 +2,7 @@
 
 return array(
     // Module name
-    'admin-pages.name' => 'Управление страницами',
+    'admin-pages.name' => 'Страницы',
 
     // Pages list
     'admin-pages.title' => 'Страницы',
@@ -12,16 +12,16 @@ return array(
     'admin-pages.back_to_list' => 'Вернуться к страницам',
 
     // Table columns
-    'admin-pages.title_field' => 'Заголовок',
-    'admin-pages.slug_field' => 'URL',
-    'admin-pages.status' => 'Статус',
-    'admin-pages.navigation' => 'Навигация',
-    'admin-pages.updated' => 'Обновлено',
-    'admin-pages.actions' => 'Действия',
+    'admin-pages.field.title' => 'Заголовок',
+    'admin-pages.field.slug' => 'URL',
+    'admin-pages.field.status' => 'Статус',
+    'admin-pages.field.navigation' => 'Навигация',
+    'admin-pages.field.updated' => 'Обновлено',
+    'admin-pages.field.actions' => 'Действия',
 
     // Status
-    'admin-pages.published' => 'Опубликовано',
-    'admin-pages.draft' => 'Черновик',
+    'admin-pages.status.published' => 'Опубликовано',
+    'admin-pages.status.draft' => 'Черновик',
     'admin-pages.shown_in_nav' => 'Показывается в навигации',
     'admin-pages.hidden_from_nav' => 'Скрыто из навигации',
 
@@ -37,7 +37,7 @@ return array(
     'admin-pages.title_placeholder' => 'Введите заголовок страницы',
     'admin-pages.slug_placeholder' => 'url-stranitsy',
     'admin-pages.slug_help' => 'URL-адрес страницы. Оставьте пустым для автоматической генерации.',
-    'admin-pages.content_field' => 'Содержимое',
+    'admin-pages.field.content' => 'Содержимое',
     'admin-pages.publish' => 'Публикация',
 
     // Featured image

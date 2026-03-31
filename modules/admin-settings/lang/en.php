@@ -12,11 +12,6 @@ return array(
     'admin-settings.saved' => 'Settings saved successfully',
     'admin-settings.error' => 'Error saving settings',
 
-    // Tabs
-    'admin-settings.tab.general' => 'General',
-    'admin-settings.tab.modules' => 'Modules',
-    'admin-settings.tab.advanced' => 'Advanced',
-
     // Module management
     'admin-settings.modules.enabled' => 'Enabled Modules',
     'admin-settings.modules.available' => 'Available Modules',
@@ -58,7 +53,6 @@ return array(
     'admin-settings.content.posts_per_page' => 'Posts per page',
 
     // Modules settings
-    'admin-settings.modules.enabled_modules' => 'Enabled modules',
     'admin-settings.modules.core_modules' => 'Core Modules',
     'admin-settings.modules.other_modules' => 'Other Modules',
 

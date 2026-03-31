@@ -2,7 +2,7 @@
 
 return array(
     // Module name
-    'admin-pages.name' => 'Pages Management',
+    'admin-pages.name' => 'Pages',
 
     // Pages list
     'admin-pages.title' => 'Pages',
@@ -12,16 +12,16 @@ return array(
     'admin-pages.back_to_list' => 'Back to Pages',
 
     // Table columns
-    'admin-pages.title_field' => 'Title',
-    'admin-pages.slug_field' => 'Slug',
-    'admin-pages.status' => 'Status',
-    'admin-pages.navigation' => 'Navigation',
-    'admin-pages.updated' => 'Updated',
-    'admin-pages.actions' => 'Actions',
+    'admin-pages.field.title' => 'Title',
+    'admin-pages.field.slug' => 'Slug',
+    'admin-pages.field.status' => 'Status',
+    'admin-pages.field.navigation' => 'Navigation',
+    'admin-pages.field.updated' => 'Updated',
+    'admin-pages.field.actions' => 'Actions',
 
     // Status
-    'admin-pages.published' => 'Published',
-    'admin-pages.draft' => 'Draft',
+    'admin-pages.status.published' => 'Published',
+    'admin-pages.status.draft' => 'Draft',
     'admin-pages.shown_in_nav' => 'Shown in navigation',
     'admin-pages.hidden_from_nav' => 'Hidden from navigation',
 
@@ -37,7 +37,7 @@ return array(
     'admin-pages.title_placeholder' => 'Enter page title',
     'admin-pages.slug_placeholder' => 'page-url-slug',
     'admin-pages.slug_help' => 'URL-friendly version of the title. Leave empty to auto-generate.',
-    'admin-pages.content_field' => 'Content',
+    'admin-pages.field.content' => 'Content',
     'admin-pages.publish' => 'Publish',
 
     // Featured image

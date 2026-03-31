@@ -43,7 +43,6 @@ return array(
     'admin.modules.author' => 'Author',
     'admin.modules.homepage' => 'Homepage',
     'admin.modules.settings' => 'Settings',
-    'admin.modules.delete' => 'Delete',
     'admin.modules.delete_confirm' => 'Are you sure you want to delete this module?',
     'admin.modules.type' => 'Type',
     'admin.modules.type.core' => 'Core',

@@ -43,7 +43,6 @@ return array(
     'admin.modules.author' => 'Автор',
     'admin.modules.homepage' => 'Домашняя страница',
     'admin.modules.settings' => 'Настройки',
-    'admin.modules.delete' => 'Удалить',
     'admin.modules.delete_confirm' => 'Вы уверены, что хотите удалить этот модуль?',
     'admin.modules.type' => 'Тип',
     'admin.modules.type.core' => 'Ядро',
