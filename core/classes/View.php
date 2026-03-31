@@ -155,6 +155,10 @@ class View {
                 list($module, $tpl) = explode(':', $template, 2);
                 $templatePath = MANTRA_MODULES . '/' . $module . '/views/' . $tpl . '.php';
                 $isModuleTemplate = true;
+                // Auto-inject module context for moduleAsset() etc.
+                if (!isset($this->data['_module'])) {
+                    $this->data['_module'] = $module;
+                }
             } else {
                 // Smart fallback: if module is specified in data, try module views
                 if (isset($data['_module']) && !empty($data['_module'])) {
@@ -210,10 +214,38 @@ class View {
     }
 
     /**
-     * Get asset URL
+     * Get theme asset URL
      */
     public function asset($path) {
         $baseUrl = rtrim(config('site.url', ''), '/');
         return $baseUrl . '/' . basename(MANTRA_THEMES) . '/' . basename($this->themePath) . '/assets/' . ltrim($path, '/');
+    }
+
+    /**
+     * Get module asset URL
+     *
+     * Two calling conventions:
+     *   $this->moduleAsset('css/style.css')           — uses _module from template context
+     *   $this->moduleAsset('admin', 'css/style.css')  — explicit module ID
+     *
+     * @param string $moduleOrPath Module ID (two-arg) or asset path (one-arg)
+     * @param string|null $path    Asset path relative to module's assets/ directory
+     * @return string URL to the asset
+     */
+    public function moduleAsset($moduleOrPath, $path = null) {
+        if ($path === null) {
+            // One-arg form: resolve module from template context
+            $path = $moduleOrPath;
+            $module = isset($this->data['_module']) ? $this->data['_module'] : null;
+        } else {
+            $module = $moduleOrPath;
+        }
+
+        if ($module === null || $module === '') {
+            return '';
+        }
+
+        $path = ltrim($path, '/');
+        return '/' . basename(MANTRA_MODULES) . '/' . $module . '/assets/' . $path;
     }
 }

@@ -1,33 +1,7 @@
-<style>
-    @media (max-width: 575.98px) {
-        .list-header-actions {
-            flex-direction: column;
-            align-items: stretch !important;
-            gap: 0.75rem;
-        }
-        .list-header-actions h1 {
-            font-size: 1.5rem;
-        }
-        .list-header-actions .btn {
-            width: 100%;
-        }
-        .table-responsive table {
-            font-size: 0.875rem;
-        }
-        .table-responsive .btn-group {
-            flex-direction: column;
-        }
-        .table-responsive .btn-group .btn {
-            border-radius: 0.25rem !important;
-            margin-bottom: 0.25rem;
-        }
-    }
-</style>
-
 <div class="container-fluid">
     <div class="row mb-4">
         <div class="col">
-            <div class="d-flex justify-content-between align-items-center list-header-actions">
+            <div class="admin-page-header">
                 <h1 class="h3"><?php echo t('admin-pages.title'); ?></h1>
                 <a href="<?php echo base_url('/admin/pages/new'); ?>" class="btn btn-primary">
                     <i class="bi bi-plus-circle me-2"></i><?php echo t('admin-pages.new'); ?>

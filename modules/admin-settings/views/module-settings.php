@@ -1,42 +1,6 @@
-<style>
-    @media (max-width: 767.98px) {
-        .module-settings-title {
-            font-size: 1.5rem;
-        }
-        .nav-tabs {
-            flex-wrap: nowrap;
-            overflow-x: auto;
-            overflow-y: hidden;
-            -webkit-overflow-scrolling: touch;
-        }
-        .nav-tabs .nav-link {
-            white-space: nowrap;
-        }
-    }
-    @media (max-width: 575.98px) {
-        .module-card-wrapper .d-flex {
-            flex-direction: column !important;
-            gap: 1rem;
-        }
-        .module-card-wrapper .text-end {
-            text-align: left !important;
-        }
-        .module-card-wrapper .btn {
-            width: 100%;
-        }
-        .text-muted.small {
-            font-size: 0.8rem;
-        }
-        .text-muted.small span {
-            display: block;
-            margin-bottom: 0.25rem;
-        }
-    }
-</style>
-
 <?php if (!empty($title)): ?>
   <div class="d-flex align-items-center justify-content-between mb-4">
-    <h1 class="h3 mb-0 module-settings-title"><?php echo e($title); ?></h1>
+    <h1 class="h3 mb-0"><?php echo e($title); ?></h1>
   </div>
 <?php endif; ?>
 

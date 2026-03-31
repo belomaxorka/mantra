@@ -5,44 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title><?php echo t('admin.login.title'); ?> - <?php echo e(MANTRA_PROJECT_INFO['name']); ?></title>
 
-  <link href="/<?php echo basename(MANTRA_CORE); ?>/assets/bootstrap/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="<?php echo $this->moduleAsset('admin', 'bootstrap/bootstrap.min.css'); ?>" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-
-  <style>
-    body {
-      background-color: #f8f9fa;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 1rem;
-    }
-    .login-card {
-      max-width: 420px;
-      width: 100%;
-    }
-
-    /* Mobile responsive adjustments */
-    @media (max-width: 575.98px) {
-      body {
-        padding: 0.5rem;
-      }
-      .login-card .card-body {
-        padding: 1.5rem !important;
-      }
-      .login-card h1 {
-        font-size: 1.5rem;
-      }
-    }
-  </style>
+  <link href="<?php echo $this->moduleAsset('admin', 'css/admin.css'); ?>" rel="stylesheet">
 </head>
-<body>
+<body class="login-page">
   <div class="login-card">
-    <div class="card shadow">
-      <div class="card-body p-4">
+    <div class="card">
+      <div class="card-body">
         <div class="text-center mb-4">
-          <h1 class="h3 fw-bold"><?php echo e(MANTRA_PROJECT_INFO['name']); ?></h1>
-          <p class="text-muted"><?php echo t('admin.login.subtitle'); ?></p>
+          <h1 class="login-brand"><?php echo e(MANTRA_PROJECT_INFO['name']); ?></h1>
+          <p class="login-subtitle"><?php echo t('admin.login.subtitle'); ?></p>
         </div>
 
         <?php if (isset($error)): ?>
@@ -73,6 +47,6 @@
     </div>
   </div>
 
-  <script src="/<?php echo basename(MANTRA_CORE); ?>/assets/bootstrap/bootstrap.min.js"></script>
+  <script src="<?php echo $this->moduleAsset('admin', 'bootstrap/bootstrap.min.js'); ?>"></script>
 </body>
 </html>

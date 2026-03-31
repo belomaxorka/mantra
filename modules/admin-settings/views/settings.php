@@ -1,24 +1,7 @@
-<style>
-    @media (max-width: 767.98px) {
-        .settings-title {
-            font-size: 1.5rem;
-        }
-        .nav-tabs {
-            flex-wrap: nowrap;
-            overflow-x: auto;
-            overflow-y: hidden;
-            -webkit-overflow-scrolling: touch;
-        }
-        .nav-tabs .nav-link {
-            white-space: nowrap;
-        }
-    }
-</style>
-
 <div class="container-fluid">
   <div class="row mb-4">
     <div class="col">
-      <h1 class="h3 settings-title"><?php echo e(isset($pageTitle) ? $pageTitle : 'Settings'); ?></h1>
+      <h1 class="h3"><?php echo e(isset($pageTitle) ? $pageTitle : 'Settings'); ?></h1>
     </div>
   </div>
 

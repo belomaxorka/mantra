@@ -1,15 +1,7 @@
-<style>
-    @media (max-width: 767.98px) {
-        .dashboard-title {
-            font-size: 1.5rem;
-        }
-    }
-</style>
-
 <div class="container-fluid">
     <div class="row mb-4">
         <div class="col">
-            <h1 class="h3 dashboard-title"><?php echo t('admin-dashboard.title'); ?></h1>
+            <h1 class="h3"><?php echo t('admin-dashboard.title'); ?></h1>
         </div>
     </div>
 
