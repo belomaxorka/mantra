@@ -43,7 +43,7 @@ class Logger implements \Psr\Log\LoggerInterface
 
         $this->logPath = isset($options['logPath'])
             ? $options['logPath']
-            : (defined('MANTRA_STORAGE') ? (MANTRA_STORAGE . '/logs') : (__DIR__ . '/../storage/logs'));
+            : (MANTRA_STORAGE . '/logs');
 
         if (isset($options['minLevel']) && isset(self::$levels[$options['minLevel']])) {
             $this->minLevel = $options['minLevel'];

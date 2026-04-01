@@ -34,11 +34,10 @@ class Auth {
         }
 
         // Check user status (block inactive/banned accounts)
-        $status = isset($user['status']) ? $user['status'] : 'active';
-        if ($status !== 'active') {
+        if ($user['status'] !== 'active') {
             logger()->warning('Login failed: account not active', array(
                 'username' => $username,
-                'status' => $status
+                'status' => $user['status']
             ));
             return false;
         }
@@ -82,8 +81,8 @@ class Auth {
     public function logout() {
         if ($this->currentUser) {
             logger()->info('User logged out', array(
-                'username' => isset($this->currentUser['username']) ? $this->currentUser['username'] : 'unknown',
-                'user_id' => isset($this->currentUser['_id']) ? $this->currentUser['_id'] : 'unknown'
+                'username' => $this->currentUser['username'],
+                'user_id' => $this->currentUser['_id']
             ));
         }
 
@@ -132,11 +131,6 @@ class Auth {
     public function hashPassword($password) {
         $algo = config('security.password_hash_algo', 'PASSWORD_DEFAULT');
 
-        // Config stores algorithm as a string identifier.
-        if (!is_string($algo) || $algo === '') {
-            $algo = 'PASSWORD_DEFAULT';
-        }
-
         switch ($algo) {
             case 'PASSWORD_BCRYPT':
                 return password_hash($password, PASSWORD_BCRYPT);
@@ -162,10 +156,6 @@ class Auth {
      */
     private function needsRehash($hash) {
         $algo = config('security.password_hash_algo', 'PASSWORD_DEFAULT');
-
-        if (!is_string($algo) || $algo === '') {
-            $algo = 'PASSWORD_DEFAULT';
-        }
 
         $phpAlgo = PASSWORD_DEFAULT;
         switch ($algo) {

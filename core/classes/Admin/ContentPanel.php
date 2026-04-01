@@ -216,8 +216,8 @@ abstract class ContentPanel extends AdminPanel {
         $data = $this->extractFormData();
         $data = $this->ensureSlug($data);
         $user = $this->getUser();
-        $data['author'] = isset($user['username']) ? $user['username'] : 'Unknown';
-        $data['author_id'] = isset($user['_id']) ? $user['_id'] : '';
+        $data['author'] = $user['username'];
+        $data['author_id'] = $user['_id'];
         $data['created_at'] = now();
         $data['updated_at'] = now();
 
@@ -289,9 +289,9 @@ abstract class ContentPanel extends AdminPanel {
         $data['updated_at'] = now();
 
         // Preserve original fields
-        $data['author'] = isset($item['author']) ? $item['author'] : 'Unknown';
-        $data['author_id'] = isset($item['author_id']) ? $item['author_id'] : '';
-        $data['created_at'] = isset($item['created_at']) ? $item['created_at'] : now();
+        $data['author'] = $item['author'];
+        $data['author_id'] = $item['author_id'];
+        $data['created_at'] = $item['created_at'];
 
         db()->write($this->getCollectionName(), $id, $data);
 

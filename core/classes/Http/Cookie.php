@@ -13,7 +13,7 @@ class Cookie {
     }
 
     public function set($name, $value, $options = array()) {
-        if (defined('MANTRA_CLI') && MANTRA_CLI) {
+        if (MANTRA_CLI) {
             return false;
         }
 
@@ -55,7 +55,7 @@ class Cookie {
         }
 
         // PHP 7.3+ supports options array with SameSite
-        if (defined('PHP_VERSION_ID') && PHP_VERSION_ID >= 70300) {
+        if (PHP_VERSION_ID >= 70300) {
             return setcookie($name, $value, array(
                 'expires' => $expires,
                 'path' => $path,

@@ -144,8 +144,7 @@
         </form>
       </div>
 
-      <?php if (defined('MANTRA_PROJECT_INFO')): ?>
-        <?php $projectInfo = MANTRA_PROJECT_INFO; ?>
+      <?php $projectInfo = MANTRA_PROJECT_INFO; ?>
         <hr class="my-2">
         <div class="sidebar-meta">
           <div><strong><?php echo e($projectInfo['name']); ?></strong> v<?php echo e($projectInfo['version']); ?></div>
@@ -158,7 +157,6 @@
             </div>
           <?php endif; ?>
         </div>
-      <?php endif; ?>
     </div>
   </aside>
 

@@ -20,7 +20,7 @@ class Config {
      * Intended for early bootstrap (index.php) before Application exists.
      */
     public static function bootstrap($configPath = null) {
-        $path = $configPath ? $configPath : (defined('MANTRA_CONTENT') ? (MANTRA_CONTENT . '/settings/config.json') : null);
+        $path = $configPath ? $configPath : (MANTRA_CONTENT . '/settings/config.json');
 
         $defaults = self::defaults();
         $json = array();

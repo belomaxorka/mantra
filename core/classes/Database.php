@@ -317,7 +317,7 @@ class Database
     private function normalizeDocument($collection, $id, $data)
     {
         $schema = $this->getCollectionSchema($collection);
-        if (!$schema || !is_array($schema)) {
+        if (!$schema) {
             return $data;
         }
 

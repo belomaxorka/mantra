@@ -8,7 +8,7 @@ class Session {
     }
 
     public function start($options = array()) {
-        if (defined('MANTRA_CLI') && MANTRA_CLI) {
+        if (MANTRA_CLI) {
             return;
         }
 
@@ -44,7 +44,7 @@ class Session {
             $secure = is_https();
         }
 
-        if (defined('PHP_VERSION_ID') && PHP_VERSION_ID >= 70300) {
+        if (PHP_VERSION_ID >= 70300) {
             $samesite = config('session.cookie_samesite', 'Lax');
 
             // Validate SameSite value
@@ -93,14 +93,14 @@ class Session {
     }
 
     public function regenerate($deleteOldSession = true) {
-        if (defined('MANTRA_CLI') && MANTRA_CLI) {
+        if (MANTRA_CLI) {
             return false;
         }
         return session_regenerate_id($deleteOldSession);
     }
 
     public function destroy() {
-        if (defined('MANTRA_CLI') && MANTRA_CLI) {
+        if (MANTRA_CLI) {
             return false;
         }
         $_SESSION = array();
