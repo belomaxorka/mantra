@@ -103,6 +103,15 @@ return array(
     'admin-settings.appearance.preset.rose' => 'Rose',
     'admin-settings.appearance.preset.violet' => 'Violet',
     'admin-settings.appearance.preset.slate' => 'Slate',
+    'admin-settings.appearance.sidebar_color' => 'Sidebar color',
+    'admin-settings.appearance.sidebar_color.help' => 'Choose the sidebar color scheme.',
+    'admin-settings.appearance.sidebar.dark' => 'Dark (default)',
+    'admin-settings.appearance.sidebar.midnight' => 'Midnight',
+    'admin-settings.appearance.sidebar.charcoal' => 'Charcoal',
+    'admin-settings.appearance.sidebar.ocean' => 'Ocean',
+    'admin-settings.appearance.sidebar.forest' => 'Forest',
+    'admin-settings.appearance.sidebar.plum' => 'Plum',
+    'admin-settings.appearance.sidebar.light' => 'Light',
 
     // Debug settings
     'admin-settings.debug.enabled' => 'Enable debug mode',

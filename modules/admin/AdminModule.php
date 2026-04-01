@@ -55,37 +55,60 @@ class AdminModule extends Module
      */
     private function registerAppearanceOverrides()
     {
-        $this->hook('admin.head', array($this, 'injectAccentColorStyle'), 20);
+        $this->hook('admin.head', array($this, 'injectAppearanceStyle'), 20);
     }
 
     /**
-     * Inject CSS custom property overrides based on the selected accent color preset.
+     * Inject CSS custom property overrides for accent color and sidebar color.
      */
-    public function injectAccentColorStyle($html)
+    public function injectAppearanceStyle($html)
     {
-        $preset = \ConfigSettings::instance()->get('admin.accent_color', 'indigo');
-        $preset = preg_replace('/[^a-z0-9_-]/', '', strtolower($preset));
-
-        if ($preset === 'indigo' || $preset === '') {
-            return $html;
-        }
-
-        $presetsFile = $this->getPath() . '/appearance-presets.php';
-        if (!file_exists($presetsFile)) {
-            return $html;
-        }
-
-        $presets = require $presetsFile;
-        if (!is_array($presets) || !isset($presets[$preset]) || !is_array($presets[$preset])) {
-            return $html;
-        }
-
+        $config = \ConfigSettings::instance();
         $lines = array();
-        foreach ($presets[$preset] as $prop => $value) {
-            $lines[] = '  ' . $prop . ': ' . $value . ';';
+
+        // Accent color
+        $accent = preg_replace('/[^a-z0-9_-]/', '', strtolower($config->get('admin.accent_color', 'indigo')));
+        if ($accent !== '' && $accent !== 'indigo') {
+            $lines = array_merge($lines, $this->loadPresetVars('appearance-presets.php', $accent));
+        }
+
+        // Sidebar color
+        $sidebar = preg_replace('/[^a-z0-9_-]/', '', strtolower($config->get('admin.sidebar_color', 'dark')));
+        if ($sidebar !== '' && $sidebar !== 'dark') {
+            $lines = array_merge($lines, $this->loadPresetVars('sidebar-presets.php', $sidebar));
+        }
+
+        if (empty($lines)) {
+            return $html;
         }
 
         return $html . "\n<style>:root {\n" . implode("\n", $lines) . "\n}</style>";
+    }
+
+    /**
+     * Load CSS variable lines from a preset file.
+     *
+     * @param string $filename Preset file name relative to module path
+     * @param string $key      Preset key
+     * @return array            Lines like "  --mn-primary: #6366f1;"
+     */
+    private function loadPresetVars($filename, $key)
+    {
+        $file = $this->getPath() . '/' . $filename;
+        if (!file_exists($file)) {
+            return array();
+        }
+
+        $presets = require $file;
+        if (!is_array($presets) || !isset($presets[$key]) || !is_array($presets[$key])) {
+            return array();
+        }
+
+        $lines = array();
+        foreach ($presets[$key] as $prop => $value) {
+            $lines[] = '  ' . $prop . ': ' . $value . ';';
+        }
+        return $lines;
     }
 
     // ========== Panel Management ==========

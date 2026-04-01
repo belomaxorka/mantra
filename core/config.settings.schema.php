@@ -118,6 +118,14 @@ return array(
                     'help' => 'admin-settings.appearance.accent_color.help',
                     'options' => array(),
                 ),
+                array(
+                    'path' => 'admin.sidebar_color',
+                    'type' => 'select',
+                    'title' => 'admin-settings.appearance.sidebar_color',
+                    'default' => 'dark',
+                    'help' => 'admin-settings.appearance.sidebar_color.help',
+                    'options' => array(),
+                ),
             ),
         ),
         array(

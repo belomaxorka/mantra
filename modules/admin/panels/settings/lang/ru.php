@@ -103,6 +103,15 @@ return array(
     'admin-settings.appearance.preset.rose' => 'Розовый',
     'admin-settings.appearance.preset.violet' => 'Фиолетовый',
     'admin-settings.appearance.preset.slate' => 'Серый',
+    'admin-settings.appearance.sidebar_color' => 'Цвет сайдбара',
+    'admin-settings.appearance.sidebar_color.help' => 'Выберите цветовую схему боковой панели.',
+    'admin-settings.appearance.sidebar.dark' => 'Тёмный (по умолчанию)',
+    'admin-settings.appearance.sidebar.midnight' => 'Полуночный',
+    'admin-settings.appearance.sidebar.charcoal' => 'Угольный',
+    'admin-settings.appearance.sidebar.ocean' => 'Океан',
+    'admin-settings.appearance.sidebar.forest' => 'Лесной',
+    'admin-settings.appearance.sidebar.plum' => 'Сливовый',
+    'admin-settings.appearance.sidebar.light' => 'Светлый',
 
     // Debug settings
     'admin-settings.debug.enabled' => 'Включить режим отладки',

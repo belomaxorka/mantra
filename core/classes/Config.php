@@ -142,6 +142,7 @@ class Config {
             ),
             'admin' => array(
                 'accent_color' => 'indigo',
+                'sidebar_color' => 'dark',
             ),
             'advanced' => array(
                 // Placeholder to force JSON object encoding for empty group.
