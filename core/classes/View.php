@@ -21,8 +21,8 @@ class View {
      * 2. Explicit module syntax: "module:template" -> modules/{module}/views/{template}.php
      * 3. Smart fallback via _module parameter: modules/{_module}/views/{template}.php
      */
-    public function render($template, $data = array()) {
-        echo $this->fetch($template, $data);
+    public function render($template, $data = array(), $options = array()) {
+        echo $this->fetch($template, $data, $options);
     }
 
     /**
@@ -141,7 +141,7 @@ class View {
     /**
      * Render and return as string (without output)
      */
-    public function fetch($template, $data = array()) {
+    public function fetch($template, $data = array(), $options = array()) {
         $this->data = $data;
 
         // Try theme template first (allows theme to override)
@@ -178,8 +178,9 @@ class View {
         // Render content with error handling
         $content = $this->renderTemplate($templatePath, $this->data);
 
-        // Wrap in layout if not a module template
-        if (!$isModuleTemplate) {
+        // Wrap in layout: theme templates always, module templates only with explicit 'layout' option
+        $forceLayout = !empty($options['layout']);
+        if (!$isModuleTemplate || $forceLayout) {
             $layoutPath = $this->themePath . '/templates/layout.php';
             if (file_exists($layoutPath)) {
                 $content = $this->renderLayout($layoutPath, $this->data, $content);

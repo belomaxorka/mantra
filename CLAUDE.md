@@ -159,10 +159,13 @@ This ensures modules can override default behavior when needed.
 
 ### Views / themes
 
+See `docs/VIEWS.md` for complete API reference.
+
 - `core/View.php` renders templates with smart fallback logic.
   - **Theme templates** (first priority): `themes/<active_theme>/templates/<template>.php`
   - **Module templates** (fallback): `modules/<module>/views/<template>.php`
   - Content templates are automatically wrapped in `layout.php` (unless using module template syntax)
+  - Module templates with `array('layout' => true)` option are wrapped in site layout (for public-facing module pages)
   - After rendering, output is filtered through the `view.render` hook.
 
 **Template resolution order:**

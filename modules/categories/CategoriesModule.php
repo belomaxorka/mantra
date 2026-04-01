@@ -295,7 +295,7 @@ class CategoriesModule extends BaseAdminModule
             'title' => $category['title'] . ' - ' . config('site.name', 'Mantra CMS'),
         );
 
-        // Template fallback: theme category.php → module template
+        // Template fallback: theme category.php → module template (with site layout)
         $theme = config('theme.active', 'default');
         $themePath = MANTRA_THEMES . '/' . $theme . '/templates';
 
@@ -304,7 +304,7 @@ class CategoriesModule extends BaseAdminModule
         } elseif (file_exists($themePath . '/category.php')) {
             app()->view()->render('category', $data);
         } else {
-            app()->view()->render('categories:category', $data);
+            app()->view()->render('categories:category', $data, array('layout' => true));
         }
     }
 
