@@ -228,7 +228,7 @@ class Database
         foreach ($documents as $id => $data) {
             $normalized = $this->normalizeDocument($collection, $id, $data);
             if ($normalized !== $data) {
-                $this->write($collection, $id, $normalized);
+                $this->writeRaw($collection, $id, $normalized);
                 $data = $normalized;
             }
 
@@ -325,26 +325,23 @@ class Database
         $currentVersion = isset($schema['version']) ? (int)$schema['version'] : 0;
         $docVersion = isset($data['schema_version']) ? (int)$data['schema_version'] : 0;
 
-        if (!isset($data['schema_version'])) {
+        // Run migration BEFORE applying defaults so that migrate callbacks
+        // operate on the raw document (defaults won't shadow old field names).
+        if ($docVersion < $currentVersion && !empty($schema['migrate']) && is_callable($schema['migrate'])) {
+            $data = call_user_func($schema['migrate'], $data, $docVersion, $currentVersion);
             $data['schema_version'] = $currentVersion;
-            $docVersion = $currentVersion;
+        } elseif ($docVersion < $currentVersion) {
+            // No migrator: only bump the version.
+            $data['schema_version'] = $currentVersion;
         }
 
+        // Apply defaults for any still-missing fields (after migration).
         if (!empty($schema['defaults']) && is_array($schema['defaults'])) {
             foreach ($schema['defaults'] as $key => $value) {
                 if (!array_key_exists($key, $data)) {
                     $data[$key] = $value;
                 }
             }
-        }
-
-        // Optional migrator callback: function(array $doc, int $fromVersion, int $toVersion): array
-        if ($docVersion < $currentVersion && !empty($schema['migrate']) && is_callable($schema['migrate'])) {
-            $data = call_user_func($schema['migrate'], $data, $docVersion, $currentVersion);
-            $data['schema_version'] = $currentVersion;
-        } elseif ($docVersion < $currentVersion) {
-            // No migrator: only bump the version + defaults.
-            $data['schema_version'] = $currentVersion;
         }
 
         return $data;

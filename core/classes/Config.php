@@ -63,6 +63,11 @@ class Config {
             }
         }
 
+        // Preserve schema metadata that is not part of defaults
+        if (isset($data['schema_version'])) {
+            $out['schema_version'] = (int)$data['schema_version'];
+        }
+
         return $out;
     }
 
