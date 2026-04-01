@@ -195,6 +195,10 @@ ClassicEditor
                 }
             }
         },
+        simpleUpload: {
+            uploadUrl: '<?php echo base_url('/admin/uploads/api/upload'); ?>',
+            withCredentials: true
+        },
         image: {
             toolbar: [
                 'imageTextAlternative', 'toggleImageCaption', 'imageStyle:inline',
