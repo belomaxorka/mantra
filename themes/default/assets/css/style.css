@@ -404,6 +404,49 @@ a:hover { color: var(--t-primary-hover); }
   opacity: .5;
 }
 
+/* ---------- Scroll Indicator ---------- */
+.scroll-indicator {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 3px;
+  background: var(--t-primary);
+  z-index: 1030;
+  transition: width .05s linear;
+}
+
+/* ---------- Back to Top ---------- */
+.back-to-top {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: none;
+  border-radius: .75rem;
+  background: var(--t-card-bg);
+  color: var(--t-text-secondary);
+  box-shadow: 0 2px 8px rgba(0,0,0,.1);
+  font-size: 1.125rem;
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(.5rem);
+  transition: all .25s ease;
+  pointer-events: none;
+  z-index: 1010;
+}
+.back-to-top.visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+.back-to-top:hover {
+  background: var(--t-primary);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(99,102,241,.3);
+}
+
 /* ---------- Responsive ---------- */
 @media (max-width: 767.98px) {
   .page-section { padding: 2rem 0; }

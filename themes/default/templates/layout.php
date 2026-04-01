@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo isset($title) ? $this->escape($title) : e(MANTRA_PROJECT_INFO['name']); ?></title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%236366f1'/><text x='16' y='23' font-size='20' font-weight='700' fill='white' text-anchor='middle' font-family='sans-serif'>M</text></svg>">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -16,6 +17,8 @@
 </head>
 <body>
     <?php echo $app->hooks()->fire('theme.body.start', ''); ?>
+
+    <div class="scroll-indicator" id="scrollIndicator"></div>
 
     <header class="site-header">
         <nav class="navbar navbar-expand-lg">
@@ -128,7 +131,26 @@
         </div>
     </footer>
 
+    <button class="back-to-top" id="backToTop" aria-label="Back to top">&uarr;</button>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    (function() {
+        var indicator = document.getElementById('scrollIndicator');
+        var btn = document.getElementById('backToTop');
+        window.addEventListener('scroll', function() {
+            var scrollTop = window.scrollY;
+            var docHeight = document.documentElement.scrollHeight - window.innerHeight;
+            if (docHeight > 0) {
+                indicator.style.width = (scrollTop / docHeight * 100) + '%';
+            }
+            btn.classList.toggle('visible', scrollTop > 400);
+        }, {passive: true});
+        btn.addEventListener('click', function() {
+            window.scrollTo({top: 0, behavior: 'smooth'});
+        });
+    })();
+    </script>
     <?php echo $app->hooks()->fire('theme.footer', ''); ?>
     <?php echo $app->hooks()->fire('theme.body.end', ''); ?>
 </body>

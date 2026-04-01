@@ -13,6 +13,10 @@
                 <span>&middot;</span>
                 <span><?php echo $this->escape($post['author']); ?></span>
             <?php endif; ?>
+            <?php if (!empty($readingTime)): ?>
+                <span>&middot;</span>
+                <span><?php echo $readingTime; ?> min read</span>
+            <?php endif; ?>
             <?php if (!empty($post['category'])): ?>
                 <span class="post-category-badge"><?php echo $this->escape($post['category']); ?></span>
             <?php endif; ?>

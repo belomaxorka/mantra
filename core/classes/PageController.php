@@ -172,9 +172,14 @@ class PageController {
         // Find adjacent posts for prev/next navigation
         $adjacent = $this->getAdjacentPosts($post);
 
+        // Estimate reading time (~200 words per minute)
+        $wordCount = str_word_count(strip_tags($post['content']));
+        $readingTime = max(1, (int)ceil($wordCount / 200));
+
         // Prepare view data
         $data = array(
             'post' => $post,
+            'readingTime' => $readingTime,
             'prevPost' => $adjacent['prev'],
             'nextPost' => $adjacent['next'],
             'title' => $post['title'] . ' - ' . config('site.name', 'Mantra CMS')
