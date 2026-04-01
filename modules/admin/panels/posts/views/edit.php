@@ -177,76 +177,83 @@
             <script>
             (function() {
                 var uploadUrl = '<?php echo base_url("/admin/uploads/api/upload"); ?>';
-                var dropZone = document.getElementById('imageDropZone');
-                var fileInput = document.getElementById('imageFile');
+                var elDropZone  = document.getElementById('imageDropZone');
+                var elFileInput = document.getElementById('imageFile');
+                var elUploading = document.getElementById('imageUploading');
+                var elError     = document.getElementById('imageError');
+                var elPreview   = document.getElementById('imagePreview');
+                var elPreviewImg = document.getElementById('imagePreviewImg');
+                var elUpload    = document.getElementById('imageUpload');
+                var elInput     = document.getElementById('image');
+
+                if (!elDropZone || !elFileInput) return;
 
                 function uploadImage(file) {
                     var form = new FormData();
                     form.append('file', file);
 
-                    document.getElementById('imageDropZone').classList.add('d-none');
-                    document.getElementById('imageUploading').classList.remove('d-none');
-                    document.getElementById('imageError').classList.add('d-none');
+                    elDropZone.classList.add('d-none');
+                    elUploading.classList.remove('d-none');
+                    elError.classList.add('d-none');
 
                     var xhr = new XMLHttpRequest();
                     xhr.open('POST', uploadUrl, true);
                     xhr.withCredentials = true;
                     xhr.onload = function() {
-                        document.getElementById('imageUploading').classList.add('d-none');
+                        elUploading.classList.add('d-none');
                         if (xhr.status === 200) {
-                            var data = JSON.parse(xhr.responseText);
-                            if (data.url) {
-                                setImage(data.url);
-                                return;
-                            }
+                            try {
+                                var data = JSON.parse(xhr.responseText);
+                                if (data.url) { setImage(data.url); return; }
+                            } catch(e) {}
                         }
                         var errMsg = 'Upload failed';
                         try { errMsg = JSON.parse(xhr.responseText).error.message; } catch(e) {}
-                        document.getElementById('imageError').textContent = errMsg;
-                        document.getElementById('imageError').classList.remove('d-none');
-                        document.getElementById('imageDropZone').classList.remove('d-none');
+                        elError.textContent = errMsg;
+                        elError.classList.remove('d-none');
+                        elDropZone.classList.remove('d-none');
                     };
                     xhr.onerror = function() {
-                        document.getElementById('imageUploading').classList.add('d-none');
-                        document.getElementById('imageDropZone').classList.remove('d-none');
-                        document.getElementById('imageError').textContent = 'Network error';
-                        document.getElementById('imageError').classList.remove('d-none');
+                        elUploading.classList.add('d-none');
+                        elDropZone.classList.remove('d-none');
+                        elError.textContent = 'Network error';
+                        elError.classList.remove('d-none');
                     };
                     xhr.send(form);
                 }
 
                 function setImage(url) {
-                    document.getElementById('image').value = url;
-                    document.getElementById('imagePreviewImg').src = url;
-                    document.getElementById('imagePreviewImg').style.display = '';
-                    document.getElementById('imagePreview').classList.remove('d-none');
-                    document.getElementById('imageUpload').classList.add('d-none');
+                    elInput.value = url;
+                    elPreviewImg.src = url;
+                    elPreviewImg.style.display = '';
+                    elPreview.classList.remove('d-none');
+                    elUpload.classList.add('d-none');
                 }
 
                 window.removeImage = function() {
-                    document.getElementById('image').value = '';
-                    document.getElementById('imagePreview').classList.add('d-none');
-                    document.getElementById('imageUpload').classList.remove('d-none');
-                    document.getElementById('imageDropZone').classList.remove('d-none');
+                    elInput.value = '';
+                    elPreview.classList.add('d-none');
+                    elUpload.classList.remove('d-none');
+                    elDropZone.classList.remove('d-none');
                 };
 
-                dropZone.addEventListener('dragover', function(e) {
+                elDropZone.addEventListener('dragover', function(e) {
                     e.preventDefault();
-                    dropZone.style.backgroundColor = 'var(--bs-light)';
+                    elDropZone.style.backgroundColor = 'var(--bs-light)';
                 });
-                dropZone.addEventListener('dragleave', function() {
-                    dropZone.style.backgroundColor = '';
+                elDropZone.addEventListener('dragleave', function() {
+                    elDropZone.style.backgroundColor = '';
                 });
-                dropZone.addEventListener('drop', function(e) {
+                elDropZone.addEventListener('drop', function(e) {
                     e.preventDefault();
-                    dropZone.style.backgroundColor = '';
+                    elDropZone.style.backgroundColor = '';
                     if (e.dataTransfer.files.length > 0 && e.dataTransfer.files[0].type.indexOf('image/') === 0) {
                         uploadImage(e.dataTransfer.files[0]);
                     }
                 });
-                fileInput.addEventListener('change', function() {
-                    if (fileInput.files.length > 0) {
-                        uploadImage(fileInput.files[0]);
+                elFileInput.addEventListener('change', function() {
+                    if (elFileInput.files.length > 0) {
+                        uploadImage(elFileInput.files[0]);
                     }
                 });
             })();
