@@ -1,0 +1,20 @@
+{
+  "id": "users",
+  "version": "1.0.0",
+  "sidebar": {
+    "title": "admin-users.title",
+    "icon": "bi-people",
+    "group": "admin.sidebar.group.system",
+    "order": 20,
+    "url": "/admin/users"
+  },
+  "quick_actions": [
+    {
+      "id": "new-user",
+      "title": "admin-users.new",
+      "icon": "bi-person-plus",
+      "url": "/admin/users/new",
+      "order": 30
+    }
+  ]
+}
