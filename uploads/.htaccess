@@ -1,0 +1,4 @@
+# Block PHP execution in uploads directory
+<FilesMatch "\.ph(p[0-9]?|tml|ar)$">
+    Deny from all
+</FilesMatch>

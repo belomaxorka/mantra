@@ -29,27 +29,10 @@ class AdminModule extends Module
         $module = $this;
         $this->provide('permissions', function () use ($module) {
             $registry = new PermissionRegistry();
-            // Register upload permissions (no dedicated panel for uploads)
-            $module->registerUploadPermissions($registry);
             // Let panels and other modules register their permissions
             $module->fireHook('permissions.register', $registry);
             return $registry;
         });
-    }
-
-    /**
-     * Register upload permissions (owned by AdminModule since there is no uploads panel).
-     */
-    public function registerUploadPermissions($registry)
-    {
-        $registry->registerPermissions(array(
-            'uploads.view'   => 'View uploads',
-            'uploads.upload' => 'Upload files',
-        ), 'Uploads');
-
-        $registry->addRoleDefaults('editor', array(
-            'uploads.view', 'uploads.upload',
-        ));
     }
 
     // ========== Panel Management ==========
