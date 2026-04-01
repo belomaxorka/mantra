@@ -64,7 +64,7 @@
                                             </td>
                                             <td>
                                                 <small class="text-muted">
-                                                    <?php echo $this->escape(date('Y-m-d H:i', strtotime($page['updated_at']))); ?>
+                                                    <?php echo e(format_datetime($page['updated_at'])); ?>
                                                 </small>
                                             </td>
                                             <td>

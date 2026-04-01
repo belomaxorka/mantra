@@ -70,6 +70,13 @@ class Application {
         $this->provide('view', function() { return new \View(); });
         $this->provide('translator', function() { return new \TranslationManager(); });
         $this->provide('auth', function() { return new \Auth(); });
+        $this->provide('clock', function() {
+            return new \Clock(
+                config('locale.timezone', 'UTC'),
+                config('locale.date_format', 'j F Y'),
+                config('locale.time_format', 'H:i')
+            );
+        });
     }
 
     /** @return \Http\Request */

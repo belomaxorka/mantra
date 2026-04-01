@@ -56,6 +56,19 @@
                 <label class="form-check-label" for="f-<?php echo e($field['name']); ?>"><?php echo e($field['title']); ?></label>
               </div>
 
+            <?php elseif ($field['type'] === 'timezone_select'): ?>
+              <select class="form-select" id="f-<?php echo e($field['name']); ?>" name="<?php echo e($field['name']); ?>">
+                <?php foreach ($field['options'] as $region => $timezones): ?>
+                  <optgroup label="<?php echo e($region); ?>">
+                    <?php foreach ($timezones as $tzId => $tzLabel): ?>
+                      <option value="<?php echo e($tzId); ?>" <?php echo ((string)$field['value'] === (string)$tzId) ? 'selected' : ''; ?>>
+                        <?php echo e($tzLabel); ?>
+                      </option>
+                    <?php endforeach; ?>
+                  </optgroup>
+                <?php endforeach; ?>
+              </select>
+
             <?php elseif ($field['type'] === 'select'): ?>
               <select class="form-select" id="f-<?php echo e($field['name']); ?>" name="<?php echo e($field['name']); ?>">
                 <?php foreach ($field['options'] as $optValue => $optLabel): ?>

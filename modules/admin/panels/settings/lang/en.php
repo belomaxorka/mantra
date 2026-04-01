@@ -37,6 +37,8 @@ return array(
 
     // Locale settings
     'admin-settings.locale.timezone' => 'Timezone',
+    'admin-settings.locale.date_format' => 'Date format',
+    'admin-settings.locale.time_format' => 'Time format',
     'admin-settings.locale.default_language' => 'Default language',
     'admin-settings.locale.fallback_locale' => 'Fallback locale',
 

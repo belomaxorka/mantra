@@ -47,9 +47,34 @@ return array(
             'fields' => array(
                 array(
                     'path' => 'locale.timezone',
-                    'type' => 'text',
+                    'type' => 'timezone_select',
                     'title' => 'admin-settings.locale.timezone',
                     'default' => 'UTC',
+                    'options' => array(),
+                ),
+                array(
+                    'path' => 'locale.date_format',
+                    'type' => 'select',
+                    'title' => 'admin-settings.locale.date_format',
+                    'default' => 'j F Y',
+                    'options' => array(
+                        'j F Y'  => '',
+                        'd.m.Y'  => '',
+                        'm/d/Y'  => '',
+                        'Y-m-d'  => '',
+                        'd M Y'  => '',
+                        'F j, Y' => '',
+                    ),
+                ),
+                array(
+                    'path' => 'locale.time_format',
+                    'type' => 'select',
+                    'title' => 'admin-settings.locale.time_format',
+                    'default' => 'H:i',
+                    'options' => array(
+                        'H:i'   => '',
+                        'g:i A' => '',
+                    ),
                 ),
                 array(
                     'path' => 'locale.default_language',

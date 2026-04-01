@@ -95,6 +95,8 @@ class Config {
             ),
             'locale' => array(
                 'timezone' => 'UTC',
+                'date_format' => 'j F Y',
+                'time_format' => 'H:i',
                 'default_language' => 'en',
                 'fallback_locale' => 'en',
             ),

@@ -67,7 +67,7 @@
                                             </td>
                                             <td>
                                                 <small class="text-muted">
-                                                    <?php echo e(!empty($u['updated_at']) ? date('Y-m-d H:i', strtotime($u['updated_at'])) : '-'); ?>
+                                                    <?php echo e(!empty($u['updated_at']) ? format_datetime($u['updated_at']) : '-'); ?>
                                                 </small>
                                             </td>
                                             <td>

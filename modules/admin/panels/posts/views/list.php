@@ -64,7 +64,7 @@
                                             </td>
                                             <td>
                                                 <small class="text-muted">
-                                                    <?php echo e(date('Y-m-d H:i', strtotime($post['updated_at']))); ?>
+                                                    <?php echo e(format_datetime($post['updated_at'])); ?>
                                                 </small>
                                             </td>
                                             <td>

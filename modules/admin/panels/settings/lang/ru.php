@@ -37,6 +37,8 @@ return array(
 
     // Locale settings
     'admin-settings.locale.timezone' => 'Часовой пояс',
+    'admin-settings.locale.date_format' => 'Формат даты',
+    'admin-settings.locale.time_format' => 'Формат времени',
     'admin-settings.locale.default_language' => 'Язык по умолчанию',
     'admin-settings.locale.fallback_locale' => 'Резервная локаль',
 

@@ -153,7 +153,8 @@ class TranslationManager {
      * Check if domain is a module
      */
     private function isModuleDomain($domain) {
-        return app()->modules()->isLoaded($domain);
+        $modules = app()->modules();
+        return $modules !== null && $modules->isLoaded($domain);
     }
     
     /**

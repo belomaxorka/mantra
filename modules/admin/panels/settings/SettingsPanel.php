@@ -323,8 +323,13 @@ class SettingsPanel extends AdminPanel {
                 }
 
                 if ($f['type'] === 'select' && is_array($f['options'])) {
-                    foreach ($f['options'] as $k => $v) {
-                        $f['options'][$k] = t($v);
+                    $skipTranslation = in_array($path, array(
+                        'locale.date_format', 'locale.time_format',
+                    ), true);
+                    if (!$skipTranslation) {
+                        foreach ($f['options'] as $k => $v) {
+                            $f['options'][$k] = t($v);
+                        }
                     }
                 }
 
@@ -372,6 +377,15 @@ class SettingsPanel extends AdminPanel {
 
                 $path = (string)$field['path'];
 
+                if ($path === 'locale.timezone' && (string)$field['type'] === 'timezone_select') {
+                    $field['options'] = $this->availableTimezoneOptions();
+                }
+                if ($path === 'locale.date_format' && (string)$field['type'] === 'select') {
+                    $field['options'] = $this->dateFormatExamples();
+                }
+                if ($path === 'locale.time_format' && (string)$field['type'] === 'select') {
+                    $field['options'] = $this->timeFormatExamples();
+                }
                 if ($path === 'locale.default_language' && (string)$field['type'] === 'select') {
                     $field['options'] = $this->availableLocaleOptions();
                 }
@@ -524,6 +538,74 @@ class SettingsPanel extends AdminPanel {
         }
         return array(
             'not_supported' => 'Not supported (PHP 7.3+ required)',
+        );
+    }
+
+    /**
+     * Build grouped timezone options for the timezone_select field.
+     *
+     * Returns a nested array: region => array(timezone_id => label).
+     */
+    private function availableTimezoneOptions() {
+        $grouped = array();
+        $now = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
+
+        foreach (\DateTimeZone::listIdentifiers() as $tz) {
+            $dtz = new \DateTimeZone($tz);
+            $offset = $dtz->getOffset($now);
+
+            $hours = (int)($offset / 3600);
+            $minutes = abs($offset % 3600) / 60;
+            $sign = $offset >= 0 ? '+' : '-';
+            $utcLabel = sprintf('UTC%s%02d:%02d', $sign, abs($hours), $minutes);
+
+            $parts = explode('/', $tz, 2);
+            if (count($parts) === 2) {
+                $region = $parts[0];
+                $city = str_replace('_', ' ', $parts[1]);
+            } else {
+                $region = 'Other';
+                $city = $tz;
+            }
+
+            if (!isset($grouped[$region])) {
+                $grouped[$region] = array();
+            }
+            $grouped[$region][$tz] = $city . ' (' . $utcLabel . ')';
+        }
+
+        ksort($grouped);
+        foreach ($grouped as &$options) {
+            asort($options);
+        }
+        unset($options);
+
+        return $grouped;
+    }
+
+    /**
+     * Build date format examples for the date_format select.
+     */
+    private function dateFormatExamples() {
+        $now = time();
+        return array(
+            'j F Y'  => date('j F Y', $now),
+            'd.m.Y'  => date('d.m.Y', $now),
+            'm/d/Y'  => date('m/d/Y', $now),
+            'Y-m-d'  => date('Y-m-d', $now),
+            'd M Y'  => date('d M Y', $now),
+            'F j, Y' => date('F j, Y', $now),
+        );
+    }
+
+    /**
+     * Build time format examples for the time_format select.
+     */
+    private function timeFormatExamples() {
+        $now = time();
+        return array(
+            'H:i'   => date('H:i', $now),
+            'g:i A' => date('g:i A', $now),
         );
     }
 
