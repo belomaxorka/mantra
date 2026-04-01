@@ -81,7 +81,7 @@ abstract class ContentPanel extends AdminPanel {
     protected function generateId($data) {
         $slug = $data['slug'];
         $id = $slug;
-        if (db()->exists($this->getCollectionName(), $id)) {
+        if (app()->db()->exists($this->getCollectionName(), $id)) {
             $id = $slug . '-' . uniqid();
         }
         return $id;
@@ -172,7 +172,7 @@ abstract class ContentPanel extends AdminPanel {
         $prefix = $this->getPermissionPrefix();
         if (!$this->requirePermission($prefix . '.view')) return;
 
-        $items = db()->query($this->getCollectionName(), array(), array(
+        $items = app()->db()->query($this->getCollectionName(), array(), array(
             'sort' => 'updated_at',
             'order' => 'desc'
         ));
@@ -196,7 +196,7 @@ abstract class ContentPanel extends AdminPanel {
         $content = $this->renderView($this->getEditTemplate(), array(
             strtolower($this->getContentType()) => $this->getDefaultItem(),
             'isNew' => true,
-            'csrf_token' => auth()->generateCsrfToken()
+            'csrf_token' => app()->auth()->generateCsrfToken()
         ));
 
         $title = t($this->getDomain() . '.new');
@@ -218,12 +218,12 @@ abstract class ContentPanel extends AdminPanel {
         $user = $this->getUser();
         $data['author'] = $user['username'];
         $data['author_id'] = $user['_id'];
-        $data['created_at'] = now();
-        $data['updated_at'] = now();
+        $data['created_at'] = date(DATETIME_FORMAT);
+        $data['updated_at'] = date(DATETIME_FORMAT);
 
         $id = $this->generateId($data);
 
-        db()->write($this->getCollectionName(), $id, $data);
+        app()->db()->write($this->getCollectionName(), $id, $data);
 
         $this->redirectAdmin($this->getAdminPath());
     }
@@ -234,7 +234,7 @@ abstract class ContentPanel extends AdminPanel {
         if ($access === false) return;
 
         $id = isset($params['id']) ? $params['id'] : '';
-        $item = db()->read($this->getCollectionName(), $id);
+        $item = app()->db()->read($this->getCollectionName(), $id);
 
         if (!$item) {
             http_response_code(404);
@@ -251,7 +251,7 @@ abstract class ContentPanel extends AdminPanel {
         $content = $this->renderView($this->getEditTemplate(), array(
             strtolower($this->getContentType()) => $item,
             'isNew' => false,
-            'csrf_token' => auth()->generateCsrfToken()
+            'csrf_token' => app()->auth()->generateCsrfToken()
         ));
 
         $title = t($this->getDomain() . '.edit_' . strtolower($this->getContentType()));
@@ -270,7 +270,7 @@ abstract class ContentPanel extends AdminPanel {
         }
 
         $id = isset($params['id']) ? $params['id'] : '';
-        $item = db()->read($this->getCollectionName(), $id);
+        $item = app()->db()->read($this->getCollectionName(), $id);
 
         if (!$item) {
             http_response_code(404);
@@ -286,14 +286,14 @@ abstract class ContentPanel extends AdminPanel {
 
         $data = $this->extractFormData();
         $data = $this->ensureSlug($data);
-        $data['updated_at'] = now();
+        $data['updated_at'] = date(DATETIME_FORMAT);
 
         // Preserve original fields
         $data['author'] = $item['author'];
         $data['author_id'] = $item['author_id'];
         $data['created_at'] = $item['created_at'];
 
-        db()->write($this->getCollectionName(), $id, $data);
+        app()->db()->write($this->getCollectionName(), $id, $data);
 
         $this->redirectAdmin($this->getAdminPath());
     }
@@ -307,7 +307,7 @@ abstract class ContentPanel extends AdminPanel {
         }
 
         $id = isset($params['id']) ? $params['id'] : '';
-        $item = db()->read($this->getCollectionName(), $id);
+        $item = app()->db()->read($this->getCollectionName(), $id);
 
         if (!$item) {
             $this->redirectAdmin($this->getAdminPath());
@@ -319,7 +319,7 @@ abstract class ContentPanel extends AdminPanel {
             return;
         }
 
-        db()->delete($this->getCollectionName(), $id);
+        app()->db()->delete($this->getCollectionName(), $id);
 
         $this->redirectAdmin($this->getAdminPath());
     }

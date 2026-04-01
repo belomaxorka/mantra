@@ -94,10 +94,10 @@ abstract class ContentAdminModule extends BaseAdminModule {
         $slug = $data['slug'];
         
         $id = $slug;
-        if (db()->exists($this->getCollectionName(), $id)) {
+        if (app()->db()->exists($this->getCollectionName(), $id)) {
             $id = $slug . '-' . uniqid();
         }
-        
+
         return $id;
     }
     
@@ -119,7 +119,7 @@ abstract class ContentAdminModule extends BaseAdminModule {
      * List all items
      */
     public function listItems() {
-        $items = db()->query($this->getCollectionName(), array(), array(
+        $items = app()->db()->query($this->getCollectionName(), array(), array(
             'sort' => 'updated_at',
             'order' => 'desc'
         ));
@@ -141,7 +141,7 @@ abstract class ContentAdminModule extends BaseAdminModule {
         $content = $this->renderView($this->getEditTemplate(), array(
             strtolower($this->getContentType()) => $this->getDefaultItem(),
             'isNew' => true,
-            'csrf_token' => auth()->generateCsrfToken()
+            'csrf_token' => app()->auth()->generateCsrfToken()
         ));
 
         $titleKey = $this->getId() . '.new';
@@ -163,12 +163,12 @@ abstract class ContentAdminModule extends BaseAdminModule {
         $user = $this->getUser();
         $data['author'] = isset($user['username']) ? $user['username'] : 'Unknown';
         $data['author_id'] = isset($user['_id']) ? $user['_id'] : '';
-        $data['created_at'] = now();
-        $data['updated_at'] = now();
-        
+        $data['created_at'] = date(DATETIME_FORMAT);
+        $data['updated_at'] = date(DATETIME_FORMAT);
+
         $id = $this->generateId($data);
-        
-        db()->write($this->getCollectionName(), $id, $data);
+
+        app()->db()->write($this->getCollectionName(), $id, $data);
         
         $this->redirectAdmin($this->getAdminPath());
     }
@@ -178,7 +178,7 @@ abstract class ContentAdminModule extends BaseAdminModule {
      */
     public function editItem($params) {
         $id = isset($params['id']) ? $params['id'] : '';
-        $item = db()->read($this->getCollectionName(), $id);
+        $item = app()->db()->read($this->getCollectionName(), $id);
 
         if (!$item) {
             http_response_code(404);
@@ -188,7 +188,7 @@ abstract class ContentAdminModule extends BaseAdminModule {
         $content = $this->renderView($this->getEditTemplate(), array(
             strtolower($this->getContentType()) => $item,
             'isNew' => false,
-            'csrf_token' => auth()->generateCsrfToken()
+            'csrf_token' => app()->auth()->generateCsrfToken()
         ));
 
         // Try module-specific edit key first (e.g., admin-posts.edit_post, admin-pages.edit_page)
@@ -207,7 +207,7 @@ abstract class ContentAdminModule extends BaseAdminModule {
         }
         
         $id = isset($params['id']) ? $params['id'] : '';
-        $item = db()->read($this->getCollectionName(), $id);
+        $item = app()->db()->read($this->getCollectionName(), $id);
 
         if (!$item) {
             http_response_code(404);
@@ -216,14 +216,14 @@ abstract class ContentAdminModule extends BaseAdminModule {
 
         $data = $this->extractFormData();
         $data = $this->ensureSlug($data);
-        $data['updated_at'] = now();
-        
+        $data['updated_at'] = date(DATETIME_FORMAT);
+
         // Preserve original fields
         $data['author'] = isset($item['author']) ? $item['author'] : 'Unknown';
         $data['author_id'] = isset($item['author_id']) ? $item['author_id'] : '';
-        $data['created_at'] = isset($item['created_at']) ? $item['created_at'] : now();
-        
-        db()->write($this->getCollectionName(), $id, $data);
+        $data['created_at'] = isset($item['created_at']) ? $item['created_at'] : date(DATETIME_FORMAT);
+
+        app()->db()->write($this->getCollectionName(), $id, $data);
         
         $this->redirectAdmin($this->getAdminPath());
     }
@@ -238,8 +238,8 @@ abstract class ContentAdminModule extends BaseAdminModule {
         
         $id = isset($params['id']) ? $params['id'] : '';
 
-        if (db()->exists($this->getCollectionName(), $id)) {
-            db()->delete($this->getCollectionName(), $id);
+        if (app()->db()->exists($this->getCollectionName(), $id)) {
+            app()->db()->delete($this->getCollectionName(), $id);
         }
         
         $this->redirectAdmin($this->getAdminPath());

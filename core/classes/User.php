@@ -126,7 +126,7 @@ class User {
             return true;
         }
 
-        $registry = permissions();
+        $registry = app()->service('permissions');
         if (!$registry) {
             return false;
         }

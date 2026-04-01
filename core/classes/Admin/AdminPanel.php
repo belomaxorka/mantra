@@ -52,7 +52,7 @@ abstract class AdminPanel implements AdminPanelInterface {
                 $required = array($required);
             }
             if (is_array($required)) {
-                $user = auth()->user();
+                $user = app()->auth()->user();
                 $userRole = is_array($user) && isset($user['role']) ? $user['role'] : '';
                 if (!in_array($userRole, $required, true)) {
                     return null;
@@ -82,7 +82,7 @@ abstract class AdminPanel implements AdminPanelInterface {
                 $required = array($required);
             }
             if (is_array($required)) {
-                $user = auth()->user();
+                $user = app()->auth()->user();
                 $userRole = is_array($user) && isset($user['role']) ? $user['role'] : '';
                 if (!in_array($userRole, $required, true)) {
                     return array();
@@ -117,7 +117,7 @@ abstract class AdminPanel implements AdminPanelInterface {
      */
     protected function renderView($template, $data = array()) {
         $path = $this->panelPath . '/views/' . $template . '.php';
-        return view()->fetchPath($path, $data);
+        return app()->view()->fetchPath($path, $data);
     }
 
     /**
@@ -171,23 +171,32 @@ abstract class AdminPanel implements AdminPanelInterface {
     // ========== Convenience Helpers ==========
 
     protected function db() {
-        return db();
+        return app()->db();
     }
 
     protected function auth() {
-        return auth();
+        return app()->auth();
     }
 
     protected function verifyCsrf() {
-        return verify_csrf();
+        if (app()->request()->method() !== 'POST') {
+            return true;
+        }
+        $token = app()->request()->post('csrf_token', '');
+        if (!app()->auth()->verifyCsrfToken($token)) {
+            http_response_code(403);
+            echo 'Invalid CSRF token';
+            return false;
+        }
+        return true;
     }
 
     protected function getUser() {
-        return auth()->user();
+        return app()->auth()->user();
     }
 
     protected function redirectAdmin($path = '') {
-        redirect(base_url('/admin/' . ltrim($path, '/')));
+        app()->response()->redirect(base_url('/admin/' . ltrim($path, '/')));
     }
 
     /**

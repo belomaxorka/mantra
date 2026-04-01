@@ -69,7 +69,7 @@ abstract class BaseAdminModule extends Module {
      */
     protected function registerAdminRoute($method, $pattern, $callback) {
         app()->hooks()->register('routes.register', function ($data) use ($method, $pattern, $callback) {
-            $admin = admin();
+            $admin = app()->modules()->getModule('admin');
             if ($admin && method_exists($admin, 'adminRoute')) {
                 $admin->adminRoute($method, $pattern, $callback);
             }
@@ -113,7 +113,7 @@ abstract class BaseAdminModule extends Module {
      * @return string
      */
     protected function renderAdmin($title, $content, $extra = array()) {
-        $admin = admin();
+        $admin = app()->modules()->getModule('admin');
         if ($admin && method_exists($admin, 'render')) {
             return $admin->render($title, $content, $extra);
         }
@@ -126,7 +126,16 @@ abstract class BaseAdminModule extends Module {
      * @return bool
      */
     protected function verifyCsrf() {
-        return verify_csrf();
+        if (app()->request()->method() !== 'POST') {
+            return true;
+        }
+        $token = app()->request()->post('csrf_token', '');
+        if (!app()->auth()->verifyCsrfToken($token)) {
+            http_response_code(403);
+            echo 'Invalid CSRF token';
+            return false;
+        }
+        return true;
     }
     
     /**
@@ -134,7 +143,7 @@ abstract class BaseAdminModule extends Module {
      * @return array|null
      */
     protected function getUser() {
-        return auth()->user();
+        return app()->auth()->user();
     }
     
     /**
@@ -142,7 +151,7 @@ abstract class BaseAdminModule extends Module {
      * @return bool
      */
     protected function isAuthenticated() {
-        return auth()->check();
+        return app()->auth()->check();
     }
     
     /**
@@ -150,7 +159,7 @@ abstract class BaseAdminModule extends Module {
      * @param string $path Path relative to /admin
      */
     protected function redirectAdmin($path = '') {
-        redirect(base_url('/admin/' . ltrim($path, '/')));
+        app()->response()->redirect(base_url('/admin/' . ltrim($path, '/')));
     }
     
     /**
@@ -160,6 +169,6 @@ abstract class BaseAdminModule extends Module {
      * @return string
      */
     protected function renderView($template, $data = array()) {
-        return view()->fetch($template, $data);
+        return app()->view()->fetch($template, $data);
     }
 }

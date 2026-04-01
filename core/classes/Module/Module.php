@@ -47,7 +47,7 @@ abstract class Module implements ModuleInterface {
      * Get module name (human-readable)
      */
     public function getName() {
-        return resolve_localized($this->manifest['name']);
+        return \Config::resolveLocalized($this->manifest['name']);
     }
 
     /**
@@ -61,7 +61,7 @@ abstract class Module implements ModuleInterface {
      * Get module description
      */
     public function getDescription() {
-        return isset($this->manifest['description']) ? resolve_localized($this->manifest['description']) : '';
+        return isset($this->manifest['description']) ? \Config::resolveLocalized($this->manifest['description']) : '';
     }
     
     /**
@@ -219,7 +219,7 @@ abstract class Module implements ModuleInterface {
     }
     
     protected function view($template, $data = array()) {
-        return view($template, $data);
+        return $this->app->view()->render($template, $data);
     }
     
     public function getPath() {
@@ -236,7 +236,7 @@ abstract class Module implements ModuleInterface {
     }
     
     protected function settings() {
-        return module_settings($this->getId());
+        return \Module\ModuleSettings::instance($this->getId());
     }
     
     protected function log($level, $message, $context = array()) {
