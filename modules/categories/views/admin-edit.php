@@ -11,7 +11,7 @@
     </div>
 
     <div class="row">
-        <div class="col-xl-8">
+        <div class="col">
             <form method="POST" action="<?php echo $isNew ? base_url('/admin/categories/new') : base_url('/admin/categories/edit/' . $category['_id']); ?>">
                 <input type="hidden" name="csrf_token" value="<?php echo e($csrf_token); ?>">
 

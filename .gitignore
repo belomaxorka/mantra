@@ -2,6 +2,7 @@
 !/content/pages/demo-*.json
 /content/posts/*
 !/content/posts/demo-*.json
+/content/categories/*
 /content/users/*
 /content/settings/*
 !/content/languages/
