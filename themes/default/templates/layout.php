@@ -21,7 +21,7 @@
     <?php
     // Build nav items once, render in desktop nav + mobile drawer
     $currentPath = strtok($_SERVER['REQUEST_URI'], '?');
-    $siteUrl = rtrim(config('site.url', ''), '/');
+    $siteUrl = config('site.url', '');
     $navItems = array(
         array('id' => 'home', 'title' => 'Home', 'url' => base_url(), 'order' => 0),
     );

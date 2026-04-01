@@ -14,8 +14,7 @@ $isInstalled = file_exists(MANTRA_CONTENT . '/users') &&
 if (!$isInstalled) {
     $currentUri = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '/';
     if (strpos($currentUri, 'install.php') === false) {
-        $baseUrl = rtrim(Config::detectBaseUrl(), '/');
-        header('Location: ' . $baseUrl . '/install.php', true, 302);
+        header('Location: ' . Config::detectBaseUrl() . '/install.php', true, 302);
         exit;
     }
 }

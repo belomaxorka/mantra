@@ -26,8 +26,7 @@ if (!empty($missingExtensions)) {
 if (file_exists(MANTRA_CONTENT . '/users')) {
     $users = glob(MANTRA_CONTENT . '/users/*.json');
     if (!empty($users)) {
-        $base = rtrim(Config::detectBaseUrl(), '/');
-        header('Location: ' . $base . '/', true, 302);
+        header('Location: ' . Config::detectBaseUrl() . '/', true, 302);
         exit;
     }
 }
@@ -128,7 +127,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
             // Regenerate CSRF token after success
             unset($_SESSION['install_csrf']);
             $success = true;
-            $adminUrl = rtrim($baseUrl, '/') . '/admin';
+            $adminUrl = $baseUrl . '/admin';
         } else {
             $error = 'error_create_user';
         }

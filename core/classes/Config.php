@@ -218,6 +218,11 @@ class Config {
                 ));
             }
         }
+
+        // Normalize: site.url never has a trailing slash
+        if (isset($this->config['site']['url'])) {
+            $this->config['site']['url'] = rtrim($this->config['site']['url'], '/');
+        }
     }
 
     /**
