@@ -275,69 +275,107 @@
 
 <script src="https://cdn.ckeditor.com/ckeditor5/41.2.1/classic/ckeditor.js"></script>
 <script>
-let editor;
-ClassicEditor
-    .create(document.querySelector('#content'), {
-        toolbar: {
-            items: [
-                'undo', 'redo',
-                '|', 'heading',
-                '|', 'bold', 'italic', 'underline', 'strikethrough',
-                '|', 'link', 'insertImage', 'insertTable', 'mediaEmbed',
-                '|', 'bulletedList', 'numberedList', 'outdent', 'indent',
-                '|', 'alignment',
-                '|', 'blockQuote', 'codeBlock',
-                '|', 'sourceEditing'
-            ],
-            shouldNotGroupWhenFull: true
-        },
-        heading: {
-            options: [
-                { model: 'paragraph', title: 'Paragraph', class: 'ck-heading_paragraph' },
-                { model: 'heading1', view: 'h1', title: 'Heading 1', class: 'ck-heading_heading1' },
-                { model: 'heading2', view: 'h2', title: 'Heading 2', class: 'ck-heading_heading2' },
-                { model: 'heading3', view: 'h3', title: 'Heading 3', class: 'ck-heading_heading3' },
-                { model: 'heading4', view: 'h4', title: 'Heading 4', class: 'ck-heading_heading4' }
-            ]
-        },
-        link: {
-            defaultProtocol: 'https://',
-            decorators: {
-                openInNewTab: {
-                    mode: 'manual',
-                    label: 'Open in a new tab',
-                    defaultValue: true,
-                    attributes: {
-                        target: '_blank',
-                        rel: 'noopener noreferrer'
+(function() {
+    var UPLOAD_URL = '<?php echo base_url("/admin/uploads/api/upload"); ?>';
+
+    // Custom upload adapter for CKEditor 5 (CDN build lacks SimpleUploadAdapter)
+    function MantraUploadAdapter(loader) { this.loader = loader; }
+    MantraUploadAdapter.prototype.upload = function() {
+        var loader = this;
+        return this.loader.file.then(function(file) {
+            return new Promise(function(resolve, reject) {
+                var form = new FormData();
+                form.append('file', file);
+                var xhr = new XMLHttpRequest();
+                loader._xhr = xhr;
+                xhr.open('POST', UPLOAD_URL, true);
+                xhr.withCredentials = true;
+                xhr.onload = function() {
+                    if (xhr.status < 200 || xhr.status >= 300) {
+                        var msg = 'Upload failed';
+                        try { msg = JSON.parse(xhr.responseText).error.message; } catch(e) {}
+                        return reject(msg);
+                    }
+                    var data = JSON.parse(xhr.responseText);
+                    if (!data.url) return reject('No URL in response');
+                    resolve({ default: data.url });
+                };
+                xhr.onerror = function() { reject('Network error'); };
+                xhr.upload.onprogress = function(e) {
+                    if (e.lengthComputable) loader.loader.uploadTotal = e.total, loader.loader.uploaded = e.loaded;
+                };
+                xhr.send(form);
+            });
+        });
+    };
+    MantraUploadAdapter.prototype.abort = function() { if (this._xhr) this._xhr.abort(); };
+
+    function MantraUploadPlugin(editor) {
+        editor.plugins.get('FileRepository').createUploadAdapter = function(loader) {
+            return new MantraUploadAdapter(loader);
+        };
+    }
+
+    ClassicEditor
+        .create(document.querySelector('#content'), {
+            extraPlugins: [MantraUploadPlugin],
+            toolbar: {
+                items: [
+                    'undo', 'redo',
+                    '|', 'heading',
+                    '|', 'bold', 'italic', 'underline', 'strikethrough',
+                    '|', 'link', 'insertImage', 'insertTable', 'mediaEmbed',
+                    '|', 'bulletedList', 'numberedList', 'outdent', 'indent',
+                    '|', 'alignment',
+                    '|', 'blockQuote', 'codeBlock',
+                    '|', 'sourceEditing'
+                ],
+                shouldNotGroupWhenFull: true
+            },
+            heading: {
+                options: [
+                    { model: 'paragraph', title: 'Paragraph', class: 'ck-heading_paragraph' },
+                    { model: 'heading1', view: 'h1', title: 'Heading 1', class: 'ck-heading_heading1' },
+                    { model: 'heading2', view: 'h2', title: 'Heading 2', class: 'ck-heading_heading2' },
+                    { model: 'heading3', view: 'h3', title: 'Heading 3', class: 'ck-heading_heading3' },
+                    { model: 'heading4', view: 'h4', title: 'Heading 4', class: 'ck-heading_heading4' }
+                ]
+            },
+            link: {
+                defaultProtocol: 'https://',
+                decorators: {
+                    openInNewTab: {
+                        mode: 'manual',
+                        label: 'Open in a new tab',
+                        defaultValue: true,
+                        attributes: {
+                            target: '_blank',
+                            rel: 'noopener noreferrer'
+                        }
                     }
                 }
+            },
+            image: {
+                toolbar: [
+                    'imageTextAlternative', 'toggleImageCaption', 'imageStyle:inline',
+                    'imageStyle:block', 'imageStyle:side', 'linkImage'
+                ]
+            },
+            table: {
+                contentToolbar: [
+                    'tableColumn', 'tableRow', 'mergeTableCells',
+                    'tableCellProperties', 'tableProperties'
+                ]
             }
-        },
-        simpleUpload: {
-            uploadUrl: '<?php echo base_url('/admin/uploads/api/upload'); ?>',
-            withCredentials: true
-        },
-        image: {
-            toolbar: [
-                'imageTextAlternative', 'toggleImageCaption', 'imageStyle:inline',
-                'imageStyle:block', 'imageStyle:side', 'linkImage'
-            ]
-        },
-        table: {
-            contentToolbar: [
-                'tableColumn', 'tableRow', 'mergeTableCells',
-                'tableCellProperties', 'tableProperties'
-            ]
-        }
-    })
-    .then(function (newEditor) {
-        editor = newEditor;
-        editor.editing.view.change(function (writer) {
-            writer.setStyle('min-height', '500px', editor.editing.view.document.getRoot());
+        })
+        .then(function (newEditor) {
+            window.editor = newEditor;
+            newEditor.editing.view.change(function (writer) {
+                writer.setStyle('min-height', '500px', newEditor.editing.view.document.getRoot());
+            });
+        })
+        .catch(function (error) {
+            console.error('CKEditor initialization error:', error);
         });
-    })
-    .catch(function (error) {
-        console.error('CKEditor initialization error:', error);
-    });
+})();
 </script>
