@@ -27,6 +27,9 @@
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav ms-auto">
                         <?php
+                        $currentPath = strtok($_SERVER['REQUEST_URI'], '?');
+                        $siteUrl = rtrim(config('site.url', ''), '/');
+
                         $navItems = array(
                             array('id' => 'home', 'title' => 'Home', 'url' => base_url(), 'order' => 0),
                         );
@@ -40,7 +43,18 @@
 
                             foreach ($navItems as $item) {
                                 if (!is_array($item) || empty($item['url']) || empty($item['title'])) continue;
-                                $active = !empty($item['active']) ? ' active' : '';
+
+                                // Auto-detect active state from current URL
+                                if (!empty($item['active'])) {
+                                    $isActive = true;
+                                } else {
+                                    $itemPath = str_replace($siteUrl, '', $item['url']);
+                                    $itemPath = $itemPath === '' ? '/' : $itemPath;
+                                    $isActive = ($itemPath === '/' && $currentPath === '/')
+                                        || ($itemPath !== '/' && strpos($currentPath, $itemPath) === 0);
+                                }
+
+                                $active = $isActive ? ' active' : '';
                                 $url = htmlspecialchars($item['url'], ENT_QUOTES, 'UTF-8');
                                 $title = htmlspecialchars($item['title'], ENT_QUOTES, 'UTF-8');
                                 echo '<li class="nav-item"><a class="nav-link' . $active . '" href="' . $url . '">' . $title . '</a></li>';

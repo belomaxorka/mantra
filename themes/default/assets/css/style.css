@@ -211,6 +211,64 @@ a:hover { color: var(--t-primary-hover); }
   border-radius: var(--t-card-radius);
 }
 
+/* ---------- Category Badge ---------- */
+.post-category-badge {
+  display: inline-block;
+  font-size: .75rem;
+  font-weight: 500;
+  padding: .15em .6em;
+  border-radius: 9999px;
+  background: var(--t-primary-soft);
+  color: var(--t-primary);
+  letter-spacing: .01em;
+  margin-left: .25rem;
+}
+
+/* ---------- Post Navigation (prev/next) ---------- */
+.post-nav {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--t-border);
+}
+.post-nav-item a {
+  display: block;
+  padding: 1rem 1.25rem;
+  border-radius: var(--t-card-radius);
+  background: var(--t-card-bg);
+  box-shadow: var(--t-card-shadow);
+  text-decoration: none;
+  transition: box-shadow var(--t-transition), transform var(--t-transition);
+}
+.post-nav-item a:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,.08);
+  transform: translateY(-1px);
+}
+.post-nav-label {
+  display: block;
+  font-size: .75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--t-text-muted);
+  margin-bottom: .25rem;
+}
+.post-nav-title {
+  display: block;
+  font-size: .9375rem;
+  font-weight: 500;
+  color: var(--t-text);
+  line-height: 1.4;
+}
+.post-nav-item a:hover .post-nav-title { color: var(--t-primary); }
+.post-nav-next { text-align: right; }
+
+@media (max-width: 575.98px) {
+  .post-nav { grid-template-columns: 1fr; }
+}
+
 /* ---------- Sidebar ---------- */
 .sidebar-widget {
   background: var(--t-card-bg);

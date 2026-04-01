@@ -11,13 +11,12 @@
                 </h2>
                 <div class="post-meta">
                     <span><?php echo clock()->formatDate($post['created_at']); ?></span>
-                    <?php if (!empty($post['category'])): ?>
-                        <span class="meta-dot">&middot;</span>
-                        <span><?php echo $this->escape($post['category']); ?></span>
-                    <?php endif; ?>
                     <?php if (!empty($post['author'])): ?>
                         <span class="meta-dot">&middot;</span>
                         <span><?php echo $this->escape($post['author']); ?></span>
+                    <?php endif; ?>
+                    <?php if (!empty($post['category'])): ?>
+                        <span class="post-category-badge"><?php echo $this->escape($post['category']); ?></span>
                     <?php endif; ?>
                 </div>
                 <?php if (!empty($post['excerpt'])): ?>

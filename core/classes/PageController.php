@@ -169,9 +169,14 @@ class PageController {
         // Hook: allow modules to modify post data
         $post = $app->hooks()->fire('post.single.loaded', $post);
 
+        // Find adjacent posts for prev/next navigation
+        $adjacent = $this->getAdjacentPosts($post);
+
         // Prepare view data
         $data = array(
             'post' => $post,
+            'prevPost' => $adjacent['prev'],
+            'nextPost' => $adjacent['next'],
             'title' => $post['title'] . ' - ' . config('site.name', 'Mantra CMS')
         );
 
@@ -229,6 +234,30 @@ class PageController {
 
         // Return first existing template
         return $this->findTemplate($templates);
+    }
+
+    /**
+     * Get previous (older) and next (newer) published posts.
+     *
+     * @return array ['prev' => array|null, 'next' => array|null]
+     */
+    private function getAdjacentPosts($currentPost) {
+        $allPosts = app()->db()->query('posts', array('status' => 'published'), array(
+            'sort' => 'created_at',
+            'order' => 'desc',
+        ));
+
+        $prev = null;
+        $next = null;
+        foreach ($allPosts as $i => $p) {
+            if ($p['_id'] === $currentPost['_id']) {
+                $next = isset($allPosts[$i - 1]) ? $allPosts[$i - 1] : null;
+                $prev = isset($allPosts[$i + 1]) ? $allPosts[$i + 1] : null;
+                break;
+            }
+        }
+
+        return array('prev' => $prev, 'next' => $next);
     }
 
     /**
