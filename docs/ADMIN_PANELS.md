@@ -492,18 +492,171 @@ Key variables:
 
 ## Permissions
 
-Permissions are defined in `core/classes/User.php`. The format is `{collection}.{action}`.
+### How Permissions Work
 
-If your panel uses a collection not in the permission map (e.g., `bookmarks`), only admin will have access by default (admin bypasses all permission checks). To allow editor access, add your permissions to the map in `User::hasPermission()`:
+Permissions use the format `{collection}.{action}` (e.g. `bookmarks.view`, `bookmarks.edit`). There is also a special `.own` suffix for ownership-gated actions (e.g. `bookmarks.edit.own` — user can only edit content they created).
+
+The central authority is `PermissionRegistry` (`core/classes/PermissionRegistry.php`). It stores all registered permissions, default role mappings, and loads custom overrides from `config.json`. Admins can configure per-role permissions in the admin UI at `/admin/permissions`.
+
+**Roles:** `admin` (all permissions, always), `editor`, `author`, `viewer`.
+
+### Registering Module Permissions
+
+Modules register their permissions via the `permissions.register` hook. This should be done in `init()`:
 
 ```php
-'editor' => array(
-    // ...existing permissions...
-    'bookmarks.view', 'bookmarks.create', 'bookmarks.edit', 'bookmarks.delete',
-),
+<?php
+
+use Module\Module;
+
+class CommentsModule extends Module
+{
+    public function init()
+    {
+        // Register permissions for this module
+        $this->hook('permissions.register', array($this, 'registerPermissions'));
+
+        // Register routes, other hooks, etc.
+        $this->hook('routes.register', array($this, 'registerRoutes'));
+    }
+
+    /**
+     * Register permissions with the central registry.
+     *
+     * @param PermissionRegistry $registry
+     * @return PermissionRegistry
+     */
+    public function registerPermissions($registry)
+    {
+        // Register permissions with human-readable labels, grouped for the admin UI
+        $registry->registerPermissions(array(
+            'comments.view'     => 'View comments',
+            'comments.create'   => 'Post comments',
+            'comments.moderate' => 'Moderate comments',
+            'comments.delete'   => 'Delete comments',
+        ), 'Comments');
+
+        // Set which roles get these permissions by default
+        $registry->addRoleDefaults('editor', array(
+            'comments.view', 'comments.create', 'comments.moderate', 'comments.delete',
+        ));
+        $registry->addRoleDefaults('author', array(
+            'comments.view', 'comments.create',
+        ));
+        $registry->addRoleDefaults('viewer', array(
+            'comments.view',
+        ));
+
+        return $registry;
+    }
+}
 ```
 
-To restrict the entire panel to admin only, add `"require_role": "admin"` to `panel.json` sidebar config. This hides the sidebar item AND the permission system will block direct URL access (since non-admins won't have `{collection}.*` permissions).
+Once registered, the permissions automatically appear in the admin Permissions panel (`/admin/permissions`) where admins can customize them per role.
+
+### PermissionRegistry API
+
+```php
+// Register permissions (associative: permission => label, or numeric: just strings)
+$registry->registerPermissions(array(
+    'bookmarks.view'   => 'View bookmarks',
+    'bookmarks.create' => 'Create bookmarks',
+    'bookmarks.edit'   => 'Edit all bookmarks',
+    'bookmarks.edit.own' => 'Edit own bookmarks',
+    'bookmarks.delete' => 'Delete bookmarks',
+), 'Bookmarks');
+
+// Add defaults for a role (merged with existing defaults)
+$registry->addRoleDefaults('editor', array('bookmarks.view', 'bookmarks.create', 'bookmarks.edit'));
+$registry->addRoleDefaults('author', array('bookmarks.view', 'bookmarks.create', 'bookmarks.edit.own'));
+
+// Query
+$registry->getAll();                          // All registered permission strings
+$registry->getGrouped();                      // Grouped for UI: group => permissions[]
+$registry->getLabel('bookmarks.view');        // 'View bookmarks'
+$registry->getPermissionsForRole('editor');   // Effective permissions (override or defaults)
+$registry->hasPermission('editor', 'bookmarks.view');  // true, 'own', or false
+$registry->hasOverride('editor');             // true if admin customized this role
+
+// Persistence (used by admin panel, not modules)
+$registry->setRolePermissions('editor', $permissions);  // Save override to config
+$registry->resetRole('editor');                          // Remove override, revert to defaults
+```
+
+### Ownership Permissions (`.own` suffix)
+
+The `.own` suffix enables ownership-based access control. When a role has `posts.edit.own` but not `posts.edit`:
+
+1. `ContentPanel` calls `requirePermission('posts.edit')`
+2. `PermissionRegistry::hasPermission()` finds `posts.edit.own` and returns the string `'own'`
+3. `ContentPanel` calls `User::canEdit($user, $item)` to verify the current user is the content author
+4. If not the owner, a 403 is rendered
+
+This is handled automatically by `ContentPanel`. If you override CRUD methods, check the return value:
+
+```php
+public function editItem($params) {
+    $access = $this->requirePermission('bookmarks.edit');
+    if ($access === false) return;    // No access at all
+
+    $item = db()->read('bookmarks', $params['id']);
+
+    // If access is 'own', verify ownership
+    if ($access === 'own' && !$this->checkOwnership($item)) {
+        return;  // Not the owner — 403 already rendered
+    }
+
+    // ... proceed with edit
+}
+```
+
+### ContentPanel and Permissions
+
+`ContentPanel` handles permissions automatically for standard CRUD. The permission prefix defaults to the collection name. To customize:
+
+```php
+protected function getPermissionPrefix() {
+    return 'bookmarks';  // default: $this->getCollectionName()
+}
+```
+
+Auto-checked permissions: `{prefix}.view`, `{prefix}.create`, `{prefix}.edit`, `{prefix}.delete`.
+
+Permission flags (`canCreate`, `canEdit`, `canDelete`) are passed to the list template for conditional UI rendering.
+
+### Restricting Sidebar Visibility
+
+Use `require_role` in `panel.json` to hide the sidebar item from specific roles. Supports a single role or an array:
+
+```json
+{
+  "sidebar": {
+    "require_role": "admin"
+  }
+}
+```
+
+```json
+{
+  "sidebar": {
+    "require_role": ["admin", "editor"]
+  }
+}
+```
+
+This controls sidebar/quick-action **visibility** only. Actual access is enforced by `requirePermission()` in the panel code. If a role has no permissions registered for a collection, they will get a 403 even if they access the URL directly.
+
+### Helper Function
+
+```php
+// Get the PermissionRegistry instance
+$registry = permissions();
+
+// Check permission for a user (typically done via requirePermission in panels)
+$userManager = new User();
+$result = $userManager->hasPermission($user, 'bookmarks.edit');
+// $result: true (full access), 'own' (ownership check needed), or false
+```
 
 ---
 
@@ -566,6 +719,7 @@ Before shipping a new panel:
 - [ ] Class extends `ContentPanel` (CRUD) or `AdminPanel` (custom)
 - [ ] Class is in `namespace Admin`
 - [ ] `id()` matches directory name
+- [ ] Permissions registered via `permissions.register` hook with labels and role defaults
 - [ ] `lang/en.php` has all translation keys
 - [ ] `lang/ru.php` has all translation keys
 - [ ] List template checks `$canCreate`, `$canEdit`, `$canDelete`

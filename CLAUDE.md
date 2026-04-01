@@ -295,11 +295,36 @@ return array(
 > Note: the CMS is pre-alpha; schemas are still evolving. Prefer additive changes (defaults) until the first stable release.
 
 
-### Auth
+### Auth & Permissions
 
 - `core/Auth.php` implements session-based login/logout.
 - Users are stored in the `users` collection (`content/users/*.json`).
+- Login rejects users with `status` other than `active` (inactive, banned).
 - CSRF token helpers exist (`generateCsrfToken()`, `verifyCsrfToken()`).
+
+**Roles:** `admin`, `editor`, `author`, `viewer` (defined in `core/schemas/users.php`).
+
+**PermissionRegistry** (`core/classes/PermissionRegistry.php`) is the central authority for permission management:
+- Registered as a lazy service: `app()->service('permissions')`, helper: `permissions()`.
+- Core permissions are registered in the constructor; modules register via the `permissions.register` hook.
+- Custom per-role overrides are stored in `config('permissions.roles')` and managed through the admin panel at `/admin/permissions`.
+- `hasPermission($role, $permission)` returns `true` (full access), `'own'` (ownership check needed), or `false`.
+
+**Module permission registration:**
+```php
+$this->hook('permissions.register', function($registry) {
+    $registry->registerPermissions(array(
+        'comments.view'   => 'View comments',
+        'comments.delete' => 'Delete comments',
+    ), 'Comments');
+    $registry->addRoleDefaults('editor', array('comments.view', 'comments.delete'));
+    return $registry;
+});
+```
+
+**Ownership enforcement:** When `hasPermission()` returns `'own'`, `ContentPanel` automatically calls `User::canEdit()` to verify the current user is the content author. The `.own` suffix on permissions (e.g. `posts.edit.own`) triggers this flow.
+
+See `docs/ADMIN_PANELS.md` § Permissions for full API reference and examples.
 
 ### Logging & error handling
 
