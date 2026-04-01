@@ -94,9 +94,13 @@ If you add tooling, prefer documenting the exact command(s) here.
 
 ### Hooks
 
-- `core/HookManager.php` provides a simple priority-based pub/sub system.
+See `docs/HOOKS.md` for complete hook system reference.
+
+- `core/HookManager.php` provides a priority-based pub/sub system.
   - `register($hookName, $callback, $priority=10)`
-  - `fire($hookName, $data=null)` (callbacks may transform `$data`)
+  - `fire($hookName, $data=null, $context=null)` (callbacks may transform `$data`, receive read-only `$context`)
+- `core/HookRegistry.php` documents hook contracts. Modules register hooks via `HookRegistry::define()`.
+- Browse all hooks at `/admin/hooks` (admin only).
 
 Modules commonly hook:
 
