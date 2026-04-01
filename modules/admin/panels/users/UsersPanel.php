@@ -13,6 +13,7 @@ class UsersPanel extends ContentPanel {
     public function init($admin) {
         parent::init($admin);
 
+        app()->db()->registerSchema('users', $this->getPath() . '/schema.php');
         $this->hook('permissions.register', array($this, 'registerPermissions'));
     }
 

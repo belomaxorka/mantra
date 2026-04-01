@@ -79,10 +79,16 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
         // Create admin user
         $db = new Database();
 
+        $now = date('Y-m-d\TH:i:sP');
         $userData = array(
             'username' => $username,
             'password' => Auth::hashPasswordStatic($password),
-            'role' => 'admin'
+            'email' => '',
+            'role' => 'admin',
+            'status' => 'active',
+            'author_id' => '',
+            'created_at' => $now,
+            'updated_at' => $now,
         );
 
         if ($db->write('users', $db->generateId(), $userData)) {
