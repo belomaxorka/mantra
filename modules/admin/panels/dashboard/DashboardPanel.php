@@ -49,6 +49,7 @@ class DashboardPanel extends AdminPanel {
                 'value' => count($users),
                 'icon'  => 'bi-people',
                 'color' => 'warning',
+                'url'   => base_url('/admin/users'),
             ),
         );
 
