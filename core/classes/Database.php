@@ -289,6 +289,38 @@ class Database
         return array_values($items);
     }
 
+    /**
+     * Count documents in a collection, optionally filtered.
+     *
+     * @param string $collection Collection name
+     * @param array  $filters    Key-value equality filters (same as query())
+     * @return int
+     */
+    public function count($collection, $filters = array())
+    {
+        $items = $this->readCollection($collection);
+
+        if (empty($filters)) {
+            return count($items);
+        }
+
+        $count = 0;
+        foreach ($items as $item) {
+            $match = true;
+            foreach ($filters as $key => $value) {
+                if (!isset($item[$key]) || $item[$key] !== $value) {
+                    $match = false;
+                    break;
+                }
+            }
+            if ($match) {
+                $count++;
+            }
+        }
+
+        return $count;
+    }
+
     private function getCollectionSchema($collection)
     {
         if (isset($this->collectionSchemas[$collection])) {

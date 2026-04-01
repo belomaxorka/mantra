@@ -21,6 +21,12 @@
                 </article>
             <?php endforeach; ?>
         </div>
+
+        <?php if (isset($paginator)): ?>
+            <div class="mt-4">
+                <?php echo partial('pagination', array('paginator' => $paginator)); ?>
+            </div>
+        <?php endif; ?>
     <?php else: ?>
         <div class="alert alert-info">
             <p class="mb-0">No posts yet. <a href="<?php echo base_url('/admin'); ?>" class="alert-link">Create your first post</a></p>

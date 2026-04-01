@@ -11,17 +11,26 @@ class PageController {
      */
     public function home() {
         $app = Application::getInstance();
+        $perPage = (int)config('content.posts_per_page', 10);
+        $page = max(1, (int)app()->request()->query('page', 1));
+
+        $filter = array('status' => 'published');
 
         // Hook: allow modules to modify query parameters
         $queryParams = $app->hooks()->fire('page.home.query', array(
             'collection' => 'posts',
-            'filter' => array('status' => 'published'),
+            'filter' => $filter,
             'options' => array(
                 'sort' => 'created_at',
                 'order' => 'desc',
-                'limit' => 10
             )
         ));
+
+        $total = app()->db()->count($queryParams['collection'], $queryParams['filter']);
+        $paginator = new Paginator($total, $perPage, $page);
+
+        $queryParams['options']['limit'] = $paginator->perPage();
+        $queryParams['options']['offset'] = $paginator->offset();
 
         $posts = app()->db()->query(
             $queryParams['collection'],
@@ -35,6 +44,7 @@ class PageController {
         // Prepare view data
         $data = array(
             'posts' => $posts,
+            'paginator' => $paginator,
             'title' => config('site.name', 'Mantra CMS')
         );
 
@@ -49,17 +59,26 @@ class PageController {
      */
     public function blog() {
         $app = Application::getInstance();
+        $perPage = (int)config('content.posts_per_page', 10);
+        $page = max(1, (int)app()->request()->query('page', 1));
+
+        $filter = array('status' => 'published');
 
         // Hook: allow modules to modify query parameters
         $queryParams = $app->hooks()->fire('page.blog.query', array(
             'collection' => 'posts',
-            'filter' => array('status' => 'published'),
+            'filter' => $filter,
             'options' => array(
                 'sort' => 'created_at',
                 'order' => 'desc',
-                'limit' => 20
             )
         ));
+
+        $total = app()->db()->count($queryParams['collection'], $queryParams['filter']);
+        $paginator = new Paginator($total, $perPage, $page);
+
+        $queryParams['options']['limit'] = $paginator->perPage();
+        $queryParams['options']['offset'] = $paginator->offset();
 
         $posts = app()->db()->query(
             $queryParams['collection'],
@@ -73,6 +92,7 @@ class PageController {
         // Prepare view data
         $data = array(
             'posts' => $posts,
+            'paginator' => $paginator,
             'title' => 'Blog - ' . config('site.name', 'Mantra CMS')
         );
 

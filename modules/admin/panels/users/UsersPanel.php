@@ -86,12 +86,18 @@ class UsersPanel extends ContentPanel {
     public function listItems() {
         if (!$this->requirePermission('users.view')) return;
 
-        $users = $this->getUserManager()->all();
+        $allUsers = $this->getUserManager()->all();
         $currentUser = $this->getUser();
+
+        $perPage = 25;
+        $page = max(1, (int)app()->request()->query('page', 1));
+        $paginator = new \Paginator(count($allUsers), $perPage, $page);
+        $users = array_slice($allUsers, $paginator->offset(), $paginator->perPage());
 
         $content = $this->renderView($this->getListTemplate(), array_merge(
             array(
                 'users' => $users,
+                'paginator' => $paginator,
                 'currentUserId' => isset($currentUser['_id']) ? $currentUser['_id'] : '',
             ),
             $this->getPermissionFlags()

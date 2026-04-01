@@ -96,5 +96,11 @@
                 </div>
             </div>
         </div>
+
+        <?php if (isset($paginator)): ?>
+            <div class="mt-3">
+                <?php echo partial('pagination', array('paginator' => $paginator)); ?>
+            </div>
+        <?php endif; ?>
     </div>
 </div>

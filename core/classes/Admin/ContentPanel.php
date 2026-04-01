@@ -172,13 +172,23 @@ abstract class ContentPanel extends AdminPanel {
         $prefix = $this->getPermissionPrefix();
         if (!$this->requirePermission($prefix . '.view')) return;
 
+        $perPage = 25;
+        $page = max(1, (int)app()->request()->query('page', 1));
+        $total = app()->db()->count($this->getCollectionName());
+        $paginator = new \Paginator($total, $perPage, $page);
+
         $items = app()->db()->query($this->getCollectionName(), array(), array(
             'sort' => 'updated_at',
-            'order' => 'desc'
+            'order' => 'desc',
+            'limit' => $paginator->perPage(),
+            'offset' => $paginator->offset(),
         ));
 
         $content = $this->renderView($this->getListTemplate(), array_merge(
-            array(strtolower($this->getCollectionName()) => $items),
+            array(
+                strtolower($this->getCollectionName()) => $items,
+                'paginator' => $paginator,
+            ),
             $this->getPermissionFlags()
         ));
 
