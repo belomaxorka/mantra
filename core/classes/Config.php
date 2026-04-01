@@ -157,6 +157,29 @@ class Config {
         return $config;
     }
 
+    /**
+     * Resolve localized value (string or array with locale keys).
+     */
+    public static function resolveLocalized($value, $locale = null) {
+        if (is_string($value)) {
+            return $value;
+        }
+        if (!is_array($value)) {
+            return '';
+        }
+        if ($locale === null) {
+            $locale = self::getNested($GLOBALS['MANTRA_CONFIG'], 'locale.default_language', 'en');
+        }
+        if (isset($value[$locale])) {
+            return (string)$value[$locale];
+        }
+        if (isset($value['en'])) {
+            return (string)$value['en'];
+        }
+        $first = reset($value);
+        return is_string($first) ? $first : '';
+    }
+
     public static function detectBaseUrl() {
         // Note: Config::bootstrap() is called from core/bootstrap.php before helpers.php is loaded,
         // so this method must not depend on global helpers like is_https() or request().

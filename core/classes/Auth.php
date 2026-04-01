@@ -145,6 +145,25 @@ class Auth {
     }
 
     /**
+     * Hash password without instantiating Auth (for install.php).
+     */
+    public static function hashPasswordStatic($password) {
+        $algo = config('security.password_hash_algo', 'PASSWORD_DEFAULT');
+
+        switch ($algo) {
+            case 'PASSWORD_BCRYPT':
+                return password_hash($password, PASSWORD_BCRYPT);
+            case 'PASSWORD_ARGON2I':
+                return defined('PASSWORD_ARGON2I') ? password_hash($password, PASSWORD_ARGON2I) : password_hash($password, PASSWORD_DEFAULT);
+            case 'PASSWORD_ARGON2ID':
+                return defined('PASSWORD_ARGON2ID') ? password_hash($password, PASSWORD_ARGON2ID) : password_hash($password, PASSWORD_DEFAULT);
+            case 'PASSWORD_DEFAULT':
+            default:
+                return password_hash($password, PASSWORD_DEFAULT);
+        }
+    }
+
+    /**
      * Verify password
      */
     private function verifyPassword($password, $hash) {

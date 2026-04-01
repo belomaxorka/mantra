@@ -28,6 +28,19 @@ class ModuleSettings
     private $raw = array();
     private $dirty = false;
 
+    private static $instances = array();
+
+    /**
+     * Get cached ModuleSettings instance.
+     */
+    public static function instance($module) {
+        $module = (string)$module;
+        if (!isset(self::$instances[$module])) {
+            self::$instances[$module] = new self($module);
+        }
+        return self::$instances[$module];
+    }
+
     public function __construct($module)
     {
         $this->module = (string)$module;

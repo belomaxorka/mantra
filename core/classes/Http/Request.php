@@ -150,4 +150,163 @@ class Request {
         $ip = client_ip();
         return $ip ? $ip : (isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : null);
     }
+
+    /**
+     * Get trimmed POST value
+     */
+    public function postTrimmed($key, $default = '') {
+        return trim((string)$this->post($key, $default));
+    }
+
+    /**
+     * Determine whether the current request is HTTPS.
+     */
+    public static function isHttps() {
+        if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
+            return true;
+        }
+
+        if (!empty($_SERVER['HTTP_X_FORWARDED_PROTO'])) {
+            $trusted = config('proxy.trusted_proxies', array());
+            $trusted = self::parseCsv($trusted);
+            $remoteAddr = isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '';
+
+            if (!empty($trusted) && self::ipMatchesAny($remoteAddr, $trusted)) {
+                $proto = strtolower(trim(explode(',', $_SERVER['HTTP_X_FORWARDED_PROTO'])[0]));
+                if ($proto === 'https') {
+                    return true;
+                }
+            }
+        }
+
+        $siteUrl = config('site.url');
+        if ($siteUrl) {
+            $scheme = parse_url($siteUrl, PHP_URL_SCHEME);
+            return strtolower((string)$scheme) === 'https';
+        }
+
+        return false;
+    }
+
+    /**
+     * Get client IP address, considering trusted proxy headers.
+     */
+    public function clientIp() {
+        $remoteAddr = isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : null;
+        if (!$remoteAddr || !filter_var($remoteAddr, FILTER_VALIDATE_IP)) {
+            return null;
+        }
+
+        $trusted = config('proxy.trusted_proxies', array());
+        $trusted = self::parseCsv($trusted);
+
+        if (empty($trusted) || !self::ipMatchesAny($remoteAddr, $trusted)) {
+            return $remoteAddr;
+        }
+
+        $candidates = array(
+            isset($_SERVER['HTTP_CF_CONNECTING_IP']) ? $_SERVER['HTTP_CF_CONNECTING_IP'] : null,
+            isset($_SERVER['HTTP_FASTLY_CLIENT_IP']) ? $_SERVER['HTTP_FASTLY_CLIENT_IP'] : null,
+            isset($_SERVER['HTTP_X_REAL_IP']) ? $_SERVER['HTTP_X_REAL_IP'] : null,
+        );
+
+        if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+            foreach (explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']) as $part) {
+                $part = trim($part);
+                if ($part !== '') {
+                    $candidates[] = $part;
+                }
+            }
+        }
+
+        foreach ($candidates as $ip) {
+            if (!$ip || !filter_var($ip, FILTER_VALIDATE_IP)) {
+                continue;
+            }
+            if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+                return $ip;
+            }
+        }
+
+        foreach ($candidates as $ip) {
+            if ($ip && filter_var($ip, FILTER_VALIDATE_IP)) {
+                return $ip;
+            }
+        }
+
+        return $remoteAddr;
+    }
+
+    /**
+     * Parse comma-separated string into array.
+     */
+    public static function parseCsv($value) {
+        if (is_array($value)) {
+            return array_filter(array_map('trim', $value), 'strlen');
+        }
+        if (is_string($value)) {
+            return array_filter(array_map('trim', explode(',', $value)), 'strlen');
+        }
+        return array();
+    }
+
+    /**
+     * Check whether an IP matches any entry in a list of IPs/CIDRs.
+     */
+    public static function ipMatchesAny($ip, $entries) {
+        foreach ($entries as $entry) {
+            if (self::ipMatches($ip, $entry)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Check whether an IP matches a single entry (IP or CIDR).
+     */
+    public static function ipMatches($ip, $entry) {
+        $entry = trim((string)$entry);
+        if ($entry === '') {
+            return false;
+        }
+
+        if (strpos($entry, '/') === false) {
+            return $ip === $entry;
+        }
+
+        list($subnet, $bits) = array_pad(explode('/', $entry, 2), 2, null);
+        if (!filter_var($subnet, FILTER_VALIDATE_IP)) {
+            return false;
+        }
+
+        $bits = (int)$bits;
+        $ipBin = @inet_pton($ip);
+        $subnetBin = @inet_pton($subnet);
+        if ($ipBin === false || $subnetBin === false || strlen($ipBin) !== strlen($subnetBin)) {
+            return false;
+        }
+
+        $maxBits = strlen($ipBin) * 8;
+        if ($bits < 0) {
+            $bits = 0;
+        }
+        if ($bits > $maxBits) {
+            $bits = $maxBits;
+        }
+
+        $bytes = (int)($bits / 8);
+        $remainder = $bits % 8;
+
+        if ($bytes > 0 && substr($ipBin, 0, $bytes) !== substr($subnetBin, 0, $bytes)) {
+            return false;
+        }
+
+        if ($remainder === 0) {
+            return true;
+        }
+
+        $mask = chr((0xFF << (8 - $remainder)) & 0xFF);
+        return (ord($ipBin[$bytes]) & ord($mask)) === (ord($subnetBin[$bytes]) & ord($mask));
+    }
 }

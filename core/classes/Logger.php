@@ -231,6 +231,22 @@ class Logger implements \Psr\Log\LoggerInterface
         return file_put_contents($logFile, $message . "\n", FILE_APPEND | LOCK_EX) !== false;
     }
 
+    /**
+     * Resolve the effective minimum log level from config/debug flag.
+     * Works before Application exists (uses globals only).
+     */
+    public static function resolveLevel()
+    {
+        $level = MANTRA_DEBUG ? self::DEBUG : self::INFO;
+
+        $cfgLevel = Config::getNested($GLOBALS['MANTRA_CONFIG'], 'logging.level', null);
+        if (!empty($cfgLevel)) {
+            $level = $cfgLevel;
+        }
+
+        return $level;
+    }
+
     public function setMinLevel($level)
     {
         if (isset(self::$levels[$level])) {

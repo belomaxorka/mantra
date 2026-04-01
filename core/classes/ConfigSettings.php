@@ -20,6 +20,18 @@ class ConfigSettings
     private $data = array();
     private $defaults = array();
 
+    private static $instance = null;
+
+    /**
+     * Get cached ConfigSettings instance.
+     */
+    public static function instance() {
+        if (self::$instance === null) {
+            self::$instance = new self();
+        }
+        return self::$instance;
+    }
+
     public function __construct()
     {
         $this->path = MANTRA_CONTENT . '/settings/config.json';

@@ -16,6 +16,7 @@ class Application {
     
     private function __construct() {
         $this->loadConfig();
+        $this->registerCoreServices();
         $this->setupEnvironment();
     }
     
@@ -55,8 +56,42 @@ class Application {
         }
         
         // Start session
-        session()->start();
+        $this->session()->start();
     }
+
+    /**
+     * Register core lazy services
+     */
+    private function registerCoreServices() {
+        $this->provide('request', function() { return new \Http\Request(); });
+        $this->provide('session', function() { return new \Http\Session(); });
+        $this->provide('response', function() { return new \Http\Response(); });
+        $this->provide('db', function() { return new \Database(); });
+        $this->provide('view', function() { return new \View(); });
+        $this->provide('translator', function() { return new \TranslationManager(); });
+        $this->provide('auth', function() { return new \Auth(); });
+    }
+
+    /** @return \Http\Request */
+    public function request() { return $this->service('request'); }
+
+    /** @return \Http\Session */
+    public function session() { return $this->service('session'); }
+
+    /** @return \Http\Response */
+    public function response() { return $this->service('response'); }
+
+    /** @return \Database */
+    public function db() { return $this->service('db'); }
+
+    /** @return \View */
+    public function view() { return $this->service('view'); }
+
+    /** @return \TranslationManager */
+    public function translator() { return $this->service('translator'); }
+
+    /** @return \Auth */
+    public function auth() { return $this->service('auth'); }
     
     /**
      * Run application
@@ -186,11 +221,11 @@ class Application {
      * Handle application errors
      */
     private function handleError($exception) {
-        // Log error
+        // Log error (use $_SERVER directly — service container may be in bad state)
         logger()->error('Application error', array(
             'exception' => $exception,
-            'url' => (string)request()->server('REQUEST_URI', 'unknown'),
-            'method' => (string)request()->server('REQUEST_METHOD', 'unknown')
+            'url' => isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : 'unknown',
+            'method' => isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : 'unknown'
         ));
 
         // Discard any partial output left in ob buffers (e.g. from View)
@@ -209,15 +244,6 @@ class Application {
             echo '<h1>Something went wrong</h1>';
             echo '<p>Please try again later.</p>';
         }
-    }
-    
-    /**
-     * Log error to file
-     * @deprecated Use logger() instead
-     */
-    private function logError($exception) {
-        // Kept for backward compatibility, but now uses Logger class
-        logger()->error('Application error', array('exception' => $exception));
     }
     
     /**
