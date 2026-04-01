@@ -25,7 +25,7 @@
   --mn-primary-soft: rgba(99,102,241,.08);
 
   /* Surfaces */
-  --mn-bg: #f1f5f9;
+  --mn-bg: #f8fafc;
   --mn-card-bg: #fff;
   --mn-card-border: transparent;
   --mn-card-shadow: 0 1px 3px rgba(0,0,0,.04), 0 1px 2px rgba(0,0,0,.06);
@@ -50,10 +50,21 @@
   --mn-transition: .15s ease;
 }
 
-/* ---------- 2. Base ---------- */
+/* ---------- 2. Scrollbar ---------- */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--mn-border) transparent;
+}
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--mn-border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--mn-text-muted); }
+
+/* ---------- 3. Base ---------- */
 body {
   font-family: var(--mn-font);
   color: var(--mn-text);
+  overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -76,10 +87,9 @@ body {
   color: var(--mn-sidebar-text);
 }
 
-/* thin scrollbar */
-.admin-sidebar::-webkit-scrollbar { width: 4px; }
-.admin-sidebar::-webkit-scrollbar-track { background: transparent; }
-.admin-sidebar::-webkit-scrollbar-thumb { background: var(--mn-sidebar-divider); border-radius: 4px; }
+/* sidebar scrollbar override (light on dark) */
+.admin-sidebar { scrollbar-color: var(--mn-sidebar-divider) transparent; }
+.admin-sidebar::-webkit-scrollbar-thumb { background: var(--mn-sidebar-divider); }
 
 /* brand */
 .admin-sidebar .sidebar-brand {
@@ -326,6 +336,9 @@ body {
 }
 
 /* ---------- 9. Buttons ---------- */
+.btn-group.w-100 { display: flex; }
+.btn-group.w-100 > .btn { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+
 .btn {
   font-weight: 500;
   font-size: .875rem;
@@ -531,7 +544,23 @@ code {
   color: #475569;
 }
 
-/* ---------- 18. Responsive ---------- */
+/* ---------- 18. Sidebar Backdrop ---------- */
+.admin-sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.5);
+  z-index: 1025;
+  opacity: 0;
+  pointer-events: none;
+}
+.admin-sidebar-backdrop.show {
+  opacity: 1;
+  pointer-events: auto;
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+}
+
+/* ---------- 19. Responsive ---------- */
 @media (max-width: 991.98px) {
   .admin-mobile-header {
     display: flex;
@@ -550,17 +579,6 @@ code {
     box-shadow: 4px 0 24px rgba(0,0,0,.3);
   }
   .admin-sidebar.show { transform: translateX(0); }
-
-  .admin-sidebar-backdrop {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,.6);
-    z-index: 1025;
-    -webkit-backdrop-filter: blur(2px);
-    backdrop-filter: blur(2px);
-  }
-  .admin-sidebar-backdrop.show { display: block; }
 
   .admin-shell { flex-direction: column; }
   main.flex-fill { width: 100%; padding: 1rem !important; }
@@ -614,6 +632,13 @@ code {
   }
   .module-card-wrapper .text-end { text-align: left !important; }
   .module-card-wrapper .btn { width: 100%; }
+
+  .card-body .btn-group.w-100 {
+    flex-direction: column;
+  }
+  .card-body .btn-group.w-100 > .btn {
+    border-radius: .5rem !important;
+  }
 
   .login-card .card-body { padding: 1.75rem; }
   .login-brand { font-size: 1.5rem; }
@@ -765,4 +790,5 @@ code {
 @media (prefers-reduced-motion: no-preference) {
   .admin-sidebar { transition: transform .3s cubic-bezier(.4,0,.2,1); }
   .admin-sidebar .nav-link.is-parent .caret { transition: transform var(--mn-transition); }
+  .admin-sidebar-backdrop { transition: opacity .3s ease; }
 }

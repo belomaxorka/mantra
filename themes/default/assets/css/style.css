@@ -125,6 +125,8 @@ a:hover { color: var(--t-primary-hover); }
 .nav-backdrop.open {
   opacity: 1;
   pointer-events: auto;
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
 }
 
 /* ---------- Nav drawer ---------- */
@@ -442,6 +444,7 @@ a:hover { color: var(--t-primary-hover); }
   transition: color var(--t-transition);
 }
 .site-footer a:hover { color: var(--t-primary); }
+.footer-sep { color: var(--t-border); margin: 0 .25rem; }
 .footer-links {
   display: flex;
   flex-wrap: wrap;

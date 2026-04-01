@@ -14,7 +14,7 @@
         <input type="hidden" name="csrf_token" value="<?php echo e($csrf_token); ?>">
 
         <div class="row">
-        <div class="col-lg-8">
+        <div class="col-xl-8">
             <div class="card mb-4">
                 <div class="card-body">
                     <div class="mb-3">
@@ -68,7 +68,7 @@
             </div>
         </div>
 
-        <div class="col-lg-4">
+        <div class="col-xl-4">
             <div class="card mb-4">
                 <div class="card-header">
                     <?php echo t('admin-posts.publish'); ?>

@@ -128,7 +128,13 @@
                 echo '</ul>';
             }
             ?>
-            <p class="footer-text mb-0">&copy; <?php echo date('Y'); ?> <?php echo e(config('site.name', MANTRA_PROJECT_INFO['name'])); ?></p>
+            <p class="footer-text mb-0">
+                &copy; <?php echo date('Y'); ?> <?php echo e(config('site.name', MANTRA_PROJECT_INFO['name'])); ?>
+                <?php if ($app->auth()->check()): ?>
+                    <span class="footer-sep">&middot;</span>
+                    <a href="<?php echo base_url('/admin'); ?>" class="footer-admin-link">Admin</a>
+                <?php endif; ?>
+            </p>
         </div>
     </footer>
 

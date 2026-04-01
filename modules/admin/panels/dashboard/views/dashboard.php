@@ -6,7 +6,7 @@
     <?php if (!empty($stats) && is_array($stats)): ?>
     <div class="row g-3 mb-4">
         <?php foreach ($stats as $stat): ?>
-            <div class="col-sm-6 col-lg-4">
+            <div class="col-sm-6 col-xl-4">
                 <?php $hasUrl = !empty($stat['url']); ?>
                 <<?php echo $hasUrl ? 'a href="' . e($stat['url']) . '"' : 'div'; ?> class="card stat-card stat-card--<?php echo e($stat['color']); ?> text-decoration-none">
                     <div class="card-body d-flex align-items-center gap-3">
@@ -28,7 +28,7 @@
     <?php endif; ?>
 
     <div class="row g-3">
-        <div class="col-lg-8">
+        <div class="col-xl-8">
             <div class="card">
                 <div class="card-header"><?php echo t('admin-dashboard.recent'); ?></div>
                 <div class="card-body">
@@ -83,7 +83,7 @@
             </div>
         </div>
 
-        <div class="col-lg-4">
+        <div class="col-xl-4">
             <div class="card">
                 <div class="card-header"><?php echo t('admin-dashboard.quick_actions'); ?></div>
                 <div class="card-body">

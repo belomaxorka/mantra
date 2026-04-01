@@ -12,7 +12,7 @@
     </div>
 
     <div class="row">
-        <div class="col-lg-8">
+        <div class="col-xl-8">
             <div class="card mb-4">
                 <div class="card-body text-center">
                     <?php if ($isImage): ?>
@@ -54,7 +54,7 @@
             </div>
         </div>
 
-        <div class="col-lg-4">
+        <div class="col-xl-4">
             <form method="POST" action="<?php echo base_url('/admin/uploads/edit/' . $file['_id']); ?>">
                 <input type="hidden" name="csrf_token" value="<?php echo e($csrf_token); ?>">
 
