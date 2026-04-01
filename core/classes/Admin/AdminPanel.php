@@ -45,6 +45,11 @@ abstract class AdminPanel implements AdminPanelInterface {
 
         $sb = $this->metadata['sidebar'];
 
+        // Hide sidebar item if user lacks the required role
+        if (isset($sb['require_role']) && !auth()->hasRole($sb['require_role'])) {
+            return null;
+        }
+
         return array(
             'id'    => isset($sb['id']) ? $sb['id'] : $this->id(),
             'title' => isset($sb['title']) ? $sb['title'] : 'admin-' . $this->id() . '.title',
@@ -57,6 +62,12 @@ abstract class AdminPanel implements AdminPanelInterface {
 
     public function getQuickActions() {
         if (!isset($this->metadata['quick_actions']) || !is_array($this->metadata['quick_actions'])) {
+            return array();
+        }
+
+        // Hide quick actions if user lacks the required role for this panel
+        if (isset($this->metadata['sidebar']['require_role'])
+            && !auth()->hasRole($this->metadata['sidebar']['require_role'])) {
             return array();
         }
 
@@ -95,6 +106,41 @@ abstract class AdminPanel implements AdminPanelInterface {
      */
     protected function renderAdmin($title, $content, $extra = array()) {
         return $this->admin->render($title, $content, $extra);
+    }
+
+    // ========== Access Control ==========
+
+    /**
+     * Check if current user has a specific permission.
+     * Returns false and renders a 403 page if denied.
+     */
+    protected function requirePermission($permission) {
+        $userManager = new \User();
+        if ($userManager->hasPermission($this->getUser(), $permission)) {
+            return true;
+        }
+        http_response_code(403);
+        echo $this->renderAdmin(
+            t('admin.common.access_denied'),
+            '<div class="alert alert-danger alert-permanent">' . e(t('admin.common.access_denied')) . '</div>'
+        );
+        return false;
+    }
+
+    /**
+     * Check if current user has admin role.
+     * Returns false and renders a 403 page if denied.
+     */
+    protected function requireAdmin() {
+        if ($this->auth()->hasRole('admin')) {
+            return true;
+        }
+        http_response_code(403);
+        echo $this->renderAdmin(
+            t('admin.common.access_denied'),
+            '<div class="alert alert-danger alert-permanent">' . e(t('admin.common.access_denied')) . '</div>'
+        );
+        return false;
     }
 
     // ========== Convenience Helpers ==========

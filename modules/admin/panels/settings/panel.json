@@ -6,7 +6,8 @@
     "icon": "bi-sliders",
     "group": "admin.sidebar.group.system",
     "order": 50,
-    "url": "/admin/settings"
+    "url": "/admin/settings",
+    "require_role": "admin"
   },
   "quick_actions": [
     {

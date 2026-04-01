@@ -3,9 +3,11 @@
         <div class="col">
             <div class="admin-page-header">
                 <h1 class="h3"><?php echo t('admin-pages.title'); ?></h1>
-                <a href="<?php echo base_url('/admin/pages/new'); ?>" class="btn btn-primary">
-                    <i class="bi bi-plus-circle me-2"></i><?php echo t('admin-pages.new'); ?>
-                </a>
+                <?php if (!empty($canCreate)): ?>
+                    <a href="<?php echo base_url('/admin/pages/new'); ?>" class="btn btn-primary">
+                        <i class="bi bi-plus-circle me-2"></i><?php echo t('admin-pages.new'); ?>
+                    </a>
+                <?php endif; ?>
             </div>
         </div>
     </div>
@@ -18,9 +20,11 @@
                         <div class="admin-empty-state">
                             <i class="bi bi-file-earmark-text"></i>
                             <p><?php echo t('admin-pages.no_pages'); ?></p>
-                            <a href="<?php echo base_url('/admin/pages/new'); ?>" class="btn btn-primary">
-                                <i class="bi bi-plus-circle me-2"></i><?php echo t('admin-pages.new'); ?>
-                            </a>
+                            <?php if (!empty($canCreate)): ?>
+                                <a href="<?php echo base_url('/admin/pages/new'); ?>" class="btn btn-primary">
+                                    <i class="bi bi-plus-circle me-2"></i><?php echo t('admin-pages.new'); ?>
+                                </a>
+                            <?php endif; ?>
                         </div>
                     <?php else: ?>
                         <div class="table-responsive">
@@ -65,22 +69,26 @@
                                             </td>
                                             <td>
                                                 <div class="btn-group btn-group-sm">
-                                                    <a href="<?php echo base_url('/admin/pages/edit/' . $page['_id']); ?>"
-                                                       class="btn btn-outline-primary" title="<?php echo t('admin-pages.edit'); ?>">
-                                                        <i class="bi bi-pencil"></i>
-                                                    </a>
+                                                    <?php if (!empty($canEdit)): ?>
+                                                        <a href="<?php echo base_url('/admin/pages/edit/' . $page['_id']); ?>"
+                                                           class="btn btn-outline-primary" title="<?php echo t('admin-pages.edit'); ?>">
+                                                            <i class="bi bi-pencil"></i>
+                                                        </a>
+                                                    <?php endif; ?>
                                                     <?php if ($page['status'] === 'published'): ?>
                                                         <a href="<?php echo base_url('/' . $page['slug']); ?>"
                                                            class="btn btn-outline-secondary" title="<?php echo t('admin-pages.view'); ?>" target="_blank">
                                                             <i class="bi bi-eye"></i>
                                                         </a>
                                                     <?php endif; ?>
-                                                    <button type="button"
-                                                            class="btn btn-outline-danger"
-                                                            title="<?php echo t('admin-pages.delete'); ?>"
-                                                            onclick="adminConfirmDelete('<?php echo e(base_url('/admin/pages/delete/' . $page['_id'])); ?>', '<?php echo e(t('admin-pages.delete_confirm')); ?>')">
-                                                        <i class="bi bi-trash"></i>
-                                                    </button>
+                                                    <?php if (!empty($canDelete)): ?>
+                                                        <button type="button"
+                                                                class="btn btn-outline-danger"
+                                                                title="<?php echo t('admin-pages.delete'); ?>"
+                                                                onclick="adminConfirmDelete('<?php echo e(base_url('/admin/pages/delete/' . $page['_id'])); ?>', '<?php echo e(t('admin-pages.delete_confirm')); ?>')">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    <?php endif; ?>
                                                 </div>
                                             </td>
                                         </tr>

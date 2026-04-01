@@ -27,18 +27,6 @@ class UsersPanel extends AdminPanel {
         return $this->userManager;
     }
 
-    private function requireAdmin() {
-        if (!$this->auth()->hasRole('admin')) {
-            http_response_code(403);
-            echo $this->renderAdmin(
-                t('admin-users.title'),
-                '<div class="alert alert-danger alert-permanent">' . e(t('admin-users.access_denied')) . '</div>'
-            );
-            return false;
-        }
-        return true;
-    }
-
     private function getDomain() {
         return 'admin-users';
     }

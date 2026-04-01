@@ -40,6 +40,7 @@ return array(
     'admin.common.error' => 'Ошибка',
     'admin.common.delete_confirm_title' => 'Подтверждение удаления',
     'admin.common.delete_confirm_body' => 'Вы уверены, что хотите удалить этот элемент? Это действие нельзя отменить.',
+    'admin.common.access_denied' => 'Доступ запрещён. У вас нет прав для выполнения этого действия.',
 
     // Modules management (shared across admin modules)
     'admin.modules.author' => 'Автор',

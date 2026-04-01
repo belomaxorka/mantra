@@ -6,7 +6,8 @@
     "icon": "bi-people",
     "group": "admin.sidebar.group.system",
     "order": 20,
-    "url": "/admin/users"
+    "url": "/admin/users",
+    "require_role": "admin"
   },
   "quick_actions": [
     {

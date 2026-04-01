@@ -121,16 +121,43 @@ abstract class ContentPanel extends AdminPanel {
         );
     }
 
+    // ========== Permission Helpers ==========
+
+    /**
+     * Permission prefix for this panel (e.g. 'posts', 'pages').
+     */
+    protected function getPermissionPrefix() {
+        return $this->getCollectionName();
+    }
+
+    /**
+     * Check permission flags for list views.
+     */
+    protected function getPermissionFlags() {
+        $userManager = new \User();
+        $user = $this->getUser();
+        $prefix = $this->getPermissionPrefix();
+        return array(
+            'canCreate' => $userManager->hasPermission($user, $prefix . '.create'),
+            'canEdit'   => $userManager->hasPermission($user, $prefix . '.edit'),
+            'canDelete' => $userManager->hasPermission($user, $prefix . '.delete'),
+        );
+    }
+
     // ========== CRUD Actions ==========
 
     public function listItems() {
+        $prefix = $this->getPermissionPrefix();
+        if (!$this->requirePermission($prefix . '.view')) return;
+
         $items = db()->query($this->getCollectionName(), array(), array(
             'sort' => 'updated_at',
             'order' => 'desc'
         ));
 
-        $content = $this->renderView($this->getListTemplate(), array(
-            strtolower($this->getCollectionName()) => $items
+        $content = $this->renderView($this->getListTemplate(), array_merge(
+            array(strtolower($this->getCollectionName()) => $items),
+            $this->getPermissionFlags()
         ));
 
         $title = t($this->getDomain() . '.title');
@@ -141,6 +168,9 @@ abstract class ContentPanel extends AdminPanel {
     }
 
     public function newItem() {
+        $prefix = $this->getPermissionPrefix();
+        if (!$this->requirePermission($prefix . '.create')) return;
+
         $content = $this->renderView($this->getEditTemplate(), array(
             strtolower($this->getContentType()) => $this->getDefaultItem(),
             'isNew' => true,
@@ -155,6 +185,8 @@ abstract class ContentPanel extends AdminPanel {
     }
 
     public function createItem() {
+        $prefix = $this->getPermissionPrefix();
+        if (!$this->requirePermission($prefix . '.create')) return;
         if (!$this->verifyCsrf()) {
             return;
         }
@@ -174,6 +206,9 @@ abstract class ContentPanel extends AdminPanel {
     }
 
     public function editItem($params) {
+        $prefix = $this->getPermissionPrefix();
+        if (!$this->requirePermission($prefix . '.edit')) return;
+
         $id = isset($params['id']) ? $params['id'] : '';
         $item = db()->read($this->getCollectionName(), $id);
 
@@ -198,6 +233,8 @@ abstract class ContentPanel extends AdminPanel {
     }
 
     public function updateItem($params) {
+        $prefix = $this->getPermissionPrefix();
+        if (!$this->requirePermission($prefix . '.edit')) return;
         if (!$this->verifyCsrf()) {
             return;
         }
@@ -226,6 +263,8 @@ abstract class ContentPanel extends AdminPanel {
     }
 
     public function deleteItem($params) {
+        $prefix = $this->getPermissionPrefix();
+        if (!$this->requirePermission($prefix . '.delete')) return;
         if (!$this->verifyCsrf()) {
             return;
         }

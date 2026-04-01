@@ -25,6 +25,8 @@ class SettingsPanel extends AdminPanel {
     // ========== Main Action ==========
 
     public function settings() {
+        if (!$this->requireAdmin()) return;
+
         $activeTab = (string)request()->query('tab', 'general');
 
         // Build tabs
