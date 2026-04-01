@@ -140,6 +140,9 @@ class Config {
             'debug' => array(
                 'enabled' => true,
             ),
+            'admin' => array(
+                'accent_color' => 'indigo',
+            ),
             'advanced' => array(
                 // Placeholder to force JSON object encoding for empty group.
                 '_placeholder' => null,

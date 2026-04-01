@@ -12,13 +12,14 @@
  */
 
 return array(
-    'version' => 2,
+    'version' => 3,
     'migrate' => function ($data, $from, $to) {
         // v2: admin sub-modules replaced by panels — strip from modules.enabled
         if ($from < 2 && isset($data['modules']['enabled']) && is_array($data['modules']['enabled'])) {
             $panelIds = array('admin-dashboard', 'admin-pages', 'admin-posts', 'admin-settings');
             $data['modules']['enabled'] = array_values(array_diff($data['modules']['enabled'], $panelIds));
         }
+        // v3: admin.accent_color — no data migration needed, gets default automatically
         $data['schema_version'] = $to;
         return $data;
     },
@@ -101,6 +102,20 @@ return array(
                     'type' => 'select',
                     'title' => 'admin-settings.theme.active',
                     'default' => 'default',
+                    'options' => array(),
+                ),
+            ),
+        ),
+        array(
+            'id' => 'appearance',
+            'title' => 'admin-settings.group.appearance',
+            'fields' => array(
+                array(
+                    'path' => 'admin.accent_color',
+                    'type' => 'select',
+                    'title' => 'admin-settings.appearance.accent_color',
+                    'default' => 'indigo',
+                    'help' => 'admin-settings.appearance.accent_color.help',
                     'options' => array(),
                 ),
             ),

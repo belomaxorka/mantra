@@ -414,6 +414,9 @@ class SettingsPanel extends AdminPanel {
                         \Logger::EMERGENCY => 'emergency',
                     );
                 }
+                if ($path === 'admin.accent_color' && (string)$field['type'] === 'select') {
+                    $field['options'] = $this->availableAccentColorOptions();
+                }
                 if ($path === 'modules.enabled' && (string)$field['type'] === 'module_cards') {
                     $field['options'] = $this->availableModuleCards();
                 }
@@ -426,6 +429,22 @@ class SettingsPanel extends AdminPanel {
     }
 
     // ========== Option providers ==========
+
+    private function availableAccentColorOptions() {
+        $presetsFile = dirname(dirname($this->panelPath)) . '/appearance-presets.php';
+        if (!file_exists($presetsFile)) {
+            return array();
+        }
+        $presets = require $presetsFile;
+        if (!is_array($presets)) {
+            return array();
+        }
+        $options = array();
+        foreach ($presets as $key => $vars) {
+            $options[$key] = 'admin-settings.appearance.preset.' . $key;
+        }
+        return $options;
+    }
 
     private function availableThemeOptions() {
         $options = array();

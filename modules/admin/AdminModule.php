@@ -17,6 +17,7 @@ class AdminModule extends Module
     {
         $this->registerAdminHooks();
         $this->registerPermissionService();
+        $this->registerAppearanceOverrides();
         $this->loadPanels();
         $this->hook('routes.register', array($this, 'registerRoutes'));
     }
@@ -47,6 +48,44 @@ class AdminModule extends Module
             $module->fireHook('permissions.register', $registry);
             return $registry;
         });
+    }
+
+    /**
+     * Register admin.head hook for accent color CSS overrides.
+     */
+    private function registerAppearanceOverrides()
+    {
+        $this->hook('admin.head', array($this, 'injectAccentColorStyle'), 20);
+    }
+
+    /**
+     * Inject CSS custom property overrides based on the selected accent color preset.
+     */
+    public function injectAccentColorStyle($html)
+    {
+        $preset = \ConfigSettings::instance()->get('admin.accent_color', 'indigo');
+        $preset = preg_replace('/[^a-z0-9_-]/', '', strtolower($preset));
+
+        if ($preset === 'indigo' || $preset === '') {
+            return $html;
+        }
+
+        $presetsFile = $this->getPath() . '/appearance-presets.php';
+        if (!file_exists($presetsFile)) {
+            return $html;
+        }
+
+        $presets = require $presetsFile;
+        if (!is_array($presets) || !isset($presets[$preset]) || !is_array($presets[$preset])) {
+            return $html;
+        }
+
+        $lines = array();
+        foreach ($presets[$preset] as $prop => $value) {
+            $lines[] = '  ' . $prop . ': ' . $value . ';';
+        }
+
+        return $html . "\n<style>:root {\n" . implode("\n", $lines) . "\n}</style>";
     }
 
     // ========== Panel Management ==========

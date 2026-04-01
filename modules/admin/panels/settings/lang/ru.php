@@ -22,6 +22,7 @@ return array(
     'admin-settings.group.site' => 'Сайт',
     'admin-settings.group.locale' => 'Локализация',
     'admin-settings.group.theme' => 'Тема',
+    'admin-settings.group.appearance' => 'Внешний вид',
     'admin-settings.group.content' => 'Контент',
     'admin-settings.group.modules' => 'Модули',
     'admin-settings.group.security' => 'Безопасность',
@@ -88,6 +89,20 @@ return array(
     // Performance settings
     'admin-settings.performance.gzip_compression' => 'Включить gzip сжатие',
     'admin-settings.performance.gzip_compression.help' => 'Сжимать HTML вывод для уменьшения трафика. Лучше настраивать на уровне веб-сервера (Apache/Nginx).',
+
+    // Appearance settings
+    'admin-settings.appearance.accent_color' => 'Акцентный цвет',
+    'admin-settings.appearance.accent_color.help' => 'Выберите основной акцентный цвет панели администрирования.',
+    'admin-settings.appearance.preset.indigo' => 'Индиго (по умолчанию)',
+    'admin-settings.appearance.preset.blue' => 'Синий',
+    'admin-settings.appearance.preset.sky' => 'Небесный',
+    'admin-settings.appearance.preset.teal' => 'Бирюзовый',
+    'admin-settings.appearance.preset.emerald' => 'Изумрудный',
+    'admin-settings.appearance.preset.amber' => 'Янтарный',
+    'admin-settings.appearance.preset.orange' => 'Оранжевый',
+    'admin-settings.appearance.preset.rose' => 'Розовый',
+    'admin-settings.appearance.preset.violet' => 'Фиолетовый',
+    'admin-settings.appearance.preset.slate' => 'Серый',
 
     // Debug settings
     'admin-settings.debug.enabled' => 'Включить режим отладки',

@@ -22,6 +22,7 @@ return array(
     'admin-settings.group.site' => 'Site',
     'admin-settings.group.locale' => 'Locale',
     'admin-settings.group.theme' => 'Theme',
+    'admin-settings.group.appearance' => 'Appearance',
     'admin-settings.group.content' => 'Content',
     'admin-settings.group.modules' => 'Modules',
     'admin-settings.group.security' => 'Security',
@@ -88,6 +89,20 @@ return array(
     // Performance settings
     'admin-settings.performance.gzip_compression' => 'Enable gzip compression',
     'admin-settings.performance.gzip_compression.help' => 'Compress HTML output to reduce bandwidth. Best configured at web server level (Apache/Nginx).',
+
+    // Appearance settings
+    'admin-settings.appearance.accent_color' => 'Accent color',
+    'admin-settings.appearance.accent_color.help' => 'Choose the primary accent color for the admin panel.',
+    'admin-settings.appearance.preset.indigo' => 'Indigo (default)',
+    'admin-settings.appearance.preset.blue' => 'Blue',
+    'admin-settings.appearance.preset.sky' => 'Sky',
+    'admin-settings.appearance.preset.teal' => 'Teal',
+    'admin-settings.appearance.preset.emerald' => 'Emerald',
+    'admin-settings.appearance.preset.amber' => 'Amber',
+    'admin-settings.appearance.preset.orange' => 'Orange',
+    'admin-settings.appearance.preset.rose' => 'Rose',
+    'admin-settings.appearance.preset.violet' => 'Violet',
+    'admin-settings.appearance.preset.slate' => 'Slate',
 
     // Debug settings
     'admin-settings.debug.enabled' => 'Enable debug mode',
