@@ -93,6 +93,20 @@ class HookManager {
     }
     
     /**
+     * Get listener count for a hook
+     */
+    public function listenerCount($hookName) {
+        return isset($this->hooks[$hookName]) ? count($this->hooks[$hookName]) : 0;
+    }
+
+    /**
+     * Get all hook names that have registered listeners
+     */
+    public function getActiveHooks() {
+        return array_keys($this->hooks);
+    }
+
+    /**
      * Remove all listeners for a hook
      */
     public function clear($hookName) {

@@ -98,7 +98,24 @@ class HookRegistry {
             'return_type' => 'array',
         ),
 
+        // ── Permissions ────────────────────────────────────
+        'permissions.register' => array(
+            'description' => 'Register module permissions with the PermissionRegistry',
+            'data_type'   => 'PermissionRegistry',
+            'return_type' => 'PermissionRegistry',
+        ),
+
         // ── Admin: content panel extensibility ─────────────
+        // These hooks are fired by ContentPanel/ContentAdminModule for
+        // every collection. Replace {collection} with: posts, pages,
+        // users, uploads, or any custom collection name.
+        //
+        // admin.{collection}.edit.data   — modify template data for edit form
+        // admin.{collection}.form_data   — modify form data before save
+        // admin.{collection}.edit.sidebar — inject HTML into edit sidebar (context: item)
+        // admin.{collection}.list.columns.head — inject <th> into list header
+        // admin.{collection}.list.columns.body — inject <td> into list row (context: item)
+
         'admin.posts.edit.sidebar' => array(
             'description' => 'Inject HTML into the posts edit form sidebar',
             'data_type'   => 'string',
@@ -126,6 +143,16 @@ class HookRegistry {
             'return_type' => 'string',
             'context'     => 'array (the post item)',
         ),
+        'admin.pages.edit.data' => array(
+            'description' => 'Modify template data for the pages edit form',
+            'data_type'   => 'array',
+            'return_type' => 'array',
+        ),
+        'admin.pages.form_data' => array(
+            'description' => 'Modify extracted form data before saving a page',
+            'data_type'   => 'array',
+            'return_type' => 'array',
+        ),
         'admin.pages.edit.sidebar' => array(
             'description' => 'Inject HTML into the pages edit form sidebar',
             'data_type'   => 'string',
@@ -143,6 +170,16 @@ class HookRegistry {
             'return_type' => 'string',
             'context'     => 'array (the page item)',
         ),
+        'admin.users.edit.data' => array(
+            'description' => 'Modify template data for the users edit form',
+            'data_type'   => 'array',
+            'return_type' => 'array',
+        ),
+        'admin.users.form_data' => array(
+            'description' => 'Modify extracted form data before saving a user',
+            'data_type'   => 'array',
+            'return_type' => 'array',
+        ),
         'admin.users.edit.sidebar' => array(
             'description' => 'Inject HTML into the users edit form sidebar',
             'data_type'   => 'string',
@@ -159,6 +196,17 @@ class HookRegistry {
             'data_type'   => 'string',
             'return_type' => 'string',
             'context'     => 'array (the user item)',
+        ),
+
+        'admin.uploads.edit.data' => array(
+            'description' => 'Modify template data for the uploads edit form',
+            'data_type'   => 'array',
+            'return_type' => 'array',
+        ),
+        'admin.uploads.form_data' => array(
+            'description' => 'Modify extracted form data before saving an upload',
+            'data_type'   => 'array',
+            'return_type' => 'array',
         ),
 
         // ── Content: home page ──────────────────────────────

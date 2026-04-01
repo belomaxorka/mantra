@@ -1,0 +1,13 @@
+{
+    "id": "hooks",
+    "version": "1.0.0",
+    "sidebar": {
+        "id": "hooks",
+        "title": "admin-hooks.title",
+        "icon": "bi-plug",
+        "group": "admin.sidebar.group.system",
+        "order": 60,
+        "url": "/admin/hooks",
+        "require_role": "admin"
+    }
+}
