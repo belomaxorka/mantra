@@ -302,7 +302,7 @@ return array(
 - Login rejects users with `status` other than `active` (inactive, banned).
 - CSRF token helpers exist (`generateCsrfToken()`, `verifyCsrfToken()`).
 
-**Roles:** `admin`, `editor`, `author`, `viewer` (defined in `core/schemas/users.php`).
+**Roles:** `admin`, `editor`, `viewer` (defined in `core/schemas/users.php`).
 
 **PermissionRegistry** (`core/classes/PermissionRegistry.php`) is the central authority for permission management:
 - Registered as a lazy service: `app()->service('permissions')`, helper: `permissions()`.
@@ -322,7 +322,7 @@ $this->hook('permissions.register', function($registry) {
 });
 ```
 
-**Ownership enforcement:** When `hasPermission()` returns `'own'`, `ContentPanel` automatically calls `User::canEdit()` to verify the current user is the content author. The `.own` suffix on permissions (e.g. `posts.edit.own`) triggers this flow.
+**Ownership enforcement:** When `hasPermission()` returns `'own'`, `ContentPanel` automatically calls `User::canEdit()` to verify the current user is the content author. The `.own` suffix on permissions (e.g. `posts.edit.own`, `posts.delete.own`) triggers this flow. This is configured per-role via the admin Permissions panel -- no separate "author" role needed.
 
 See `docs/ADMIN_PANELS.md` § Permissions for full API reference and examples.
 

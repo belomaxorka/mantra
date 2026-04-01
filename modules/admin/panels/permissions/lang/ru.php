@@ -13,6 +13,5 @@ return array(
     // Role names
     'admin-permissions.role.admin' => 'Администратор',
     'admin-permissions.role.editor' => 'Редактор',
-    'admin-permissions.role.author' => 'Автор',
     'admin-permissions.role.viewer' => 'Читатель',
 );

@@ -22,7 +22,6 @@ return array(
     // Roles
     'admin-users.role.admin' => 'Администратор',
     'admin-users.role.editor' => 'Редактор',
-    'admin-users.role.author' => 'Автор',
     'admin-users.role.viewer' => 'Читатель',
 
     // Statuses

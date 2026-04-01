@@ -498,7 +498,7 @@ Permissions use the format `{collection}.{action}` (e.g. `bookmarks.view`, `book
 
 The central authority is `PermissionRegistry` (`core/classes/PermissionRegistry.php`). It stores all registered permissions, default role mappings, and loads custom overrides from `config.json`. Admins can configure per-role permissions in the admin UI at `/admin/permissions`.
 
-**Roles:** `admin` (all permissions, always), `editor`, `author`, `viewer`.
+**Roles:** `admin` (all permissions, always), `editor`, `viewer`.
 
 ### Registering Module Permissions
 
@@ -540,9 +540,6 @@ class CommentsModule extends Module
         $registry->addRoleDefaults('editor', array(
             'comments.view', 'comments.create', 'comments.moderate', 'comments.delete',
         ));
-        $registry->addRoleDefaults('author', array(
-            'comments.view', 'comments.create',
-        ));
         $registry->addRoleDefaults('viewer', array(
             'comments.view',
         ));
@@ -568,7 +565,6 @@ $registry->registerPermissions(array(
 
 // Add defaults for a role (merged with existing defaults)
 $registry->addRoleDefaults('editor', array('bookmarks.view', 'bookmarks.create', 'bookmarks.edit'));
-$registry->addRoleDefaults('author', array('bookmarks.view', 'bookmarks.create', 'bookmarks.edit.own'));
 
 // Query
 $registry->getAll();                          // All registered permission strings

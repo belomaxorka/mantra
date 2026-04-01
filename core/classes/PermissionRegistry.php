@@ -34,19 +34,21 @@ class PermissionRegistry {
      */
     private function registerCorePermissions() {
         $this->registerPermissions(array(
-            'pages.view'     => 'View pages',
-            'pages.create'   => 'Create pages',
-            'pages.edit'     => 'Edit all pages',
-            'pages.edit.own' => 'Edit own pages',
-            'pages.delete'   => 'Delete pages',
+            'pages.view'       => 'View pages',
+            'pages.create'     => 'Create pages',
+            'pages.edit'       => 'Edit all pages',
+            'pages.edit.own'   => 'Edit own pages',
+            'pages.delete'     => 'Delete all pages',
+            'pages.delete.own' => 'Delete own pages',
         ), 'Pages');
 
         $this->registerPermissions(array(
-            'posts.view'     => 'View posts',
-            'posts.create'   => 'Create posts',
-            'posts.edit'     => 'Edit all posts',
-            'posts.edit.own' => 'Edit own posts',
-            'posts.delete'   => 'Delete posts',
+            'posts.view'       => 'View posts',
+            'posts.create'     => 'Create posts',
+            'posts.edit'       => 'Edit all posts',
+            'posts.edit.own'   => 'Edit own posts',
+            'posts.delete'     => 'Delete all posts',
+            'posts.delete.own' => 'Delete own posts',
         ), 'Posts');
 
         $this->registerPermissions(array(
@@ -70,11 +72,6 @@ class PermissionRegistry {
             'editor' => array(
                 'pages.view', 'pages.create', 'pages.edit', 'pages.delete',
                 'posts.view', 'posts.create', 'posts.edit', 'posts.delete',
-                'uploads.view', 'uploads.upload',
-            ),
-            'author' => array(
-                'pages.view', 'pages.create', 'pages.edit.own',
-                'posts.view', 'posts.create', 'posts.edit.own',
                 'uploads.view', 'uploads.upload',
             ),
             'viewer' => array(
@@ -185,7 +182,7 @@ class PermissionRegistry {
      * @return array
      */
     public function getConfigurableRoles() {
-        return array('editor', 'author', 'viewer');
+        return array('editor', 'viewer');
     }
 
     /**
@@ -194,7 +191,7 @@ class PermissionRegistry {
      * @return array
      */
     public function getRoles() {
-        return array('admin', 'editor', 'author', 'viewer');
+        return array('admin', 'editor', 'viewer');
     }
 
     /**

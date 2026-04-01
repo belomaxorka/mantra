@@ -135,33 +135,28 @@ class User {
     }
 
     /**
-     * Check if user can edit content
+     * Check if user owns the given content item.
+     * Used for ownership-gated permissions (.own suffix).
+     *
+     * @param array $user    User data
+     * @param array $content Content item with 'author' field
+     * @return bool
      */
     public function canEdit($user, $content) {
         if (!is_array($user) || !is_array($content)) {
             return false;
         }
 
-        $role = isset($user['role']) ? $user['role'] : '';
-
-        // Admin can edit everything
-        if ($role === 'admin') {
+        // Admin bypasses ownership checks
+        if (isset($user['role']) && $user['role'] === 'admin') {
             return true;
         }
 
-        // Editor can edit everything
-        if ($role === 'editor') {
-            return true;
-        }
+        // Compare content author with current username
+        $contentAuthor = isset($content['author']) ? $content['author'] : '';
+        $username = isset($user['username']) ? $user['username'] : '';
 
-        // Author can only edit own content
-        if ($role === 'author') {
-            $contentAuthor = isset($content['author']) ? $content['author'] : '';
-            $username = isset($user['username']) ? $user['username'] : '';
-            return $contentAuthor === $username;
-        }
-
-        return false;
+        return $contentAuthor !== '' && $contentAuthor === $username;
     }
 
     /**

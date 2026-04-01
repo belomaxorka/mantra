@@ -83,8 +83,8 @@
                     <div class="card-body">
                         <div class="btn-group w-100" role="group">
                             <?php
-                                $roles = array('admin', 'editor', 'author', 'viewer');
-                                $roleColors = array('admin' => 'primary', 'editor' => 'success', 'author' => 'info', 'viewer' => 'secondary');
+                                $roles = array('admin', 'editor', 'viewer');
+                                $roleColors = array('admin' => 'primary', 'editor' => 'success', 'viewer' => 'secondary');
                                 $currentRole = isset($user['role']) ? $user['role'] : 'editor';
                             ?>
                             <?php foreach ($roles as $r): ?>
