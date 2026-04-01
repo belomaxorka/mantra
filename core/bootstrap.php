@@ -58,15 +58,8 @@ spl_autoload_register(function ($class) {
     }
 });
 
-// Load helper functions from core/helpers/ directory
-$helpersDir = MANTRA_CORE . '/helpers';
-$helperFiles = glob($helpersDir . '/*.php');
-if ($helperFiles) {
-    sort($helperFiles);
-    foreach ($helperFiles as $helperFile) {
-        require_once $helperFile;
-    }
-}
+// Load global helper functions
+require_once MANTRA_CORE . '/helpers.php';
 
 // Register centralized PHP error handling (logs to channel "php")
 ErrorHandler::register(new Logger('php', array(
