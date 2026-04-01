@@ -553,7 +553,32 @@ code {
   .login-brand { font-size: 1.5rem; }
 }
 
-/* ---------- 19. Animations ---------- */
+/* ---------- 19. CKEditor 5 integration ---------- */
+.ck.ck-editor {
+  font-family: var(--mn-font);
+}
+.ck.ck-toolbar {
+  border-color: var(--mn-border) !important;
+  border-radius: .5rem .5rem 0 0 !important;
+  background: var(--mn-bg) !important;
+}
+.ck.ck-editor__editable_inline {
+  min-height: 300px;
+  border-color: var(--mn-border) !important;
+  border-radius: 0 0 .5rem .5rem !important;
+  transition: border-color var(--mn-transition), box-shadow var(--mn-transition);
+}
+.ck.ck-editor__editable_inline.ck-focused {
+  border-color: var(--mn-primary) !important;
+  box-shadow: 0 0 0 3px var(--mn-primary-soft) !important;
+}
+
+/* ---------- 20. Utilities ---------- */
+.admin-img-preview {
+  max-height: 200px;
+}
+
+/* ---------- 21. Animations ---------- */
 @media (prefers-reduced-motion: no-preference) {
   .admin-sidebar { transition: transform .3s cubic-bezier(.4,0,.2,1); }
   .admin-sidebar .nav-link.is-parent .caret { transition: transform var(--mn-transition); }

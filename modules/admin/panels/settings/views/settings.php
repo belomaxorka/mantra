@@ -1,8 +1,6 @@
 <div class="container-fluid">
-  <div class="row mb-4">
-    <div class="col">
+  <div class="admin-page-header mb-4">
       <h1 class="h3"><?php echo e(isset($pageTitle) ? $pageTitle : 'Settings'); ?></h1>
-    </div>
   </div>
 
   <div class="row">

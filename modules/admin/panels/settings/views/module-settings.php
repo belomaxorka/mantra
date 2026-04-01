@@ -1,6 +1,6 @@
 <?php if (!empty($title)): ?>
-  <div class="d-flex align-items-center justify-content-between mb-4">
-    <h1 class="h3 mb-0"><?php echo e($title); ?></h1>
+  <div class="admin-page-header mb-4">
+    <h1 class="h3"><?php echo e($title); ?></h1>
   </div>
 <?php endif; ?>
 
@@ -112,7 +112,6 @@
                     $modules = $field['options'];
                 }
 
-                // Separate modules into core and other groups
                 $coreModules = array();
                 $otherModules = array();
                 foreach ($modules as $m) {
@@ -123,155 +122,84 @@
                         $otherModules[] = $m;
                     }
                 }
+
+                // Reusable renderer for module cards
+                $renderModuleCards = function ($list, $sectionTitle) {
+                    if (empty($list)) return;
+                    ?>
+                    <div class="mb-3">
+                      <h6 class="mb-2"><?php echo e($sectionTitle); ?></h6>
+                      <div class="border rounded overflow-hidden">
+                        <?php foreach ($list as $m):
+                            $id = isset($m['id']) ? (string)$m['id'] : '';
+                            if ($id === '') continue;
+                            $isEnabled   = !empty($m['enabled']);
+                            $canToggle   = !empty($m['disableable']);
+                            $canDelete   = !empty($m['deletable']);
+                            $hasSettings = !empty($m['has_settings']);
+                            $homepage    = isset($m['homepage']) ? (string)$m['homepage'] : '';
+                        ?>
+                          <div class="p-3 border-bottom module-card-wrapper">
+                            <div class="d-flex justify-content-between align-items-start gap-3">
+                              <div class="flex-grow-1">
+                                <div class="d-flex align-items-center gap-2">
+                                  <div class="form-check m-0">
+                                    <input class="form-check-input" type="checkbox" id="f-mod-<?php echo e($id); ?>" name="modules.enabled[]" value="<?php echo e($id); ?>" <?php echo $isEnabled ? 'checked' : ''; ?> <?php echo $canToggle ? '' : 'disabled'; ?>>
+                                  </div>
+                                  <div>
+                                    <div class="fw-semibold">
+                                      <?php echo e(isset($m['title']) ? (string)$m['title'] : $id); ?>
+                                      <?php if (!empty($m['version'])): ?>
+                                        <span class="text-muted fw-normal">v<?php echo e((string)$m['version']); ?></span>
+                                      <?php endif; ?>
+                                    </div>
+                                    <?php if (!empty($m['description'])): ?>
+                                      <div class="text-muted small"><?php echo e((string)$m['description']); ?></div>
+                                    <?php endif; ?>
+                                  </div>
+                                </div>
+
+                                <?php
+                                  $metaParts = array();
+                                  if (!empty($m['type'])) {
+                                    $metaParts[] = '<strong>' . e(t('admin.modules.type')) . ':</strong> ' . e(t('admin.modules.type.' . (string)$m['type']));
+                                  }
+                                  if (!empty($m['author'])) {
+                                    $metaParts[] = '<strong>' . e(t('admin.modules.author')) . ':</strong> ' . e((string)$m['author']);
+                                  }
+                                  if ($homepage !== '') {
+                                    $metaParts[] = '<strong>' . e(t('admin.modules.homepage')) . ':</strong> <a href="' . e($homepage) . '" target="_blank" rel="noopener noreferrer">' . e($homepage) . '</a>';
+                                  }
+                                ?>
+                                <?php if (!empty($metaParts)): ?>
+                                  <div class="text-muted small mt-2">
+                                    <?php echo implode(' <span class="text-secondary">|</span> ', $metaParts); ?>
+                                  </div>
+                                <?php endif; ?>
+
+                                <?php if ($hasSettings && $isEnabled): ?>
+                                  <div class="mt-2">
+                                    <a class="small" href="<?php echo e(base_url('/admin/settings?tab=' . $id)); ?>"><?php echo e(t('admin.modules.settings')); ?></a>
+                                  </div>
+                                <?php endif; ?>
+                              </div>
+
+                              <div class="text-end">
+                                <button class="btn btn-sm btn-outline-danger" type="submit" name="module_delete" value="<?php echo e($id); ?>" <?php echo $canDelete ? '' : 'disabled'; ?> onclick="return confirm('<?php echo e(t('admin.modules.delete_confirm')); ?>');">
+                                  <?php echo e(t('admin.common.delete')); ?>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        <?php endforeach; ?>
+                      </div>
+                    </div>
+                    <?php
+                };
+
+                $renderModuleCards($coreModules, t('admin-settings.modules.core_modules'));
+                $renderModuleCards($otherModules, t('admin-settings.modules.other_modules'));
               ?>
-
-              <?php if (!empty($coreModules)): ?>
-                <div class="mb-3">
-                  <h6 class="mb-2"><?php echo e(t('admin-settings.modules.core_modules')); ?></h6>
-                  <div class="border rounded" style="overflow:hidden;">
-                    <?php foreach ($coreModules as $m): ?>
-                      <?php
-                        $id = isset($m['id']) ? (string)$m['id'] : '';
-                        if ($id === '') {
-                            continue;
-                        }
-                        $isEnabled = !empty($m['enabled']);
-                        $canToggle = !empty($m['disableable']);
-                        $canDelete = !empty($m['deletable']);
-                        $hasSettings = !empty($m['has_settings']);
-                        $homepage = isset($m['homepage']) ? (string)$m['homepage'] : '';
-                      ?>
-
-                      <div class="p-3 border-bottom module-card-wrapper">
-                        <div class="d-flex justify-content-between align-items-start gap-3">
-                          <div class="flex-grow-1">
-                            <div class="d-flex align-items-center gap-2">
-                              <div class="form-check m-0">
-                                <input class="form-check-input" type="checkbox" id="f-mod-<?php echo e($id); ?>" name="modules.enabled[]" value="<?php echo e($id); ?>" <?php echo $isEnabled ? 'checked' : ''; ?> <?php echo $canToggle ? '' : 'disabled'; ?>>
-                              </div>
-                              <div>
-                                <div class="fw-semibold">
-                                  <?php echo e(isset($m['title']) ? (string)$m['title'] : $id); ?>
-                                  <?php if (!empty($m['version'])): ?>
-                                    <span class="text-muted fw-normal">v<?php echo e((string)$m['version']); ?></span>
-                                  <?php endif; ?>
-                                </div>
-                                <?php if (!empty($m['description'])): ?>
-                                  <div class="text-muted small"><?php echo e((string)$m['description']); ?></div>
-                                <?php endif; ?>
-                              </div>
-                            </div>
-
-                            <?php
-                              $metaParts = array();
-                              if (!empty($m['type'])) {
-                                $metaParts[] = '<strong>' . e(t('admin.modules.type')) . ':</strong> ' . e(t('admin.modules.type.' . (string)$m['type']));
-                              }
-                              if (!empty($m['author'])) {
-                                $metaParts[] = '<strong>' . e(t('admin.modules.author')) . ':</strong> ' . e((string)$m['author']);
-                              }
-                              if ($homepage !== '') {
-                                $metaParts[] = '<strong>' . e(t('admin.modules.homepage')) . ':</strong> <a href="' . e($homepage) . '" target="_blank" rel="noopener noreferrer">' . e($homepage) . '</a>';
-                              }
-                            ?>
-                            <?php if (!empty($metaParts)): ?>
-                              <div class="text-muted small mt-2">
-                                <?php echo implode(' <span class="text-secondary">|</span> ', $metaParts); ?>
-                              </div>
-                            <?php endif; ?>
-
-                            <?php if ($hasSettings && $isEnabled): ?>
-                              <div class="mt-2">
-                                <a class="small" href="<?php echo e(base_url('/admin/settings?tab=' . $id)); ?>"><?php echo e(t('admin.modules.settings')); ?></a>
-                              </div>
-                            <?php endif; ?>
-                          </div>
-
-                          <div class="text-end">
-                            <button class="btn btn-sm btn-outline-danger" type="submit" name="module_delete" value="<?php echo e($id); ?>" <?php echo $canDelete ? '' : 'disabled'; ?> onclick="return confirm('<?php echo e(t('admin.modules.delete_confirm')); ?>');">
-                              <?php echo e(t('admin.common.delete')); ?>
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    <?php endforeach; ?>
-                  </div>
-                </div>
-              <?php endif; ?>
-
-              <?php if (!empty($otherModules)): ?>
-                <div class="mb-3">
-                  <h6 class="mb-2"><?php echo e(t('admin-settings.modules.other_modules')); ?></h6>
-                  <div class="border rounded" style="overflow:hidden;">
-                    <?php foreach ($otherModules as $m): ?>
-                      <?php
-                        $id = isset($m['id']) ? (string)$m['id'] : '';
-                        if ($id === '') {
-                            continue;
-                        }
-                        $isEnabled = !empty($m['enabled']);
-                        $canToggle = !empty($m['disableable']);
-                        $canDelete = !empty($m['deletable']);
-                        $hasSettings = !empty($m['has_settings']);
-                        $homepage = isset($m['homepage']) ? (string)$m['homepage'] : '';
-                      ?>
-
-                      <div class="p-3 border-bottom module-card-wrapper">
-                        <div class="d-flex justify-content-between align-items-start gap-3">
-                          <div class="flex-grow-1">
-                            <div class="d-flex align-items-center gap-2">
-                              <div class="form-check m-0">
-                                <input class="form-check-input" type="checkbox" id="f-mod-<?php echo e($id); ?>" name="modules.enabled[]" value="<?php echo e($id); ?>" <?php echo $isEnabled ? 'checked' : ''; ?> <?php echo $canToggle ? '' : 'disabled'; ?>>
-                              </div>
-                              <div>
-                                <div class="fw-semibold">
-                                  <?php echo e(isset($m['title']) ? (string)$m['title'] : $id); ?>
-                                  <?php if (!empty($m['version'])): ?>
-                                    <span class="text-muted fw-normal">v<?php echo e((string)$m['version']); ?></span>
-                                  <?php endif; ?>
-                                </div>
-                                <?php if (!empty($m['description'])): ?>
-                                  <div class="text-muted small"><?php echo e((string)$m['description']); ?></div>
-                                <?php endif; ?>
-                              </div>
-                            </div>
-
-                            <?php
-                              $metaParts = array();
-                              if (!empty($m['type'])) {
-                                $metaParts[] = '<strong>' . e(t('admin.modules.type')) . ':</strong> ' . e(t('admin.modules.type.' . (string)$m['type']));
-                              }
-                              if (!empty($m['author'])) {
-                                $metaParts[] = '<strong>' . e(t('admin.modules.author')) . ':</strong> ' . e((string)$m['author']);
-                              }
-                              if ($homepage !== '') {
-                                $metaParts[] = '<strong>' . e(t('admin.modules.homepage')) . ':</strong> <a href="' . e($homepage) . '" target="_blank" rel="noopener noreferrer">' . e($homepage) . '</a>';
-                              }
-                            ?>
-                            <?php if (!empty($metaParts)): ?>
-                              <div class="text-muted small mt-2">
-                                <?php echo implode(' <span class="text-secondary">|</span> ', $metaParts); ?>
-                              </div>
-                            <?php endif; ?>
-
-                            <?php if ($hasSettings && $isEnabled): ?>
-                              <div class="mt-2">
-                                <a class="small" href="<?php echo e(base_url('/admin/settings?tab=' . $id)); ?>"><?php echo e(t('admin.modules.settings')); ?></a>
-                              </div>
-                            <?php endif; ?>
-                          </div>
-
-                          <div class="text-end">
-                            <button class="btn btn-sm btn-outline-danger" type="submit" name="module_delete" value="<?php echo e($id); ?>" <?php echo $canDelete ? '' : 'disabled'; ?> onclick="return confirm('<?php echo e(t('admin.modules.delete_confirm')); ?>');">
-                              <?php echo e(t('admin.common.delete')); ?>
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    <?php endforeach; ?>
-                  </div>
-                </div>
-              <?php endif; ?>
 
             <?php else: ?>
               <input class="form-control" type="text" id="f-<?php echo e($field['name']); ?>" name="<?php echo e($field['name']); ?>" value="<?php echo e((string)$field['value']); ?>">
@@ -299,7 +227,6 @@
 
     if (!id) return;
 
-    // Persist active tab in URL so F5 can render correct tab immediately (hash alone isn't sent to server).
     try {
       var url = new URL(window.location.href);
       url.hash = 'tab-' + id;
@@ -312,7 +239,6 @@
     }
   }
 
-  // On click, persist tab + update hash.
   document.querySelectorAll('[data-settings-tab]').forEach(function (btn) {
     btn.addEventListener('click', function () {
       setActiveTab(btn.getAttribute('data-settings-tab'));
@@ -345,9 +271,6 @@
     }
   }
 
-  // Note: Bootstrap bundle is loaded at the end of the admin layout,
-  // so on hard refresh this template script may run before `bootstrap.Tab` exists.
-  // Try now, and again on load.
   activateFromHash();
   window.addEventListener('load', function () {
     activateFromHash();

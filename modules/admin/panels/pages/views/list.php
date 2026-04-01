@@ -15,9 +15,9 @@
             <div class="card">
                 <div class="card-body">
                     <?php if (empty($pages)): ?>
-                        <div class="text-center py-5 text-muted">
-                            <i class="bi bi-file-earmark-text" style="font-size: 3rem;"></i>
-                            <p class="mt-3"><?php echo t('admin-pages.no_pages'); ?></p>
+                        <div class="admin-empty-state">
+                            <i class="bi bi-file-earmark-text"></i>
+                            <p><?php echo t('admin-pages.no_pages'); ?></p>
                             <a href="<?php echo base_url('/admin/pages/new'); ?>" class="btn btn-primary">
                                 <i class="bi bi-plus-circle me-2"></i><?php echo t('admin-pages.new'); ?>
                             </a>
@@ -95,7 +95,7 @@
     </div>
 </div>
 
-<form id="deleteForm" method="POST" style="display: none;">
+<form id="deleteForm" method="POST" class="d-none">
     <input type="hidden" name="csrf_token" value="<?php echo auth()->generateCsrfToken(); ?>">
 </form>
 

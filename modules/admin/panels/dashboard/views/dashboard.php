@@ -1,8 +1,6 @@
 <div class="container-fluid">
-    <div class="row mb-4">
-        <div class="col">
-            <h1 class="h3"><?php echo t('admin-dashboard.title'); ?></h1>
-        </div>
+    <div class="admin-page-header mb-4">
+        <h1 class="h3"><?php echo t('admin-dashboard.title'); ?></h1>
     </div>
 
     <div class="row">

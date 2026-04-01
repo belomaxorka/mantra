@@ -62,8 +62,7 @@
                         </label>
                         <textarea class="form-control"
                                   id="content"
-                                  name="content"
-                                  rows="15"><?php echo e($post['content']); ?></textarea>
+                                  name="content"><?php echo e($post['content']); ?></textarea>
                     </div>
                 </div>
             </div>
@@ -76,17 +75,30 @@
                 </div>
                 <div class="card-body">
                     <div class="mb-3">
-                        <label for="status" class="form-label">
+                        <label class="form-label">
                             <?php echo t('admin-posts.field.status'); ?>
                         </label>
-                        <select class="form-select" id="status" name="status">
-                            <option value="draft" <?php echo ($post['status'] === 'draft') ? 'selected' : ''; ?>>
-                                <?php echo t('admin-posts.status.draft'); ?>
-                            </option>
-                            <option value="published" <?php echo ($post['status'] === 'published') ? 'selected' : ''; ?>>
-                                <?php echo t('admin-posts.status.published'); ?>
-                            </option>
-                        </select>
+                        <div class="btn-group w-100" role="group">
+                            <input type="radio"
+                                   class="btn-check"
+                                   name="status"
+                                   id="status_draft"
+                                   value="draft"
+                                   <?php echo ($post['status'] === 'draft') ? 'checked' : ''; ?>>
+                            <label class="btn btn-outline-secondary" for="status_draft">
+                                <i class="bi bi-file-earmark me-1"></i><?php echo t('admin-posts.status.draft'); ?>
+                            </label>
+
+                            <input type="radio"
+                                   class="btn-check"
+                                   name="status"
+                                   id="status_published"
+                                   value="published"
+                                   <?php echo ($post['status'] === 'published') ? 'checked' : ''; ?>>
+                            <label class="btn btn-outline-success" for="status_published">
+                                <i class="bi bi-check-circle me-1"></i><?php echo t('admin-posts.status.published'); ?>
+                            </label>
+                        </div>
                     </div>
 
                     <?php if (!$isNew && isset($post['author'])): ?>
@@ -141,3 +153,68 @@
         </div>
     </form>
 </div>
+
+<script src="https://cdn.ckeditor.com/ckeditor5/41.2.1/classic/ckeditor.js"></script>
+<script>
+let editor;
+ClassicEditor
+    .create(document.querySelector('#content'), {
+        toolbar: {
+            items: [
+                'undo', 'redo',
+                '|', 'heading',
+                '|', 'bold', 'italic', 'underline', 'strikethrough',
+                '|', 'link', 'insertImage', 'insertTable', 'mediaEmbed',
+                '|', 'bulletedList', 'numberedList', 'outdent', 'indent',
+                '|', 'alignment',
+                '|', 'blockQuote', 'codeBlock',
+                '|', 'sourceEditing'
+            ],
+            shouldNotGroupWhenFull: true
+        },
+        heading: {
+            options: [
+                { model: 'paragraph', title: 'Paragraph', class: 'ck-heading_paragraph' },
+                { model: 'heading1', view: 'h1', title: 'Heading 1', class: 'ck-heading_heading1' },
+                { model: 'heading2', view: 'h2', title: 'Heading 2', class: 'ck-heading_heading2' },
+                { model: 'heading3', view: 'h3', title: 'Heading 3', class: 'ck-heading_heading3' },
+                { model: 'heading4', view: 'h4', title: 'Heading 4', class: 'ck-heading_heading4' }
+            ]
+        },
+        link: {
+            defaultProtocol: 'https://',
+            decorators: {
+                openInNewTab: {
+                    mode: 'manual',
+                    label: 'Open in a new tab',
+                    defaultValue: true,
+                    attributes: {
+                        target: '_blank',
+                        rel: 'noopener noreferrer'
+                    }
+                }
+            }
+        },
+        image: {
+            toolbar: [
+                'imageTextAlternative', 'toggleImageCaption', 'imageStyle:inline',
+                'imageStyle:block', 'imageStyle:side', 'linkImage'
+            ]
+        },
+        table: {
+            contentToolbar: [
+                'tableColumn', 'tableRow', 'mergeTableCells',
+                'tableCellProperties', 'tableProperties'
+            ]
+        }
+    })
+    .then(function (newEditor) {
+        editor = newEditor;
+        editor.editing.view.change(function (writer) {
+            writer.setStyle('min-height', '500px', editor.editing.view.document.getRoot());
+        });
+    })
+    .catch(function (error) {
+        console.error('CKEditor initialization error:', error);
+    });
+</script>

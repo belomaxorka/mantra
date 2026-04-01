@@ -50,7 +50,7 @@
             <div class="col-lg-4">
                 <div class="card mb-4">
                     <div class="card-header">
-                        <strong><?php echo t('admin-pages.publish'); ?></strong>
+                        <?php echo t('admin-pages.publish'); ?>
                     </div>
                     <div class="card-body">
                         <div class="mb-3">
@@ -88,7 +88,7 @@
 
                 <div class="card mb-4">
                     <div class="card-header">
-                        <strong><?php echo t('admin-pages.featured_image'); ?></strong>
+                        <?php echo t('admin-pages.featured_image'); ?>
                     </div>
                     <div class="card-body">
                         <div class="mb-3">
@@ -106,8 +106,7 @@
                             <div class="mt-2">
                                 <img src="<?php echo $this->escape($page['image']); ?>"
                                      alt="<?php echo t('admin-pages.image_preview'); ?>"
-                                     class="img-fluid rounded"
-                                     style="max-height: 200px;"
+                                     class="img-fluid rounded admin-img-preview"
                                      onerror="this.style.display='none'">
                             </div>
                         <?php endif; ?>
@@ -116,7 +115,7 @@
 
                 <div class="card">
                     <div class="card-header">
-                        <strong><?php echo t('admin-pages.field.navigation'); ?></strong>
+                        <?php echo t('admin-pages.field.navigation'); ?>
                     </div>
                     <div class="card-body">
                         <div class="mb-3">
