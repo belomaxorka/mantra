@@ -656,6 +656,7 @@ code {
 
 /* ---------- 20. Stat Cards ---------- */
 .stat-card {
+  height: 100%;
   transition: transform var(--mn-transition), box-shadow var(--mn-transition);
 }
 .stat-card:hover {
