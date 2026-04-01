@@ -1,14 +1,15 @@
-<article class="page">
+<article>
     <?php
-    // Display breadcrumbs if available (provided by SEO module)
     if (isset($breadcrumbs) && !empty($breadcrumbs)) {
         echo partial('seo:breadcrumbs', array('breadcrumbs' => $breadcrumbs));
     }
     ?>
 
-    <h1 class="mb-4"><?php echo $this->escape($page['title']); ?></h1>
+    <header class="article-header">
+        <h1><?php echo $this->escape($page['title']); ?></h1>
+    </header>
 
-    <div class="content">
+    <div class="article-content">
         <?php echo $page['content']; ?>
     </div>
 </article>

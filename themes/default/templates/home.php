@@ -1,35 +1,39 @@
-<div class="home">
-    <h1>Welcome to <?php echo $this->escape(config('site.name', MANTRA_PROJECT_INFO['name'])); ?></h1>
-
-    <?php if (!empty($posts)): ?>
-        <div class="posts">
-            <?php foreach ($posts as $post): ?>
-                <article class="post mb-4">
-                    <h2>
-                        <a href="<?php echo base_url('/post/' . $post['slug']); ?>">
-                            <?php echo $this->escape($post['title']); ?>
-                        </a>
-                    </h2>
-                    <div class="meta text-muted mb-2">
-                        <?php echo clock()->formatDate($post['created_at']); ?>
-                    </div>
-                    <?php if (isset($post['excerpt'])): ?>
-                        <div class="excerpt">
-                            <?php echo $this->escape($post['excerpt']); ?>
-                        </div>
+<?php if (!empty($posts)): ?>
+    <div class="d-flex flex-column gap-3">
+        <?php foreach ($posts as $post): ?>
+            <article class="post-card">
+                <h2 class="post-title">
+                    <a href="<?php echo base_url('/post/' . $post['slug']); ?>">
+                        <?php echo $this->escape($post['title']); ?>
+                    </a>
+                </h2>
+                <div class="post-meta">
+                    <span><?php echo clock()->formatDate($post['created_at']); ?></span>
+                    <?php if (!empty($post['category'])): ?>
+                        <span class="meta-dot">&middot;</span>
+                        <span><?php echo $this->escape($post['category']); ?></span>
                     <?php endif; ?>
-                </article>
-            <?php endforeach; ?>
-        </div>
+                    <?php if (!empty($post['author'])): ?>
+                        <span class="meta-dot">&middot;</span>
+                        <span><?php echo $this->escape($post['author']); ?></span>
+                    <?php endif; ?>
+                </div>
+                <?php if (!empty($post['excerpt'])): ?>
+                    <p class="post-excerpt mb-0"><?php echo $this->escape($post['excerpt']); ?></p>
+                <?php endif; ?>
+                <a href="<?php echo base_url('/post/' . $post['slug']); ?>" class="post-read-more">Read more &rarr;</a>
+            </article>
+        <?php endforeach; ?>
+    </div>
 
-        <?php if (isset($paginator)): ?>
-            <div class="mt-4">
-                <?php echo partial('pagination', array('paginator' => $paginator)); ?>
-            </div>
-        <?php endif; ?>
-    <?php else: ?>
-        <div class="alert alert-info">
-            <p class="mb-0">No posts yet. <a href="<?php echo base_url('/admin'); ?>" class="alert-link">Create your first post</a></p>
+    <?php if (isset($paginator)): ?>
+        <div class="mt-4">
+            <?php echo partial('pagination', array('paginator' => $paginator)); ?>
         </div>
     <?php endif; ?>
-</div>
+<?php else: ?>
+    <div class="empty-state">
+        <p>No posts yet.</p>
+        <a href="<?php echo base_url('/admin'); ?>" class="btn btn-primary">Create your first post</a>
+    </div>
+<?php endif; ?>
