@@ -33,6 +33,8 @@ class UploadsPanel extends AdminPanel {
 
     public function init($admin) {
         parent::init($admin);
+
+        app()->db()->registerSchema('uploads', $this->getPath() . '/schema.php');
         $this->hook('permissions.register', array($this, 'registerPermissions'));
     }
 
