@@ -329,6 +329,9 @@ class Database
         // operate on the raw document (defaults won't shadow old field names).
         if ($docVersion < $currentVersion && !empty($schema['migrate']) && is_callable($schema['migrate'])) {
             $data = call_user_func($schema['migrate'], $data, $docVersion, $currentVersion);
+            if (!is_array($data)) {
+                $data = array();
+            }
             $data['schema_version'] = $currentVersion;
         } elseif ($docVersion < $currentVersion) {
             // No migrator: only bump the version.
