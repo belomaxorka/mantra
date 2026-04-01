@@ -38,7 +38,7 @@ return array(
         ),
         'role' => array(
             'type' => 'enum',
-            'values' => array('admin', 'editor', 'viewer'),
+            'values' => array('admin', 'editor', 'author', 'viewer'),
             'required' => true
         ),
         'status' => array(

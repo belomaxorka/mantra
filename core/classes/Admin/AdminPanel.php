@@ -46,8 +46,18 @@ abstract class AdminPanel implements AdminPanelInterface {
         $sb = $this->metadata['sidebar'];
 
         // Hide sidebar item if user lacks the required role
-        if (isset($sb['require_role']) && !auth()->hasRole($sb['require_role'])) {
-            return null;
+        if (isset($sb['require_role'])) {
+            $required = $sb['require_role'];
+            if (is_string($required)) {
+                $required = array($required);
+            }
+            if (is_array($required)) {
+                $user = auth()->user();
+                $userRole = is_array($user) && isset($user['role']) ? $user['role'] : '';
+                if (!in_array($userRole, $required, true)) {
+                    return null;
+                }
+            }
         }
 
         return array(
@@ -66,9 +76,18 @@ abstract class AdminPanel implements AdminPanelInterface {
         }
 
         // Hide quick actions if user lacks the required role for this panel
-        if (isset($this->metadata['sidebar']['require_role'])
-            && !auth()->hasRole($this->metadata['sidebar']['require_role'])) {
-            return array();
+        if (isset($this->metadata['sidebar']['require_role'])) {
+            $required = $this->metadata['sidebar']['require_role'];
+            if (is_string($required)) {
+                $required = array($required);
+            }
+            if (is_array($required)) {
+                $user = auth()->user();
+                $userRole = is_array($user) && isset($user['role']) ? $user['role'] : '';
+                if (!in_array($userRole, $required, true)) {
+                    return array();
+                }
+            }
         }
 
         $actions = array();
@@ -113,18 +132,24 @@ abstract class AdminPanel implements AdminPanelInterface {
     /**
      * Check if current user has a specific permission.
      * Returns false and renders a 403 page if denied.
+     *
+     * @param string $permission
+     * @return bool|string  true for full access, 'own' for ownership-gated, false if denied
      */
     protected function requirePermission($permission) {
         $userManager = new \User();
-        if ($userManager->hasPermission($this->getUser(), $permission)) {
-            return true;
+        $result = $userManager->hasPermission($this->getUser(), $permission);
+
+        if ($result === false) {
+            http_response_code(403);
+            echo $this->renderAdmin(
+                t('admin.common.access_denied'),
+                '<div class="alert alert-danger alert-permanent">' . e(t('admin.common.access_denied')) . '</div>'
+            );
+            return false;
         }
-        http_response_code(403);
-        echo $this->renderAdmin(
-            t('admin.common.access_denied'),
-            '<div class="alert alert-danger alert-permanent">' . e(t('admin.common.access_denied')) . '</div>'
-        );
-        return false;
+
+        return $result; // true or 'own'
     }
 
     /**

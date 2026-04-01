@@ -16,6 +16,15 @@ function auth()
 }
 
 /**
+ * Get PermissionRegistry instance
+ * @return PermissionRegistry|null
+ */
+function permissions()
+{
+    return app()->service('permissions');
+}
+
+/**
  * Verify CSRF token from POST request
  * @return bool
  */

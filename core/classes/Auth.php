@@ -33,6 +33,16 @@ class Auth {
             return false;
         }
 
+        // Check user status (block inactive/banned accounts)
+        $status = isset($user['status']) ? $user['status'] : 'active';
+        if ($status !== 'active') {
+            logger()->warning('Login failed: account not active', array(
+                'username' => $username,
+                'status' => $status
+            ));
+            return false;
+        }
+
         // Check if password needs rehashing (algorithm changed in config)
         if ($this->needsRehash($user['password'])) {
             $newHash = $this->hashPassword($password);
@@ -54,7 +64,6 @@ class Auth {
 
         // Set session
         session()->set('user_id', $user['_id']);
-        session()->set('user_role', $user['role']);
 
         $this->currentUser = $user;
 
@@ -79,7 +88,6 @@ class Auth {
         }
 
         session()->delete('user_id');
-        session()->delete('user_role');
         $this->currentUser = null;
         session()->destroy();
     }

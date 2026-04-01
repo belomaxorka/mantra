@@ -40,6 +40,7 @@
                                         $roleBadge = 'secondary';
                                         if ($role === 'admin') $roleBadge = 'primary';
                                         elseif ($role === 'editor') $roleBadge = 'success';
+                                        elseif ($role === 'author') $roleBadge = 'info';
 
                                         $statusBadge = 'secondary';
                                         if ($status === 'active') $statusBadge = 'success';

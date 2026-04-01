@@ -104,7 +104,16 @@ class User {
     }
 
     /**
-     * Check if user has permission
+     * Check if user has permission.
+     *
+     * Returns:
+     *   true   - full access
+     *   'own'  - access only to own content (ownership check needed)
+     *   false  - no access
+     *
+     * @param array  $user
+     * @param string $permission
+     * @return bool|string
      */
     public function hasPermission($user, $permission) {
         if (!is_array($user) || !isset($user['role'])) {
@@ -113,33 +122,16 @@ class User {
 
         $role = $user['role'];
 
-        // Admin has all permissions
         if ($role === 'admin') {
             return true;
         }
 
-        // Define role permissions
-        $permissions = array(
-            'editor' => array(
-                'pages.view', 'pages.create', 'pages.edit', 'pages.delete',
-                'posts.view', 'posts.create', 'posts.edit', 'posts.delete',
-                'uploads.view', 'uploads.upload'
-            ),
-            'author' => array(
-                'pages.view', 'pages.create', 'pages.edit.own',
-                'posts.view', 'posts.create', 'posts.edit.own',
-                'uploads.view', 'uploads.upload'
-            ),
-            'viewer' => array(
-                'pages.view', 'posts.view'
-            )
-        );
-
-        if (!isset($permissions[$role])) {
+        $registry = permissions();
+        if (!$registry) {
             return false;
         }
 
-        return in_array($permission, $permissions[$role]);
+        return $registry->hasPermission($role, $permission);
     }
 
     /**

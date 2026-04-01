@@ -15,8 +15,23 @@ class AdminModule extends Module
 
     public function init()
     {
+        $this->registerPermissionService();
         $this->loadPanels();
         $this->hook('routes.register', array($this, 'registerRoutes'));
+    }
+
+    /**
+     * Register PermissionRegistry as a lazy service.
+     * Modules register their own permissions via the 'permissions.register' hook.
+     */
+    private function registerPermissionService()
+    {
+        $module = $this;
+        $this->provide('permissions', function () use ($module) {
+            $registry = new PermissionRegistry();
+            $module->fireHook('permissions.register', $registry);
+            return $registry;
+        });
     }
 
     // ========== Panel Management ==========

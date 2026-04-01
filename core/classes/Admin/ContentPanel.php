@@ -121,6 +121,28 @@ abstract class ContentPanel extends AdminPanel {
         );
     }
 
+    // ========== Ownership Check ==========
+
+    /**
+     * Verify that the current user owns the given content item.
+     * Renders 403 and returns false if not.
+     *
+     * @param array $item Content item with 'author' field
+     * @return bool
+     */
+    protected function checkOwnership($item) {
+        $userManager = new \User();
+        if ($userManager->canEdit($this->getUser(), $item)) {
+            return true;
+        }
+        http_response_code(403);
+        echo $this->renderAdmin(
+            t('admin.common.access_denied'),
+            '<div class="alert alert-danger alert-permanent">' . e(t('admin.common.access_denied')) . '</div>'
+        );
+        return false;
+    }
+
     // ========== Permission Helpers ==========
 
     /**
@@ -207,7 +229,8 @@ abstract class ContentPanel extends AdminPanel {
 
     public function editItem($params) {
         $prefix = $this->getPermissionPrefix();
-        if (!$this->requirePermission($prefix . '.edit')) return;
+        $access = $this->requirePermission($prefix . '.edit');
+        if ($access === false) return;
 
         $id = isset($params['id']) ? $params['id'] : '';
         $item = db()->read($this->getCollectionName(), $id);
@@ -217,6 +240,11 @@ abstract class ContentPanel extends AdminPanel {
             return $this->renderAdmin('Not Found',
                 '<div class="alert alert-danger alert-permanent">'
                 . e($this->getContentType()) . ' not found</div>');
+        }
+
+        // Ownership check when access is 'own'
+        if ($access === 'own' && !$this->checkOwnership($item)) {
+            return;
         }
 
         $content = $this->renderView($this->getEditTemplate(), array(
@@ -234,7 +262,8 @@ abstract class ContentPanel extends AdminPanel {
 
     public function updateItem($params) {
         $prefix = $this->getPermissionPrefix();
-        if (!$this->requirePermission($prefix . '.edit')) return;
+        $access = $this->requirePermission($prefix . '.edit');
+        if ($access === false) return;
         if (!$this->verifyCsrf()) {
             return;
         }
@@ -247,6 +276,11 @@ abstract class ContentPanel extends AdminPanel {
             return $this->renderAdmin('Not Found',
                 '<div class="alert alert-danger alert-permanent">'
                 . e($this->getContentType()) . ' not found</div>');
+        }
+
+        // Ownership check when access is 'own'
+        if ($access === 'own' && !$this->checkOwnership($item)) {
+            return;
         }
 
         $data = $this->extractFormData();
@@ -264,16 +298,26 @@ abstract class ContentPanel extends AdminPanel {
 
     public function deleteItem($params) {
         $prefix = $this->getPermissionPrefix();
-        if (!$this->requirePermission($prefix . '.delete')) return;
+        $access = $this->requirePermission($prefix . '.delete');
+        if ($access === false) return;
         if (!$this->verifyCsrf()) {
             return;
         }
 
         $id = isset($params['id']) ? $params['id'] : '';
+        $item = db()->read($this->getCollectionName(), $id);
 
-        if (db()->exists($this->getCollectionName(), $id)) {
-            db()->delete($this->getCollectionName(), $id);
+        if (!$item) {
+            $this->redirectAdmin($this->getAdminPath());
+            return;
         }
+
+        // Ownership check when access is 'own'
+        if ($access === 'own' && !$this->checkOwnership($item)) {
+            return;
+        }
+
+        db()->delete($this->getCollectionName(), $id);
 
         $this->redirectAdmin($this->getAdminPath());
     }

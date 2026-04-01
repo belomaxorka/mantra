@@ -132,6 +132,9 @@ class Config {
             'performance' => array(
                 'gzip_compression' => false,
             ),
+            'permissions' => array(
+                'roles' => array(),
+            ),
             'debug' => array(
                 'enabled' => true,
             ),

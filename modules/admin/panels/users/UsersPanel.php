@@ -89,6 +89,13 @@ class UsersPanel extends ContentPanel {
         $data = $this->extractFormData();
         $data['username'] = post_trimmed('username');
 
+        // Only admins can assign roles
+        $currentUser = $this->getUser();
+        $currentRole = isset($currentUser['role']) ? $currentUser['role'] : '';
+        if ($currentRole !== 'admin') {
+            $data['role'] = 'viewer';
+        }
+
         $result = $this->getUserManager()->create($data);
 
         if ($result === false) {
@@ -122,6 +129,25 @@ class UsersPanel extends ContentPanel {
         }
 
         $data = $this->extractFormData();
+
+        // Escalation protection: only admins can change roles
+        $currentUser = $this->getUser();
+        $currentRole = isset($currentUser['role']) ? $currentUser['role'] : '';
+        if ($currentRole !== 'admin') {
+            unset($data['role']);
+        }
+
+        // Prevent non-admins from editing admin accounts
+        $targetRole = isset($user['role']) ? $user['role'] : '';
+        if ($currentRole !== 'admin' && $targetRole === 'admin') {
+            http_response_code(403);
+            echo $this->renderAdmin(
+                t('admin.common.access_denied'),
+                '<div class="alert alert-danger alert-permanent">' . e(t('admin.common.access_denied')) . '</div>'
+            );
+            return;
+        }
+
         $this->getUserManager()->update($id, $data);
         $this->redirectAdmin($this->getAdminPath());
     }

@@ -1,0 +1,12 @@
+{
+    "id": "permissions",
+    "version": "1.0.0",
+    "sidebar": {
+        "title": "admin-permissions.title",
+        "icon": "bi-shield-lock",
+        "group": "admin.sidebar.group.system",
+        "order": 25,
+        "url": "/admin/permissions",
+        "require_role": "admin"
+    }
+}
