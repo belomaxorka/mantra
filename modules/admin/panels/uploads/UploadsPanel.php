@@ -334,7 +334,7 @@ class UploadsPanel extends AdminPanel {
             'path'          => $relativePath,
             'author'        => isset($user['username']) ? $user['username'] : 'Unknown',
             'author_id'     => isset($user['_id']) ? $user['_id'] : '',
-            'created_at'    => date(DATETIME_FORMAT),
+            'created_at'    => clock()->timestamp(),
         );
 
         app()->db()->write('uploads', $id, $metadata);

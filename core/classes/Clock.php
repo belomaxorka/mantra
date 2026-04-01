@@ -8,6 +8,9 @@
  * Registered as a lazy service: app()->service('clock'), helper: clock().
  */
 class Clock {
+    /** Storage format for timestamps in JSON documents. */
+    const STORAGE_FORMAT = 'Y-m-d H:i:s';
+
     private $timezone;
     private $dateFormat;
     private $timeFormat;
@@ -38,14 +41,14 @@ class Clock {
      * @return string
      */
     public function timestamp() {
-        return $this->now()->format(DATETIME_FORMAT);
+        return $this->now()->format(self::STORAGE_FORMAT);
     }
 
     /**
      * Parse a datetime value into DateTimeImmutable.
      *
      * Accepts:
-     *  - string in DATETIME_FORMAT ('Y-m-d H:i:s') or any strtotime-compatible string
+     *  - string in self::STORAGE_FORMAT ('Y-m-d H:i:s') or any strtotime-compatible string
      *  - DateTimeInterface instance
      *  - int (Unix timestamp)
      *
@@ -66,7 +69,7 @@ class Clock {
         $str = (string)$datetime;
 
         // Try exact storage format first
-        $dt = \DateTimeImmutable::createFromFormat(DATETIME_FORMAT, $str, $this->timezone);
+        $dt = \DateTimeImmutable::createFromFormat(self::STORAGE_FORMAT, $str, $this->timezone);
         if ($dt !== false) {
             return $dt;
         }

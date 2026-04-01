@@ -139,19 +139,6 @@ function abort($code = 404, $message = '')
 // ── Utilities ───────────────────────────────────────────────────────────────
 
 /**
- * Standard datetime format constant.
- */
-define('DATETIME_FORMAT', 'Y-m-d H:i:s');
-
-/**
- * Get current datetime in standard format.
- */
-function now()
-{
-    return date(DATETIME_FORMAT);
-}
-
-/**
  * Generate slug from string.
  */
 function slugify($text)

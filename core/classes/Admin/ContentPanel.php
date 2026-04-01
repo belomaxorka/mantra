@@ -218,8 +218,8 @@ abstract class ContentPanel extends AdminPanel {
         $user = $this->getUser();
         $data['author'] = $user['username'];
         $data['author_id'] = $user['_id'];
-        $data['created_at'] = date(DATETIME_FORMAT);
-        $data['updated_at'] = date(DATETIME_FORMAT);
+        $data['created_at'] = clock()->timestamp();
+        $data['updated_at'] = clock()->timestamp();
 
         $id = $this->generateId($data);
 
@@ -286,7 +286,7 @@ abstract class ContentPanel extends AdminPanel {
 
         $data = $this->extractFormData();
         $data = $this->ensureSlug($data);
-        $data['updated_at'] = date(DATETIME_FORMAT);
+        $data['updated_at'] = clock()->timestamp();
 
         // Preserve original fields
         $data['author'] = $item['author'];

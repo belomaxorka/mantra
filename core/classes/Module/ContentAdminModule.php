@@ -163,8 +163,8 @@ abstract class ContentAdminModule extends BaseAdminModule {
         $user = $this->getUser();
         $data['author'] = isset($user['username']) ? $user['username'] : 'Unknown';
         $data['author_id'] = isset($user['_id']) ? $user['_id'] : '';
-        $data['created_at'] = date(DATETIME_FORMAT);
-        $data['updated_at'] = date(DATETIME_FORMAT);
+        $data['created_at'] = clock()->timestamp();
+        $data['updated_at'] = clock()->timestamp();
 
         $id = $this->generateId($data);
 
@@ -216,12 +216,12 @@ abstract class ContentAdminModule extends BaseAdminModule {
 
         $data = $this->extractFormData();
         $data = $this->ensureSlug($data);
-        $data['updated_at'] = date(DATETIME_FORMAT);
+        $data['updated_at'] = clock()->timestamp();
 
         // Preserve original fields
         $data['author'] = isset($item['author']) ? $item['author'] : 'Unknown';
         $data['author_id'] = isset($item['author_id']) ? $item['author_id'] : '';
-        $data['created_at'] = isset($item['created_at']) ? $item['created_at'] : date(DATETIME_FORMAT);
+        $data['created_at'] = isset($item['created_at']) ? $item['created_at'] : clock()->timestamp();
 
         app()->db()->write($this->getCollectionName(), $id, $data);
         
