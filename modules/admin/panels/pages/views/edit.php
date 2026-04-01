@@ -206,6 +206,9 @@
                 }
             },
             image: {
+                insert: {
+                    integrations: ['upload', 'url']
+                },
                 toolbar: [
                     'imageTextAlternative', 'toggleImageCaption', 'imageStyle:inline',
                     'imageStyle:block', 'imageStyle:side', 'linkImage'
