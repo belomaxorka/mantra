@@ -14,6 +14,7 @@ return array(
     'admin-hooks.col.data_type'   => 'Type',
     'admin-hooks.col.listeners'   => 'Listeners',
     'admin-hooks.col.context'     => 'Context',
+    'admin-hooks.modules_section' => 'Module Hooks',
     'admin-hooks.not_documented'  => 'Not documented in registry',
     'admin-hooks.context'         => 'Context',
 );

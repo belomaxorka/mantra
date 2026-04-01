@@ -46,6 +46,7 @@ class PagesPanel extends ContentPanel {
         parent::init($admin);
 
         app()->db()->registerSchema('pages', $this->getPath() . '/schema.php');
+        $this->registerPanelHooks();
         $this->hook('permissions.register', array($this, 'registerPermissions'));
         $this->hook('theme.navigation', array($this, 'addPagesToNavigation'));
     }

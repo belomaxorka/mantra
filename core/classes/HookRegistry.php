@@ -105,110 +105,6 @@ class HookRegistry {
             'return_type' => 'PermissionRegistry',
         ),
 
-        // ── Admin: content panel extensibility ─────────────
-        // These hooks are fired by ContentPanel/ContentAdminModule for
-        // every collection. Replace {collection} with: posts, pages,
-        // users, uploads, or any custom collection name.
-        //
-        // admin.{collection}.edit.data   — modify template data for edit form
-        // admin.{collection}.form_data   — modify form data before save
-        // admin.{collection}.edit.sidebar — inject HTML into edit sidebar (context: item)
-        // admin.{collection}.list.columns.head — inject <th> into list header
-        // admin.{collection}.list.columns.body — inject <td> into list row (context: item)
-
-        'admin.posts.edit.sidebar' => array(
-            'description' => 'Inject HTML into the posts edit form sidebar',
-            'data_type'   => 'string',
-            'return_type' => 'string',
-            'context'     => 'array (the post item)',
-        ),
-        'admin.posts.edit.data' => array(
-            'description' => 'Modify template data for the posts edit form',
-            'data_type'   => 'array',
-            'return_type' => 'array',
-        ),
-        'admin.posts.form_data' => array(
-            'description' => 'Modify extracted form data before saving a post',
-            'data_type'   => 'array',
-            'return_type' => 'array',
-        ),
-        'admin.posts.list.columns.head' => array(
-            'description' => 'Inject <th> elements into the posts list table header',
-            'data_type'   => 'string',
-            'return_type' => 'string',
-        ),
-        'admin.posts.list.columns.body' => array(
-            'description' => 'Inject <td> elements into a posts list table row',
-            'data_type'   => 'string',
-            'return_type' => 'string',
-            'context'     => 'array (the post item)',
-        ),
-        'admin.pages.edit.data' => array(
-            'description' => 'Modify template data for the pages edit form',
-            'data_type'   => 'array',
-            'return_type' => 'array',
-        ),
-        'admin.pages.form_data' => array(
-            'description' => 'Modify extracted form data before saving a page',
-            'data_type'   => 'array',
-            'return_type' => 'array',
-        ),
-        'admin.pages.edit.sidebar' => array(
-            'description' => 'Inject HTML into the pages edit form sidebar',
-            'data_type'   => 'string',
-            'return_type' => 'string',
-            'context'     => 'array (the page item)',
-        ),
-        'admin.pages.list.columns.head' => array(
-            'description' => 'Inject <th> elements into the pages list table header',
-            'data_type'   => 'string',
-            'return_type' => 'string',
-        ),
-        'admin.pages.list.columns.body' => array(
-            'description' => 'Inject <td> elements into a pages list table row',
-            'data_type'   => 'string',
-            'return_type' => 'string',
-            'context'     => 'array (the page item)',
-        ),
-        'admin.users.edit.data' => array(
-            'description' => 'Modify template data for the users edit form',
-            'data_type'   => 'array',
-            'return_type' => 'array',
-        ),
-        'admin.users.form_data' => array(
-            'description' => 'Modify extracted form data before saving a user',
-            'data_type'   => 'array',
-            'return_type' => 'array',
-        ),
-        'admin.users.edit.sidebar' => array(
-            'description' => 'Inject HTML into the users edit form sidebar',
-            'data_type'   => 'string',
-            'return_type' => 'string',
-            'context'     => 'array (the user item)',
-        ),
-        'admin.users.list.columns.head' => array(
-            'description' => 'Inject <th> elements into the users list table header',
-            'data_type'   => 'string',
-            'return_type' => 'string',
-        ),
-        'admin.users.list.columns.body' => array(
-            'description' => 'Inject <td> elements into a users list table row',
-            'data_type'   => 'string',
-            'return_type' => 'string',
-            'context'     => 'array (the user item)',
-        ),
-
-        'admin.uploads.edit.data' => array(
-            'description' => 'Modify template data for the uploads edit form',
-            'data_type'   => 'array',
-            'return_type' => 'array',
-        ),
-        'admin.uploads.form_data' => array(
-            'description' => 'Modify extracted form data before saving an upload',
-            'data_type'   => 'array',
-            'return_type' => 'array',
-        ),
-
         // ── Content: home page ──────────────────────────────
         'page.home.query' => array(
             'description' => 'Modify query parameters for the home page post list',
@@ -308,18 +204,23 @@ class HookRegistry {
     }
 
     /**
-     * Register a custom hook definition (for modules that expose their own hooks)
+     * Register a hook definition (for modules/panels that expose their own hooks)
      *
      * @param string $name Hook name
      * @param string $description Human-readable description
      * @param string $dataType Expected input type (e.g. 'array', 'string', 'null')
      * @param string $returnType Expected return type
+     * @param array  $extra Extra fields: 'source', 'context', etc.
      */
-    public static function define($name, $description, $dataType = 'mixed', $returnType = 'mixed') {
-        self::$hooks[$name] = array(
+    public static function define($name, $description, $dataType = 'mixed', $returnType = 'mixed', $extra = array()) {
+        $entry = array(
             'description' => $description,
             'data_type'   => $dataType,
             'return_type' => $returnType,
         );
+        if (!empty($extra)) {
+            $entry = array_merge($entry, $extra);
+        }
+        self::$hooks[$name] = $entry;
     }
 }

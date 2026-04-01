@@ -59,6 +59,38 @@ abstract class ContentPanel extends AdminPanel {
         return 'edit';
     }
 
+    // ========== Hook Registration ==========
+
+    /**
+     * Register standard content panel hooks in HookRegistry.
+     * Call from init() so hooks appear on the /admin/hooks page.
+     */
+    protected function registerPanelHooks() {
+        $c = $this->getCollectionName();
+        $type = ucfirst($this->getContentType());
+        $source = $this->id();
+
+        \HookRegistry::define('admin.' . $c . '.edit.data',
+            'Modify template data for the ' . $c . ' edit form',
+            'array', 'array', array('source' => $source));
+
+        \HookRegistry::define('admin.' . $c . '.form_data',
+            'Modify extracted form data before saving ' . strtolower($type),
+            'array', 'array', array('source' => $source));
+
+        \HookRegistry::define('admin.' . $c . '.edit.sidebar',
+            'Inject HTML into the ' . $c . ' edit form sidebar',
+            'string', 'string', array('source' => $source, 'context' => 'array (the ' . strtolower($type) . ' item)'));
+
+        \HookRegistry::define('admin.' . $c . '.list.columns.head',
+            'Inject <th> elements into the ' . $c . ' list table header',
+            'string', 'string', array('source' => $source));
+
+        \HookRegistry::define('admin.' . $c . '.list.columns.body',
+            'Inject <td> elements into the ' . $c . ' list table row',
+            'string', 'string', array('source' => $source, 'context' => 'array (the ' . strtolower($type) . ' item)'));
+    }
+
     // ========== Route Registration ==========
 
     /**

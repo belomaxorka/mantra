@@ -12,6 +12,7 @@ class PostsPanel extends ContentPanel {
         parent::init($admin);
 
         app()->db()->registerSchema('posts', $this->getPath() . '/schema.php');
+        $this->registerPanelHooks();
         $this->hook('permissions.register', array($this, 'registerPermissions'));
     }
 

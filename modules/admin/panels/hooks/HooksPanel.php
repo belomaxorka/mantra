@@ -23,28 +23,42 @@ class HooksPanel extends AdminPanel {
         $registry = \HookRegistry::all();
         $activeHooks = $hookManager->getActiveHooks();
 
-        // Build hook data: merge registry + runtime listeners
-        $groups = array();
         $allHookNames = array_unique(array_merge(array_keys($registry), $activeHooks));
         sort($allHookNames);
 
-        foreach ($allHookNames as $name) {
-            // Determine group from hook name prefix
-            $group = $this->getHookGroup($name);
+        // Split into core groups and module groups
+        $coreGroups = array();
+        $moduleGroups = array();
 
+        foreach ($allHookNames as $name) {
             $info = isset($registry[$name]) ? $registry[$name] : array();
             $info['name'] = $name;
             $info['listeners'] = $hookManager->listenerCount($name);
             $info['registered'] = isset($registry[$name]);
 
-            if (!isset($groups[$group])) {
-                $groups[$group] = array();
+            $source = isset($info['source']) ? $info['source'] : '';
+
+            if ($source !== '') {
+                // Module hook — group by source
+                if (!isset($moduleGroups[$source])) {
+                    $moduleGroups[$source] = array();
+                }
+                $moduleGroups[$source][] = $info;
+            } else {
+                // Core hook — group by prefix
+                $group = $this->getCoreGroup($name);
+                if (!isset($coreGroups[$group])) {
+                    $coreGroups[$group] = array();
+                }
+                $coreGroups[$group][] = $info;
             }
-            $groups[$group][] = $info;
         }
 
+        ksort($moduleGroups);
+
         $content = $this->renderView('hooks', array(
-            'groups' => $groups,
+            'coreGroups' => $coreGroups,
+            'moduleGroups' => $moduleGroups,
             'totalHooks' => count($allHookNames),
             'totalListeners' => array_sum(array_map(function ($name) use ($hookManager) {
                 return $hookManager->listenerCount($name);
@@ -59,12 +73,11 @@ class HooksPanel extends AdminPanel {
         ));
     }
 
-    private function getHookGroup($name) {
-        if (strpos($name, 'system.') === 0 || $name === 'routes.register' || $name === 'view.render') return 'system';
+    private function getCoreGroup($name) {
+        if (strpos($name, 'system.') === 0 || $name === 'routes.register' || $name === 'view.render' || $name === 'permissions.register') return 'system';
         if (strpos($name, 'theme.') === 0) return 'theme';
         if (strpos($name, 'admin.') === 0) return 'admin';
         if (strpos($name, 'page.') === 0 || strpos($name, 'post.') === 0) return 'content';
-        if ($name === 'permissions.register') return 'system';
         return 'other';
     }
 }
