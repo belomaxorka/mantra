@@ -11,7 +11,7 @@
                         </a>
                     </h2>
                     <div class="meta text-muted mb-2">
-                        <?php echo format_date($post['created_at']); ?>
+                        <?php echo clock()->formatDate($post['created_at']); ?>
                     </div>
                     <?php if (isset($post['excerpt'])): ?>
                         <div class="excerpt">

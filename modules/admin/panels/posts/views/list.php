@@ -64,7 +64,7 @@
                                             </td>
                                             <td>
                                                 <small class="text-muted">
-                                                    <?php echo e(format_datetime($post['updated_at'])); ?>
+                                                    <?php echo e(clock()->formatDatetime($post['updated_at'])); ?>
                                                 </small>
                                             </td>
                                             <td>

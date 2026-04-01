@@ -152,50 +152,6 @@ function now()
 }
 
 /**
- * Format datetime for display using the configured date format.
- *
- * @param string|\DateTimeInterface|int $datetime
- * @return string
- */
-function format_date($datetime)
-{
-    return clock()->formatDate($datetime);
-}
-
-/**
- * Format datetime for display using the configured time format.
- *
- * @param string|\DateTimeInterface|int $datetime
- * @return string
- */
-function format_time($datetime)
-{
-    return clock()->formatTime($datetime);
-}
-
-/**
- * Format datetime for display using date + time formats.
- *
- * @param string|\DateTimeInterface|int $datetime
- * @return string
- */
-function format_datetime($datetime)
-{
-    return clock()->formatDatetime($datetime);
-}
-
-/**
- * Human-readable relative time ("5 min. ago", "2 hr. ago").
- *
- * @param string|\DateTimeInterface|int $datetime
- * @return string
- */
-function time_ago($datetime)
-{
-    return clock()->ago($datetime);
-}
-
-/**
  * Generate slug from string.
  */
 function slugify($text)

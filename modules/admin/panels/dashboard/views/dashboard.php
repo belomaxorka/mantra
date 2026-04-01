@@ -71,7 +71,7 @@
                                                 <span class="text-muted small"><?php echo e($typeLabel); ?></span>
                                             </td>
                                             <td class="text-end">
-                                                <small class="text-muted"><?php echo e($updatedAt ? format_datetime($updatedAt) : ''); ?></small>
+                                                <small class="text-muted"><?php echo e($updatedAt ? clock()->formatDatetime($updatedAt) : ''); ?></small>
                                             </td>
                                         </tr>
                                     <?php endforeach; ?>
