@@ -259,23 +259,10 @@
             })();
             </script>
 
-            <div class="card">
-                <div class="card-header">
-                    <?php echo t('admin-posts.metadata'); ?>
-                </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <label for="category" class="form-label">
-                            <?php echo t('admin-posts.field.category'); ?>
-                        </label>
-                        <input type="text"
-                               class="form-control"
-                               id="category"
-                               name="category"
-                               value="<?php echo e($post['category']); ?>">
-                    </div>
-                </div>
-            </div>
+            <?php
+            $sidebarHook = app()->hooks()->fire('admin.posts.edit.sidebar', array('html' => '', 'item' => $post));
+            echo is_array($sidebarHook) ? $sidebarHook['html'] : $sidebarHook;
+            ?>
         </div>
     </form>
 </div>

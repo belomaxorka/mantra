@@ -68,7 +68,6 @@ class PostsPanel extends ContentPanel {
             'content' => app()->request()->post('content', ''),
             'excerpt' => app()->request()->post('excerpt', ''),
             'status' => app()->request()->post('status', 'draft'),
-            'category' => app()->request()->post('category', ''),
             'image' => app()->request()->postTrimmed('image'),
         );
     }

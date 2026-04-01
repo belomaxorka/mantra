@@ -1,0 +1,39 @@
+{
+    "id": "categories",
+    "name": {
+        "en": "Categories",
+        "ru": "Категории"
+    },
+    "description": {
+        "en": "Category management for posts with admin CRUD and public category pages",
+        "ru": "Управление категориями постов с панелью администрирования и публичными страницами категорий"
+    },
+    "version": "1.0.0",
+    "author": "Mantra CMS",
+    "license": "MIT",
+    "type": "feature",
+    "capabilities": ["routes", "admin_ui", "hooks", "templates"],
+    "dependencies": {
+        "admin": ">=1.0"
+    },
+    "tags": ["categories", "taxonomy", "content"],
+    "admin": {
+        "sidebar": {
+            "id": "categories",
+            "title": "categories.title",
+            "icon": "bi-tag",
+            "group": "admin.sidebar.group.content",
+            "order": 15,
+            "url": "/admin/categories"
+        },
+        "quick_actions": [
+            {
+                "id": "new-category",
+                "title": "categories.new_category",
+                "icon": "bi-tag",
+                "url": "/admin/categories/new",
+                "order": 25
+            }
+        ]
+    }
+}

@@ -37,7 +37,7 @@
                                     <tr>
                                         <th><?php echo t('admin-posts.field.title'); ?></th>
                                         <th><?php echo t('admin-posts.field.author'); ?></th>
-                                        <th><?php echo t('admin-posts.field.category'); ?></th>
+                                        <?php echo app()->hooks()->fire('admin.posts.list.columns.head', ''); ?>
                                         <th><?php echo t('admin-posts.field.status'); ?></th>
                                         <th><?php echo t('admin-posts.field.updated'); ?></th>
                                         <th class="text-end"><?php echo t('admin-posts.field.actions'); ?></th>
@@ -52,9 +52,10 @@
                                             <td>
                                                 <?php echo e($post['author']); ?>
                                             </td>
-                                            <td>
-                                                <?php echo e($post['category'] !== '' ? $post['category'] : '-'); ?>
-                                            </td>
+                                            <?php
+                                            $colData = app()->hooks()->fire('admin.posts.list.columns.body', array('html' => '', 'item' => $post));
+                                            echo is_array($colData) ? $colData['html'] : $colData;
+                                            ?>
                                             <td>
                                                 <?php if ($post['status'] === 'published'): ?>
                                                     <span class="badge bg-success"><?php echo t('admin-posts.status.published'); ?></span>
