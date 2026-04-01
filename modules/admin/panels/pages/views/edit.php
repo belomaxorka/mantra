@@ -2,9 +2,9 @@
     <div class="row mb-4">
         <div class="col">
             <div class="admin-page-header">
-                <h1 class="h3"><?php echo $isNew ? t('admin-pages.new') : t('admin-pages.edit'); ?></h1>
+                <h1 class="h3"><?php echo $isNew ? t('admin-pages.new') : t('admin-pages.edit_page'); ?></h1>
                 <a href="<?php echo base_url('/admin/pages'); ?>" class="btn btn-outline-secondary">
-                    <i class="bi bi-arrow-left me-2"></i><?php echo t('admin-pages.back_to_list'); ?>
+                    <i class="bi bi-arrow-left me-2"></i><?php echo t('admin.common.back'); ?>
                 </a>
             </div>
         </div>
