@@ -59,10 +59,10 @@ class Auth {
         }
 
         // Regenerate session ID to prevent session fixation
-        session()->regenerate(true);
+        app()->session()->regenerate(true);
 
         // Set session
-        session()->set('user_id', $user['_id']);
+        app()->session()->set('user_id', $user['_id']);
 
         $this->currentUser = $user;
 
@@ -86,9 +86,9 @@ class Auth {
             ));
         }
 
-        session()->delete('user_id');
+        app()->session()->delete('user_id');
         $this->currentUser = null;
-        session()->destroy();
+        app()->session()->destroy();
     }
     
     /**
@@ -109,8 +109,8 @@ class Auth {
      * Load current user from session
      */
     private function loadCurrentUser() {
-        if (session()->has('user_id')) {
-            $this->currentUser = $this->db->read('users', session()->get('user_id'));
+        if (app()->session()->has('user_id')) {
+            $this->currentUser = $this->db->read('users', app()->session()->get('user_id'));
         }
     }
     
@@ -202,15 +202,15 @@ class Auth {
     public function generateCsrfToken() {
         // Reuse the existing token if present so that a browser refresh (POST resubmit)
         // doesn't immediately invalidate the previous request.
-        if (session()->has('csrf_token')) {
-            $existing = session()->get('csrf_token');
+        if (app()->session()->has('csrf_token')) {
+            $existing = app()->session()->get('csrf_token');
             if (is_string($existing) && $existing !== '') {
                 return $existing;
             }
         }
 
         $token = bin2hex(openssl_random_pseudo_bytes(32));
-        session()->set('csrf_token', $token);
+        app()->session()->set('csrf_token', $token);
         return $token;
     }
 
@@ -218,10 +218,10 @@ class Auth {
      * Verify CSRF token
      */
     public function verifyCsrfToken($token) {
-        if (!session()->has('csrf_token')) {
+        if (!app()->session()->has('csrf_token')) {
             return false;
         }
         // Use hash_equals to prevent timing attacks
-        return hash_equals(session()->get('csrf_token'), $token);
+        return hash_equals(app()->session()->get('csrf_token'), $token);
     }
 }

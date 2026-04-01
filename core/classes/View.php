@@ -268,7 +268,7 @@ class View {
         $url = '/' . basename(MANTRA_MODULES) . '/' . $module . '/assets/' . $path;
 
         // Append module version for cache-busting
-        $instance = module($module);
+        $instance = \Application::getInstance()->modules()->getModule($module);
         if ($instance) {
             $url .= '?v=' . urlencode($instance->getVersion());
         }

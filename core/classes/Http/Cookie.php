@@ -50,7 +50,7 @@ class Cookie {
                 $secure = false;
             } else {
                 // auto
-                $secure = is_https();
+                $secure = \Http\Request::isHttps();
             }
         }
 

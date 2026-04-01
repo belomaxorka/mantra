@@ -23,7 +23,7 @@ class PageController {
             )
         ));
 
-        $posts = db()->query(
+        $posts = app()->db()->query(
             $queryParams['collection'],
             $queryParams['filter'],
             $queryParams['options']
@@ -41,7 +41,7 @@ class PageController {
         // Hook: allow modules to add data to view
         $data = $app->hooks()->fire('page.home.data', $data);
 
-        view('home', $data);
+        app()->view()->render('home', $data);
     }
 
     /**
@@ -61,7 +61,7 @@ class PageController {
             )
         ));
 
-        $posts = db()->query(
+        $posts = app()->db()->query(
             $queryParams['collection'],
             $queryParams['filter'],
             $queryParams['options']
@@ -79,7 +79,7 @@ class PageController {
         // Hook: allow modules to add data to view
         $data = $app->hooks()->fire('page.blog.data', $data);
 
-        view('blog', $data);
+        app()->view()->render('blog', $data);
     }
 
     /**
@@ -96,7 +96,7 @@ class PageController {
             'slug' => $slug
         ));
 
-        $pages = db()->query($queryParams['collection'], $queryParams['filter']);
+        $pages = app()->db()->query($queryParams['collection'], $queryParams['filter']);
 
         if (empty($pages)) {
             $this->notFound();
@@ -120,7 +120,7 @@ class PageController {
         // Determine template (support template hierarchy)
         $template = $this->getPageTemplate($page);
 
-        view($template, $data);
+        app()->view()->render($template, $data);
     }
 
     /**
@@ -137,7 +137,7 @@ class PageController {
             'slug' => $slug
         ));
 
-        $posts = db()->query($queryParams['collection'], $queryParams['filter']);
+        $posts = app()->db()->query($queryParams['collection'], $queryParams['filter']);
 
         if (empty($posts)) {
             $this->notFound();
@@ -161,7 +161,7 @@ class PageController {
         // Determine template (support template hierarchy)
         $template = $this->getPostTemplate($post);
 
-        view($template, $data);
+        app()->view()->render($template, $data);
     }
 
     /**

@@ -85,7 +85,7 @@ class Router {
      * Dispatch current request
      */
     public function dispatch() {
-        $method = request()->method();
+        $method = app()->request()->method();
         $uri = $this->getUri();
 
         foreach ($this->routes as $route) {
@@ -147,7 +147,7 @@ class Router {
      * Get clean URI
      */
     private function getUri() {
-        $uri = request()->uri();
+        $uri = app()->request()->uri();
 
         // Remove query string
         if (($pos = strpos($uri, '?')) !== false) {
@@ -155,7 +155,7 @@ class Router {
         }
 
         // Remove base path if in subdirectory
-        $scriptName = dirname((string)request()->server('SCRIPT_NAME', ''));
+        $scriptName = dirname((string)app()->request()->server('SCRIPT_NAME', ''));
         $scriptName = Config::normalizeScriptPath($scriptName);
         if ($scriptName !== '/' && str_starts_with($uri, $scriptName)) {
             $uri = substr($uri, strlen($scriptName));
@@ -240,6 +240,6 @@ class Router {
      * Redirect helper
      */
     public function redirect($url, $code = 302) {
-        redirect($url, $code);
+        app()->response()->redirect($url, $code);
     }
 }

@@ -147,8 +147,7 @@ class Request {
     }
 
     public function ip() {
-        $ip = client_ip();
-        return $ip ? $ip : (isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : null);
+        return $this->clientIp();
     }
 
     /**

@@ -41,7 +41,7 @@ class Session {
             $secure = false;
         } else {
             // auto
-            $secure = is_https();
+            $secure = \Http\Request::isHttps();
         }
 
         if (PHP_VERSION_ID >= 70300) {
