@@ -1,4 +1,4 @@
-<h1 class="mb-4" style="font-size:1.75rem;font-weight:700;letter-spacing:-.02em">Blog</h1>
+<h1 class="section-title mb-4">Blog</h1>
 
 <?php if (!empty($posts)): ?>
     <div class="d-flex flex-column gap-3">

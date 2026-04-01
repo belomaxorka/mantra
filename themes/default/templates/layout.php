@@ -18,54 +18,55 @@
 <body>
     <?php echo $app->hooks()->fire('theme.body.start', ''); ?>
 
+    <?php
+    // Build nav items once, render in desktop nav + mobile drawer
+    $currentPath = strtok($_SERVER['REQUEST_URI'], '?');
+    $siteUrl = rtrim(config('site.url', ''), '/');
+    $navItems = array(
+        array('id' => 'home', 'title' => 'Home', 'url' => base_url(), 'order' => 0),
+    );
+    $navItems = $app->hooks()->fire('theme.navigation', $navItems);
+    $navHtml = '';
+    if (is_array($navItems)) {
+        usort($navItems, function($a, $b) {
+            return (isset($a['order']) ? (int)$a['order'] : 100) - (isset($b['order']) ? (int)$b['order'] : 100);
+        });
+        foreach ($navItems as $item) {
+            if (!is_array($item) || empty($item['url']) || empty($item['title'])) continue;
+            if (!empty($item['active'])) {
+                $isActive = true;
+            } else {
+                $itemPath = str_replace($siteUrl, '', $item['url']);
+                $itemPath = $itemPath === '' ? '/' : $itemPath;
+                $isActive = ($itemPath === '/' && $currentPath === '/')
+                    || ($itemPath !== '/' && strpos($currentPath, $itemPath) === 0);
+            }
+            $active = $isActive ? ' active' : '';
+            $url = htmlspecialchars($item['url'], ENT_QUOTES, 'UTF-8');
+            $title = htmlspecialchars($item['title'], ENT_QUOTES, 'UTF-8');
+            $navHtml .= '<li class="nav-item"><a class="nav-link' . $active . '" href="' . $url . '">' . $title . '</a></li>';
+        }
+    }
+    ?>
+
     <div class="scroll-indicator" id="scrollIndicator"></div>
+    <div class="nav-backdrop" id="navBackdrop"></div>
+    <nav class="nav-drawer" id="navDrawer">
+        <div class="nav-drawer-header">
+            <span class="nav-drawer-brand"><?php echo e(config('site.name', MANTRA_PROJECT_INFO['name'])); ?></span>
+            <button class="nav-drawer-close" id="navDrawerClose" type="button" aria-label="Close menu">&times;</button>
+        </div>
+        <ul class="navbar-nav"><?php echo $navHtml; ?></ul>
+    </nav>
 
     <header class="site-header">
-        <nav class="navbar navbar-expand-lg">
+        <nav class="navbar">
             <div class="container">
                 <a class="navbar-brand" href="<?php echo base_url(); ?>"><?php echo e(config('site.name', MANTRA_PROJECT_INFO['name'])); ?></a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
+                <button class="nav-toggle" id="navToggle" type="button" aria-label="Toggle navigation">
+                    <span class="nav-toggle-icon"></span>
                 </button>
-                <div class="collapse navbar-collapse" id="navbarNav">
-                    <ul class="navbar-nav ms-auto">
-                        <?php
-                        $currentPath = strtok($_SERVER['REQUEST_URI'], '?');
-                        $siteUrl = rtrim(config('site.url', ''), '/');
-
-                        $navItems = array(
-                            array('id' => 'home', 'title' => 'Home', 'url' => base_url(), 'order' => 0),
-                        );
-
-                        $navItems = $app->hooks()->fire('theme.navigation', $navItems);
-
-                        if (is_array($navItems)) {
-                            usort($navItems, function($a, $b) {
-                                return (isset($a['order']) ? (int)$a['order'] : 100) - (isset($b['order']) ? (int)$b['order'] : 100);
-                            });
-
-                            foreach ($navItems as $item) {
-                                if (!is_array($item) || empty($item['url']) || empty($item['title'])) continue;
-
-                                // Auto-detect active state from current URL
-                                if (!empty($item['active'])) {
-                                    $isActive = true;
-                                } else {
-                                    $itemPath = str_replace($siteUrl, '', $item['url']);
-                                    $itemPath = $itemPath === '' ? '/' : $itemPath;
-                                    $isActive = ($itemPath === '/' && $currentPath === '/')
-                                        || ($itemPath !== '/' && strpos($currentPath, $itemPath) === 0);
-                                }
-
-                                $active = $isActive ? ' active' : '';
-                                $url = htmlspecialchars($item['url'], ENT_QUOTES, 'UTF-8');
-                                $title = htmlspecialchars($item['title'], ENT_QUOTES, 'UTF-8');
-                                echo '<li class="nav-item"><a class="nav-link' . $active . '" href="' . $url . '">' . $title . '</a></li>';
-                            }
-                        }
-                        ?>
-                    </ul>
-                </div>
+                <ul class="navbar-nav desktop-nav"><?php echo $navHtml; ?></ul>
             </div>
         </nav>
     </header>
@@ -148,6 +149,36 @@
         }, {passive: true});
         btn.addEventListener('click', function() {
             window.scrollTo({top: 0, behavior: 'smooth'});
+        });
+    })();
+    (function() {
+        var drawer = document.getElementById('navDrawer');
+        var backdrop = document.getElementById('navBackdrop');
+        var toggle = document.getElementById('navToggle');
+        var close = document.getElementById('navDrawerClose');
+        if (!drawer || !backdrop || !toggle) return;
+
+        function open() {
+            drawer.classList.add('open');
+            backdrop.classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+        function shut() {
+            drawer.classList.remove('open');
+            backdrop.classList.remove('open');
+            document.body.style.overflow = '';
+        }
+
+        toggle.addEventListener('click', function() {
+            drawer.classList.contains('open') ? shut() : open();
+        });
+        backdrop.addEventListener('click', shut);
+        if (close) close.addEventListener('click', shut);
+        drawer.addEventListener('click', function(e) {
+            if (e.target.closest('a.nav-link') && window.innerWidth <= 991.98) shut();
+        });
+        window.addEventListener('resize', function() {
+            if (window.innerWidth > 991.98) shut();
         });
     })();
     </script>
