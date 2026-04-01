@@ -209,8 +209,8 @@ abstract class AdminPanel implements AdminPanelInterface {
     /**
      * Fire a hook.
      */
-    protected function fireHook($hookName, $data = null) {
-        return Application::getInstance()->hooks()->fire($hookName, $data);
+    protected function fireHook($hookName, $data = null, $context = null) {
+        return Application::getInstance()->hooks()->fire($hookName, $data, $context);
     }
 
     /**

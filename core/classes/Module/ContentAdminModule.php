@@ -138,11 +138,14 @@ abstract class ContentAdminModule extends BaseAdminModule {
      * Show new item form
      */
     public function newItem() {
-        $content = $this->renderView($this->getEditTemplate(), array(
+        $templateData = array(
             strtolower($this->getContentType()) => $this->getDefaultItem(),
             'isNew' => true,
             'csrf_token' => app()->auth()->generateCsrfToken()
-        ));
+        );
+        $templateData = $this->fireHook('admin.' . $this->getCollectionName() . '.edit.data', $templateData);
+
+        $content = $this->renderView($this->getEditTemplate(), $templateData);
 
         $titleKey = $this->getId() . '.new';
         $title = t($titleKey);
@@ -159,6 +162,7 @@ abstract class ContentAdminModule extends BaseAdminModule {
         }
         
         $data = $this->extractFormData();
+        $data = $this->fireHook('admin.' . $this->getCollectionName() . '.form_data', $data);
         $data = $this->ensureSlug($data);
         $user = $this->getUser();
         $data['author'] = isset($user['username']) ? $user['username'] : 'Unknown';
@@ -185,11 +189,14 @@ abstract class ContentAdminModule extends BaseAdminModule {
             return $this->renderAdmin('Not Found', '<div class="alert alert-danger alert-dismissible fade show alert-permanent" role="alert">' . $this->getContentType() . ' not found<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>');
         }
 
-        $content = $this->renderView($this->getEditTemplate(), array(
+        $templateData = array(
             strtolower($this->getContentType()) => $item,
             'isNew' => false,
             'csrf_token' => app()->auth()->generateCsrfToken()
-        ));
+        );
+        $templateData = $this->fireHook('admin.' . $this->getCollectionName() . '.edit.data', $templateData);
+
+        $content = $this->renderView($this->getEditTemplate(), $templateData);
 
         // Try module-specific edit key first (e.g., admin-posts.edit_post, admin-pages.edit_page)
         $titleKey = $this->getId() . '.edit_' . strtolower($this->getContentType());
@@ -215,6 +222,7 @@ abstract class ContentAdminModule extends BaseAdminModule {
         }
 
         $data = $this->extractFormData();
+        $data = $this->fireHook('admin.' . $this->getCollectionName() . '.form_data', $data);
         $data = $this->ensureSlug($data);
         $data['updated_at'] = clock()->timestamp();
 

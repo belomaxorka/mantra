@@ -119,6 +119,8 @@
                         </div>
                     </div>
                 </div>
+
+                <?php echo app()->hooks()->fire('admin.pages.edit.sidebar', '', $page); ?>
             </div>
         </div>
     </form>

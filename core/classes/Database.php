@@ -16,6 +16,9 @@ class Database
     // Schema cache: collection => schema array
     private $collectionSchemas = array();
 
+    // Module-registered schemas: collection => file path
+    private $registeredSchemas = array();
+
     public function __construct($basePath = null)
     {
         $this->basePath = $basePath ? $basePath : MANTRA_CONTENT;
@@ -321,13 +324,27 @@ class Database
         return $count;
     }
 
+    /**
+     * Register a schema path for a collection (used by modules).
+     */
+    public function registerSchema($collection, $schemaPath)
+    {
+        $this->registeredSchemas[$collection] = $schemaPath;
+        unset($this->collectionSchemas[$collection]);
+    }
+
     private function getCollectionSchema($collection)
     {
         if (isset($this->collectionSchemas[$collection])) {
             return $this->collectionSchemas[$collection];
         }
 
-        $schemaPath = MANTRA_CORE . '/schemas/' . $collection . '.php';
+        // Check module-registered schemas first, then core fallback
+        if (isset($this->registeredSchemas[$collection])) {
+            $schemaPath = $this->registeredSchemas[$collection];
+        } else {
+            $schemaPath = MANTRA_CORE . '/schemas/' . $collection . '.php';
+        }
         if (!file_exists($schemaPath)) {
             $this->collectionSchemas[$collection] = null;
             return null;

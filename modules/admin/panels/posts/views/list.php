@@ -52,10 +52,7 @@
                                             <td>
                                                 <?php echo e($post['author']); ?>
                                             </td>
-                                            <?php
-                                            $colData = app()->hooks()->fire('admin.posts.list.columns.body', array('html' => '', 'item' => $post));
-                                            echo is_array($colData) ? $colData['html'] : $colData;
-                                            ?>
+                                            <?php echo app()->hooks()->fire('admin.posts.list.columns.body', '', $post); ?>
                                             <td>
                                                 <?php if ($post['status'] === 'published'): ?>
                                                     <span class="badge bg-success"><?php echo t('admin-posts.status.published'); ?></span>

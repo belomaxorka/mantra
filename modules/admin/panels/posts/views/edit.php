@@ -259,10 +259,7 @@
             })();
             </script>
 
-            <?php
-            $sidebarHook = app()->hooks()->fire('admin.posts.edit.sidebar', array('html' => '', 'item' => $post));
-            echo is_array($sidebarHook) ? $sidebarHook['html'] : $sidebarHook;
-            ?>
+            <?php echo app()->hooks()->fire('admin.posts.edit.sidebar', '', $post); ?>
         </div>
     </form>
 </div>

@@ -98,6 +98,69 @@ class HookRegistry {
             'return_type' => 'array',
         ),
 
+        // ── Admin: content panel extensibility ─────────────
+        'admin.posts.edit.sidebar' => array(
+            'description' => 'Inject HTML into the posts edit form sidebar',
+            'data_type'   => 'string',
+            'return_type' => 'string',
+            'context'     => 'array (the post item)',
+        ),
+        'admin.posts.edit.data' => array(
+            'description' => 'Modify template data for the posts edit form',
+            'data_type'   => 'array',
+            'return_type' => 'array',
+        ),
+        'admin.posts.form_data' => array(
+            'description' => 'Modify extracted form data before saving a post',
+            'data_type'   => 'array',
+            'return_type' => 'array',
+        ),
+        'admin.posts.list.columns.head' => array(
+            'description' => 'Inject <th> elements into the posts list table header',
+            'data_type'   => 'string',
+            'return_type' => 'string',
+        ),
+        'admin.posts.list.columns.body' => array(
+            'description' => 'Inject <td> elements into a posts list table row',
+            'data_type'   => 'string',
+            'return_type' => 'string',
+            'context'     => 'array (the post item)',
+        ),
+        'admin.pages.edit.sidebar' => array(
+            'description' => 'Inject HTML into the pages edit form sidebar',
+            'data_type'   => 'string',
+            'return_type' => 'string',
+            'context'     => 'array (the page item)',
+        ),
+        'admin.pages.list.columns.head' => array(
+            'description' => 'Inject <th> elements into the pages list table header',
+            'data_type'   => 'string',
+            'return_type' => 'string',
+        ),
+        'admin.pages.list.columns.body' => array(
+            'description' => 'Inject <td> elements into a pages list table row',
+            'data_type'   => 'string',
+            'return_type' => 'string',
+            'context'     => 'array (the page item)',
+        ),
+        'admin.users.edit.sidebar' => array(
+            'description' => 'Inject HTML into the users edit form sidebar',
+            'data_type'   => 'string',
+            'return_type' => 'string',
+            'context'     => 'array (the user item)',
+        ),
+        'admin.users.list.columns.head' => array(
+            'description' => 'Inject <th> elements into the users list table header',
+            'data_type'   => 'string',
+            'return_type' => 'string',
+        ),
+        'admin.users.list.columns.body' => array(
+            'description' => 'Inject <td> elements into a users list table row',
+            'data_type'   => 'string',
+            'return_type' => 'string',
+            'context'     => 'array (the user item)',
+        ),
+
         // ── Content: home page ──────────────────────────────
         'page.home.query' => array(
             'description' => 'Modify query parameters for the home page post list',

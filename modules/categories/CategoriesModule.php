@@ -8,6 +8,9 @@ class CategoriesModule extends BaseAdminModule
     {
         parent::init();
 
+        // Register schema from module directory
+        app()->db()->registerSchema('categories', $this->getPath() . '/schema.php');
+
         // Register translations
         app()->translator()->registerDomain('categories', $this->getPath() . '/lang');
 
@@ -213,9 +216,8 @@ class CategoriesModule extends BaseAdminModule
 
     // ========== Post Edit Integration ==========
 
-    public function renderCategorySelector($data)
+    public function renderCategorySelector($html, $post)
     {
-        $post = is_array($data) && isset($data['item']) ? $data['item'] : array();
         $currentCategory = isset($post['category']) ? $post['category'] : '';
 
         $categories = app()->db()->query('categories', array(), array(
@@ -223,18 +225,10 @@ class CategoriesModule extends BaseAdminModule
             'order' => 'asc',
         ));
 
-        $html = app()->view()->fetch('categories:category-selector', array(
+        return $html . partial('categories:category-selector', array(
             'categories' => $categories,
             'currentCategory' => $currentCategory,
         ));
-
-        if (is_array($data)) {
-            $data['html'] .= $html;
-        } else {
-            $data = $html;
-        }
-
-        return $data;
     }
 
     public function extractCategoryField($data)
@@ -250,18 +244,10 @@ class CategoriesModule extends BaseAdminModule
         return $html . '<th>' . t('categories.category') . '</th>';
     }
 
-    public function renderCategoryColumnBody($data)
+    public function renderCategoryColumnBody($html, $post)
     {
-        $post = is_array($data) && isset($data['item']) ? $data['item'] : array();
         $cat = isset($post['category']) && $post['category'] !== '' ? e($post['category']) : '-';
-
-        if (is_array($data)) {
-            $data['html'] .= '<td>' . $cat . '</td>';
-        } else {
-            $data = '<td>' . $cat . '</td>';
-        }
-
-        return $data;
+        return $html . '<td>' . $cat . '</td>';
     }
 
     // ========== Public Route ==========

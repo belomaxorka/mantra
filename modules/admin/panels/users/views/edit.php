@@ -128,6 +128,8 @@
                     </div>
                 </div>
 
+                <?php echo app()->hooks()->fire('admin.users.edit.sidebar', '', $user); ?>
+
                 <div class="d-grid">
                     <button type="submit" class="btn btn-primary">
                         <i class="bi bi-check-circle me-2"></i><?php echo $isNew ? t('admin-users.create') : t('admin-users.update'); ?>

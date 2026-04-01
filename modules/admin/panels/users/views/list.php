@@ -28,6 +28,7 @@
                                         <th><?php echo t('admin-users.field.role'); ?></th>
                                         <th><?php echo t('admin-users.field.status'); ?></th>
                                         <th><?php echo t('admin-users.field.updated'); ?></th>
+                                        <?php echo app()->hooks()->fire('admin.users.list.columns.head', ''); ?>
                                         <th class="text-end"><?php echo t('admin-users.field.actions'); ?></th>
                                     </tr>
                                 </thead>
@@ -70,6 +71,7 @@
                                                     <?php echo e(!empty($u['updated_at']) ? clock()->formatDatetime($u['updated_at']) : '-'); ?>
                                                 </small>
                                             </td>
+                                            <?php echo app()->hooks()->fire('admin.users.list.columns.body', '', $u); ?>
                                             <td>
                                                 <div class="btn-group btn-group-sm">
                                                     <a href="<?php echo base_url('/admin/users/edit/' . $u['_id']); ?>"

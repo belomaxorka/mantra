@@ -36,6 +36,7 @@
                                         <th><?php echo t('admin-pages.field.status'); ?></th>
                                         <th><?php echo t('admin-pages.field.navigation'); ?></th>
                                         <th><?php echo t('admin-pages.field.updated'); ?></th>
+                                        <?php echo app()->hooks()->fire('admin.pages.list.columns.head', ''); ?>
                                         <th><?php echo t('admin-pages.field.actions'); ?></th>
                                     </tr>
                                 </thead>
@@ -67,6 +68,7 @@
                                                     <?php echo e(clock()->formatDatetime($page['updated_at'])); ?>
                                                 </small>
                                             </td>
+                                            <?php echo app()->hooks()->fire('admin.pages.list.columns.body', '', $page); ?>
                                             <td>
                                                 <div class="btn-group btn-group-sm">
                                                     <?php if (!empty($canEdit)): ?>

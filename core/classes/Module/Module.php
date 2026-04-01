@@ -171,8 +171,8 @@ abstract class Module implements ModuleInterface {
         return $this->app->hooks()->register($hookName, $callback, $priority);
     }
 
-    protected function fireHook($hookName, $data = null) {
-        return $this->app->hooks()->fire($hookName, $data);
+    protected function fireHook($hookName, $data = null, $context = null) {
+        return $this->app->hooks()->fire($hookName, $data, $context);
     }
 
     /**

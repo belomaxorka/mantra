@@ -63,17 +63,18 @@ class HookManager {
      * Fire a hook
      * 
      * @param string $hookName Hook name
-     * @param mixed $data Data to pass to callbacks
+     * @param mixed $data Data to pass to callbacks (transformable)
+     * @param mixed $context Optional read-only context passed as second argument to callbacks
      * @return mixed Modified data after all callbacks
      */
-    public function fire($hookName, $data = null) {
+    public function fire($hookName, $data = null, $context = null) {
         if (!isset($this->hooks[$hookName])) {
             return $data;
         }
-        
+
         foreach ($this->hooks[$hookName] as $hook) {
             if (is_callable($hook['callback'])) {
-                $result = call_user_func($hook['callback'], $data);
+                $result = call_user_func($hook['callback'], $data, $context);
                 // Allow hooks to modify data
                 if ($result !== null) {
                     $data = $result;
