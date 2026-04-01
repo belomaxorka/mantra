@@ -53,6 +53,7 @@ class PostsPanel extends ContentPanel {
             'excerpt' => '',
             'status' => 'draft',
             'category' => '',
+            'image' => '',
             'author' => '',
             'author_id' => '',
             'created_at' => '',
@@ -68,6 +69,7 @@ class PostsPanel extends ContentPanel {
             'excerpt' => request()->post('excerpt', ''),
             'status' => request()->post('status', 'draft'),
             'category' => request()->post('category', ''),
+            'image' => post_trimmed('image'),
         );
     }
 }

@@ -42,9 +42,11 @@ return array(
 
     // Featured image
     'admin-pages.featured_image' => 'Featured Image',
-    'admin-pages.image_field' => 'Image URL',
-    'admin-pages.image_help' => 'Full URL or path to the featured image',
     'admin-pages.image_preview' => 'Image preview',
+    'admin-pages.image_remove' => 'Remove',
+    'admin-pages.image_drop' => 'Drag image here or click below',
+    'admin-pages.image_choose' => 'Upload Image',
+    'admin-pages.image_uploading' => 'Uploading...',
 
     // Navigation settings
     'admin-pages.show_in_nav' => 'Show in navigation',

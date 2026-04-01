@@ -91,27 +91,119 @@
                         <?php echo t('admin-pages.featured_image'); ?>
                     </div>
                     <div class="card-body">
-                        <div class="mb-3">
-                            <label for="image" class="form-label"><?php echo t('admin-pages.image_field'); ?></label>
-                            <input type="text"
-                                   class="form-control"
-                                   id="image"
-                                   name="image"
-                                   value="<?php echo $this->escape($page['image']); ?>"
-                                   placeholder="https://example.com/image.jpg">
-                            <div class="form-text"><?php echo t('admin-pages.image_help'); ?></div>
+                        <input type="hidden" name="image" id="image" value="<?php echo $this->escape($page['image']); ?>">
+
+                        <div id="imagePreview" class="mb-3 text-center <?php echo empty($page['image']) ? 'd-none' : ''; ?>">
+                            <img src="<?php echo $this->escape($page['image']); ?>"
+                                 id="imagePreviewImg"
+                                 alt="<?php echo t('admin-pages.image_preview'); ?>"
+                                 class="img-fluid rounded"
+                                 style="max-height: 200px;"
+                                 onerror="this.style.display='none'">
+                            <div class="mt-2">
+                                <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeImage()">
+                                    <i class="bi bi-trash me-1"></i><?php echo t('admin-pages.image_remove'); ?>
+                                </button>
+                            </div>
                         </div>
 
-                        <?php if (!empty($page['image'])): ?>
-                            <div class="mt-2">
-                                <img src="<?php echo $this->escape($page['image']); ?>"
-                                     alt="<?php echo t('admin-pages.image_preview'); ?>"
-                                     class="img-fluid rounded admin-img-preview"
-                                     onerror="this.style.display='none'">
+                        <div id="imageUpload" class="<?php echo !empty($page['image']) ? 'd-none' : ''; ?>">
+                            <div id="imageDropZone"
+                                 class="border border-2 border-dashed rounded p-3 text-center"
+                                 style="cursor: pointer;">
+                                <i class="bi bi-image text-muted fs-3"></i>
+                                <p class="small text-muted mb-1"><?php echo t('admin-pages.image_drop'); ?></p>
+                                <input type="file" id="imageFile" class="d-none" accept="image/*">
+                                <button type="button" class="btn btn-outline-primary btn-sm" onclick="document.getElementById('imageFile').click()">
+                                    <i class="bi bi-upload me-1"></i><?php echo t('admin-pages.image_choose'); ?>
+                                </button>
                             </div>
-                        <?php endif; ?>
+                            <div id="imageUploading" class="text-center py-3 d-none">
+                                <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                                <span class="ms-2 text-muted"><?php echo t('admin-pages.image_uploading'); ?></span>
+                            </div>
+                            <div id="imageError" class="alert alert-danger mt-2 d-none small"></div>
+                        </div>
                     </div>
                 </div>
+
+                <script>
+                (function() {
+                    var uploadUrl = '<?php echo base_url("/admin/uploads/api/upload"); ?>';
+                    var dropZone = document.getElementById('imageDropZone');
+                    var fileInput = document.getElementById('imageFile');
+
+                    function uploadImage(file) {
+                        var form = new FormData();
+                        form.append('file', file);
+
+                        document.getElementById('imageDropZone').classList.add('d-none');
+                        document.getElementById('imageUploading').classList.remove('d-none');
+                        document.getElementById('imageError').classList.add('d-none');
+
+                        var xhr = new XMLHttpRequest();
+                        xhr.open('POST', uploadUrl, true);
+                        xhr.withCredentials = true;
+                        xhr.onload = function() {
+                            document.getElementById('imageUploading').classList.add('d-none');
+                            if (xhr.status === 200) {
+                                var data = JSON.parse(xhr.responseText);
+                                if (data.url) {
+                                    setImage(data.url);
+                                    return;
+                                }
+                            }
+                            var errMsg = 'Upload failed';
+                            try { errMsg = JSON.parse(xhr.responseText).error.message; } catch(e) {}
+                            document.getElementById('imageError').textContent = errMsg;
+                            document.getElementById('imageError').classList.remove('d-none');
+                            document.getElementById('imageDropZone').classList.remove('d-none');
+                        };
+                        xhr.onerror = function() {
+                            document.getElementById('imageUploading').classList.add('d-none');
+                            document.getElementById('imageDropZone').classList.remove('d-none');
+                            document.getElementById('imageError').textContent = 'Network error';
+                            document.getElementById('imageError').classList.remove('d-none');
+                        };
+                        xhr.send(form);
+                    }
+
+                    function setImage(url) {
+                        document.getElementById('image').value = url;
+                        document.getElementById('imagePreviewImg').src = url;
+                        document.getElementById('imagePreviewImg').style.display = '';
+                        document.getElementById('imagePreview').classList.remove('d-none');
+                        document.getElementById('imageUpload').classList.add('d-none');
+                    }
+
+                    window.removeImage = function() {
+                        document.getElementById('image').value = '';
+                        document.getElementById('imagePreview').classList.add('d-none');
+                        document.getElementById('imageUpload').classList.remove('d-none');
+                        document.getElementById('imageDropZone').classList.remove('d-none');
+                    };
+
+                    dropZone.addEventListener('dragover', function(e) {
+                        e.preventDefault();
+                        dropZone.style.backgroundColor = 'var(--bs-light)';
+                    });
+                    dropZone.addEventListener('dragleave', function() {
+                        dropZone.style.backgroundColor = '';
+                    });
+                    dropZone.addEventListener('drop', function(e) {
+                        e.preventDefault();
+                        dropZone.style.backgroundColor = '';
+                        if (e.dataTransfer.files.length > 0 && e.dataTransfer.files[0].type.indexOf('image/') === 0) {
+                            uploadImage(e.dataTransfer.files[0]);
+                        }
+                    });
+                    fileInput.addEventListener('change', function() {
+                        if (fileInput.files.length > 0) {
+                            uploadImage(fileInput.files[0]);
+                        }
+                    });
+                })();
+                </script>
 
                 <div class="card">
                     <div class="card-header">

@@ -1,11 +1,4 @@
 {
     "id": "uploads",
-    "version": "1.0.0",
-    "sidebar": {
-        "title": "admin-uploads.title",
-        "icon": "bi-paperclip",
-        "group": "admin.sidebar.group.content",
-        "order": 20,
-        "url": "/admin/uploads"
-    }
+    "version": "1.0.0"
 }

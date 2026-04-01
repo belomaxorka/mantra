@@ -11,6 +11,7 @@ return array(
         'excerpt' => '',
         'status' => 'draft',
         'category' => '',
+        'image' => '',
         'author' => '',
         'author_id' => '',
         'created_at' => '',

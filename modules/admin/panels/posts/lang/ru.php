@@ -38,6 +38,13 @@ return array(
     'admin-posts.publish' => 'Публикация',
     'admin-posts.metadata' => 'Метаданные',
 
+    // Featured image
+    'admin-posts.featured_image' => 'Изображение',
+    'admin-posts.image_remove' => 'Удалить',
+    'admin-posts.image_drop' => 'Перетащите изображение сюда',
+    'admin-posts.image_choose' => 'Загрузить',
+    'admin-posts.image_uploading' => 'Загрузка...',
+
     // Help text
     'admin-posts.slug_help' => 'URL-адрес поста. Оставьте пустым для автоматической генерации.',
     'admin-posts.excerpt_help' => 'Краткое описание поста (опционально)',

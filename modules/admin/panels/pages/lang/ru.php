@@ -42,9 +42,11 @@ return array(
 
     // Featured image
     'admin-pages.featured_image' => 'Изображение',
-    'admin-pages.image_field' => 'URL изображения',
-    'admin-pages.image_help' => 'Полный URL или путь к изображению',
-    'admin-pages.image_preview' => 'Предпросмотр изображения',
+    'admin-pages.image_preview' => 'Предпросмотр',
+    'admin-pages.image_remove' => 'Удалить',
+    'admin-pages.image_drop' => 'Перетащите изображение сюда',
+    'admin-pages.image_choose' => 'Загрузить',
+    'admin-pages.image_uploading' => 'Загрузка...',
 
     // Navigation settings
     'admin-pages.show_in_nav' => 'Показывать в навигации',

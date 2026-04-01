@@ -38,6 +38,13 @@ return array(
     'admin-posts.publish' => 'Publish',
     'admin-posts.metadata' => 'Metadata',
 
+    // Featured image
+    'admin-posts.featured_image' => 'Featured Image',
+    'admin-posts.image_remove' => 'Remove',
+    'admin-posts.image_drop' => 'Drag image here or click below',
+    'admin-posts.image_choose' => 'Upload Image',
+    'admin-posts.image_uploading' => 'Uploading...',
+
     // Help text
     'admin-posts.slug_help' => 'URL-friendly version of the title. Leave empty to auto-generate.',
     'admin-posts.excerpt_help' => 'Short summary of the post (optional)',
