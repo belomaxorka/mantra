@@ -51,14 +51,14 @@
 }
 
 /* ---------- 2. Scrollbar ---------- */
-* {
+.admin-shell {
   scrollbar-width: thin;
   scrollbar-color: var(--mn-border) transparent;
 }
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--mn-border); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--mn-text-muted); }
+.admin-shell ::-webkit-scrollbar { width: 6px; height: 6px; }
+.admin-shell ::-webkit-scrollbar-track { background: transparent; }
+.admin-shell ::-webkit-scrollbar-thumb { background: var(--mn-border); border-radius: 3px; }
+.admin-shell ::-webkit-scrollbar-thumb:hover { background: var(--mn-text-muted); }
 
 /* ---------- 3. Base ---------- */
 body {
@@ -69,13 +69,13 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* ---------- 3. Admin Shell ---------- */
+/* ---------- 4. Admin Shell ---------- */
 .admin-shell {
   min-height: 100vh;
   background: var(--mn-bg);
 }
 
-/* ---------- 4. Sidebar ---------- */
+/* ---------- 5. Sidebar ---------- */
 .admin-sidebar {
   width: var(--mn-sidebar-w);
   flex-shrink: 0;
@@ -216,7 +216,7 @@ body {
   color: var(--mn-sidebar-text-hover) !important;
 }
 
-/* ---------- 5. Mobile Header ---------- */
+/* ---------- 6. Mobile Header ---------- */
 .admin-mobile-header {
   display: none;
   position: sticky;
@@ -236,7 +236,7 @@ body {
   color: #fff;
 }
 
-/* ---------- 6. Cards ---------- */
+/* ---------- 7. Cards ---------- */
 .card {
   border: 1px solid var(--mn-card-border);
   border-radius: var(--mn-card-radius);
@@ -254,7 +254,7 @@ body {
 }
 .card-body { padding: 1.25rem; }
 
-/* ---------- 7. Tables ---------- */
+/* ---------- 8. Tables ---------- */
 .table {
   --bs-table-bg: transparent;
   margin-bottom: 0;
@@ -314,7 +314,7 @@ body {
   border-color: var(--mn-danger);
 }
 
-/* ---------- 8. Badges ---------- */
+/* ---------- 9. Badges ---------- */
 .badge {
   font-weight: 500;
   font-size: .75rem;
@@ -335,7 +335,7 @@ body {
   color: var(--mn-danger) !important;
 }
 
-/* ---------- 9. Buttons ---------- */
+/* ---------- 10. Buttons ---------- */
 .btn-group.w-100 { display: flex; }
 .btn-group.w-100 > .btn { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 
@@ -344,7 +344,12 @@ body {
   font-size: .875rem;
   border-radius: .5rem;
   padding: .5rem 1rem;
-  transition: all var(--mn-transition);
+  transition: background var(--mn-transition), border-color var(--mn-transition), color var(--mn-transition), box-shadow var(--mn-transition);
+}
+.btn .bi {
+  font-size: 1em;
+  vertical-align: -.125em;
+  line-height: 0;
 }
 .btn-sm {
   font-size: .8125rem;
@@ -406,7 +411,7 @@ body {
   border-color: var(--mn-success);
 }
 
-/* ---------- 10. Forms ---------- */
+/* ---------- 11. Forms ---------- */
 .form-control,
 .form-select {
   border-radius: .5rem;
@@ -439,14 +444,14 @@ body {
   border-color: var(--mn-primary);
 }
 
-/* ---------- 11. Alerts ---------- */
+/* ---------- 12. Alerts ---------- */
 .alert {
   border-radius: var(--mn-card-radius);
   border: none;
   font-size: .875rem;
 }
 
-/* ---------- 12. Nav Tabs (settings) ---------- */
+/* ---------- 13. Nav Tabs (settings) ---------- */
 .nav-tabs {
   border-bottom: 1px solid var(--mn-border);
 }
@@ -465,7 +470,7 @@ body {
   font-weight: 600;
 }
 
-/* ---------- 13. Page Headers ---------- */
+/* ---------- 14. Page Headers ---------- */
 .admin-page-header {
   display: flex;
   justify-content: space-between;
@@ -479,13 +484,13 @@ body {
   margin: 0;
 }
 
-/* ---------- 14. Empty States ---------- */
+/* ---------- 15. Empty States ---------- */
 .admin-empty-state {
   text-align: center;
   padding: 3rem 1.5rem;
   color: var(--mn-text-muted);
 }
-.admin-empty-state .bi {
+.admin-empty-state > .bi {
   font-size: 3rem;
   opacity: .35;
 }
@@ -494,7 +499,7 @@ body {
   font-size: .9375rem;
 }
 
-/* ---------- 15. Login Page ---------- */
+/* ---------- 16. Login Page ---------- */
 .login-page {
   min-height: 100vh;
   display: flex;
@@ -524,7 +529,7 @@ body {
   font-size: .9375rem;
 }
 
-/* ---------- 16. Module Cards ---------- */
+/* ---------- 17. Module Cards ---------- */
 .module-card-wrapper {
   transition: background var(--mn-transition);
 }
@@ -535,16 +540,16 @@ body {
   border-bottom: none !important;
 }
 
-/* ---------- 17. Code / misc ---------- */
+/* ---------- 18. Code / misc ---------- */
 code {
   font-size: .8125em;
   padding: .15em .4em;
   border-radius: .25rem;
-  background: #f1f5f9;
-  color: #475569;
+  background: var(--mn-bg);
+  color: var(--mn-text-secondary);
 }
 
-/* ---------- 18. Sidebar Backdrop ---------- */
+/* ---------- 19. Sidebar Backdrop ---------- */
 .admin-sidebar-backdrop {
   position: fixed;
   inset: 0;
@@ -560,7 +565,7 @@ code {
   backdrop-filter: blur(2px);
 }
 
-/* ---------- 19. Responsive ---------- */
+/* ---------- 20. Responsive ---------- */
 @media (max-width: 991.98px) {
   .admin-mobile-header {
     display: flex;
@@ -644,7 +649,7 @@ code {
   .login-brand { font-size: 1.5rem; }
 }
 
-/* ---------- 19. Breadcrumbs ---------- */
+/* ---------- 21. Breadcrumbs ---------- */
 .admin-breadcrumb {
   font-size: .8125rem;
   margin-bottom: .75rem;
@@ -679,7 +684,7 @@ code {
   color: var(--mn-text-muted);
 }
 
-/* ---------- 20. Stat Cards ---------- */
+/* ---------- 22. Stat Cards ---------- */
 .stat-card {
   height: 100%;
   transition: transform var(--mn-transition), box-shadow var(--mn-transition);
@@ -719,7 +724,7 @@ code {
   margin-top: .125rem;
 }
 
-/* ---------- 20. Pagination ---------- */
+/* ---------- 23. Pagination ---------- */
 .pagination {
   gap: .25rem;
 }
@@ -760,7 +765,7 @@ code {
   font-size: .875rem;
 }
 
-/* ---------- CKEditor 5 integration ---------- */
+/* ---------- 24. CKEditor 5 integration ---------- */
 .ck.ck-editor {
   font-family: var(--mn-font);
 }
@@ -785,7 +790,7 @@ code {
   max-height: 200px;
 }
 
-/* ---------- 21. Animations ---------- */
+/* ---------- 25. Animations ---------- */
 
 @media (prefers-reduced-motion: no-preference) {
   .admin-sidebar { transition: transform .3s cubic-bezier(.4,0,.2,1); }
