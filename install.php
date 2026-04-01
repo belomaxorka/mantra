@@ -32,11 +32,11 @@ if (file_exists(MANTRA_CONTENT . '/users')) {
 
 // Handle form submission
 $selectedLanguage = 'en';
-if (request()->method() === 'POST') {
-    $username = post_trimmed('username');
-    $password = (string)request()->post('password', '');
-    $siteName = post_trimmed('site_name', MANTRA_PROJECT_INFO['name']);
-    $language = (string)request()->post('language', 'en');
+if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $username = isset($_POST['username']) ? trim((string)$_POST['username']) : '';
+    $password = isset($_POST['password']) ? (string)$_POST['password'] : '';
+    $siteName = isset($_POST['site_name']) && trim($_POST['site_name']) !== '' ? trim((string)$_POST['site_name']) : MANTRA_PROJECT_INFO['name'];
+    $language = isset($_POST['language']) ? (string)$_POST['language'] : 'en';
     $selectedLanguage = $language;
 
     if (empty($username) || empty($password)) {
@@ -78,11 +78,10 @@ if (request()->method() === 'POST') {
 
         // Create admin user
         $db = new Database();
-        $auth = new Auth();
 
         $userData = array(
             'username' => $username,
-            'password' => $auth->hashPassword($password),
+            'password' => Auth::hashPasswordStatic($password),
             'role' => 'admin'
         );
 

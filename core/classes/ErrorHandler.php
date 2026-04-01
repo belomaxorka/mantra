@@ -45,7 +45,7 @@ class ErrorHandler
             return self::$logger;
         }
 
-        $minLevel = resolve_log_level();
+        $minLevel = Logger::resolveLevel();
         self::$logger = new Logger('php', array('minLevel' => $minLevel));
         return self::$logger;
     }
@@ -64,8 +64,8 @@ class ErrorHandler
             'severity' => $severity,
             'file' => $file,
             'line' => $line,
-            'url' => request()->server('REQUEST_URI'),
-            'method' => request()->server('REQUEST_METHOD')
+            'url' => isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : null,
+            'method' => isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : null
         ));
 
         // Let PHP continue with its internal handler as well.
@@ -76,8 +76,8 @@ class ErrorHandler
     {
         self::getLogger()->error('Uncaught exception', array(
             'exception' => $exception,
-            'url' => request()->server('REQUEST_URI'),
-            'method' => request()->server('REQUEST_METHOD')
+            'url' => isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : null,
+            'method' => isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : null
         ));
 
         if (self::isCli()) {
@@ -121,8 +121,8 @@ class ErrorHandler
             'severity' => isset($error['type']) ? $error['type'] : null,
             'file' => isset($error['file']) ? $error['file'] : null,
             'line' => isset($error['line']) ? $error['line'] : null,
-            'url' => request()->server('REQUEST_URI'),
-            'method' => request()->server('REQUEST_METHOD')
+            'url' => isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : null,
+            'method' => isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : null
         ));
 
         if (self::isCli()) {

@@ -12,9 +12,10 @@ $isInstalled = file_exists(MANTRA_CONTENT . '/users') &&
 
 // Redirect to installer if not installed
 if (!$isInstalled) {
-    $currentUri = request()->uri();
+    $currentUri = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '/';
     if (strpos($currentUri, 'install.php') === false) {
-        redirect('/install.php');
+        header('Location: /install.php', true, 302);
+        exit;
     }
 }
 
