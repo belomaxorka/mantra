@@ -75,9 +75,29 @@ a:hover { color: var(--t-primary-hover); }
   border: 1px solid var(--t-border);
   padding: .375rem .625rem;
   border-radius: .5rem;
+  transition: background var(--t-transition);
 }
+.site-header .navbar-toggler:focus { box-shadow: 0 0 0 3px var(--t-primary-soft); }
 .site-header .navbar-toggler-icon {
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='%23475569' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+/* mobile dropdown menu */
+@media (max-width: 991.98px) {
+  .site-header .navbar-collapse {
+    background: var(--t-card-bg);
+    border-top: 1px solid var(--t-border);
+    margin: .875rem -1rem 0;
+    padding: .5rem 1rem;
+  }
+  .site-header .navbar-nav { gap: .125rem; }
+  .site-header .nav-link {
+    padding: .625rem .875rem;
+    font-size: 1rem;
+  }
+  .site-header .nav-link.active {
+    background: var(--t-primary-soft);
+  }
 }
 
 /* ---------- Page ---------- */
@@ -112,7 +132,8 @@ a:hover { color: var(--t-primary-hover); }
   color: var(--t-text-muted);
   display: flex;
   align-items: center;
-  gap: .75rem;
+  flex-wrap: wrap;
+  gap: .25rem .75rem;
   margin-bottom: .75rem;
 }
 .post-card .post-meta .meta-dot { color: var(--t-border); }
@@ -147,7 +168,8 @@ a:hover { color: var(--t-primary-hover); }
   color: var(--t-text-muted);
   display: flex;
   align-items: center;
-  gap: .75rem;
+  flex-wrap: wrap;
+  gap: .25rem .75rem;
   margin-top: .75rem;
 }
 .article-content {
@@ -447,10 +469,22 @@ a:hover { color: var(--t-primary-hover); }
   box-shadow: 0 4px 12px rgba(99,102,241,.3);
 }
 
+/* ---------- Touch devices ---------- */
+@media (hover: none) {
+  .post-card:hover { box-shadow: var(--t-card-shadow); transform: none; }
+  .post-nav-item a:hover { box-shadow: var(--t-card-shadow); transform: none; }
+  .post-card .post-read-more:hover { gap: .25rem; }
+}
+
 /* ---------- Responsive ---------- */
 @media (max-width: 767.98px) {
+  .site-header .navbar { padding: .625rem 0; }
   .page-section { padding: 2rem 0; }
   .article-header h1 { font-size: 1.5rem; }
+  .article-content blockquote { padding: .625rem 1rem; margin-left: 0; margin-right: 0; }
   .post-card { padding: 1.25rem; }
+  .post-nav-item a { padding: .875rem 1rem; }
+  .error-page { padding: 3rem 1rem; }
   .error-page .error-code { font-size: 4rem; }
+  .back-to-top { bottom: 1.25rem; right: 1.25rem; width: 2.25rem; height: 2.25rem; font-size: 1rem; }
 }
