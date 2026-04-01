@@ -15,9 +15,23 @@ class AdminModule extends Module
 
     public function init()
     {
+        $this->registerAdminHooks();
         $this->registerPermissionService();
         $this->loadPanels();
         $this->hook('routes.register', array($this, 'registerRoutes'));
+    }
+
+    /**
+     * Register admin-owned hooks in the HookRegistry.
+     */
+    private function registerAdminHooks()
+    {
+        $s = 'admin';
+        \HookRegistry::define('admin.head', 'Inject HTML into the admin <head> section', 'string', 'string', array('source' => $s));
+        \HookRegistry::define('admin.footer', 'Inject scripts/HTML into the admin footer', 'string', 'string', array('source' => $s));
+        \HookRegistry::define('admin.sidebar', 'Build admin sidebar navigation items', 'array', 'array', array('source' => $s));
+        \HookRegistry::define('admin.quick_actions', 'Register dashboard quick action buttons', 'array', 'array', array('source' => $s));
+        \HookRegistry::define('permissions.register', 'Register module permissions with the PermissionRegistry', 'PermissionRegistry', 'PermissionRegistry', array('source' => $s));
     }
 
     /**

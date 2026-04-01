@@ -13,7 +13,21 @@ class PostsPanel extends ContentPanel {
 
         app()->db()->registerSchema('posts', $this->getPath() . '/schema.php');
         $this->registerPanelHooks();
+        $this->registerContentHooks();
         $this->hook('permissions.register', array($this, 'registerPermissions'));
+    }
+
+    private function registerContentHooks() {
+        $s = 'posts';
+        \HookRegistry::define('page.home.query', 'Modify query parameters for the home page post list', 'array', 'array', array('source' => $s));
+        \HookRegistry::define('page.home.posts', 'Filter the post list on the home page', 'array', 'array', array('source' => $s));
+        \HookRegistry::define('page.home.data', 'Modify template data for the home page', 'array', 'array', array('source' => $s));
+        \HookRegistry::define('page.blog.query', 'Modify query parameters for the blog listing', 'array', 'array', array('source' => $s));
+        \HookRegistry::define('page.blog.posts', 'Filter the post list on the blog page', 'array', 'array', array('source' => $s));
+        \HookRegistry::define('page.blog.data', 'Modify template data for the blog page', 'array', 'array', array('source' => $s));
+        \HookRegistry::define('post.single.query', 'Modify query parameters for a single post', 'array', 'array', array('source' => $s));
+        \HookRegistry::define('post.single.loaded', 'Filter the loaded post document before rendering', 'array', 'array', array('source' => $s));
+        \HookRegistry::define('post.single.data', 'Modify template data for a single post', 'array', 'array', array('source' => $s));
     }
 
     /**

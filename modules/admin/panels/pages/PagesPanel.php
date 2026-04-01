@@ -47,8 +47,16 @@ class PagesPanel extends ContentPanel {
 
         app()->db()->registerSchema('pages', $this->getPath() . '/schema.php');
         $this->registerPanelHooks();
+        $this->registerContentHooks();
         $this->hook('permissions.register', array($this, 'registerPermissions'));
         $this->hook('theme.navigation', array($this, 'addPagesToNavigation'));
+    }
+
+    private function registerContentHooks() {
+        $s = 'pages';
+        \HookRegistry::define('page.single.query', 'Modify query parameters for a single page', 'array', 'array', array('source' => $s));
+        \HookRegistry::define('page.single.loaded', 'Filter the loaded page document before rendering', 'array', 'array', array('source' => $s));
+        \HookRegistry::define('page.single.data', 'Modify template data for a single page', 'array', 'array', array('source' => $s));
     }
 
     /**
