@@ -13,3 +13,38 @@ main {
 footer {
     margin-top: auto;
 }
+
+/* Pagination */
+.pagination {
+    gap: .25rem;
+}
+.pagination .page-link {
+    border: none;
+    border-radius: .5rem;
+    color: #475569;
+    font-size: .875rem;
+    font-weight: 500;
+    padding: .4rem .85rem;
+    min-width: 2.25rem;
+    text-align: center;
+    background: transparent;
+    transition: all .15s ease;
+    line-height: 1.4;
+}
+.pagination .page-link:hover {
+    background: rgba(99,102,241,.08);
+    color: #6366f1;
+}
+.pagination .page-link:focus {
+    box-shadow: 0 0 0 3px rgba(99,102,241,.12);
+}
+.pagination .page-item.active .page-link {
+    background: #6366f1;
+    color: #fff;
+    box-shadow: 0 1px 3px rgba(99,102,241,.3);
+}
+.pagination .page-item.disabled .page-link {
+    background: transparent;
+    color: #94a3b8;
+    opacity: .5;
+}

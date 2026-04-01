@@ -694,7 +694,48 @@ code {
   margin-top: .125rem;
 }
 
-/* ---------- 20. CKEditor 5 integration ---------- */
+/* ---------- 20. Pagination ---------- */
+.pagination {
+  gap: .25rem;
+}
+.pagination .page-link {
+  border: none;
+  border-radius: .5rem;
+  color: var(--mn-text-secondary);
+  font-size: .8125rem;
+  font-weight: 500;
+  padding: .375rem .75rem;
+  min-width: 2.125rem;
+  text-align: center;
+  background: transparent;
+  transition: all var(--mn-transition);
+  line-height: 1.4;
+}
+.pagination .page-link:hover {
+  background: var(--mn-primary-soft);
+  color: var(--mn-primary);
+}
+.pagination .page-link:focus {
+  box-shadow: 0 0 0 3px var(--mn-primary-soft);
+}
+.pagination .page-item.active .page-link {
+  background: var(--mn-primary);
+  color: #fff;
+  box-shadow: 0 1px 3px rgba(99,102,241,.3);
+}
+.pagination .page-item.disabled .page-link {
+  background: transparent;
+  color: var(--mn-text-muted);
+  opacity: .5;
+}
+
+/* prev/next arrows */
+.pagination .page-item:first-child .page-link,
+.pagination .page-item:last-child .page-link {
+  font-size: .875rem;
+}
+
+/* ---------- CKEditor 5 integration ---------- */
 .ck.ck-editor {
   font-family: var(--mn-font);
 }
@@ -714,12 +755,13 @@ code {
   box-shadow: 0 0 0 3px var(--mn-primary-soft) !important;
 }
 
-/* ---------- 20. Utilities ---------- */
+/* ---------- Utilities ---------- */
 .admin-img-preview {
   max-height: 200px;
 }
 
 /* ---------- 21. Animations ---------- */
+
 @media (prefers-reduced-motion: no-preference) {
   .admin-sidebar { transition: transform .3s cubic-bezier(.4,0,.2,1); }
   .admin-sidebar .nav-link.is-parent .caret { transition: transform var(--mn-transition); }
