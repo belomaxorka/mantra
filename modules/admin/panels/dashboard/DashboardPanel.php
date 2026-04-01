@@ -13,13 +13,63 @@ class DashboardPanel extends AdminPanel {
     }
 
     public function dashboard() {
-        // Collect quick actions from hooks (backward compat with BaseAdminModule)
+        $db = $this->db();
+
+        // Stats
+        $posts = $db->query('posts');
+        $pages = $db->query('pages');
+        $users = $db->query('users');
+
+        $publishedPosts = array_filter($posts, function ($p) {
+            return isset($p['status']) && $p['status'] === 'published';
+        });
+        $publishedPages = array_filter($pages, function ($p) {
+            return isset($p['status']) && $p['status'] === 'published';
+        });
+
+        $stats = array(
+            array(
+                'title' => t('admin-dashboard.stats.posts'),
+                'value' => count($posts),
+                'sub'   => t('admin-dashboard.stats.published', array('count' => count($publishedPosts))),
+                'icon'  => 'bi-file-earmark-text',
+                'color' => 'primary',
+                'url'   => base_url('/admin/posts'),
+            ),
+            array(
+                'title' => t('admin-dashboard.stats.pages'),
+                'value' => count($pages),
+                'sub'   => t('admin-dashboard.stats.published', array('count' => count($publishedPages))),
+                'icon'  => 'bi-file-earmark-richtext',
+                'color' => 'success',
+                'url'   => base_url('/admin/pages'),
+            ),
+            array(
+                'title' => t('admin-dashboard.stats.users'),
+                'value' => count($users),
+                'icon'  => 'bi-people',
+                'color' => 'warning',
+            ),
+        );
+
+        // Recent content (last 5 by updated_at)
+        $allContent = array_merge(
+            array_map(function ($p) { $p['_type'] = 'post'; return $p; }, $posts),
+            array_map(function ($p) { $p['_type'] = 'page'; return $p; }, $pages)
+        );
+        usort($allContent, function ($a, $b) {
+            $ta = isset($a['updated_at']) ? $a['updated_at'] : '';
+            $tb = isset($b['updated_at']) ? $b['updated_at'] : '';
+            return strcmp($tb, $ta);
+        });
+        $recentContent = array_slice($allContent, 0, 5);
+
+        // Quick actions
         $quickActions = app()->hooks()->fire('admin.quick_actions', array());
         if (!is_array($quickActions)) {
             $quickActions = array();
         }
 
-        // Collect quick actions from panels
         foreach ($this->admin->getPanels() as $panel) {
             $panelActions = $panel->getQuickActions();
             if (!empty($panelActions)) {
@@ -29,7 +79,6 @@ class DashboardPanel extends AdminPanel {
             }
         }
 
-        // Translate titles
         foreach ($quickActions as &$action) {
             if (is_array($action) && isset($action['title'])) {
                 $action['title'] = t($action['title']);
@@ -37,7 +86,6 @@ class DashboardPanel extends AdminPanel {
         }
         unset($action);
 
-        // Sort by order
         usort($quickActions, function ($a, $b) {
             $orderA = isset($a['order']) ? (int)$a['order'] : 100;
             $orderB = isset($b['order']) ? (int)$b['order'] : 100;
@@ -46,7 +94,9 @@ class DashboardPanel extends AdminPanel {
 
         $content = $this->renderView('dashboard', array(
             'user' => $this->getUser(),
-            'quickActions' => $quickActions
+            'quickActions' => $quickActions,
+            'stats' => $stats,
+            'recentContent' => $recentContent,
         ));
 
         return $this->renderAdmin(t('admin-dashboard.title'), $content, array(

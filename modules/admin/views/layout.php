@@ -163,9 +163,50 @@
   </aside>
 
   <main class="flex-fill p-4">
+    <?php if (!empty($breadcrumbs) && is_array($breadcrumbs)): ?>
+      <nav class="admin-breadcrumb" aria-label="breadcrumb">
+        <ol>
+          <?php foreach ($breadcrumbs as $i => $crumb):
+            $isLast = ($i === count($breadcrumbs) - 1);
+          ?>
+            <li<?php echo $isLast ? ' class="active" aria-current="page"' : ''; ?>>
+              <?php if (!$isLast && !empty($crumb['url'])): ?>
+                <a href="<?php echo e($crumb['url']); ?>"><?php echo e($crumb['title']); ?></a>
+              <?php else: ?>
+                <?php echo e($crumb['title']); ?>
+              <?php endif; ?>
+            </li>
+          <?php endforeach; ?>
+        </ol>
+      </nav>
+    <?php endif; ?>
     <?php echo isset($content) ? $content : ''; ?>
   </main>
 </div>
+
+<!-- Delete confirmation modal -->
+<div class="modal fade" id="adminDeleteModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><?php echo t('admin.common.delete_confirm_title'); ?></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?php echo e(t('admin.common.close')); ?>"></button>
+      </div>
+      <div class="modal-body">
+        <p id="adminDeleteMessage"><?php echo t('admin.common.delete_confirm_body'); ?></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><?php echo t('admin.common.cancel'); ?></button>
+        <button type="button" class="btn btn-danger" id="adminDeleteConfirm">
+          <i class="bi bi-trash me-1"></i><?php echo t('admin.common.delete'); ?>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<form id="adminDeleteForm" method="POST" class="d-none">
+  <input type="hidden" name="csrf_token" value="<?php echo e(auth()->generateCsrfToken()); ?>">
+</form>
 
 <script src="<?php echo $this->moduleAsset('bootstrap/bootstrap.min.js'); ?>"></script>
 <script>
@@ -245,6 +286,35 @@
     window.addEventListener('resize', function () {
       if (window.innerWidth > 991.98) {
         closeSidebar();
+      }
+    });
+  })();
+
+  // Delete confirmation modal
+  (function () {
+    var modal = document.getElementById('adminDeleteModal');
+    var form = document.getElementById('adminDeleteForm');
+    var confirmBtn = document.getElementById('adminDeleteConfirm');
+    var messageEl = document.getElementById('adminDeleteMessage');
+
+    if (!modal || !form || !confirmBtn) return;
+
+    var bsModal = null;
+
+    window.adminConfirmDelete = function (url, message) {
+      form.action = url;
+      if (message && messageEl) {
+        messageEl.textContent = message;
+      }
+      if (!bsModal) {
+        bsModal = new bootstrap.Modal(modal);
+      }
+      bsModal.show();
+    };
+
+    confirmBtn.addEventListener('click', function () {
+      if (form.action) {
+        form.submit();
       }
     });
   })();

@@ -85,6 +85,10 @@ class SettingsPanel extends AdminPanel {
 
         return $this->renderAdmin($pageTitle, $page, array(
             'user' => $this->getUser(),
+            'breadcrumbs' => array(
+                array('title' => t('admin-dashboard.title'), 'url' => base_url('/admin')),
+                array('title' => t('admin-settings.title')),
+            ),
         ));
     }
 

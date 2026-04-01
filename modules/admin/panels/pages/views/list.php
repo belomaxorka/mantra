@@ -78,7 +78,7 @@
                                                     <button type="button"
                                                             class="btn btn-outline-danger"
                                                             title="<?php echo t('admin-pages.delete'); ?>"
-                                                            onclick="deletePage('<?php echo $this->escape($page['_id']); ?>', '<?php echo $this->escape($page['title']); ?>')">
+                                                            onclick="adminConfirmDelete('<?php echo e(base_url('/admin/pages/delete/' . $page['_id'])); ?>', '<?php echo e(t('admin-pages.delete_confirm')); ?>')">
                                                         <i class="bi bi-trash"></i>
                                                     </button>
                                                 </div>
@@ -95,18 +95,3 @@
     </div>
 </div>
 
-<form id="deleteForm" method="POST" class="d-none">
-    <input type="hidden" name="csrf_token" value="<?php echo auth()->generateCsrfToken(); ?>">
-</form>
-
-<script>
-function deletePage(id, title) {
-    if (!confirm('<?php echo t('admin-pages.delete_confirm'); ?>')) {
-        return;
-    }
-
-    var form = document.getElementById('deleteForm');
-    form.action = '<?php echo base_url('/admin/pages/delete/'); ?>' + id;
-    form.submit();
-}
-</script>

@@ -80,7 +80,7 @@
                                                     <?php endif; ?>
                                                     <button type="button"
                                                             class="btn btn-outline-danger"
-                                                            onclick="deletePost('<?php echo e($post['_id']); ?>')"
+                                                            onclick="adminConfirmDelete('<?php echo e(base_url('/admin/posts/delete/' . $post['_id'])); ?>', '<?php echo e(t('admin-posts.delete_confirm')); ?>')"
                                                             title="<?php echo t('admin-posts.delete'); ?>">
                                                         <i class="bi bi-trash"></i>
                                                     </button>
@@ -98,18 +98,3 @@
     </div>
 </div>
 
-<form id="deleteForm" method="POST" class="d-none">
-    <input type="hidden" name="csrf_token" value="<?php echo auth()->generateCsrfToken(); ?>">
-</form>
-
-<script>
-function deletePost(id) {
-    if (!confirm('<?php echo t('admin-posts.delete_confirm'); ?>')) {
-        return;
-    }
-
-    const form = document.getElementById('deleteForm');
-    form.action = '<?php echo base_url('/admin/posts/delete/'); ?>' + id;
-    form.submit();
-}
-</script>

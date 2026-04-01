@@ -3,20 +3,90 @@
         <h1 class="h3"><?php echo t('admin-dashboard.title'); ?></h1>
     </div>
 
-    <div class="row">
-        <div class="col-md-8">
+    <?php if (!empty($stats) && is_array($stats)): ?>
+    <div class="row g-3 mb-4">
+        <?php foreach ($stats as $stat): ?>
+            <div class="col-sm-6 col-lg-4">
+                <?php $hasUrl = !empty($stat['url']); ?>
+                <<?php echo $hasUrl ? 'a href="' . e($stat['url']) . '"' : 'div'; ?> class="card stat-card stat-card--<?php echo e($stat['color']); ?> text-decoration-none">
+                    <div class="card-body d-flex align-items-center gap-3">
+                        <div class="stat-card-icon">
+                            <i class="bi <?php echo e($stat['icon']); ?>"></i>
+                        </div>
+                        <div>
+                            <div class="stat-card-value"><?php echo (int)$stat['value']; ?></div>
+                            <div class="stat-card-title"><?php echo e($stat['title']); ?></div>
+                            <?php if (!empty($stat['sub'])): ?>
+                                <div class="stat-card-sub"><?php echo e($stat['sub']); ?></div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </<?php echo $hasUrl ? 'a' : 'div'; ?>>
+            </div>
+        <?php endforeach; ?>
+    </div>
+    <?php endif; ?>
+
+    <div class="row g-3">
+        <div class="col-lg-8">
             <div class="card">
+                <div class="card-header"><?php echo t('admin-dashboard.recent'); ?></div>
                 <div class="card-body">
-                    <h5 class="card-title"><?php echo t('admin-dashboard.welcome'); ?>, <?php echo $this->escape($user['username']); ?>!</h5>
-                    <p class="card-text text-muted"><?php echo t('admin-dashboard.welcome_message'); ?></p>
+                    <?php if (empty($recentContent)): ?>
+                        <div class="admin-empty-state">
+                            <i class="bi bi-clock-history"></i>
+                            <p><?php echo t('admin-dashboard.recent.empty'); ?></p>
+                        </div>
+                    <?php else: ?>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th><?php echo t('admin-dashboard.recent.page'); ?></th>
+                                        <th></th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($recentContent as $item):
+                                        $type = isset($item['_type']) ? $item['_type'] : 'post';
+                                        $title = isset($item['title']) ? $item['title'] : '';
+                                        $status = isset($item['status']) ? $item['status'] : 'draft';
+                                        $updatedAt = isset($item['updated_at']) ? $item['updated_at'] : '';
+                                        $editUrl = ($type === 'post')
+                                            ? base_url('/admin/posts/edit/' . $item['_id'])
+                                            : base_url('/admin/pages/edit/' . $item['_id']);
+                                        $typeLabel = ($type === 'post')
+                                            ? t('admin-dashboard.recent.post')
+                                            : t('admin-dashboard.recent.page');
+                                    ?>
+                                        <tr>
+                                            <td>
+                                                <a href="<?php echo e($editUrl); ?>" class="text-decoration-none fw-medium">
+                                                    <?php echo e($title); ?>
+                                                </a>
+                                                <span class="badge bg-<?php echo $status === 'published' ? 'success' : 'secondary'; ?> ms-2"><?php echo e($status); ?></span>
+                                            </td>
+                                            <td>
+                                                <span class="text-muted small"><?php echo e($typeLabel); ?></span>
+                                            </td>
+                                            <td class="text-end">
+                                                <small class="text-muted"><?php echo e($updatedAt ? date('Y-m-d H:i', strtotime($updatedAt)) : ''); ?></small>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
 
-        <div class="col-md-4">
+        <div class="col-lg-4">
             <div class="card">
+                <div class="card-header"><?php echo t('admin-dashboard.quick_actions'); ?></div>
                 <div class="card-body">
-                    <h5 class="card-title"><?php echo t('admin-dashboard.quick_actions'); ?></h5>
                     <div class="d-grid gap-2">
                         <?php if (!empty($quickActions) && is_array($quickActions)): ?>
                             <?php foreach ($quickActions as $action): ?>

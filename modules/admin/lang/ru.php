@@ -38,6 +38,8 @@ return array(
     'admin.common.loading' => 'Загрузка...',
     'admin.common.success' => 'Успешно',
     'admin.common.error' => 'Ошибка',
+    'admin.common.delete_confirm_title' => 'Подтверждение удаления',
+    'admin.common.delete_confirm_body' => 'Вы уверены, что хотите удалить этот элемент? Это действие нельзя отменить.',
 
     // Modules management (shared across admin modules)
     'admin.modules.author' => 'Автор',

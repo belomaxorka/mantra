@@ -38,6 +38,8 @@ return array(
     'admin.common.loading' => 'Loading...',
     'admin.common.success' => 'Success',
     'admin.common.error' => 'Error',
+    'admin.common.delete_confirm_title' => 'Confirm Deletion',
+    'admin.common.delete_confirm_body' => 'Are you sure you want to delete this item? This action cannot be undone.',
 
     // Modules management (shared across admin modules)
     'admin.modules.author' => 'Author',

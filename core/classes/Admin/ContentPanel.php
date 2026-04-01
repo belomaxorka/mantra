@@ -104,6 +104,23 @@ abstract class ContentPanel extends AdminPanel {
         return 'admin-' . $this->id();
     }
 
+    // ========== Breadcrumbs ==========
+
+    protected function getListBreadcrumbs() {
+        return array(
+            array('title' => t('admin-dashboard.title'), 'url' => base_url('/admin')),
+            array('title' => t($this->getDomain() . '.title')),
+        );
+    }
+
+    protected function getItemBreadcrumbs($itemTitle) {
+        return array(
+            array('title' => t('admin-dashboard.title'), 'url' => base_url('/admin')),
+            array('title' => t($this->getDomain() . '.title'), 'url' => base_url('/admin/' . $this->getAdminPath())),
+            array('title' => $itemTitle),
+        );
+    }
+
     // ========== CRUD Actions ==========
 
     public function listItems() {
@@ -118,7 +135,9 @@ abstract class ContentPanel extends AdminPanel {
 
         $title = t($this->getDomain() . '.title');
 
-        return $this->renderAdmin($title, $content);
+        return $this->renderAdmin($title, $content, array(
+            'breadcrumbs' => $this->getListBreadcrumbs(),
+        ));
     }
 
     public function newItem() {
@@ -130,7 +149,9 @@ abstract class ContentPanel extends AdminPanel {
 
         $title = t($this->getDomain() . '.new');
 
-        return $this->renderAdmin($title, $content);
+        return $this->renderAdmin($title, $content, array(
+            'breadcrumbs' => $this->getItemBreadcrumbs($title),
+        ));
     }
 
     public function createItem() {
@@ -171,7 +192,9 @@ abstract class ContentPanel extends AdminPanel {
 
         $title = t($this->getDomain() . '.edit_' . strtolower($this->getContentType()));
 
-        return $this->renderAdmin($title, $content);
+        return $this->renderAdmin($title, $content, array(
+            'breadcrumbs' => $this->getItemBreadcrumbs($title),
+        ));
     }
 
     public function updateItem($params) {
