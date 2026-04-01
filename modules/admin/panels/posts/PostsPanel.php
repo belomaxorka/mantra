@@ -63,13 +63,13 @@ class PostsPanel extends ContentPanel {
 
     protected function extractFormData() {
         return array(
-            'title' => post_trimmed('title'),
-            'slug' => post_trimmed('slug'),
-            'content' => request()->post('content', ''),
-            'excerpt' => request()->post('excerpt', ''),
-            'status' => request()->post('status', 'draft'),
-            'category' => request()->post('category', ''),
-            'image' => post_trimmed('image'),
+            'title' => app()->request()->postTrimmed('title'),
+            'slug' => app()->request()->postTrimmed('slug'),
+            'content' => app()->request()->post('content', ''),
+            'excerpt' => app()->request()->post('excerpt', ''),
+            'status' => app()->request()->post('status', 'draft'),
+            'category' => app()->request()->post('category', ''),
+            'image' => app()->request()->postTrimmed('image'),
         );
     }
 }

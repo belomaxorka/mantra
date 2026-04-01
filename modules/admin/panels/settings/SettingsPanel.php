@@ -27,7 +27,7 @@ class SettingsPanel extends AdminPanel {
     public function settings() {
         if (!$this->requireAdmin()) return;
 
-        $activeTab = (string)request()->query('tab', 'general');
+        $activeTab = (string)app()->request()->query('tab', 'general');
 
         // Build tabs
         $tabs = array();
@@ -122,7 +122,7 @@ class SettingsPanel extends AdminPanel {
     // ========== Config settings ==========
 
     private function buildConfigSettingsContent($actionUrl, &$notice, &$error) {
-        $store = config_settings();
+        $store = \ConfigSettings::instance();
         $schema = $this->applyConfigSchemaRuntimeOptions($store->schema());
         return $this->buildSchemaSettingsContent(
             $store, $schema, $actionUrl, $notice, $error,
@@ -138,7 +138,7 @@ class SettingsPanel extends AdminPanel {
             return null;
         }
 
-        $store = module_settings($moduleId);
+        $store = \Module\ModuleSettings::instance($moduleId);
         $schema = $store->schema();
         if (!is_array($schema)) {
             $error = 'This module has no settings';
@@ -164,9 +164,9 @@ class SettingsPanel extends AdminPanel {
             $store->load();
         }
 
-        if (request()->method() === 'POST') {
-            $token = (string)request()->post('csrf_token', '');
-            if (!auth()->verifyCsrfToken($token)) {
+        if (app()->request()->method() === 'POST') {
+            $token = (string)app()->request()->post('csrf_token', '');
+            if (!$this->auth()->verifyCsrfToken($token)) {
                 $error = 'Invalid CSRF token';
             } else {
                 $handledAction = false;
@@ -190,7 +190,7 @@ class SettingsPanel extends AdminPanel {
                             $type = (string)$field['type'];
 
                             if ($type === 'module_cards') {
-                                $posted = request()->post($path, null);
+                                $posted = app()->request()->post($path, null);
                                 if (is_array($posted)) {
                                     $items = array();
                                     foreach ($posted as $item) {
@@ -207,11 +207,11 @@ class SettingsPanel extends AdminPanel {
                             $name = str_replace('.', '__', $path);
 
                             if ($type === 'toggle') {
-                                $updates[$path] = request()->post($name) ? true : false;
+                                $updates[$path] = app()->request()->post($name) ? true : false;
                                 continue;
                             }
 
-                            $raw = request()->post($name, null);
+                            $raw = app()->request()->post($name, null);
                             if ($raw === null) {
                                 continue;
                             }
@@ -277,9 +277,9 @@ class SettingsPanel extends AdminPanel {
         }
 
         // Build tab data for rendering
-        $activeInnerTab = (string)request()->query('section', '');
+        $activeInnerTab = (string)app()->request()->query('section', '');
         if ($activeInnerTab === '') {
-            $activeInnerTab = (string)request()->post('active_tab', '');
+            $activeInnerTab = (string)app()->request()->post('active_tab', '');
         }
 
         $tabs = array();
@@ -347,7 +347,7 @@ class SettingsPanel extends AdminPanel {
             'tabs' => $tabs,
             'active_tab' => $activeInnerTab,
             'action' => $actionUrl,
-            'csrf_token' => auth()->generateCsrfToken(),
+            'csrf_token' => $this->auth()->generateCsrfToken(),
             'notice' => $notice,
             'error' => $error,
         ));
@@ -454,7 +454,7 @@ class SettingsPanel extends AdminPanel {
                 'name' => isset($meta['name']) && is_string($meta['name']) ? (string)$meta['name'] : $dir,
                 'version' => isset($meta['version']) && is_string($meta['version']) ? (string)$meta['version'] : '',
                 'author' => isset($meta['author']) && is_string($meta['author']) ? (string)$meta['author'] : '',
-                'description' => isset($meta['description']) ? resolve_localized($meta['description']) : '',
+                'description' => isset($meta['description']) ? \Config::resolveLocalized($meta['description']) : '',
                 'homepage' => isset($meta['homepage']) && is_string($meta['homepage']) ? (string)$meta['homepage'] : '',
             );
         }
@@ -548,11 +548,11 @@ class SettingsPanel extends AdminPanel {
                 $canDisable = $module->isDisableable();
                 $canDelete = $module->isDeletable();
             } else {
-                $title = resolve_localized(isset($manifest['name']) ? $manifest['name'] : $moduleId);
+                $title = \Config::resolveLocalized(isset($manifest['name']) ? $manifest['name'] : $moduleId);
                 $version = isset($manifest['version']) ? $manifest['version'] : '';
                 $author = isset($manifest['author']) ? $manifest['author'] : '';
                 $homepage = isset($manifest['homepage']) ? $manifest['homepage'] : '';
-                $description = resolve_localized(isset($manifest['description']) ? $manifest['description'] : '');
+                $description = \Config::resolveLocalized(isset($manifest['description']) ? $manifest['description'] : '');
                 $type = isset($manifest['type']) ? $manifest['type'] : 'custom';
                 $hasSettings = file_exists($moduleData['path'] . '/settings.schema.php');
 
@@ -568,7 +568,7 @@ class SettingsPanel extends AdminPanel {
 
             $requiredByEnabled = false;
             if ($isEnabled) {
-                $enabled = config_settings()->get('modules.enabled', array('admin'));
+                $enabled = \ConfigSettings::instance()->get('modules.enabled', array('admin'));
                 $graph = $this->collectModuleDependencyGraph();
 
                 foreach ($enabled as $enabledMod) {
@@ -689,7 +689,7 @@ class SettingsPanel extends AdminPanel {
             return 'Invalid modules list';
         }
 
-        $current = config_settings()->get('modules.enabled', array('admin'));
+        $current = \ConfigSettings::instance()->get('modules.enabled', array('admin'));
         if (!is_array($current)) {
             $current = array('admin');
         }
@@ -771,7 +771,7 @@ class SettingsPanel extends AdminPanel {
     }
 
     private function handleConfigDeleteModuleAction(&$notice, &$error) {
-        $deleteId = (string)request()->post('module_delete', '');
+        $deleteId = (string)app()->request()->post('module_delete', '');
         if ($deleteId === '') {
             return false;
         }
@@ -815,7 +815,7 @@ class SettingsPanel extends AdminPanel {
             }
         }
 
-        $enabled = config_settings()->get('modules.enabled', array('admin'));
+        $enabled = \ConfigSettings::instance()->get('modules.enabled', array('admin'));
         if (!is_array($enabled)) {
             $enabled = array('admin');
         }
@@ -844,8 +844,8 @@ class SettingsPanel extends AdminPanel {
         }
 
         $newEnabled = array_values(array_diff($enabled, array($deleteId)));
-        config_settings()->set('modules.enabled', $newEnabled);
-        config_settings()->save();
+        \ConfigSettings::instance()->set('modules.enabled', $newEnabled);
+        \ConfigSettings::instance()->save();
 
         $notice = "Module '{$deleteId}' deleted";
         return true;

@@ -33,12 +33,12 @@ class PagesPanel extends ContentPanel {
 
     protected function extractFormData() {
         return array(
-            'title' => post_trimmed('title'),
-            'slug' => post_trimmed('slug'),
-            'content' => request()->post('content', ''),
-            'status' => request()->post('status', 'draft'),
-            'show_in_navigation' => (bool)request()->post('show_in_navigation', false),
-            'navigation_order' => (int)request()->post('navigation_order', 50),
+            'title' => app()->request()->postTrimmed('title'),
+            'slug' => app()->request()->postTrimmed('slug'),
+            'content' => app()->request()->post('content', ''),
+            'status' => app()->request()->post('status', 'draft'),
+            'show_in_navigation' => (bool)app()->request()->post('show_in_navigation', false),
+            'navigation_order' => (int)app()->request()->post('navigation_order', 50),
         );
     }
 
@@ -80,7 +80,7 @@ class PagesPanel extends ContentPanel {
             $navItems = array();
         }
 
-        $pages = db()->query('pages', array(
+        $pages = app()->db()->query('pages', array(
             'status' => 'published',
             'show_in_navigation' => true
         ));

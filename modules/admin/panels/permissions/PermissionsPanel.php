@@ -26,7 +26,7 @@ class PermissionsPanel extends AdminPanel {
     public function index() {
         if (!$this->requireAdmin()) return;
 
-        $registry = permissions();
+        $registry = app()->service('permissions');
         if (!$registry) {
             return $this->renderAdmin(
                 t('admin-permissions.title'),
@@ -44,7 +44,7 @@ class PermissionsPanel extends AdminPanel {
         if (!$this->requireAdmin()) return;
         if (!$this->verifyCsrf()) return;
 
-        $registry = permissions();
+        $registry = app()->service('permissions');
         if (!$registry) {
             return $this->renderAdmin(
                 t('admin-permissions.title'),
@@ -55,7 +55,7 @@ class PermissionsPanel extends AdminPanel {
         $notice = null;
 
         // Check for reset action
-        $resetRole = request()->post('reset_role', '');
+        $resetRole = app()->request()->post('reset_role', '');
         if ($resetRole !== '') {
             $configurableRoles = $registry->getConfigurableRoles();
             if (in_array($resetRole, $configurableRoles, true)) {
@@ -70,7 +70,7 @@ class PermissionsPanel extends AdminPanel {
         $allPermissions = $registry->getAll();
 
         foreach ($configurableRoles as $role) {
-            $posted = request()->post('role_' . $role, array());
+            $posted = app()->request()->post('role_' . $role, array());
             if (!is_array($posted)) {
                 $posted = array();
             }
@@ -107,7 +107,7 @@ class PermissionsPanel extends AdminPanel {
             'grouped' => $grouped,
             'labels' => $labels,
             'roleData' => $roleData,
-            'csrf_token' => auth()->generateCsrfToken(),
+            'csrf_token' => $this->auth()->generateCsrfToken(),
             'notice' => $notice,
         ));
 

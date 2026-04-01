@@ -74,7 +74,7 @@ class UploadsPanel extends AdminPanel {
     public function listFiles() {
         if (!$this->requirePermission('uploads.view')) return;
 
-        $files = db()->query('uploads', array(), array(
+        $files = app()->db()->query('uploads', array(), array(
             'sort' => 'created_at',
             'order' => 'desc',
         ));
@@ -86,7 +86,7 @@ class UploadsPanel extends AdminPanel {
             'files'     => $files,
             'canUpload' => (bool)$userManager->hasPermission($user, 'uploads.upload'),
             'canDelete' => $userManager->hasPermission($user, 'uploads.delete'),
-            'csrf_token' => auth()->generateCsrfToken(),
+            'csrf_token' => $this->auth()->generateCsrfToken(),
             'uploadsUrl' => $this->getUploadsBaseUrl(),
         ));
 
@@ -108,7 +108,7 @@ class UploadsPanel extends AdminPanel {
         $error = $this->processUpload();
 
         if ($error !== null) {
-            $files = db()->query('uploads', array(), array(
+            $files = app()->db()->query('uploads', array(), array(
                 'sort' => 'created_at',
                 'order' => 'desc',
             ));
@@ -120,7 +120,7 @@ class UploadsPanel extends AdminPanel {
                 'files'     => $files,
                 'canUpload' => true,
                 'canDelete' => $userManager->hasPermission($user, 'uploads.delete'),
-                'csrf_token' => auth()->generateCsrfToken(),
+                'csrf_token' => $this->auth()->generateCsrfToken(),
                 'uploadsUrl' => $this->getUploadsBaseUrl(),
                 'error'     => $error,
             ));
@@ -159,7 +159,7 @@ class UploadsPanel extends AdminPanel {
         }
 
         // Return the URL of the last uploaded file
-        $files = db()->query('uploads', array(), array(
+        $files = app()->db()->query('uploads', array(), array(
             'sort' => 'created_at',
             'order' => 'desc',
             'limit' => 1,
@@ -181,7 +181,7 @@ class UploadsPanel extends AdminPanel {
         if (!$this->requirePermission('uploads.view')) return;
 
         $id = isset($params['id']) ? $params['id'] : '';
-        $file = db()->read('uploads', $id);
+        $file = app()->db()->read('uploads', $id);
 
         if (!$file) {
             http_response_code(404);
@@ -195,7 +195,7 @@ class UploadsPanel extends AdminPanel {
         $content = $this->renderView('edit', array(
             'file'       => $file,
             'canDelete'  => $userManager->hasPermission($user, 'uploads.delete'),
-            'csrf_token' => auth()->generateCsrfToken(),
+            'csrf_token' => $this->auth()->generateCsrfToken(),
             'uploadsUrl' => $this->getUploadsBaseUrl(),
         ));
 
@@ -217,7 +217,7 @@ class UploadsPanel extends AdminPanel {
         if (!$this->verifyCsrf()) return;
 
         $id = isset($params['id']) ? $params['id'] : '';
-        $file = db()->read('uploads', $id);
+        $file = app()->db()->read('uploads', $id);
 
         if (!$file) {
             http_response_code(404);
@@ -225,10 +225,10 @@ class UploadsPanel extends AdminPanel {
                 '<div class="alert alert-danger alert-permanent">' . e(t('admin-uploads.not_found')) . '</div>');
         }
 
-        $file['original_name'] = post_trimmed('original_name');
+        $file['original_name'] = app()->request()->postTrimmed('original_name');
         unset($file['_id']);
 
-        db()->write('uploads', $id, $file);
+        app()->db()->write('uploads', $id, $file);
 
         $this->redirectAdmin('uploads/edit/' . $id);
     }
@@ -242,7 +242,7 @@ class UploadsPanel extends AdminPanel {
         if (!$this->verifyCsrf()) return;
 
         $id = isset($params['id']) ? $params['id'] : '';
-        $file = db()->read('uploads', $id);
+        $file = app()->db()->read('uploads', $id);
 
         if (!$file) {
             $this->redirectAdmin('uploads');
@@ -269,7 +269,7 @@ class UploadsPanel extends AdminPanel {
         }
 
         // Delete metadata
-        db()->delete('uploads', $id);
+        app()->db()->delete('uploads', $id);
 
         $this->redirectAdmin('uploads');
     }
@@ -282,7 +282,7 @@ class UploadsPanel extends AdminPanel {
      * @return string|null Error message, or null on success
      */
     private function processUpload() {
-        $fileData = request()->file('file');
+        $fileData = app()->request()->file('file');
 
         if (!$fileData || !is_array($fileData) || $fileData['error'] !== UPLOAD_ERR_OK) {
             $code = is_array($fileData) ? $fileData['error'] : -1;
@@ -325,7 +325,7 @@ class UploadsPanel extends AdminPanel {
 
         // Save metadata
         $user = $this->getUser();
-        $id = db()->generateId();
+        $id = app()->db()->generateId();
         $metadata = array(
             'filename'      => $filename,
             'original_name' => $fileData['name'],
@@ -334,10 +334,10 @@ class UploadsPanel extends AdminPanel {
             'path'          => $relativePath,
             'author'        => isset($user['username']) ? $user['username'] : 'Unknown',
             'author_id'     => isset($user['_id']) ? $user['_id'] : '',
-            'created_at'    => now(),
+            'created_at'    => date(DATETIME_FORMAT),
         );
 
-        db()->write('uploads', $id, $metadata);
+        app()->db()->write('uploads', $id, $metadata);
 
         return null;
     }

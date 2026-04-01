@@ -100,7 +100,7 @@ class AdminModule extends Module
             // Register translation domain: panel "pages" → domain "admin-pages"
             $langDir = $panelPath . '/lang';
             if (is_dir($langDir)) {
-                translator()->registerDomain('admin-' . $panelId, $langDir);
+                app()->translator()->registerDomain('admin-' . $panelId, $langDir);
             }
 
             $this->panels[$panelId] = $panel;
@@ -153,7 +153,7 @@ class AdminModule extends Module
         $router->get('/admin/login', array($this, 'loginForm'));
         $router->post('/admin/login', array($this, 'loginProcess'));
         $router->post('/admin/logout', array($this, 'logout'));
-        $router->get('/admin/logout', function() { redirect(base_url('/admin')); });
+        $router->get('/admin/logout', function() { app()->response()->redirect(base_url('/admin')); });
 
         // Panel routes (auth middleware applied by adminRoute())
         foreach ($this->panels as $panel) {
@@ -294,7 +294,7 @@ class AdminModule extends Module
             }
         }
 
-        $path = request()->path();
+        $path = app()->request()->path();
 
         $normalized = array();
         foreach ($items as $item) {
@@ -342,10 +342,10 @@ class AdminModule extends Module
             'title' => $title,
             'content' => $content,
             'sidebarItems' => $this->buildSidebarItems(),
-            'user' => auth()->user(),
+            'user' => app()->auth()->user(),
         ), is_array($extra) ? $extra : array());
 
-        return view('admin:layout', $data);
+        return app()->view()->render('admin:layout', $data);
     }
 
     /**
@@ -353,8 +353,8 @@ class AdminModule extends Module
      */
     public function requireAuth()
     {
-        if (!auth()->check()) {
-            redirect(base_url('/admin/login'));
+        if (!app()->auth()->check()) {
+            app()->response()->redirect(base_url('/admin/login'));
             return false;
         }
         return true;
@@ -365,13 +365,13 @@ class AdminModule extends Module
      */
     public function loginForm()
     {
-        if (auth()->check()) {
-            redirect(base_url('/admin'));
+        if (app()->auth()->check()) {
+            app()->response()->redirect(base_url('/admin'));
             return;
         }
 
         $this->view('admin:login', array(
-            'csrf_token' => auth()->generateCsrfToken()
+            'csrf_token' => app()->auth()->generateCsrfToken()
         ));
     }
 
@@ -380,21 +380,21 @@ class AdminModule extends Module
      */
     public function loginProcess()
     {
-        $token = (string)request()->post('csrf_token', '');
-        if (!auth()->verifyCsrfToken($token)) {
+        $token = (string)app()->request()->post('csrf_token', '');
+        if (!app()->auth()->verifyCsrfToken($token)) {
             abort(403);
             return;
         }
 
-        $username = (string)request()->post('username', '');
-        $password = (string)request()->post('password', '');
+        $username = (string)app()->request()->post('username', '');
+        $password = (string)app()->request()->post('password', '');
 
-        if (auth()->login($username, $password)) {
-            redirect(base_url('/admin'));
+        if (app()->auth()->login($username, $password)) {
+            app()->response()->redirect(base_url('/admin'));
         } else {
             $this->view('admin:login', array(
                 'error' => 'Invalid credentials',
-                'csrf_token' => auth()->generateCsrfToken()
+                'csrf_token' => app()->auth()->generateCsrfToken()
             ));
         }
     }
@@ -404,13 +404,13 @@ class AdminModule extends Module
      */
     public function logout()
     {
-        $token = (string)request()->post('csrf_token', '');
-        if (!auth()->verifyCsrfToken($token)) {
+        $token = (string)app()->request()->post('csrf_token', '');
+        if (!app()->auth()->verifyCsrfToken($token)) {
             abort(403);
             return;
         }
 
-        auth()->logout();
-        redirect(base_url('/admin/login'));
+        app()->auth()->logout();
+        app()->response()->redirect(base_url('/admin/login'));
     }
 }

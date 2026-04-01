@@ -32,11 +32,11 @@ class SeoModule extends Module
      */
     public function addMetaTags($content)
     {
-        $request = request();
+        $request = app()->request();
         $path = $request->path();
 
         // Get settings
-        $settings = module_settings('seo');
+        $settings = $this->settings();
 
         // Get current page/post data from request
         $title = config('site.name', MANTRA_PROJECT_INFO['name']);
@@ -100,7 +100,7 @@ class SeoModule extends Module
      */
     public function addSeoData($data)
     {
-        $settings = module_settings('seo');
+        $settings = $this->settings();
 
         // Check if breadcrumbs are enabled
         if (!$settings->get('breadcrumbs.enabled', true)) {

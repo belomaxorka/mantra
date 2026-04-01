@@ -50,13 +50,13 @@ class UsersPanel extends ContentPanel {
 
     protected function extractFormData() {
         $data = array(
-            'email'  => post_trimmed('email'),
-            'role'   => request()->post('role', 'editor'),
-            'status' => request()->post('status', 'active'),
+            'email'  => app()->request()->postTrimmed('email'),
+            'role'   => app()->request()->post('role', 'editor'),
+            'status' => app()->request()->post('status', 'active'),
         );
 
         // Password: empty means keep current (User::update handles this)
-        $password = request()->post('password', '');
+        $password = app()->request()->post('password', '');
         if ($password !== '') {
             $data['password'] = $password;
         }
@@ -107,7 +107,7 @@ class UsersPanel extends ContentPanel {
         if (!$this->verifyCsrf()) return;
 
         $data = $this->extractFormData();
-        $data['username'] = post_trimmed('username');
+        $data['username'] = app()->request()->postTrimmed('username');
 
         // Only admins can assign roles
         $currentUser = $this->getUser();

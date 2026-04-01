@@ -137,7 +137,7 @@
       </div>
       <div class="mt-2">
         <form method="POST" action="<?php echo e(base_url('/admin/logout')); ?>" class="d-inline">
-          <input type="hidden" name="csrf_token" value="<?php echo e(auth()->generateCsrfToken()); ?>">
+          <input type="hidden" name="csrf_token" value="<?php echo e(app()->auth()->generateCsrfToken()); ?>">
           <button type="submit" class="btn btn-link p-0 border-0">
             <i class="bi bi-box-arrow-right me-1"></i><?php echo t('admin.layout.logout'); ?>
           </button>
@@ -203,7 +203,7 @@
   </div>
 </div>
 <form id="adminDeleteForm" method="POST" class="d-none">
-  <input type="hidden" name="csrf_token" value="<?php echo e(auth()->generateCsrfToken()); ?>">
+  <input type="hidden" name="csrf_token" value="<?php echo e(app()->auth()->generateCsrfToken()); ?>">
 </form>
 
 <script src="<?php echo $this->moduleAsset('bootstrap/bootstrap.min.js'); ?>"></script>

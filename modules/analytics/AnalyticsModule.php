@@ -26,19 +26,19 @@ class AnalyticsModule extends Module
         $scripts = array();
 
         // Google Analytics
-        $gaId = module_settings('analytics', 'google_analytics_id');
+        $gaId = $this->settings()->get('google_analytics_id');
         if ($gaId) {
             $scripts[] = $this->getGoogleAnalyticsScript($gaId);
         }
 
         // Yandex Metrika
-        $ymId = module_settings('analytics', 'yandex_metrika_id');
+        $ymId = $this->settings()->get('yandex_metrika_id');
         if ($ymId) {
             $scripts[] = $this->getYandexMetrikaScript($ymId);
         }
 
         // Custom tracking code
-        $customCode = module_settings('analytics', 'custom_code');
+        $customCode = $this->settings()->get('custom_code');
         if ($customCode) {
             $scripts[] = "\n    " . $customCode;
         }
