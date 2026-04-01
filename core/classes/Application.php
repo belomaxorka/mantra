@@ -12,6 +12,7 @@ class Application {
     private $router = null;
     private $moduleManager = null;
     private $hookManager = null;
+    private $services = array();
     
     private function __construct() {
         $this->loadConfig();
@@ -268,5 +269,55 @@ class Application {
      */
     public function hooks() {
         return $this->hookManager;
+    }
+
+    /**
+     * Register a service that other modules can consume.
+     *
+     * @param string   $name     Service name (e.g. 'pages', 'search')
+     * @param callable|mixed $provider  Callable (lazy) or a ready value
+     */
+    public function provide($name, $provider) {
+        $this->services[$name] = array(
+            'provider' => $provider,
+            'resolved' => false,
+            'value'    => null,
+        );
+    }
+
+    /**
+     * Resolve a previously registered service.
+     *
+     * Callable providers are invoked once; the result is cached.
+     *
+     * @param string $name    Service name
+     * @param mixed  $default Returned when the service is not registered
+     * @return mixed
+     */
+    public function service($name, $default = null) {
+        if (!isset($this->services[$name])) {
+            return $default;
+        }
+
+        $entry = &$this->services[$name];
+
+        if (!$entry['resolved']) {
+            $entry['value'] = is_callable($entry['provider'])
+                ? call_user_func($entry['provider'])
+                : $entry['provider'];
+            $entry['resolved'] = true;
+        }
+
+        return $entry['value'];
+    }
+
+    /**
+     * Check whether a service is registered.
+     *
+     * @param string $name
+     * @return bool
+     */
+    public function hasService($name) {
+        return isset($this->services[$name]);
     }
 }

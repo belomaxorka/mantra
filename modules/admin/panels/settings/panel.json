@@ -1,0 +1,20 @@
+{
+  "id": "settings",
+  "version": "1.0.0",
+  "sidebar": {
+    "title": "admin-settings.title",
+    "icon": "bi-sliders",
+    "group": "admin.sidebar.group.system",
+    "order": 50,
+    "url": "/admin/settings"
+  },
+  "quick_actions": [
+    {
+      "id": "settings",
+      "title": "admin-settings.title",
+      "icon": "bi-gear",
+      "url": "/admin/settings",
+      "order": 10
+    }
+  ]
+}

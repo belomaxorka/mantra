@@ -1,0 +1,12 @@
+{
+  "id": "dashboard",
+  "version": "1.0.0",
+  "sidebar": {
+    "id": "dashboard",
+    "title": "admin-dashboard.title",
+    "icon": "bi-speedometer2",
+    "group": "admin.sidebar.group.general",
+    "order": 0,
+    "url": "/admin"
+  }
+}

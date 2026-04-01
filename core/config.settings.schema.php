@@ -12,7 +12,16 @@
  */
 
 return array(
-    'version' => 1,
+    'version' => 2,
+    'migrate' => function ($data, $from, $to) {
+        // v2: admin sub-modules replaced by panels — strip from modules.enabled
+        if ($from < 2 && isset($data['modules']['enabled']) && is_array($data['modules']['enabled'])) {
+            $panelIds = array('admin-dashboard', 'admin-pages', 'admin-posts', 'admin-settings');
+            $data['modules']['enabled'] = array_values(array_diff($data['modules']['enabled'], $panelIds));
+        }
+        $data['schema_version'] = $to;
+        return $data;
+    },
     'tabs' => array(
         array(
             'id' => 'site',

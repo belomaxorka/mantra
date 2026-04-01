@@ -1,15 +1,115 @@
 <?php
 /**
  * AdminModule - Admin panel functionality
+ *
+ * Central hub for the admin area. Manages authentication,
+ * layout rendering, and panel discovery/loading.
  */
 
 use Module\Module;
 
 class AdminModule extends Module
 {
+    /** @var Admin\AdminPanelInterface[] */
+    private $panels = array();
+
     public function init()
     {
+        $this->loadPanels();
         $this->hook('routes.register', array($this, 'registerRoutes'));
+    }
+
+    // ========== Panel Management ==========
+
+    /**
+     * Discover and load panels from modules/admin/panels/
+     */
+    private function loadPanels()
+    {
+        $panelsDir = $this->getPath() . '/panels';
+        if (!is_dir($panelsDir)) {
+            return;
+        }
+
+        $dirs = scandir($panelsDir);
+        if (!is_array($dirs)) {
+            return;
+        }
+
+        foreach ($dirs as $dir) {
+            if ($dir === '.' || $dir === '..') {
+                continue;
+            }
+
+            $panelPath = $panelsDir . '/' . $dir;
+            if (!is_dir($panelPath)) {
+                continue;
+            }
+
+            $metaPath = $panelPath . '/panel.json';
+            if (!file_exists($metaPath)) {
+                continue;
+            }
+
+            try {
+                $metadata = JsonCodec::decode(file_get_contents($metaPath));
+            } catch (Exception $e) {
+                logger()->warning('Failed to read panel.json', array('panel' => $dir, 'error' => $e->getMessage()));
+                continue;
+            }
+
+            $panelId = isset($metadata['id']) ? (string)$metadata['id'] : $dir;
+
+            // Derive class name: "pages" → "Admin\PagesPanel"
+            $parts = explode('-', $dir);
+            $baseName = implode('', array_map('ucfirst', $parts)) . 'Panel';
+            $className = 'Admin\\' . $baseName;
+
+            $classFile = $panelPath . '/' . $baseName . '.php';
+            if (!file_exists($classFile)) {
+                logger()->warning('Panel class file not found', array('panel' => $dir, 'file' => $classFile));
+                continue;
+            }
+
+            require_once $classFile;
+
+            if (!class_exists($className)) {
+                logger()->warning('Panel class not found', array('panel' => $dir, 'class' => $className));
+                continue;
+            }
+
+            $panel = new $className($panelPath, $metadata);
+            $panel->init($this);
+
+            // Register translation domain: panel "pages" → domain "admin-pages"
+            $langDir = $panelPath . '/lang';
+            if (is_dir($langDir)) {
+                translator()->registerDomain('admin-' . $panelId, $langDir);
+            }
+
+            $this->panels[$panelId] = $panel;
+
+            logger()->debug('Panel loaded', array('panel' => $panelId));
+        }
+    }
+
+    /**
+     * Get all loaded panels.
+     * @return Admin\AdminPanelInterface[]
+     */
+    public function getPanels()
+    {
+        return $this->panels;
+    }
+
+    /**
+     * Get a panel by ID.
+     * @param string $id
+     * @return Admin\AdminPanelInterface|null
+     */
+    public function getPanel($id)
+    {
+        return isset($this->panels[$id]) ? $this->panels[$id] : null;
     }
 
     public function adminRoute($method, $pattern, $callback)
@@ -33,11 +133,16 @@ class AdminModule extends Module
     {
         $router = $data['router'];
 
-        // Auth
+        // Auth routes (no middleware — public)
         $router->get('/admin/login', array($this, 'loginForm'));
         $router->post('/admin/login', array($this, 'loginProcess'));
         $router->post('/admin/logout', array($this, 'logout'));
         $router->get('/admin/logout', function() { redirect(base_url('/admin')); });
+
+        // Panel routes (auth middleware applied by adminRoute())
+        foreach ($this->panels as $panel) {
+            $panel->registerRoutes($this);
+        }
 
         return $data;
     }
@@ -159,9 +264,18 @@ class AdminModule extends Module
 
     private function buildSidebarItems()
     {
+        // Collect from hooks (backward compat with BaseAdminModule / third-party modules)
         $items = $this->fireHook('admin.sidebar', array());
         if (!is_array($items)) {
             $items = array();
+        }
+
+        // Collect from panels (declarative)
+        foreach ($this->panels as $panel) {
+            $sb = $panel->getSidebarItem();
+            if (is_array($sb) && !empty($sb)) {
+                $items[] = $sb;
+            }
         }
 
         $path = request()->path();

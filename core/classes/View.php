@@ -214,6 +214,25 @@ class View {
     }
 
     /**
+     * Render a template at an absolute filesystem path within the View context.
+     *
+     * Templates rendered this way have access to $this->escape(),
+     * $this->moduleAsset(), etc. — identical to module templates.
+     * The output is NOT wrapped in a layout and NOT filtered through view.render.
+     *
+     * @param string $templatePath Absolute path to the .php template
+     * @param array  $data         Variables to extract into template scope
+     * @return string Rendered HTML
+     */
+    public function fetchPath($templatePath, $data = array()) {
+        if (!file_exists($templatePath)) {
+            throw new Exception("Template not found: $templatePath");
+        }
+        $this->data = $data;
+        return $this->renderTemplate($templatePath, $this->data);
+    }
+
+    /**
      * Get theme asset URL
      */
     public function asset($path) {
@@ -246,6 +265,14 @@ class View {
         }
 
         $path = ltrim($path, '/');
-        return '/' . basename(MANTRA_MODULES) . '/' . $module . '/assets/' . $path;
+        $url = '/' . basename(MANTRA_MODULES) . '/' . $module . '/assets/' . $path;
+
+        // Append module version for cache-busting
+        $instance = module($module);
+        if ($instance) {
+            $url .= '?v=' . urlencode($instance->getVersion());
+        }
+
+        return $url;
     }
 }

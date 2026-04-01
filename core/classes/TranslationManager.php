@@ -15,6 +15,7 @@ class TranslationManager {
     private $fallbackLocale;
     private $translations = array();
     private $loadedDomains = array();
+    private $customDomainPaths = array();
     
     public function __construct($locale = null, $fallbackLocale = null) {
         $this->locale = $locale ?: config('locale.default_language', 'en');
@@ -71,7 +72,14 @@ class TranslationManager {
         }
         
         $this->loadedDomains[$domainKey] = true;
-        
+
+        // Check custom registered domains first (panels, etc.)
+        if (isset($this->customDomainPaths[$domain])) {
+            $file = $this->customDomainPaths[$domain] . '/' . $locale . '.php';
+            $this->loadFile($domain, $locale, $file);
+            return;
+        }
+
         // Try to load from module
         if ($this->isModuleDomain($domain)) {
             $this->loadModuleTranslations($domain, $locale);
@@ -171,6 +179,17 @@ class TranslationManager {
         return $text;
     }
     
+    /**
+     * Register a custom domain with an explicit lang directory path.
+     * Used by admin panels and other non-module translation sources.
+     *
+     * @param string $domain  Translation domain (e.g. 'admin-pages')
+     * @param string $langDir Absolute path to the lang/ directory
+     */
+    public function registerDomain($domain, $langDir) {
+        $this->customDomainPaths[$domain] = $langDir;
+    }
+
     /**
      * Get current locale
      */

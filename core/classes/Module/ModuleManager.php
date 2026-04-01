@@ -112,12 +112,31 @@ class ModuleManager
                 throw new Exception("Module manifest missing required fields: id, version");
             }
 
-            // Load dependencies
+            // Load dependencies.
+            // Supports both indexed array ["admin"] and associative {"admin": ">=1.0"}.
             if (isset($manifest['dependencies']) && is_array($manifest['dependencies'])) {
-                foreach ($manifest['dependencies'] as $dependency) {
-                    $this->assertValidModuleName($dependency, "dependency of {$moduleName}");
-                    if (!$this->loadModule($dependency)) {
-                        throw new Exception("Module '{$moduleName}' requires '{$dependency}'");
+                foreach ($manifest['dependencies'] as $key => $value) {
+                    if (is_int($key)) {
+                        $depName = $value;
+                        $constraint = '*';
+                    } else {
+                        $depName = $key;
+                        $constraint = $value;
+                    }
+
+                    $this->assertValidModuleName($depName, "dependency of {$moduleName}");
+                    if (!$this->loadModule($depName)) {
+                        throw new Exception("Module '{$moduleName}' requires '{$depName}'");
+                    }
+
+                    if ($constraint !== '*' && $constraint !== '') {
+                        $depModule = $this->getModule($depName);
+                        if ($depModule && !self::satisfiesVersion($depModule->getVersion(), $constraint)) {
+                            throw new Exception(
+                                "Module '{$moduleName}' requires '{$depName}' {$constraint}, "
+                                . "but version {$depModule->getVersion()} is installed"
+                            );
+                        }
                     }
                 }
             }
@@ -461,5 +480,57 @@ class ModuleManager
             'path' => $data['path'],
             'enabled' => true,
         );
+    }
+
+    /**
+     * Check whether $version satisfies a semver $constraint.
+     *
+     * Supported constraints:
+     *   "*"          — any version
+     *   "1.2.3"      — exact match
+     *   ">=1.2"      — comparison (also >, <, <=, !=, =)
+     *   "^1.2"       — caret: >=1.2.0 and <2.0.0
+     *   "~1.2"       — tilde: >=1.2.0 and <1.3.0
+     *
+     * @param string $version  Installed version (e.g. "1.4.2")
+     * @param string $constraint  Version constraint string
+     * @return bool
+     */
+    public static function satisfiesVersion($version, $constraint) {
+        $constraint = trim($constraint);
+
+        if ($constraint === '' || $constraint === '*') {
+            return true;
+        }
+
+        // Caret: ^1.2.3 → >=1.2.3, <2.0.0
+        if ($constraint[0] === '^') {
+            $min = substr($constraint, 1);
+            $parts = explode('.', $min);
+            $major = (int)$parts[0];
+            $nextMajor = ($major + 1) . '.0.0';
+            return version_compare($version, $min, '>=')
+                && version_compare($version, $nextMajor, '<');
+        }
+
+        // Tilde: ~1.2.3 → >=1.2.3, <1.3.0
+        if ($constraint[0] === '~') {
+            $min = substr($constraint, 1);
+            $parts = explode('.', $min);
+            $major = (int)$parts[0];
+            $minor = isset($parts[1]) ? (int)$parts[1] + 1 : 1;
+            $nextMinor = $major . '.' . $minor . '.0';
+            return version_compare($version, $min, '>=')
+                && version_compare($version, $nextMinor, '<');
+        }
+
+        // Comparison operators: >=, <=, !=, >, <, =
+        if (preg_match('/^(>=|<=|!=|>|<|=)(.+)$/', $constraint, $m)) {
+            $op = $m[1] === '=' ? '==' : $m[1];
+            return version_compare($version, trim($m[2]), $op);
+        }
+
+        // Exact match
+        return version_compare($version, $constraint, '==');
     }
 }

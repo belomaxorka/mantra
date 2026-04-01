@@ -1,21 +1,22 @@
 <?php
 
-use Module\ContentAdminModule;
+namespace Admin;
 
-class AdminPagesModule extends ContentAdminModule
-{
-    protected function getContentType()
-    {
-        return 'Page';
-    }
+class PagesPanel extends ContentPanel {
 
-    protected function getCollectionName()
-    {
+    public function id() {
         return 'pages';
     }
 
-    protected function getDefaultItem()
-    {
+    protected function getContentType() {
+        return 'Page';
+    }
+
+    protected function getCollectionName() {
+        return 'pages';
+    }
+
+    protected function getDefaultItem() {
         return array(
             'title' => '',
             'slug' => '',
@@ -30,8 +31,7 @@ class AdminPagesModule extends ContentAdminModule
         );
     }
 
-    protected function extractFormData()
-    {
+    protected function extractFormData() {
         return array(
             'title' => post_trimmed('title'),
             'slug' => post_trimmed('slug'),
@@ -43,41 +43,16 @@ class AdminPagesModule extends ContentAdminModule
         );
     }
 
-    public function init()
-    {
-        $this->registerSidebarItem(array(
-            'id' => 'pages',
-            'title' => 'admin-pages.title',
-            'icon' => 'bi-file-earmark-text',
-            'group' => 'admin.sidebar.group.content',
-            'order' => 10,
-            'url' => base_url('/admin/pages'),
-        ));
+    public function init($admin) {
+        parent::init($admin);
 
-        $this->registerQuickAction(array(
-            'id' => 'new-page',
-            'title' => 'admin-pages.new',
-            'icon' => 'bi-file-earmark-plus',
-            'url' => base_url('/admin/pages/new'),
-            'order' => 20,
-        ));
-
-        $this->registerAdminRoute('GET', 'pages', array($this, 'listItems'));
-        $this->registerAdminRoute('GET', 'pages/new', array($this, 'newItem'));
-        $this->registerAdminRoute('POST', 'pages/new', array($this, 'createItem'));
-        $this->registerAdminRoute('GET', 'pages/edit/{id}', array($this, 'editItem'));
-        $this->registerAdminRoute('POST', 'pages/edit/{id}', array($this, 'updateItem'));
-        $this->registerAdminRoute('POST', 'pages/delete/{id}', array($this, 'deleteItem'));
-
-        // Hook into theme navigation to add published pages
         $this->hook('theme.navigation', array($this, 'addPagesToNavigation'));
     }
 
     /**
-     * Add published pages to navigation menu
+     * Add published pages with show_in_navigation to the theme navigation menu.
      */
-    public function addPagesToNavigation($navItems)
-    {
+    public function addPagesToNavigation($navItems) {
         if (!is_array($navItems)) {
             $navItems = array();
         }

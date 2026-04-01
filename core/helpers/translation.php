@@ -4,6 +4,23 @@
  */
 
 /**
+ * Get the TranslationManager singleton.
+ *
+ * Use this to register custom domains or access advanced API.
+ * For simple translations, use t() instead.
+ *
+ * @return TranslationManager
+ */
+function translator()
+{
+    static $instance = null;
+    if ($instance === null) {
+        $instance = new TranslationManager();
+    }
+    return $instance;
+}
+
+/**
  * Translation helper
  * @param string $key Translation key
  * @param array $params Parameters for interpolation
@@ -11,9 +28,5 @@
  */
 function t($key, $params = array())
 {
-    static $translator = null;
-    if ($translator === null) {
-        $translator = new TranslationManager();
-    }
-    return $translator->translate($key, $params);
+    return translator()->translate($key, $params);
 }

@@ -1,42 +1,42 @@
 <?php
 /**
- * ContentAdminModule - Base class for content management modules
- * 
- * Provides CRUD operations for content types (pages, posts, etc.)
- * Reduces code duplication in admin modules
+ * ContentPanel - CRUD scaffolding for admin panels
+ *
+ * Panel equivalent of ContentAdminModule. Implement the four abstract
+ * methods and you get a full list/create/edit/delete admin interface.
  */
 
-namespace Module;
+namespace Admin;
 
-abstract class ContentAdminModule extends BaseAdminModule {
-    
+abstract class ContentPanel extends AdminPanel {
+
     /**
-     * Get content type name (singular)
+     * Singular content type name (e.g. 'Page', 'Post')
      * @return string
      */
     abstract protected function getContentType();
-    
+
     /**
-     * Get collection name for database
+     * Database collection name (e.g. 'pages', 'posts')
      * @return string
      */
     abstract protected function getCollectionName();
-    
+
     /**
-     * Get default item data
+     * Default empty item data array
      * @return array
      */
     abstract protected function getDefaultItem();
-    
+
     /**
-     * Extract form data from request
+     * Extract form data from the current POST request
      * @return array
      */
     abstract protected function extractFormData();
-    
+
     /**
-     * Get admin path for redirects (without /admin prefix)
-     * Override this if module ID differs from route path
+     * Admin URL path segment (without /admin/ prefix).
+     * Defaults to the collection name.
      * @return string
      */
     protected function getAdminPath() {
@@ -44,68 +44,49 @@ abstract class ContentAdminModule extends BaseAdminModule {
     }
 
     /**
-     * Initialize module — registers CRUD routes + manifest sidebar/quick_actions.
-     * Subclasses should call parent::init() before adding custom hooks.
-     */
-    public function init() {
-        parent::init();
-        $this->registerCrudRoutes();
-    }
-
-    /**
-     * Register standard CRUD routes for this content type.
-     *
-     * Registers: list, new (GET+POST), edit (GET+POST), delete (POST).
-     * Override to add/remove routes or change patterns.
-     */
-    protected function registerCrudRoutes() {
-        $path = $this->getAdminPath();
-
-        $this->registerAdminRoute('GET',  $path,                   array($this, 'listItems'));
-        $this->registerAdminRoute('GET',  $path . '/new',          array($this, 'newItem'));
-        $this->registerAdminRoute('POST', $path . '/new',          array($this, 'createItem'));
-        $this->registerAdminRoute('GET',  $path . '/edit/{id}',    array($this, 'editItem'));
-        $this->registerAdminRoute('POST', $path . '/edit/{id}',    array($this, 'updateItem'));
-        $this->registerAdminRoute('POST', $path . '/delete/{id}',  array($this, 'deleteItem'));
-    }
-    
-    /**
-     * Get list view template
+     * Template name for the list view (default: 'list')
      * @return string
      */
     protected function getListTemplate() {
-        return $this->getId() . ':list';
+        return 'list';
     }
-    
+
     /**
-     * Get edit view template
+     * Template name for the edit/new view (default: 'edit')
      * @return string
      */
     protected function getEditTemplate() {
-        return $this->getId() . ':edit';
+        return 'edit';
     }
-    
+
+    // ========== Route Registration ==========
+
     /**
-     * Generate ID for new item
-     * @param array $data Item data (must have slug already set via ensureSlug)
-     * @return string
+     * Register standard CRUD routes.
+     * Override to add/remove routes.
      */
+    public function registerRoutes($admin) {
+        $path = $this->getAdminPath();
+
+        $admin->adminRoute('GET',  $path,                   array($this, 'listItems'));
+        $admin->adminRoute('GET',  $path . '/new',          array($this, 'newItem'));
+        $admin->adminRoute('POST', $path . '/new',          array($this, 'createItem'));
+        $admin->adminRoute('GET',  $path . '/edit/{id}',    array($this, 'editItem'));
+        $admin->adminRoute('POST', $path . '/edit/{id}',    array($this, 'updateItem'));
+        $admin->adminRoute('POST', $path . '/delete/{id}',  array($this, 'deleteItem'));
+    }
+
+    // ========== Helpers ==========
+
     protected function generateId($data) {
         $slug = $data['slug'];
-        
         $id = $slug;
         if (db()->exists($this->getCollectionName(), $id)) {
             $id = $slug . '-' . uniqid();
         }
-        
         return $id;
     }
-    
-    /**
-     * Ensure slug is set, generate from title if empty
-     * @param array $data Item data
-     * @return array Modified data with slug
-     */
+
     protected function ensureSlug($data) {
         if (empty($data['slug']) && !empty($data['title'])) {
             $data['slug'] = slugify($data['title']);
@@ -114,10 +95,17 @@ abstract class ContentAdminModule extends BaseAdminModule {
         }
         return $data;
     }
-    
+
     /**
-     * List all items
+     * Translation domain for this panel (default: "admin-{id}")
+     * @return string
      */
+    protected function getDomain() {
+        return 'admin-' . $this->id();
+    }
+
+    // ========== CRUD Actions ==========
+
     public function listItems() {
         $items = db()->query($this->getCollectionName(), array(), array(
             'sort' => 'updated_at',
@@ -128,15 +116,11 @@ abstract class ContentAdminModule extends BaseAdminModule {
             strtolower($this->getCollectionName()) => $items
         ));
 
-        $titleKey = $this->getId() . '.title';
-        $title = t($titleKey);
+        $title = t($this->getDomain() . '.title');
 
         return $this->renderAdmin($title, $content);
     }
 
-    /**
-     * Show new item form
-     */
     public function newItem() {
         $content = $this->renderView($this->getEditTemplate(), array(
             strtolower($this->getContentType()) => $this->getDefaultItem(),
@@ -144,44 +128,39 @@ abstract class ContentAdminModule extends BaseAdminModule {
             'csrf_token' => auth()->generateCsrfToken()
         ));
 
-        $titleKey = $this->getId() . '.new';
-        $title = t($titleKey);
+        $title = t($this->getDomain() . '.new');
 
         return $this->renderAdmin($title, $content);
     }
-    
-    /**
-     * Create new item
-     */
+
     public function createItem() {
         if (!$this->verifyCsrf()) {
             return;
         }
-        
+
         $data = $this->extractFormData();
         $data = $this->ensureSlug($data);
         $user = $this->getUser();
         $data['author'] = isset($user['username']) ? $user['username'] : 'Unknown';
         $data['created_at'] = now();
         $data['updated_at'] = now();
-        
+
         $id = $this->generateId($data);
-        
+
         db()->write($this->getCollectionName(), $id, $data);
-        
+
         $this->redirectAdmin($this->getAdminPath());
     }
-    
-    /**
-     * Show edit item form
-     */
+
     public function editItem($params) {
         $id = isset($params['id']) ? $params['id'] : '';
         $item = db()->read($this->getCollectionName(), $id);
 
         if (!$item) {
             http_response_code(404);
-            return $this->renderAdmin('Not Found', '<div class="alert alert-danger alert-dismissible fade show alert-permanent" role="alert">' . $this->getContentType() . ' not found<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>');
+            return $this->renderAdmin('Not Found',
+                '<div class="alert alert-danger alert-permanent">'
+                . e($this->getContentType()) . ' not found</div>');
         }
 
         $content = $this->renderView($this->getEditTemplate(), array(
@@ -190,56 +169,50 @@ abstract class ContentAdminModule extends BaseAdminModule {
             'csrf_token' => auth()->generateCsrfToken()
         ));
 
-        // Try module-specific edit key first (e.g., admin-posts.edit_post, admin-pages.edit_page)
-        $titleKey = $this->getId() . '.edit_' . strtolower($this->getContentType());
-        $title = t($titleKey);
+        $title = t($this->getDomain() . '.edit_' . strtolower($this->getContentType()));
 
         return $this->renderAdmin($title, $content);
     }
-    
-    /**
-     * Update existing item
-     */
+
     public function updateItem($params) {
         if (!$this->verifyCsrf()) {
             return;
         }
-        
+
         $id = isset($params['id']) ? $params['id'] : '';
         $item = db()->read($this->getCollectionName(), $id);
 
         if (!$item) {
             http_response_code(404);
-            return $this->renderAdmin('Not Found', '<div class="alert alert-danger alert-dismissible fade show alert-permanent" role="alert">' . e($this->getContentType()) . ' not found<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>');
+            return $this->renderAdmin('Not Found',
+                '<div class="alert alert-danger alert-permanent">'
+                . e($this->getContentType()) . ' not found</div>');
         }
 
         $data = $this->extractFormData();
         $data = $this->ensureSlug($data);
         $data['updated_at'] = now();
-        
+
         // Preserve original fields
         $data['author'] = isset($item['author']) ? $item['author'] : 'Unknown';
         $data['created_at'] = isset($item['created_at']) ? $item['created_at'] : now();
-        
+
         db()->write($this->getCollectionName(), $id, $data);
-        
+
         $this->redirectAdmin($this->getAdminPath());
     }
-    
-    /**
-     * Delete item
-     */
+
     public function deleteItem($params) {
         if (!$this->verifyCsrf()) {
             return;
         }
-        
+
         $id = isset($params['id']) ? $params['id'] : '';
 
         if (db()->exists($this->getCollectionName(), $id)) {
             db()->delete($this->getCollectionName(), $id);
         }
-        
+
         $this->redirectAdmin($this->getAdminPath());
     }
 }

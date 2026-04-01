@@ -6,7 +6,7 @@
 
 class Router {
     private $routes = array();
-    private $middleware = array();
+    private $globalMiddleware = array();
     private $currentRoute = null;
     
     /**
@@ -55,6 +55,31 @@ class Router {
         }
         return $this;
     }
+
+    /**
+     * Register global middleware that runs on matching URI patterns.
+     *
+     * Patterns:
+     *   '*'          — every request
+     *   '/admin/*'   — URIs starting with /admin/
+     *   '/api/*'     — URIs starting with /api/
+     *   '/login'     — exact match
+     *
+     * @param string   $pattern  URI pattern (* suffix for prefix match)
+     * @param callable $callback Middleware callable; return false to halt
+     * @param int      $priority Lower = runs first (default 10)
+     */
+    public function addGlobalMiddleware($pattern, $callback, $priority = 10) {
+        $this->globalMiddleware[] = array(
+            'pattern'  => $pattern,
+            'callback' => $callback,
+            'priority' => $priority,
+        );
+
+        usort($this->globalMiddleware, function ($a, $b) {
+            return $a['priority'] - $b['priority'];
+        });
+    }
     
     /**
      * Dispatch current request
@@ -77,8 +102,17 @@ class Router {
             
             // Route matched
             $this->currentRoute = $route;
-            
-            // Run middleware
+
+            // Run global middleware that matches this URI
+            foreach ($this->globalMiddleware as $mw) {
+                if ($this->middlewareMatches($mw['pattern'], $uri) && is_callable($mw['callback'])) {
+                    if (call_user_func($mw['callback']) === false) {
+                        return;
+                    }
+                }
+            }
+
+            // Run route-specific middleware
             foreach ($route['middleware'] as $mw) {
                 if (is_callable($mw)) {
                     $result = call_user_func($mw);
@@ -177,6 +211,24 @@ class Router {
         }
     }
     
+    /**
+     * Check if a middleware pattern matches the given URI.
+     */
+    private function middlewareMatches($pattern, $uri) {
+        if ($pattern === '*') {
+            return true;
+        }
+
+        // Prefix match: "/admin/*" matches "/admin" and "/admin/pages"
+        if (substr($pattern, -2) === '/*') {
+            $prefix = substr($pattern, 0, -2);
+            return $uri === $prefix || strpos($uri, $prefix . '/') === 0;
+        }
+
+        // Exact match
+        return $uri === $pattern;
+    }
+
     /**
      * 404 handler
      */

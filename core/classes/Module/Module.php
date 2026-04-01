@@ -168,11 +168,38 @@ abstract class Module implements ModuleInterface {
     // ========== Helper Methods ==========
     
     protected function hook($hookName, $callback, $priority = 10) {
-        $this->app->hooks()->register($hookName, $callback, $priority);
+        return $this->app->hooks()->register($hookName, $callback, $priority);
     }
-    
+
     protected function fireHook($hookName, $data = null) {
         return $this->app->hooks()->fire($hookName, $data);
+    }
+
+    /**
+     * Register a service for other modules to consume.
+     *
+     * @param string         $name     Service name
+     * @param callable|mixed $provider Callable (lazy) or a ready value
+     */
+    protected function provide($name, $provider) {
+        $this->app->provide($name, $provider);
+    }
+
+    /**
+     * Register global middleware for a URI pattern.
+     *
+     * Safe to call during init() — registration is deferred until the router
+     * is ready (routes.register hook, priority 5).
+     *
+     * @param string   $pattern  URI pattern ('*', '/admin/*', '/api/*', etc.)
+     * @param callable $callback Return false to halt the request
+     * @param int      $priority Lower = runs first (default 10)
+     */
+    protected function middleware($pattern, $callback, $priority = 10) {
+        $this->hook('routes.register', function ($data) use ($pattern, $callback, $priority) {
+            app()->router()->addGlobalMiddleware($pattern, $callback, $priority);
+            return $data;
+        }, 5);
     }
     
     protected function route($method, $pattern, $callback) {
@@ -253,7 +280,9 @@ abstract class Module implements ModuleInterface {
      */
     public function asset($path) {
         $path = ltrim($path, '/');
-        return base_url($this->getUrl() . '/assets/' . $path);
+        $url = base_url($this->getUrl() . '/assets/' . $path);
+        $version = $this->getVersion();
+        return $version ? $url . '?v=' . urlencode($version) : $url;
     }
 
     /**
