@@ -3,7 +3,7 @@
 // Collection schema for: posts
 
 return array(
-    'version' => 1,
+    'version' => 2,
     'defaults' => array(
         'title' => '',
         'slug' => '',
@@ -12,9 +12,21 @@ return array(
         'status' => 'draft',
         'category' => '',
         'author' => '',
+        'author_id' => '',
         'created_at' => '',
         'updated_at' => ''
     ),
+    'migrate' => function ($doc, $from, $to) {
+        if ($from < 2) {
+            // author_id added; existing docs keep author (username) for display,
+            // author_id will be empty until next edit or matched by username lookup.
+            if (!isset($doc['author_id'])) {
+                $doc['author_id'] = '';
+            }
+            $doc['schema_version'] = 2;
+        }
+        return $doc;
+    },
     'fields' => array(
         'title' => array(
             'type' => 'string',

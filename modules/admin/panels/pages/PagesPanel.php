@@ -26,6 +26,7 @@ class PagesPanel extends ContentPanel {
             'show_in_navigation' => false,
             'navigation_order' => 50,
             'author' => '',
+            'author_id' => '',
             'created_at' => '',
             'updated_at' => ''
         );
@@ -46,7 +47,31 @@ class PagesPanel extends ContentPanel {
     public function init($admin) {
         parent::init($admin);
 
+        $this->hook('permissions.register', array($this, 'registerPermissions'));
         $this->hook('theme.navigation', array($this, 'addPagesToNavigation'));
+    }
+
+    /**
+     * Register page permissions with the central registry.
+     */
+    public function registerPermissions($registry) {
+        $registry->registerPermissions(array(
+            'pages.view'       => 'View pages',
+            'pages.create'     => 'Create pages',
+            'pages.edit'       => 'Edit all pages',
+            'pages.edit.own'   => 'Edit own pages',
+            'pages.delete'     => 'Delete all pages',
+            'pages.delete.own' => 'Delete own pages',
+        ), 'Pages');
+
+        $registry->addRoleDefaults('editor', array(
+            'pages.view', 'pages.create', 'pages.edit', 'pages.delete',
+        ));
+        $registry->addRoleDefaults('viewer', array(
+            'pages.view',
+        ));
+
+        return $registry;
     }
 
     /**

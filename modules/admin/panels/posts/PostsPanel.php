@@ -8,6 +8,35 @@ class PostsPanel extends ContentPanel {
         return 'posts';
     }
 
+    public function init($admin) {
+        parent::init($admin);
+
+        $this->hook('permissions.register', array($this, 'registerPermissions'));
+    }
+
+    /**
+     * Register post permissions with the central registry.
+     */
+    public function registerPermissions($registry) {
+        $registry->registerPermissions(array(
+            'posts.view'       => 'View posts',
+            'posts.create'     => 'Create posts',
+            'posts.edit'       => 'Edit all posts',
+            'posts.edit.own'   => 'Edit own posts',
+            'posts.delete'     => 'Delete all posts',
+            'posts.delete.own' => 'Delete own posts',
+        ), 'Posts');
+
+        $registry->addRoleDefaults('editor', array(
+            'posts.view', 'posts.create', 'posts.edit', 'posts.delete',
+        ));
+        $registry->addRoleDefaults('viewer', array(
+            'posts.view',
+        ));
+
+        return $registry;
+    }
+
     protected function getContentType() {
         return 'Post';
     }
@@ -25,6 +54,7 @@ class PostsPanel extends ContentPanel {
             'status' => 'draft',
             'category' => '',
             'author' => '',
+            'author_id' => '',
             'created_at' => '',
             'updated_at' => ''
         );

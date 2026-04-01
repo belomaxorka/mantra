@@ -24,60 +24,12 @@ class PermissionRegistry {
     /** @var array Cached resolved permissions per role: role => array of permission strings */
     private $resolved = array();
 
+    /**
+     * Constructor. The registry starts empty.
+     * Panels and modules register their permissions via the 'permissions.register' hook.
+     */
     public function __construct() {
-        $this->registerCorePermissions();
-        $this->registerCoreDefaults();
-    }
-
-    /**
-     * Register core permissions and their groups.
-     */
-    private function registerCorePermissions() {
-        $this->registerPermissions(array(
-            'pages.view'       => 'View pages',
-            'pages.create'     => 'Create pages',
-            'pages.edit'       => 'Edit all pages',
-            'pages.edit.own'   => 'Edit own pages',
-            'pages.delete'     => 'Delete all pages',
-            'pages.delete.own' => 'Delete own pages',
-        ), 'Pages');
-
-        $this->registerPermissions(array(
-            'posts.view'       => 'View posts',
-            'posts.create'     => 'Create posts',
-            'posts.edit'       => 'Edit all posts',
-            'posts.edit.own'   => 'Edit own posts',
-            'posts.delete'     => 'Delete all posts',
-            'posts.delete.own' => 'Delete own posts',
-        ), 'Posts');
-
-        $this->registerPermissions(array(
-            'uploads.view'   => 'View uploads',
-            'uploads.upload' => 'Upload files',
-        ), 'Uploads');
-
-        $this->registerPermissions(array(
-            'users.view'   => 'View users',
-            'users.create' => 'Create users',
-            'users.edit'   => 'Edit users',
-            'users.delete' => 'Delete users',
-        ), 'Users');
-    }
-
-    /**
-     * Register built-in default permissions per role.
-     */
-    private function registerCoreDefaults() {
-        $this->defaults = array(
-            'editor' => array(
-                'pages.view', 'pages.create', 'pages.edit', 'pages.delete',
-                'posts.view', 'posts.create', 'posts.edit', 'posts.delete',
-                'uploads.view', 'uploads.upload',
-            ),
-            'viewer' => array(
-                'pages.view', 'posts.view',
-            ),
-        );
+        // No hardcoded permissions — everything is registered by panels/modules.
     }
 
     // ========== Registration API ==========

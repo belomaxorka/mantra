@@ -138,8 +138,11 @@ class User {
      * Check if user owns the given content item.
      * Used for ownership-gated permissions (.own suffix).
      *
-     * @param array $user    User data
-     * @param array $content Content item with 'author' field
+     * Compares by author_id (stable). Falls back to author (username)
+     * for content created before the author_id migration.
+     *
+     * @param array $user    User data with '_id' and 'username'
+     * @param array $content Content item with 'author_id' or 'author'
      * @return bool
      */
     public function canEdit($user, $content) {
@@ -152,7 +155,14 @@ class User {
             return true;
         }
 
-        // Compare content author with current username
+        // Primary: compare by author_id (stable identifier)
+        $authorId = isset($content['author_id']) ? $content['author_id'] : '';
+        $userId = isset($user['_id']) ? $user['_id'] : '';
+        if ($authorId !== '' && $userId !== '') {
+            return $authorId === $userId;
+        }
+
+        // Fallback: compare by username (pre-migration content)
         $contentAuthor = isset($content['author']) ? $content['author'] : '';
         $username = isset($user['username']) ? $user['username'] : '';
 

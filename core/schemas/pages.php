@@ -3,7 +3,7 @@
 // Collection schema for: pages
 
 return array(
-    'version' => 1,
+    'version' => 2,
     'defaults' => array(
         'title' => '',
         'slug' => '',
@@ -13,9 +13,19 @@ return array(
         'show_in_navigation' => false,
         'navigation_order' => 50,
         'author' => '',
+        'author_id' => '',
         'created_at' => '',
         'updated_at' => ''
     ),
+    'migrate' => function ($doc, $from, $to) {
+        if ($from < 2) {
+            if (!isset($doc['author_id'])) {
+                $doc['author_id'] = '';
+            }
+            $doc['schema_version'] = 2;
+        }
+        return $doc;
+    },
     'fields' => array(
         'title' => array(
             'type' => 'string',

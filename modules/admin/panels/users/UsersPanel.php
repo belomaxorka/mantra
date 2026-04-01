@@ -10,6 +10,26 @@ class UsersPanel extends ContentPanel {
         return 'users';
     }
 
+    public function init($admin) {
+        parent::init($admin);
+
+        $this->hook('permissions.register', array($this, 'registerPermissions'));
+    }
+
+    /**
+     * Register user management permissions with the central registry.
+     */
+    public function registerPermissions($registry) {
+        $registry->registerPermissions(array(
+            'users.view'   => 'View users',
+            'users.create' => 'Create users',
+            'users.edit'   => 'Edit users',
+            'users.delete' => 'Delete users',
+        ), 'Users');
+
+        return $registry;
+    }
+
     protected function getContentType() {
         return 'User';
     }
