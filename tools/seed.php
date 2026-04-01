@@ -148,6 +148,7 @@ if ($doClear) {
     $cleared = 0;
     $cleared += clear_seeded('posts');
     $cleared += clear_seeded('pages');
+    $cleared += clear_seeded('categories');
     echo "Cleared {$cleared} seeded documents.\n";
 
     if (!$generateAfter) {
@@ -158,8 +159,38 @@ if ($doClear) {
 }
 
 $db = app()->db();
-$categories = array('news', 'tutorials', 'reviews', 'opinion', 'guides', '');
 $statuses = array('published', 'published', 'published', 'draft'); // 75% published
+
+// ── Generate categories ────────────────────────────────────────────────────
+
+$categoryDefs = array(
+    array('title' => 'News',      'slug' => 'news',      'description' => 'Latest news and announcements', 'order' => 0),
+    array('title' => 'Tutorials',  'slug' => 'tutorials',  'description' => 'Step-by-step guides and how-tos', 'order' => 1),
+    array('title' => 'Reviews',    'slug' => 'reviews',    'description' => 'In-depth reviews and comparisons', 'order' => 2),
+    array('title' => 'Opinion',    'slug' => 'opinion',    'description' => 'Opinions and editorials',         'order' => 3),
+    array('title' => 'Guides',     'slug' => 'guides',     'description' => 'Comprehensive reference guides',  'order' => 4),
+);
+
+echo "Generating " . count($categoryDefs) . " categories...";
+foreach ($categoryDefs as $catDef) {
+    if ($db->exists('categories', $catDef['slug'])) {
+        continue;
+    }
+    $now = clock()->timestamp();
+    $db->write('categories', $catDef['slug'], array(
+        'title'       => $catDef['title'],
+        'slug'        => $catDef['slug'],
+        'description' => $catDef['description'],
+        'order'       => $catDef['order'],
+        'created_at'  => $now,
+        'updated_at'  => $now,
+        '_seed'       => true,
+    ));
+}
+echo " done.\n";
+
+$categorySlugs = array_map(function ($c) { return $c['slug']; }, $categoryDefs);
+$categorySlugs[] = ''; // some posts without category
 
 // Get first user as author
 $users = $db->query('users', array(), array('limit' => 1));
@@ -196,7 +227,7 @@ if ($numPosts > 0) {
             'content' => seed_html_content(),
             'excerpt' => seed_sentence(8, 20) . '.',
             'status' => seed_pick($statuses),
-            'category' => seed_pick($categories),
+            'category' => seed_pick($categorySlugs),
             'image' => '',
             'author' => $author,
             'author_id' => $authorId,
@@ -260,8 +291,10 @@ if ($numPages > 0) {
 
 $totalPosts = $db->count('posts');
 $totalPages = $db->count('pages');
+$totalCategories = $db->count('categories');
 
 echo "\nSummary:\n";
+echo "  Categories: {$totalCategories} total\n";
 echo "  Posts: {$totalPosts} total ({$numPosts} seeded)\n";
 echo "  Pages: {$totalPages} total ({$numPages} seeded)\n";
 echo "Done.\n";
