@@ -112,6 +112,17 @@ return array(
     'admin-settings.appearance.sidebar.forest' => 'Лесной',
     'admin-settings.appearance.sidebar.plum' => 'Сливовый',
     'admin-settings.appearance.sidebar.light' => 'Светлый',
+    'admin-settings.appearance.font' => 'Шрифт',
+    'admin-settings.appearance.font.help' => 'Выберите шрифт панели администрирования.',
+    'admin-settings.appearance.font.inter' => 'Inter (по умолчанию)',
+    'admin-settings.appearance.font.system' => 'Системный',
+    'admin-settings.appearance.font.roboto' => 'Roboto',
+    'admin-settings.appearance.font.nunito' => 'Nunito',
+    'admin-settings.appearance.font.source-sans' => 'Source Sans',
+    'admin-settings.appearance.font.jetbrains-mono' => 'JetBrains Mono',
+    'admin-settings.appearance.theme' => 'Тема',
+    'admin-settings.appearance.theme.light' => 'Светлая',
+    'admin-settings.appearance.theme.dark' => 'Тёмная',
 
     // Debug settings
     'admin-settings.debug.enabled' => 'Включить режим отладки',

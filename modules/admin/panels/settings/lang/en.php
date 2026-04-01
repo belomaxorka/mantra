@@ -112,6 +112,17 @@ return array(
     'admin-settings.appearance.sidebar.forest' => 'Forest',
     'admin-settings.appearance.sidebar.plum' => 'Plum',
     'admin-settings.appearance.sidebar.light' => 'Light',
+    'admin-settings.appearance.font' => 'Font',
+    'admin-settings.appearance.font.help' => 'Choose the admin panel font.',
+    'admin-settings.appearance.font.inter' => 'Inter (default)',
+    'admin-settings.appearance.font.system' => 'System',
+    'admin-settings.appearance.font.roboto' => 'Roboto',
+    'admin-settings.appearance.font.nunito' => 'Nunito',
+    'admin-settings.appearance.font.source-sans' => 'Source Sans',
+    'admin-settings.appearance.font.jetbrains-mono' => 'JetBrains Mono',
+    'admin-settings.appearance.theme' => 'Theme',
+    'admin-settings.appearance.theme.light' => 'Light',
+    'admin-settings.appearance.theme.dark' => 'Dark',
 
     // Debug settings
     'admin-settings.debug.enabled' => 'Enable debug mode',

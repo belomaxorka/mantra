@@ -420,6 +420,9 @@ class SettingsPanel extends AdminPanel {
                 if ($path === 'admin.sidebar_color' && (string)$field['type'] === 'select') {
                     $field['options'] = $this->availableSidebarColorOptions();
                 }
+                if ($path === 'admin.font' && (string)$field['type'] === 'select') {
+                    $field['options'] = $this->availableFontOptions();
+                }
                 if ($path === 'modules.enabled' && (string)$field['type'] === 'module_cards') {
                     $field['options'] = $this->availableModuleCards();
                 }
@@ -445,6 +448,22 @@ class SettingsPanel extends AdminPanel {
         $options = array();
         foreach ($presets as $key => $vars) {
             $options[$key] = 'admin-settings.appearance.preset.' . $key;
+        }
+        return $options;
+    }
+
+    private function availableFontOptions() {
+        $presetsFile = dirname(dirname($this->panelPath)) . '/font-presets.php';
+        if (!file_exists($presetsFile)) {
+            return array();
+        }
+        $presets = require $presetsFile;
+        if (!is_array($presets)) {
+            return array();
+        }
+        $options = array();
+        foreach ($presets as $key => $meta) {
+            $options[$key] = 'admin-settings.appearance.font.' . $key;
         }
         return $options;
     }

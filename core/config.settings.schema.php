@@ -126,6 +126,24 @@ return array(
                     'help' => 'admin-settings.appearance.sidebar_color.help',
                     'options' => array(),
                 ),
+                array(
+                    'path' => 'admin.font',
+                    'type' => 'select',
+                    'title' => 'admin-settings.appearance.font',
+                    'default' => 'inter',
+                    'help' => 'admin-settings.appearance.font.help',
+                    'options' => array(),
+                ),
+                array(
+                    'path' => 'admin.theme',
+                    'type' => 'select',
+                    'title' => 'admin-settings.appearance.theme',
+                    'default' => 'light',
+                    'options' => array(
+                        'light' => 'admin-settings.appearance.theme.light',
+                        'dark' => 'admin-settings.appearance.theme.dark',
+                    ),
+                ),
             ),
         ),
         array(

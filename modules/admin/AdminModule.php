@@ -59,12 +59,13 @@ class AdminModule extends Module
     }
 
     /**
-     * Inject CSS custom property overrides for accent color and sidebar color.
+     * Inject CSS overrides for accent color, sidebar color and font.
      */
     public function injectAppearanceStyle($html)
     {
         $config = \ConfigSettings::instance();
         $lines = array();
+        $extra = '';
 
         // Accent color
         $accent = preg_replace('/[^a-z0-9_-]/', '', strtolower($config->get('admin.accent_color', 'indigo')));
@@ -78,11 +79,36 @@ class AdminModule extends Module
             $lines = array_merge($lines, $this->loadPresetVars('sidebar-presets.php', $sidebar));
         }
 
-        if (empty($lines)) {
+        // Font
+        $font = preg_replace('/[^a-z0-9_-]/', '', strtolower($config->get('admin.font', 'inter')));
+        if ($font !== '' && $font !== 'inter') {
+            $preset = $this->loadFontPreset($font);
+            if ($preset !== null) {
+                if (!empty($preset['import'])) {
+                    $extra .= '<link href="' . htmlspecialchars($preset['import'], ENT_QUOTES, 'UTF-8') . '" rel="stylesheet">' . "\n";
+                }
+                $lines[] = '  --mn-font: ' . $preset['family'] . ';';
+            }
+        }
+
+        // Dark theme
+        $theme = preg_replace('/[^a-z0-9_-]/', '', strtolower($config->get('admin.theme', 'light')));
+        if ($theme === 'dark') {
+            $extra .= '<link href="' . base_url('/modules/admin/assets/css/admin-dark.css') . '" rel="stylesheet">' . "\n";
+        }
+
+        if (empty($lines) && $extra === '') {
             return $html;
         }
 
-        return $html . "\n<style>:root {\n" . implode("\n", $lines) . "\n}</style>";
+        $result = $html;
+        if ($extra !== '') {
+            $result .= "\n" . $extra;
+        }
+        if (!empty($lines)) {
+            $result .= "<style>:root {\n" . implode("\n", $lines) . "\n}</style>";
+        }
+        return $result;
     }
 
     /**
@@ -109,6 +135,27 @@ class AdminModule extends Module
             $lines[] = '  ' . $prop . ': ' . $value . ';';
         }
         return $lines;
+    }
+
+    /**
+     * Load a font preset by key.
+     *
+     * @param string $key Font preset key
+     * @return array|null  array('family' => ..., 'import' => ...) or null
+     */
+    private function loadFontPreset($key)
+    {
+        $file = $this->getPath() . '/font-presets.php';
+        if (!file_exists($file)) {
+            return null;
+        }
+
+        $presets = require $file;
+        if (!is_array($presets) || !isset($presets[$key]) || !is_array($presets[$key])) {
+            return null;
+        }
+
+        return $presets[$key];
     }
 
     // ========== Panel Management ==========
