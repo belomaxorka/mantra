@@ -2,7 +2,7 @@
 
 namespace Admin;
 
-class UsersPanel extends AdminPanel {
+class UsersPanel extends ContentPanel {
 
     private $userManager = null;
 
@@ -10,154 +10,25 @@ class UsersPanel extends AdminPanel {
         return 'users';
     }
 
-    public function registerRoutes($admin) {
-        $path = 'users';
-        $admin->adminRoute('GET',  $path,                  array($this, 'listUsers'));
-        $admin->adminRoute('GET',  $path . '/new',         array($this, 'newUser'));
-        $admin->adminRoute('POST', $path . '/new',         array($this, 'createUser'));
-        $admin->adminRoute('GET',  $path . '/edit/{id}',   array($this, 'editUser'));
-        $admin->adminRoute('POST', $path . '/edit/{id}',   array($this, 'updateUser'));
-        $admin->adminRoute('POST', $path . '/delete/{id}', array($this, 'deleteUser'));
+    protected function getContentType() {
+        return 'User';
     }
 
-    private function getUserManager() {
-        if ($this->userManager === null) {
-            $this->userManager = new \User();
-        }
-        return $this->userManager;
+    protected function getCollectionName() {
+        return 'users';
     }
 
-    private function getDomain() {
-        return 'admin-users';
-    }
-
-    // ========== Breadcrumbs ==========
-
-    private function getListBreadcrumbs() {
+    protected function getDefaultItem() {
         return array(
-            array('title' => t('admin-dashboard.title'), 'url' => base_url('/admin')),
-            array('title' => t('admin-users.title')),
+            'username' => '',
+            'email' => '',
+            'password' => '',
+            'role' => 'editor',
+            'status' => 'active',
         );
     }
 
-    private function getItemBreadcrumbs($title) {
-        return array(
-            array('title' => t('admin-dashboard.title'), 'url' => base_url('/admin')),
-            array('title' => t('admin-users.title'), 'url' => base_url('/admin/users')),
-            array('title' => $title),
-        );
-    }
-
-    // ========== CRUD ==========
-
-    public function listUsers() {
-        if (!$this->requireAdmin()) return;
-
-        $users = $this->getUserManager()->all();
-        $currentUser = $this->getUser();
-
-        $content = $this->renderView('list', array(
-            'users' => $users,
-            'currentUserId' => isset($currentUser['_id']) ? $currentUser['_id'] : '',
-        ));
-
-        return $this->renderAdmin(t('admin-users.title'), $content, array(
-            'breadcrumbs' => $this->getListBreadcrumbs(),
-        ));
-    }
-
-    public function newUser() {
-        if (!$this->requireAdmin()) return;
-
-        $title = t('admin-users.new');
-
-        $content = $this->renderView('edit', array(
-            'user' => array(
-                'username' => '',
-                'email' => '',
-                'password' => '',
-                'role' => 'editor',
-                'status' => 'active',
-            ),
-            'isNew' => true,
-            'csrf_token' => $this->auth()->generateCsrfToken(),
-        ));
-
-        return $this->renderAdmin($title, $content, array(
-            'breadcrumbs' => $this->getItemBreadcrumbs($title),
-        ));
-    }
-
-    public function createUser() {
-        if (!$this->requireAdmin()) return;
-        if (!$this->verifyCsrf()) return;
-
-        $data = array(
-            'username' => post_trimmed('username'),
-            'email'    => post_trimmed('email'),
-            'password' => request()->post('password', ''),
-            'role'     => request()->post('role', 'editor'),
-            'status'   => request()->post('status', 'active'),
-        );
-
-        $result = $this->getUserManager()->create($data);
-
-        if ($result === false) {
-            // Re-render form with error
-            $data['password'] = '';
-            $content = $this->renderView('edit', array(
-                'user' => $data,
-                'isNew' => true,
-                'csrf_token' => $this->auth()->generateCsrfToken(),
-                'error' => t('admin-users.create_error'),
-            ));
-
-            return $this->renderAdmin(t('admin-users.new'), $content, array(
-                'breadcrumbs' => $this->getItemBreadcrumbs(t('admin-users.new')),
-            ));
-        }
-
-        $this->redirectAdmin('users');
-    }
-
-    public function editUser($params) {
-        if (!$this->requireAdmin()) return;
-
-        $id = isset($params['id']) ? $params['id'] : '';
-        $user = $this->getUserManager()->find($id);
-
-        if (!$user) {
-            http_response_code(404);
-            return $this->renderAdmin(t('admin-users.title'),
-                '<div class="alert alert-danger alert-permanent">' . e(t('admin-users.not_found')) . '</div>');
-        }
-
-        $title = t('admin-users.edit_user');
-
-        $content = $this->renderView('edit', array(
-            'user' => $user,
-            'isNew' => false,
-            'csrf_token' => $this->auth()->generateCsrfToken(),
-        ));
-
-        return $this->renderAdmin($title, $content, array(
-            'breadcrumbs' => $this->getItemBreadcrumbs($title),
-        ));
-    }
-
-    public function updateUser($params) {
-        if (!$this->requireAdmin()) return;
-        if (!$this->verifyCsrf()) return;
-
-        $id = isset($params['id']) ? $params['id'] : '';
-        $user = $this->getUserManager()->find($id);
-
-        if (!$user) {
-            http_response_code(404);
-            return $this->renderAdmin(t('admin-users.title'),
-                '<div class="alert alert-danger alert-permanent">' . e(t('admin-users.not_found')) . '</div>');
-        }
-
+    protected function extractFormData() {
         $data = array(
             'email'  => post_trimmed('email'),
             'role'   => request()->post('role', 'editor'),
@@ -170,12 +41,93 @@ class UsersPanel extends AdminPanel {
             $data['password'] = $password;
         }
 
-        $this->getUserManager()->update($id, $data);
-        $this->redirectAdmin('users');
+        return $data;
     }
 
-    public function deleteUser($params) {
-        if (!$this->requireAdmin()) return;
+    // Users don't have slugs
+    protected function ensureSlug($data) {
+        return $data;
+    }
+
+    // Use generated ID instead of slug-based
+    protected function generateId($data) {
+        return $this->db()->generateId();
+    }
+
+    private function getUserManager() {
+        if ($this->userManager === null) {
+            $this->userManager = new \User();
+        }
+        return $this->userManager;
+    }
+
+    // ========== Overrides ==========
+
+    public function listItems() {
+        if (!$this->requirePermission('users.view')) return;
+
+        $users = $this->getUserManager()->all();
+        $currentUser = $this->getUser();
+
+        $content = $this->renderView($this->getListTemplate(), array_merge(
+            array(
+                'users' => $users,
+                'currentUserId' => isset($currentUser['_id']) ? $currentUser['_id'] : '',
+            ),
+            $this->getPermissionFlags()
+        ));
+
+        return $this->renderAdmin(t($this->getDomain() . '.title'), $content, array(
+            'breadcrumbs' => $this->getListBreadcrumbs(),
+        ));
+    }
+
+    public function createItem() {
+        if (!$this->requirePermission('users.create')) return;
+        if (!$this->verifyCsrf()) return;
+
+        $data = $this->extractFormData();
+        $data['username'] = post_trimmed('username');
+
+        $result = $this->getUserManager()->create($data);
+
+        if ($result === false) {
+            $data['password'] = '';
+            $title = t($this->getDomain() . '.new');
+            $content = $this->renderView($this->getEditTemplate(), array(
+                'user' => $data,
+                'isNew' => true,
+                'csrf_token' => $this->auth()->generateCsrfToken(),
+                'error' => t('admin-users.create_error'),
+            ));
+            return $this->renderAdmin($title, $content, array(
+                'breadcrumbs' => $this->getItemBreadcrumbs($title),
+            ));
+        }
+
+        $this->redirectAdmin($this->getAdminPath());
+    }
+
+    public function updateItem($params) {
+        if (!$this->requirePermission('users.edit')) return;
+        if (!$this->verifyCsrf()) return;
+
+        $id = isset($params['id']) ? $params['id'] : '';
+        $user = $this->getUserManager()->find($id);
+
+        if (!$user) {
+            http_response_code(404);
+            return $this->renderAdmin('Not Found',
+                '<div class="alert alert-danger alert-permanent">' . e(t('admin-users.not_found')) . '</div>');
+        }
+
+        $data = $this->extractFormData();
+        $this->getUserManager()->update($id, $data);
+        $this->redirectAdmin($this->getAdminPath());
+    }
+
+    public function deleteItem($params) {
+        if (!$this->requirePermission('users.delete')) return;
         if (!$this->verifyCsrf()) return;
 
         $id = isset($params['id']) ? $params['id'] : '';
@@ -183,7 +135,7 @@ class UsersPanel extends AdminPanel {
 
         // Prevent self-deletion
         if (isset($currentUser['_id']) && $id === $currentUser['_id']) {
-            $this->redirectAdmin('users');
+            $this->redirectAdmin($this->getAdminPath());
             return;
         }
 
@@ -192,12 +144,12 @@ class UsersPanel extends AdminPanel {
         if ($target && isset($target['role']) && $target['role'] === 'admin') {
             $admins = $this->getUserManager()->all(array('role' => 'admin'));
             if (count($admins) <= 1) {
-                $this->redirectAdmin('users');
+                $this->redirectAdmin($this->getAdminPath());
                 return;
             }
         }
 
         $this->getUserManager()->delete($id);
-        $this->redirectAdmin('users');
+        $this->redirectAdmin($this->getAdminPath());
     }
 }
