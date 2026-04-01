@@ -6,9 +6,7 @@
 /**
  * Standard datetime format used throughout the application
  */
-if (!defined('DATETIME_FORMAT')) {
-    define('DATETIME_FORMAT', 'Y-m-d H:i:s');
-}
+define('DATETIME_FORMAT', 'Y-m-d H:i:s');
 
 /**
  * Get current datetime in standard format

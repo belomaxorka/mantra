@@ -31,18 +31,9 @@ class Language
 
     public function __construct()
     {
-        // Prefer config() helper when available (no Application dependency),
-        // but fall back to early-loaded $GLOBALS['MANTRA_CONFIG'] during bootstrap.
-        if (function_exists('config')) {
-            $this->locale = (string)config('locale.default_language', 'en');
-            $this->fallbackLocale = (string)config('locale.fallback_locale', 'en');
-            $this->theme = (string)config('theme.active', 'default');
-        } else {
-            $cfg = (isset($GLOBALS['MANTRA_CONFIG']) && is_array($GLOBALS['MANTRA_CONFIG'])) ? $GLOBALS['MANTRA_CONFIG'] : array();
-            $this->locale = (string)Config::getNested($cfg, 'locale.default_language', 'en');
-            $this->fallbackLocale = (string)Config::getNested($cfg, 'locale.fallback_locale', 'en');
-            $this->theme = (string)Config::getNested($cfg, 'theme.active', 'default');
-        }
+        $this->locale = (string)config('locale.default_language', 'en');
+        $this->fallbackLocale = (string)config('locale.fallback_locale', 'en');
+        $this->theme = (string)config('theme.active', 'default');
 
         if ($this->locale === '') {
             $this->locale = 'en';

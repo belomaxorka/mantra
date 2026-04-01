@@ -12,13 +12,11 @@
  */
 function resolve_log_level()
 {
-    $level = (defined('MANTRA_DEBUG') && MANTRA_DEBUG) ? Logger::DEBUG : Logger::INFO;
+    $level = MANTRA_DEBUG ? Logger::DEBUG : Logger::INFO;
 
-    if (isset($GLOBALS['MANTRA_CONFIG']) && is_array($GLOBALS['MANTRA_CONFIG'])) {
-        $cfgLevel = Config::getNested($GLOBALS['MANTRA_CONFIG'], 'logging.level', null);
-        if (!empty($cfgLevel)) {
-            $level = $cfgLevel;
-        }
+    $cfgLevel = Config::getNested($GLOBALS['MANTRA_CONFIG'], 'logging.level', null);
+    if (!empty($cfgLevel)) {
+        $level = $cfgLevel;
     }
 
     return $level;

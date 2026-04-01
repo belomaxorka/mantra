@@ -12,20 +12,12 @@ class ErrorHandler
 
     private static function isCli()
     {
-        if (defined('MANTRA_CLI')) {
-            return MANTRA_CLI;
-        }
-        return (PHP_SAPI === 'cli');
+        return MANTRA_CLI;
     }
 
     private static function writeCli($text)
     {
-        if (defined('STDERR')) {
-            fwrite(STDERR, $text);
-        } else {
-            // Fallback (should be rare).
-            echo $text;
-        }
+        fwrite(STDERR, $text);
     }
 
     /**
@@ -53,8 +45,7 @@ class ErrorHandler
             return self::$logger;
         }
 
-        // Create a dedicated logger that does not depend on Application/config.
-        $minLevel = function_exists('resolve_log_level') ? resolve_log_level() : Logger::DEBUG;
+        $minLevel = resolve_log_level();
         self::$logger = new Logger('php', array('minLevel' => $minLevel));
         return self::$logger;
     }
@@ -92,7 +83,7 @@ class ErrorHandler
         if (self::isCli()) {
             // CLI-friendly output
             self::writeCli("Uncaught exception: " . $exception->getMessage() . "\n");
-            if (defined('MANTRA_DEBUG') && MANTRA_DEBUG) {
+            if (MANTRA_DEBUG) {
                 self::writeCli($exception->getTraceAsString() . "\n");
             }
             exit(1);
@@ -104,7 +95,7 @@ class ErrorHandler
         // Preserve existing application behavior: show a generic 500 if not in debug.
         http_response_code(500);
 
-        if (defined('MANTRA_DEBUG') && MANTRA_DEBUG) {
+        if (MANTRA_DEBUG) {
             echo '<h1>Error</h1>';
             echo '<p>' . htmlspecialchars($exception->getMessage()) . '</p>';
             echo '<pre>' . htmlspecialchars($exception->getTraceAsString()) . '</pre>';

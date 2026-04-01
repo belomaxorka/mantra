@@ -33,20 +33,7 @@ class Application {
      * Load configuration
      */
     private function loadConfig() {
-        // Prefer config loaded in index.php (avoids re-reading config file)
-        if (isset($GLOBALS['MANTRA_CONFIG']) && is_array($GLOBALS['MANTRA_CONFIG'])) {
-            $config = $GLOBALS['MANTRA_CONFIG'];
-        } else {
-            // Fallback for non-standard entrypoints
-            require_once MANTRA_CORE . '/Config.php';
-            $config = Config::bootstrap();
-        }
-        $this->config = $config;
-        
-        // Define debug constant (may already be defined in index.php)
-        if (!defined('MANTRA_DEBUG')) {
-            define('MANTRA_DEBUG', !empty(Config::getNested($config, 'debug.enabled', false)));
-        }
+        $this->config = $GLOBALS['MANTRA_CONFIG'];
     }
     
     /**
@@ -59,17 +46,7 @@ class Application {
             date_default_timezone_set($tz);
         }
 
-        // Ensure MANTRA_DEBUG matches config as a single source of truth.
-        $debug = Config::getNested($this->config, 'debug.enabled', false);
-        if (!defined('MANTRA_DEBUG') || MANTRA_DEBUG !== (bool)$debug) {
-            // Constants can't be redefined; only define if missing.
-            if (!defined('MANTRA_DEBUG')) {
-                define('MANTRA_DEBUG', (bool)$debug);
-            }
-        }
-        
         // Error reporting
-        // Variant C: collect everything to logs, but show details only in debug.
         error_reporting(E_ALL);
         if (MANTRA_DEBUG) {
             ini_set('display_errors', 1);
