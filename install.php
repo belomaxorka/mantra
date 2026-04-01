@@ -22,26 +22,53 @@ if (!empty($missingExtensions)) {
     die('Missing required PHP extensions: ' . implode(', ', $missingExtensions));
 }
 
-// Check if already installed
+// Check if already installed — redirect away instead of die()
 if (file_exists(MANTRA_CONTENT . '/users')) {
     $users = glob(MANTRA_CONTENT . '/users/*.json');
     if (!empty($users)) {
-        die(MANTRA_PROJECT_INFO['name'] . ' is already installed. Delete users to reinstall.');
+        $base = rtrim(Config::detectBaseUrl(), '/');
+        header('Location: ' . $base . '/', true, 302);
+        exit;
     }
 }
+
+// Allowed languages whitelist
+$allowedLanguages = array('en', 'ru');
+
+// CSRF: generate token for the form
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+if (empty($_SESSION['install_csrf'])) {
+    $_SESSION['install_csrf'] = bin2hex(random_bytes(32));
+}
+$csrfToken = $_SESSION['install_csrf'];
 
 // Handle form submission
 $selectedLanguage = 'en';
 if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = isset($_POST['username']) ? trim((string)$_POST['username']) : '';
-    $password = isset($_POST['password']) ? (string)$_POST['password'] : '';
-    $siteName = isset($_POST['site_name']) && trim($_POST['site_name']) !== '' ? trim((string)$_POST['site_name']) : MANTRA_PROJECT_INFO['name'];
-    $language = isset($_POST['language']) ? (string)$_POST['language'] : 'en';
-    $selectedLanguage = $language;
-
-    if (empty($username) || empty($password)) {
-        $error = 'error_required_fields';
+    // Verify CSRF
+    $postedToken = isset($_POST['csrf_token']) ? (string)$_POST['csrf_token'] : '';
+    if (!hash_equals($csrfToken, $postedToken)) {
+        $error = 'error_csrf';
     } else {
+        $username = isset($_POST['username']) ? trim((string)$_POST['username']) : '';
+        $password = isset($_POST['password']) ? (string)$_POST['password'] : '';
+        $siteName = isset($_POST['site_name']) && trim($_POST['site_name']) !== '' ? trim((string)$_POST['site_name']) : MANTRA_PROJECT_INFO['name'];
+        $language = isset($_POST['language']) ? (string)$_POST['language'] : 'en';
+        $selectedLanguage = in_array($language, $allowedLanguages) ? $language : 'en';
+
+        // Validate input
+        if (empty($username) || empty($password)) {
+            $error = 'error_required_fields';
+        } elseif (!preg_match('/^[a-zA-Z0-9_-]{3,32}$/', $username)) {
+            $error = 'error_invalid_username';
+        } elseif (strlen($password) < 6) {
+            $error = 'error_password_too_short';
+        }
+    }
+
+    if (!isset($error)) {
         // Create directories
         $dirs = array(
             MANTRA_CONTENT . '/pages',
@@ -52,12 +79,18 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
             MANTRA_UPLOADS
         );
 
+        $dirFailed = false;
         foreach ($dirs as $dir) {
-            if (!is_dir($dir)) {
-                mkdir($dir, 0755, true);
+            if (!is_dir($dir) && !mkdir($dir, 0755, true)) {
+                $dirFailed = true;
             }
         }
+        if ($dirFailed) {
+            $error = 'error_create_dirs';
+        }
+    }
 
+    if (!isset($error)) {
         // Create configuration
         $baseUrl = Config::detectBaseUrl();
         $config = Config::buildInstallConfig($siteName, $language, $baseUrl);
@@ -76,10 +109,10 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
         // Save configuration
         FileIO::writeAtomic(MANTRA_CONTENT . '/settings/config.json', JsonCodec::encode($overrides));
 
-        // Create admin user
+        // Create admin user (use Clock format for timestamp consistency)
         $db = new Database();
 
-        $now = date('Y-m-d\TH:i:sP');
+        $now = date(Clock::STORAGE_FORMAT);
         $userData = array(
             'username' => $username,
             'password' => Auth::hashPasswordStatic($password),
@@ -92,6 +125,8 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
         );
 
         if ($db->write('users', $db->generateId(), $userData)) {
+            // Regenerate CSRF token after success
+            unset($_SESSION['install_csrf']);
             $success = true;
             $adminUrl = rtrim($baseUrl, '/') . '/admin';
         } else {
@@ -192,6 +227,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
                             <?php endif; ?>
 
                             <form method="POST">
+                                <input type="hidden" name="csrf_token" value="<?php echo e($csrfToken); ?>">
                                 <div class="mb-3">
                                     <label for="site_name" class="form-label" data-i18n="label_site_name">Site Name</label>
                                     <input type="text" class="form-control" id="site_name" name="site_name" value="<?php echo e(MANTRA_PROJECT_INFO['name']); ?>" required>
@@ -207,12 +243,12 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
 
                                 <div class="mb-3">
                                     <label for="username" class="form-label" data-i18n="label_username">Admin Username</label>
-                                    <input type="text" class="form-control" id="username" name="username" required>
+                                    <input type="text" class="form-control" id="username" name="username" pattern="[a-zA-Z0-9_\-]{3,32}" minlength="3" maxlength="32" required>
                                 </div>
 
                                 <div class="mb-3">
                                     <label for="password" class="form-label" data-i18n="label_password">Admin Password</label>
-                                    <input type="password" class="form-control" id="password" name="password" required>
+                                    <input type="password" class="form-control" id="password" name="password" minlength="6" required>
                                 </div>
 
                                 <div class="d-grid">
@@ -241,6 +277,10 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
                 label_password: 'Admin Password',
                 button_install: 'Install',
                 error_required_fields: 'Username and password are required',
+                error_invalid_username: 'Username must be 3-32 characters: letters, numbers, hyphens, underscores',
+                error_password_too_short: 'Password must be at least 6 characters',
+                error_create_dirs: 'Failed to create required directories. Check file permissions.',
+                error_csrf: 'Security token expired. Please try again.',
                 error_create_user: 'Failed to create user'
             },
             ru: {
@@ -255,6 +295,10 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
                 label_password: 'Пароль администратора',
                 button_install: 'Установить',
                 error_required_fields: 'Имя пользователя и пароль обязательны',
+                error_invalid_username: 'Имя пользователя: 3-32 символа (буквы, цифры, дефис, подчёркивание)',
+                error_password_too_short: 'Пароль должен быть не менее 6 символов',
+                error_create_dirs: 'Не удалось создать директории. Проверьте права доступа.',
+                error_csrf: 'Токен безопасности истёк. Попробуйте ещё раз.',
                 error_create_user: 'Не удалось создать пользователя'
             }
         };
