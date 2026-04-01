@@ -40,14 +40,6 @@ return array(
     'admin-pages.field.content' => 'Content',
     'admin-pages.publish' => 'Publish',
 
-    // Featured image
-    'admin-pages.featured_image' => 'Featured Image',
-    'admin-pages.image_preview' => 'Image preview',
-    'admin-pages.image_remove' => 'Remove',
-    'admin-pages.image_drop' => 'Drag image here or click below',
-    'admin-pages.image_choose' => 'Upload Image',
-    'admin-pages.image_uploading' => 'Uploading...',
-
     // Navigation settings
     'admin-pages.show_in_nav' => 'Show in navigation',
     'admin-pages.show_in_nav_help' => 'Display this page in the site navigation menu',

@@ -9,7 +9,6 @@ return array(
         'slug' => '',
         'content' => '',
         'status' => 'draft',
-        'image' => '',
         'show_in_navigation' => false,
         'navigation_order' => 50,
         'author' => '',
