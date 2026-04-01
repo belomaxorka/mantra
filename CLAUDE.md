@@ -190,6 +190,23 @@ Partials are reusable template fragments embedded in templates (rendered without
 - Usage: `<?php echo partial('sidebar'); ?>` or `<?php echo partial('seo:breadcrumbs', $params); ?>`
 - Theme can override module partials: `themes/{theme}/templates/partials/{module}/{partial}.php`
 
+### Pagination
+
+`core/Paginator.php` is a standalone value object for pagination:
+
+```php
+$paginator = new Paginator($totalItems, $perPage, $currentPage);
+// Use $paginator->offset() and $paginator->perPage() in Database::query()
+// Use partial('pagination', array('paginator' => $paginator)) in templates
+```
+
+- Public pages (home, blog) use `config('content.posts_per_page')` (default 10).
+- Admin panels (ContentPanel) paginate at 25 items per page automatically.
+- `Database::count($collection, $filters)` counts documents without loading full results.
+- Pagination partial (`themes/default/templates/partials/pagination.php`) renders Bootstrap 5 nav, preserves query params, hides when only 1 page.
+
+See `docs/PAGINATION.md` for full API reference and integration examples.
+
 ### Persistence (flat-file DB)
 
 - `core/Database.php` stores JSON documents at:
