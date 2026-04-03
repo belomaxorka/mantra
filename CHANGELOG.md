@@ -1,5 +1,37 @@
 # Changelog
 
+
+## [v1.1.1] - 2026-04-03
+
+### ✨ Added
+
+- (admin) Add content preview for posts and pages ([00e9273](https://github.com/belomaxorka/mantra/commit/00e9273ff35102bbf0b85351e4de9414bf95f1e0))
+- (docker) Add Nginx and Caddy web server support ([c28de81](https://github.com/belomaxorka/mantra/commit/c28de8150ddddab197c8dabc417949463b569f50))
+- (docker) Add Docker support with Caddy reverse proxy ([1274228](https://github.com/belomaxorka/mantra/commit/1274228072c85da430537082f665e4d23eb9e205))
+- (tools) Add content directory cleaner utility ([caf3fe0](https://github.com/belomaxorka/mantra/commit/caf3fe0bcd18caacb7eac4265dbd9048bef6d221))
+
+### 🐛 Fixed
+
+- (admin) Correct quick action translation key for new post ([5e3a8cf](https://github.com/belomaxorka/mantra/commit/5e3a8cf2dd90886a8a0c6cbc7b0e446aaeffb60a))
+- (admin) Enforce unique slugs for pages and posts ([360d685](https://github.com/belomaxorka/mantra/commit/360d685e66ea464c09d65c34d46958cf0e2ad3d6))
+- (docker,security) Harden web server configs and improve Docker setup ([b21076f](https://github.com/belomaxorka/mantra/commit/b21076faabcea01cf518ff4f2249d2d42a7a83ce))
+- (docker) Fix volume permissions with entrypoint script ([2d1a1bf](https://github.com/belomaxorka/mantra/commit/2d1a1bf70961a049520f1c4b0c157fcb4eb6d1c8))
+- (core) Add explicit nullable types for PHP 8.4 compatibility ([a7634c6](https://github.com/belomaxorka/mantra/commit/a7634c667f2290ff42d06fdfb04542e5971a458a))
+- (docker) Use default for DOMAIN to avoid error without .env ([750da73](https://github.com/belomaxorka/mantra/commit/750da734b50ea3dbffb866e8b75d97fb8444025b))
+
+### ♻️ Refactored
+
+- (admin) Remove redundant cancel button from post edit form ([4961683](https://github.com/belomaxorka/mantra/commit/4961683e634ed3d7b4c3b4d3b47eadefe3d00507))
+- (admin) Remove flash() wrapper, fix missed legacy alerts ([8f15384](https://github.com/belomaxorka/mantra/commit/8f1538421d859053fe1ab5da3f50b17f032570e3))
+- (admin) Replace alert notifications with toast system ([5a3da88](https://github.com/belomaxorka/mantra/commit/5a3da88a3dd3440053373ee8c39d19fc52b9ccba))
+- (admin) Remove generateId() from content panel classes ([fea7ce6](https://github.com/belomaxorka/mantra/commit/fea7ce6d3c6f141ecaada72cc841b8bb00a8d2ee))
+- (admin) Simplify generateId() in ContentPanel ([d93115d](https://github.com/belomaxorka/mantra/commit/d93115df854ffec1a54058002da509bd466f0851))
+- Move server configs to docs/server-configs/ ([85b460b](https://github.com/belomaxorka/mantra/commit/85b460bb71ab2993dadaf2d09468d58d97a7c5c0))
+
+### 📦 Other
+
+- (docker) Rewrite installation guide with reverse proxy section ([e1117fe](https://github.com/belomaxorka/mantra/commit/e1117fed2e083435b4839264e26c28fe0616f1e0))
+- (install) Add manual installation guide ([640c9f7](https://github.com/belomaxorka/mantra/commit/640c9f7fc1d0bec5f739a87780778fc54415f4a7))
 ## [v1.1.0] - 2026-04-03
 
 ### ✨ Added

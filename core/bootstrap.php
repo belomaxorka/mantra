@@ -13,7 +13,7 @@ if (version_compare(PHP_VERSION, '8.1.0', '<')) {
 // Project information
 define('MANTRA_PROJECT_INFO', [
     'name' => 'Mantra CMS',
-    'version' => '1.1.0',
+    'version' => '1.1.1',
     'github' => 'https://github.com/belomaxorka/mantra',
     'release_date' => '2026-04-03',
 ]);
