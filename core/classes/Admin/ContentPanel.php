@@ -159,7 +159,7 @@ abstract class ContentPanel extends AdminPanel
      * @param string $error Error message
      * @param bool   $isNew Whether this is a create (true) or edit (false) form
      */
-    protected function renderFormWithError($data, $error, $isNew = true)
+    protected function renderFormWithError($data, $error, $isNew = true): void
     {
         $templateData = [
             strtolower($this->getContentType()) => $data,
