@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Mantra CMS - Bootstrap
  *
@@ -6,17 +6,17 @@
  */
 
 // Check PHP version requirement
-if (version_compare(PHP_VERSION, '5.5.0', '<')) {
-    die('Mantra CMS requires PHP 5.5.0 or higher. Your version: ' . PHP_VERSION);
+if (version_compare(PHP_VERSION, '8.1.0', '<')) {
+    die('Mantra CMS requires PHP 8.1.0 or higher. Your version: ' . PHP_VERSION);
 }
 
 // Project information
-define('MANTRA_PROJECT_INFO', array(
+define('MANTRA_PROJECT_INFO', [
     'name' => 'Mantra CMS',
     'version' => '1.1.0',
     'github' => 'https://github.com/belomaxorka/mantra',
-    'release_date' => '2026-03-17'
-));
+    'release_date' => '2026-03-17',
+]);
 
 // Detect CLI mode
 define('MANTRA_CLI', (PHP_SAPI === 'cli'));
@@ -44,11 +44,11 @@ $GLOBALS['MANTRA_CONFIG'] = $config;
 define('MANTRA_DEBUG', !empty(Config::getNested($config, 'debug.enabled', false)));
 
 // PSR-4 autoloader for core classes (namespace maps to directory)
-spl_autoload_register(function ($class) {
+spl_autoload_register(function ($class): void {
     $relative = str_replace("\0", '', $class);
     $relative = str_replace('\\', '/', $relative);
 
-    if (strpos($relative, '..') !== false) {
+    if (str_contains($relative, '..')  ) {
         return;
     }
 
@@ -62,6 +62,6 @@ spl_autoload_register(function ($class) {
 require_once MANTRA_CORE . '/helpers.php';
 
 // Register centralized PHP error handling (logs to channel "php")
-ErrorHandler::register(new Logger('php', array(
-    'minLevel' => Logger::resolveLevel()
-)));
+ErrorHandler::register(new Logger('php', [
+    'minLevel' => Logger::resolveLevel(),
+]));

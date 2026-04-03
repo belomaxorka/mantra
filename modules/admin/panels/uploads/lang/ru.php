@@ -1,6 +1,6 @@
-<?php
+<?php declare(strict_types=1);
 
-return array(
+return [
     'admin-uploads.title' => 'Файлы',
     'admin-uploads.edit_file' => 'Информация о файле',
     'admin-uploads.no_files' => 'Файлы ещё не загружены.',
@@ -35,4 +35,4 @@ return array(
     'admin-uploads.error_move_failed' => 'Не удалось сохранить загруженный файл.',
     'admin-uploads.error_partial' => 'Файл был загружен лишь частично.',
     'admin-uploads.error_upload_failed' => 'Ошибка загрузки. Попробуйте ещё раз.',
-);
+];

@@ -34,7 +34,7 @@
       <div class="tab-pane fade <?php echo $isActive ? 'show active' : ''; ?>" id="tab-<?php echo e($tabId); ?>" role="tabpanel">
         <?php foreach ($tab['fields'] as $field): ?>
           <div class="mb-3">
-            <?php if (!in_array($field['type'], array('toggle', 'module_cards'), true)): ?>
+            <?php if (!in_array($field['type'], ['toggle', 'module_cards'], true)): ?>
               <label class="form-label" for="f-<?php echo e($field['name']); ?>"><?php echo e($field['title']); ?></label>
             <?php endif; ?>
 
@@ -81,7 +81,7 @@
               <?php if ($field['path'] === 'theme.active' && !empty($field['theme_metadata']) && !empty($field['value'])): ?>
                 <?php
                   $activeThemeId = (string)$field['value'];
-                  $themeInfo = isset($field['theme_metadata'][$activeThemeId]) ? $field['theme_metadata'][$activeThemeId] : null;
+                  $themeInfo = $field['theme_metadata'][$activeThemeId] ?? null;
                 ?>
                 <?php if ($themeInfo): ?>
                   <div class="card mt-3">
@@ -120,13 +120,13 @@
             <?php elseif ($field['type'] === 'module_cards'): ?>
               <label class="form-label d-block"><?php echo e($field['title']); ?></label>
               <?php
-                $modules = array();
+                $modules = [];
                 if (isset($field['options']) && is_array($field['options'])) {
                     $modules = $field['options'];
                 }
 
-                $coreModules = array();
-                $otherModules = array();
+                $coreModules = [];
+                $otherModules = [];
                 foreach ($modules as $m) {
                     $type = !empty($m['type']) ? strtolower((string)$m['type']) : '';
                     if ($type === 'core') {
@@ -137,7 +137,7 @@
                 }
 
                 // Reusable renderer for module cards
-                $renderModuleCards = function ($list, $sectionTitle) {
+                $renderModuleCards = function ($list, $sectionTitle): void {
                     if (empty($list)) return;
                     ?>
                     <div class="mb-3">
@@ -146,11 +146,11 @@
                         <?php foreach ($list as $m):
                             $id = isset($m['id']) ? (string)$m['id'] : '';
                             if ($id === '') continue;
-                            $isEnabled   = !empty($m['enabled']);
-                            $canToggle   = !empty($m['disableable']);
-                            $canDelete   = !empty($m['deletable']);
+                            $isEnabled = !empty($m['enabled']);
+                            $canToggle = !empty($m['disableable']);
+                            $canDelete = !empty($m['deletable']);
                             $hasSettings = !empty($m['has_settings']);
-                            $homepage    = isset($m['homepage']) ? (string)$m['homepage'] : '';
+                            $homepage = isset($m['homepage']) ? (string)$m['homepage'] : '';
                         ?>
                           <div class="p-3 border-bottom module-card-wrapper">
                             <div class="d-flex justify-content-between align-items-start gap-3">
@@ -173,7 +173,7 @@
                                 </div>
 
                                 <?php
-                                  $metaParts = array();
+                                  $metaParts = [];
                                   if (!empty($m['type'])) {
                                     $metaParts[] = '<strong>' . e(t('admin.modules.type')) . ':</strong> ' . e(t('admin.modules.type.' . (string)$m['type']));
                                   }

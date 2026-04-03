@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * MarkdownConverter - Simple Markdown to HTML converter
  */
@@ -46,16 +46,14 @@ class MarkdownConverter {
         $html = preg_replace('/^>\s+(.*)$/m', '<blockquote>$1</blockquote>', $html);
 
         // Unordered lists
-        $html = preg_replace_callback('/^(\s*)[-*+]\s+(.*)$/m', function($matches) {
-            return '<li>' . $matches[2] . '</li>';
-        }, $html);
+        $html = preg_replace_callback('/^(\s*)[-*+]\s+(.*)$/m', fn($matches) => '<li>' . $matches[2] . '</li>', $html);
 
         // Wrap consecutive <li> in <ul>
         $html = preg_replace('/(<li>.*<\/li>\n?)+/s', '<ul>$0</ul>', $html);
 
         // Paragraphs (lines separated by blank lines)
         $lines = explode("\n\n", $html);
-        $paragraphs = array();
+        $paragraphs = [];
         foreach ($lines as $line) {
             $line = trim($line);
             if (empty($line)) {

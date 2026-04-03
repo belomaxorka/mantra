@@ -82,7 +82,7 @@
     <?php else: ?>
         <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 g-3">
             <?php foreach ($files as $file):
-                $isImage = \Admin\UploadsPanel::isImage(isset($file['mime_type']) ? $file['mime_type'] : '');
+                $isImage = \Admin\UploadsPanel::isImage($file['mime_type'] ?? '');
                 $fileUrl = $uploadsUrl . '/' . $file['path'];
                 $displayName = !empty($file['original_name']) ? $file['original_name'] : $file['filename'];
             ?>
@@ -100,11 +100,11 @@
                                 <div class="card-img-top bg-light d-flex align-items-center justify-content-center"
                                      style="height: 150px;">
                                     <?php
-                                        $mime = isset($file['mime_type']) ? $file['mime_type'] : '';
+                                        $mime = $file['mime_type'] ?? '';
                                         $icon = 'bi-file-earmark';
-                                        if (strpos($mime, 'pdf') !== false) $icon = 'bi-file-earmark-pdf';
-                                        elseif (strpos($mime, 'zip') !== false) $icon = 'bi-file-earmark-zip';
-                                        elseif (strpos($mime, 'text') !== false) $icon = 'bi-file-earmark-text';
+                                        if (str_contains($mime, 'pdf')  ) $icon = 'bi-file-earmark-pdf';
+                                        elseif (str_contains($mime, 'zip')  ) $icon = 'bi-file-earmark-zip';
+                                        elseif (str_contains($mime, 'text')  ) $icon = 'bi-file-earmark-text';
                                     ?>
                                     <i class="<?php echo $icon; ?> text-muted" style="font-size: 3rem;"></i>
                                 </div>
@@ -115,7 +115,7 @@
                                 <?php echo e($displayName); ?>
                             </small>
                             <small class="text-muted">
-                                <?php echo \Admin\UploadsPanel::formatSize(isset($file['size']) ? $file['size'] : 0); ?>
+                                <?php echo \Admin\UploadsPanel::formatSize($file['size'] ?? 0); ?>
                             </small>
                         </div>
                         <?php if ($canDelete): ?>

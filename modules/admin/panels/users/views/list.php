@@ -35,8 +35,8 @@
                                 <tbody>
                                     <?php foreach ($users as $u):
                                         $isSelf = (isset($currentUserId) && isset($u['_id']) && $u['_id'] === $currentUserId);
-                                        $role = isset($u['role']) ? $u['role'] : 'editor';
-                                        $status = isset($u['status']) ? $u['status'] : 'active';
+                                        $role = $u['role'] ?? 'editor';
+                                        $status = $u['status'] ?? 'active';
 
                                         $roleBadge = 'secondary';
                                         if ($role === 'admin') $roleBadge = 'primary';
@@ -101,7 +101,7 @@
 
         <?php if (isset($paginator)): ?>
             <div class="mt-3">
-                <?php echo partial('pagination', array('paginator' => $paginator)); ?>
+                <?php echo partial('pagination', ['paginator' => $paginator]); ?>
             </div>
         <?php endif; ?>
     </div>

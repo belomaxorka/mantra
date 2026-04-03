@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Config - Configuration management
  *
@@ -13,7 +13,7 @@ use Storage\FileIO;
 
 class Config {
     private $configPath = '';
-    private $config = array();
+    private $config = [];
 
     /**
      * Build full configuration array (defaults + JSON overrides).
@@ -23,7 +23,7 @@ class Config {
         $path = $configPath ? $configPath : (MANTRA_CONTENT . '/settings/config.json');
 
         $defaults = self::defaults();
-        $json = array();
+        $json = [];
 
         if ($path && file_exists($path)) {
             try {
@@ -47,13 +47,13 @@ class Config {
             return $data;
         }
         if (!is_array($data)) {
-            $data = array();
+            $data = [];
         }
 
-        $out = array();
+        $out = [];
         foreach ($defaults as $k => $defVal) {
             if (is_array($defVal) && self::isAssoc($defVal)) {
-                $out[$k] = self::pruneToDefaults(isset($data[$k]) ? $data[$k] : array(), $defVal);
+                $out[$k] = self::pruneToDefaults($data[$k] ?? [], $defVal);
             } else {
                 if (array_key_exists($k, $data)) {
                     $out[$k] = $data[$k];
@@ -88,34 +88,34 @@ class Config {
     public static function defaults() {
         $baseUrl = self::detectBaseUrl();
 
-        return array(
-            'site' => array(
+        return [
+            'site' => [
                 'name' => 'Mantra CMS',
                 'url' => $baseUrl,
-            ),
-            'locale' => array(
+            ],
+            'locale' => [
                 'timezone' => 'UTC',
                 'date_format' => 'j F Y',
                 'time_format' => 'H:i',
                 'default_language' => 'en',
                 'fallback_locale' => 'en',
-            ),
-            'theme' => array(
+            ],
+            'theme' => [
                 'active' => 'default',
-            ),
-            'content' => array(
+            ],
+            'content' => [
                 'format' => 'json',
                 'posts_per_page' => 10,
-            ),
-            'modules' => array(
-                'enabled' => array('admin'),
-            ),
-            'security' => array(
+            ],
+            'modules' => [
+                'enabled' => ['admin'],
+            ],
+            'security' => [
                 // Stored as string identifier; interpreted by Auth when hashing.
                 'password_hash_algo' => 'PASSWORD_DEFAULT',
                 'csrf_token_name' => 'mantra_csrf',
-            ),
-            'session' => array(
+            ],
+            'session' => [
                 'name' => 'mantra_session',
                 'lifetime' => 7200,
                 'cookie_secure' => 'auto',
@@ -123,34 +123,34 @@ class Config {
                 'cookie_samesite' => 'Lax',
                 'cookie_path' => '/',
                 'cookie_domain' => '',
-            ),
-            'logging' => array(
+            ],
+            'logging' => [
                 'level' => 'debug',
                 'retention_days' => 30,
-            ),
-            'proxy' => array(
-                'trusted_proxies' => array(),
-            ),
-            'performance' => array(
+            ],
+            'proxy' => [
+                'trusted_proxies' => [],
+            ],
+            'performance' => [
                 'gzip_compression' => false,
-            ),
-            'permissions' => array(
-                'roles' => array(),
-            ),
-            'debug' => array(
+            ],
+            'permissions' => [
+                'roles' => [],
+            ],
+            'debug' => [
                 'enabled' => true,
-            ),
-            'admin' => array(
+            ],
+            'admin' => [
                 'accent_color' => 'indigo',
                 'sidebar_color' => 'dark',
                 'font' => 'inter',
                 'theme' => 'light',
-            ),
-            'advanced' => array(
+            ],
+            'advanced' => [
                 // Placeholder to force JSON object encoding for empty group.
                 '_placeholder' => null,
-            ),
-        );
+            ],
+        ];
     }
 
     /**
@@ -192,7 +192,7 @@ class Config {
         // Note: Config::bootstrap() is called from core/bootstrap.php before helpers.php is loaded,
         // so this method must not depend on global helpers like is_https() or request().
         $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-        $host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'localhost';
+        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
         $scriptPath = isset($_SERVER['SCRIPT_NAME']) ? dirname($_SERVER['SCRIPT_NAME']) : '';
         $scriptPath = self::normalizeScriptPath($scriptPath);
         $baseUrl = $protocol . '://' . $host . (($scriptPath && $scriptPath !== '/') ? $scriptPath : '');
@@ -207,7 +207,7 @@ class Config {
     /**
      * Load configuration (merged: defaults + JSON overrides).
      */
-    private function load() {
+    private function load(): void {
         $this->config = self::defaults();
 
         if (file_exists($this->configPath)) {
@@ -218,10 +218,10 @@ class Config {
                     $this->config = self::deepMerge($this->config, $decoded);
                 }
             } catch (Exception $e) {
-                logger('app')->warning('Failed to read config.json, using defaults', array(
+                logger('app')->warning('Failed to read config.json, using defaults', [
                     'path' => $this->configPath,
-                    'error' => $e->getMessage()
-                ));
+                    'error' => $e->getMessage(),
+                ]);
             }
         }
 
@@ -277,14 +277,14 @@ class Config {
         $dir = dirname($this->configPath);
 
         if (!is_dir($dir)) {
-            mkdir($dir, 0755, true);
+            mkdir($dir, 0o755, true);
         }
 
         try {
             $defaults = self::defaults();
             $overrides = self::diffOverrides($defaults, $this->config);
             if (!is_array($overrides)) {
-                $overrides = array();
+                $overrides = [];
             }
 
             // Preserve schema_version if present in the in-memory config.
@@ -294,10 +294,10 @@ class Config {
 
             return FileIO::writeAtomic($this->configPath, JsonCodec::encode($overrides));
         } catch (Exception $e) {
-            logger('app')->error('Failed to write config.json', array(
+            logger('app')->error('Failed to write config.json', [
                 'path' => $this->configPath,
-                'error' => $e->getMessage()
-            ));
+                'error' => $e->getMessage(),
+            ]);
             return false;
         }
     }
@@ -312,14 +312,14 @@ class Config {
         }
 
         $parts = explode('.', $path);
-        $cur =& $this->config;
+        $cur = & $this->config;
 
         $last = array_pop($parts);
         foreach ($parts as $part) {
             if ($part === '' || !is_array($cur) || !array_key_exists($part, $cur)) {
                 return false;
             }
-            $cur =& $cur[$part];
+            $cur = & $cur[$part];
         }
 
         if ($last === '' || !is_array($cur) || !array_key_exists($last, $cur)) {
@@ -342,7 +342,7 @@ class Config {
      */
     public static function deepMerge($base, $override) {
         if (!is_array($base)) {
-            $base = array();
+            $base = [];
         }
         if (!is_array($override)) {
             return $base;
@@ -363,7 +363,7 @@ class Config {
      * Flatten nested arrays into dot-path => value map.
      */
     public static function flattenPaths($nested, $prefix = '') {
-        $out = array();
+        $out = [];
         if (!is_array($nested)) {
             return $out;
         }
@@ -439,9 +439,9 @@ class Config {
         return true;
     }
 
-    public static function setNested(&$arr, $path, $value) {
+    public static function setNested(&$arr, $path, $value): void {
         if (!is_array($arr)) {
-            $arr = array();
+            $arr = [];
         }
 
         $path = trim((string)$path);
@@ -450,7 +450,7 @@ class Config {
         }
 
         $parts = explode('.', $path);
-        $cur =& $arr;
+        $cur = & $arr;
 
         $last = array_pop($parts);
         foreach ($parts as $part) {
@@ -458,9 +458,9 @@ class Config {
                 return;
             }
             if (!isset($cur[$part]) || !is_array($cur[$part])) {
-                $cur[$part] = array();
+                $cur[$part] = [];
             }
-            $cur =& $cur[$part];
+            $cur = & $cur[$part];
         }
 
         if ($last === '') {
@@ -494,7 +494,7 @@ class Config {
             return $current;
         }
 
-        $out = array();
+        $out = [];
         $hasAny = false;
 
         foreach ($defaults as $k => $defVal) {

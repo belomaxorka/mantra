@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * JsonStorageDriver Tests (PHPUnit 10.x)
  * Tests for JSON file storage driver implementation
@@ -16,7 +16,7 @@ class JsonStorageDriverTest extends MantraTestCase
         // Use temporary test directory
         $this->testDir = MANTRA_STORAGE . '/test-json-storage-' . time();
         if (!is_dir($this->testDir)) {
-            mkdir($this->testDir, 0755, true);
+            mkdir($this->testDir, 0o755, true);
         }
         $this->driver = new JsonStorageDriver($this->testDir);
     }
@@ -35,12 +35,12 @@ class JsonStorageDriverTest extends MantraTestCase
 
     public function testWriteAndRead(): void
     {
-        $data = array(
+        $data = [
             'id' => 'test-1',
             'title' => 'Test Document',
             'content' => 'Test content',
-            'created' => time()
-        );
+            'created' => time(),
+        ];
 
         $result = $this->driver->write('pages', 'test-1', $data);
         $this->assertTrue($result, 'write() returns true on success');
@@ -59,7 +59,7 @@ class JsonStorageDriverTest extends MantraTestCase
 
     public function testExists(): void
     {
-        $this->driver->write('pages', 'exists-test', array('title' => 'Test'));
+        $this->driver->write('pages', 'exists-test', ['title' => 'Test']);
 
         $exists = $this->driver->exists('pages', 'exists-test');
         $this->assertTrue($exists, 'exists() returns true for existing document');
@@ -70,7 +70,7 @@ class JsonStorageDriverTest extends MantraTestCase
 
     public function testDelete(): void
     {
-        $this->driver->write('pages', 'delete-test', array('title' => 'To Delete'));
+        $this->driver->write('pages', 'delete-test', ['title' => 'To Delete']);
 
         $result = $this->driver->delete('pages', 'delete-test');
         $this->assertTrue($result, 'delete() returns true on success');
@@ -88,9 +88,9 @@ class JsonStorageDriverTest extends MantraTestCase
     public function testReadCollection(): void
     {
         // Write multiple documents
-        $this->driver->write('posts', 'post-1', array('title' => 'Post 1', 'order' => 1));
-        $this->driver->write('posts', 'post-2', array('title' => 'Post 2', 'order' => 2));
-        $this->driver->write('posts', 'post-3', array('title' => 'Post 3', 'order' => 3));
+        $this->driver->write('posts', 'post-1', ['title' => 'Post 1', 'order' => 1]);
+        $this->driver->write('posts', 'post-2', ['title' => 'Post 2', 'order' => 2]);
+        $this->driver->write('posts', 'post-3', ['title' => 'Post 3', 'order' => 3]);
 
         $collection = $this->driver->readCollection('posts');
         $this->assertIsArray($collection, 'readCollection() returns array');
@@ -111,8 +111,8 @@ class JsonStorageDriverTest extends MantraTestCase
     public function testReadCollectionWithCorruptedFile(): void
     {
         $col = 'mixed-corrupt-' . time();
-        $this->driver->write($col, 'valid-1', array('title' => 'Valid 1'));
-        $this->driver->write($col, 'valid-2', array('title' => 'Valid 2'));
+        $this->driver->write($col, 'valid-1', ['title' => 'Valid 1']);
+        $this->driver->write($col, 'valid-2', ['title' => 'Valid 2']);
 
         // Create corrupted JSON file manually
         $corruptedPath = $this->testDir . '/' . $col . '/corrupted.json';
@@ -128,7 +128,7 @@ class JsonStorageDriverTest extends MantraTestCase
     public function testReadCollectionIgnoresNonJsonFiles(): void
     {
         $col = 'mixed-files-' . time();
-        $this->driver->write($col, 'doc-1', array('title' => 'Doc 1'));
+        $this->driver->write($col, 'doc-1', ['title' => 'Doc 1']);
 
         // Create non-json files that should be ignored
         $colPath = $this->testDir . '/' . $col;
@@ -148,7 +148,7 @@ class JsonStorageDriverTest extends MantraTestCase
 
         $this->assertDirectoryDoesNotExist($collectionPath, 'Collection directory does not exist before write');
 
-        $this->driver->write($newCollection, 'first-doc', array('title' => 'First'));
+        $this->driver->write($newCollection, 'first-doc', ['title' => 'First']);
 
         $this->assertDirectoryExists($collectionPath, 'write() creates collection directory');
         $this->assertTrue($this->driver->exists($newCollection, 'first-doc'), 'Document exists after write');
@@ -157,14 +157,14 @@ class JsonStorageDriverTest extends MantraTestCase
     public function testOverwriteExisting(): void
     {
         $col = 'overwrite-' . time();
-        $this->driver->write($col, 'ow-test', array('title' => 'Original', 'version' => 1, 'old_field' => 'gone'));
+        $this->driver->write($col, 'ow-test', ['title' => 'Original', 'version' => 1, 'old_field' => 'gone']);
 
         $original = $this->driver->read($col, 'ow-test');
         $this->assertSame('Original', $original['title'], 'Original data written correctly');
         $this->assertArrayHasKey('old_field', $original, 'Original has old_field');
 
         // Overwrite without old_field
-        $this->driver->write($col, 'ow-test', array('title' => 'Updated', 'version' => 2));
+        $this->driver->write($col, 'ow-test', ['title' => 'Updated', 'version' => 2]);
 
         $updated = $this->driver->read($col, 'ow-test');
         $this->assertSame('Updated', $updated['title'], 'write() overwrites existing document');
@@ -175,7 +175,7 @@ class JsonStorageDriverTest extends MantraTestCase
     public function testEmptyDocument(): void
     {
         $col = 'empty-doc-' . time();
-        $this->driver->write($col, 'empty', array());
+        $this->driver->write($col, 'empty', []);
 
         $read = $this->driver->read($col, 'empty');
         $this->assertIsArray($read, 'Empty document read returns array');
@@ -185,16 +185,16 @@ class JsonStorageDriverTest extends MantraTestCase
     public function testDataTypePreservation(): void
     {
         $col = 'types-' . time();
-        $data = array(
+        $data = [
             'string' => 'hello',
             'integer' => 42,
             'float' => 3.14,
             'bool_true' => true,
             'bool_false' => false,
             'null_val' => null,
-            'array_list' => array(1, 2, 3),
-            'nested' => array('a' => array('b' => 'c')),
-        );
+            'array_list' => [1, 2, 3],
+            'nested' => ['a' => ['b' => 'c']],
+        ];
 
         $this->driver->write($col, 'types', $data);
         $read = $this->driver->read($col, 'types');
@@ -205,14 +205,14 @@ class JsonStorageDriverTest extends MantraTestCase
         $this->assertTrue($read['bool_true'], 'Boolean true preserved');
         $this->assertFalse($read['bool_false'], 'Boolean false preserved');
         $this->assertNull($read['null_val'], 'Null value preserved');
-        $this->assertSame(array(1, 2, 3), $read['array_list'], 'Array list preserved');
+        $this->assertSame([1, 2, 3], $read['array_list'], 'Array list preserved');
         $this->assertSame('c', $read['nested']['a']['b'], 'Nested structure preserved');
     }
 
     public function testWriteUtf8Data(): void
     {
         $col = 'utf8-' . time();
-        $data = array('title' => 'Тест', 'content' => '日本語', 'special' => 'Test "quotes" & \'apostrophes\'');
+        $data = ['title' => 'Тест', 'content' => '日本語', 'special' => 'Test "quotes" & \'apostrophes\''];
 
         $result = $this->driver->write($col, 'utf8', $data);
         $this->assertTrue($result, 'write() handles UTF-8 data');
@@ -230,17 +230,17 @@ class JsonStorageDriverTest extends MantraTestCase
 
     public function testCountFiles(): void
     {
-        $this->driver->write('counted', 'a', array('x' => 1));
-        $this->driver->write('counted', 'b', array('x' => 2));
-        $this->driver->write('counted', 'c', array('x' => 3));
+        $this->driver->write('counted', 'a', ['x' => 1]);
+        $this->driver->write('counted', 'b', ['x' => 2]);
+        $this->driver->write('counted', 'c', ['x' => 3]);
 
         $this->assertSame(3, $this->driver->countFiles('counted'));
     }
 
     public function testCountFilesAfterDelete(): void
     {
-        $this->driver->write('counted2', 'a', array('x' => 1));
-        $this->driver->write('counted2', 'b', array('x' => 2));
+        $this->driver->write('counted2', 'a', ['x' => 1]);
+        $this->driver->write('counted2', 'b', ['x' => 2]);
         $this->driver->delete('counted2', 'a');
 
         $this->assertSame(1, $this->driver->countFiles('counted2'));
@@ -248,13 +248,13 @@ class JsonStorageDriverTest extends MantraTestCase
 
     public function testListIdsEmpty(): void
     {
-        $this->assertSame(array(), $this->driver->listIds('nonexistent'));
+        $this->assertSame([], $this->driver->listIds('nonexistent'));
     }
 
     public function testListIds(): void
     {
-        $this->driver->write('listed', 'alpha', array('x' => 1));
-        $this->driver->write('listed', 'beta', array('x' => 2));
+        $this->driver->write('listed', 'alpha', ['x' => 1]);
+        $this->driver->write('listed', 'beta', ['x' => 2]);
 
         $ids = $this->driver->listIds('listed');
         sort($ids);
@@ -271,7 +271,7 @@ class JsonStorageDriverTest extends MantraTestCase
         $iterations = 5;
 
         for ($i = 1; $i <= $iterations; $i++) {
-            $this->driver->write($col, $id, array('iteration' => $i));
+            $this->driver->write($col, $id, ['iteration' => $i]);
         }
 
         $final = $this->driver->read($col, $id);

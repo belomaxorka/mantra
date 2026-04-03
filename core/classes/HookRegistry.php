@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * HookRegistry - Documents standard hook contracts
  *
@@ -13,85 +13,85 @@ class HookRegistry {
      * Standard hook definitions.
      * Each entry: 'hook.name' => array(description, data_type, return_type)
      */
-    private static $hooks = array(
+    private static $hooks = [
 
         // ── System lifecycle ────────────────────────────────
-        'system.init' => array(
+        'system.init' => [
             'description' => 'Fired after all modules are loaded, before routing',
-            'data_type'   => 'null',
+            'data_type' => 'null',
             'return_type' => 'null',
-        ),
-        'system.shutdown' => array(
+        ],
+        'system.shutdown' => [
             'description' => 'Fired after the request has been handled',
-            'data_type'   => 'null',
+            'data_type' => 'null',
             'return_type' => 'null',
-        ),
-        'routes.register' => array(
+        ],
+        'routes.register' => [
             'description' => 'Modules register their routes here',
-            'data_type'   => 'array',
+            'data_type' => 'array',
             'return_type' => 'array',
-        ),
+        ],
 
         // ── Content lifecycle ──────────────────────────────
-        'content.saved' => array(
+        'content.saved' => [
             'description' => 'Fired after content is created or updated via admin panel',
-            'data_type'   => 'array {collection, id, action}',
+            'data_type' => 'array {collection, id, action}',
             'return_type' => 'null',
-        ),
-        'content.deleted' => array(
+        ],
+        'content.deleted' => [
             'description' => 'Fired after content is deleted via admin panel',
-            'data_type'   => 'array {collection, id}',
+            'data_type' => 'array {collection, id}',
             'return_type' => 'null',
-        ),
+        ],
 
         // ── View ────────────────────────────────────────────
-        'view.render' => array(
+        'view.render' => [
             'description' => 'Filter final rendered HTML before output',
-            'data_type'   => 'string',
+            'data_type' => 'string',
             'return_type' => 'string',
-        ),
+        ],
 
         // ── Theme (public) ──────────────────────────────────
-        'theme.head' => array(
+        'theme.head' => [
             'description' => 'Inject HTML into the public <head> section',
-            'data_type'   => 'string',
+            'data_type' => 'string',
             'return_type' => 'string',
-        ),
-        'theme.body.start' => array(
+        ],
+        'theme.body.start' => [
             'description' => 'Inject HTML right after the opening <body> tag',
-            'data_type'   => 'string',
+            'data_type' => 'string',
             'return_type' => 'string',
-        ),
-        'theme.navigation' => array(
+        ],
+        'theme.navigation' => [
             'description' => 'Build the main navigation menu items',
-            'data_type'   => 'array',
+            'data_type' => 'array',
             'return_type' => 'array',
-        ),
-        'theme.sidebar' => array(
+        ],
+        'theme.sidebar' => [
             'description' => 'Build sidebar widget items for public theme',
-            'data_type'   => 'array',
+            'data_type' => 'array',
             'return_type' => 'array',
-        ),
-        'theme.footer.links' => array(
+        ],
+        'theme.footer.links' => [
             'description' => 'Build footer link items',
-            'data_type'   => 'array',
+            'data_type' => 'array',
             'return_type' => 'array',
-        ),
-        'theme.footer' => array(
+        ],
+        'theme.footer' => [
             'description' => 'Inject scripts/HTML before closing </body>',
-            'data_type'   => 'string',
+            'data_type' => 'string',
             'return_type' => 'string',
-        ),
-        'theme.body.end' => array(
+        ],
+        'theme.body.end' => [
             'description' => 'Inject HTML right before the closing </body> tag',
-            'data_type'   => 'string',
+            'data_type' => 'string',
             'return_type' => 'string',
-        ),
+        ],
 
         // Admin and content hooks are registered dynamically by their
         // owning modules/panels via HookRegistry::define() in init().
         // See: AdminModule, PostsPanel, PagesPanel, UsersPanel.
-    );
+    ];
 
     /**
      * Get the definition for a specific hook
@@ -100,7 +100,7 @@ class HookRegistry {
      * @return array|null array with description, data_type, return_type or null
      */
     public static function describe($name) {
-        return isset(self::$hooks[$name]) ? self::$hooks[$name] : null;
+        return self::$hooks[$name] ?? null;
     }
 
     /**
@@ -131,12 +131,12 @@ class HookRegistry {
      * @param string $returnType Expected return type
      * @param array  $extra Extra fields: 'source', 'context', etc.
      */
-    public static function define($name, $description, $dataType = 'mixed', $returnType = 'mixed', $extra = array()) {
-        $entry = array(
+    public static function define($name, $description, $dataType = 'mixed', $returnType = 'mixed', $extra = []): void {
+        $entry = [
             'description' => $description,
-            'data_type'   => $dataType,
+            'data_type' => $dataType,
             'return_type' => $returnType,
-        );
+        ];
         if (!empty($extra)) {
             $entry = array_merge($entry, $extra);
         }

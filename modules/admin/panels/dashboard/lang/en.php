@@ -1,6 +1,6 @@
-<?php
+<?php declare(strict_types=1);
 
-return array(
+return [
     // Module name
     'admin-dashboard.name' => 'Dashboard',
 
@@ -21,4 +21,4 @@ return array(
     'admin-dashboard.recent.empty' => 'No content yet.',
     'admin-dashboard.recent.post' => 'Post',
     'admin-dashboard.recent.page' => 'Page',
-);
+];

@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * PageController - Handles public page rendering
  * Core controller for site pages (not admin)
@@ -9,22 +9,22 @@ class PageController {
     /**
      * Render home page
      */
-    public function home() {
+    public function home(): void {
         $app = Application::getInstance();
         $perPage = (int)config('content.posts_per_page', 10);
         $page = max(1, (int)app()->request()->query('page', 1));
 
-        $filter = array('status' => 'published');
+        $filter = ['status' => 'published'];
 
         // Hook: allow modules to modify query parameters
-        $queryParams = $app->hooks()->fire('page.home.query', array(
+        $queryParams = $app->hooks()->fire('page.home.query', [
             'collection' => 'posts',
             'filter' => $filter,
-            'options' => array(
+            'options' => [
                 'sort' => 'created_at',
                 'order' => 'desc',
-            )
-        ));
+            ],
+        ]);
 
         $total = app()->db()->count($queryParams['collection'], $queryParams['filter']);
         $paginator = new Paginator($total, $perPage, $page);
@@ -35,18 +35,18 @@ class PageController {
         $posts = app()->db()->query(
             $queryParams['collection'],
             $queryParams['filter'],
-            $queryParams['options']
+            $queryParams['options'],
         );
 
         // Hook: allow modules to modify posts data
         $posts = $app->hooks()->fire('page.home.posts', $posts);
 
         // Prepare view data
-        $data = array(
+        $data = [
             'posts' => $posts,
             'paginator' => $paginator,
-            'title' => config('site.name', 'Mantra CMS')
-        );
+            'title' => config('site.name', 'Mantra CMS'),
+        ];
 
         // Hook: allow modules to add data to view
         $data = $app->hooks()->fire('page.home.data', $data);
@@ -57,22 +57,22 @@ class PageController {
     /**
      * Render blog listing page
      */
-    public function blog() {
+    public function blog(): void {
         $app = Application::getInstance();
         $perPage = (int)config('content.posts_per_page', 10);
         $page = max(1, (int)app()->request()->query('page', 1));
 
-        $filter = array('status' => 'published');
+        $filter = ['status' => 'published'];
 
         // Hook: allow modules to modify query parameters
-        $queryParams = $app->hooks()->fire('page.blog.query', array(
+        $queryParams = $app->hooks()->fire('page.blog.query', [
             'collection' => 'posts',
             'filter' => $filter,
-            'options' => array(
+            'options' => [
                 'sort' => 'created_at',
                 'order' => 'desc',
-            )
-        ));
+            ],
+        ]);
 
         $total = app()->db()->count($queryParams['collection'], $queryParams['filter']);
         $paginator = new Paginator($total, $perPage, $page);
@@ -83,18 +83,18 @@ class PageController {
         $posts = app()->db()->query(
             $queryParams['collection'],
             $queryParams['filter'],
-            $queryParams['options']
+            $queryParams['options'],
         );
 
         // Hook: allow modules to modify posts data
         $posts = $app->hooks()->fire('page.blog.posts', $posts);
 
         // Prepare view data
-        $data = array(
+        $data = [
             'posts' => $posts,
             'paginator' => $paginator,
-            'title' => 'Blog - ' . config('site.name', 'Mantra CMS')
-        );
+            'title' => 'Blog - ' . config('site.name', 'Mantra CMS'),
+        ];
 
         // Hook: allow modules to add data to view
         $data = $app->hooks()->fire('page.blog.data', $data);
@@ -105,16 +105,16 @@ class PageController {
     /**
      * Render single page
      */
-    public function page($params) {
+    public function page($params): void {
         $app = Application::getInstance();
-        $slug = isset($params['slug']) ? $params['slug'] : '';
+        $slug = $params['slug'] ?? '';
 
         // Hook: allow modules to modify query
-        $queryParams = $app->hooks()->fire('page.single.query', array(
+        $queryParams = $app->hooks()->fire('page.single.query', [
             'collection' => 'pages',
-            'filter' => array('slug' => $slug, 'status' => 'published'),
-            'slug' => $slug
-        ));
+            'filter' => ['slug' => $slug, 'status' => 'published'],
+            'slug' => $slug,
+        ]);
 
         $pages = app()->db()->query($queryParams['collection'], $queryParams['filter']);
 
@@ -129,10 +129,10 @@ class PageController {
         $page = $app->hooks()->fire('page.single.loaded', $page);
 
         // Prepare view data
-        $data = array(
+        $data = [
             'page' => $page,
-            'title' => $page['title'] . ' - ' . config('site.name', 'Mantra CMS')
-        );
+            'title' => $page['title'] . ' - ' . config('site.name', 'Mantra CMS'),
+        ];
 
         // Hook: allow modules to add data to view
         $data = $app->hooks()->fire('page.single.data', $data);
@@ -146,16 +146,16 @@ class PageController {
     /**
      * Render single post
      */
-    public function post($params) {
+    public function post($params): void {
         $app = Application::getInstance();
-        $slug = isset($params['slug']) ? $params['slug'] : '';
+        $slug = $params['slug'] ?? '';
 
         // Hook: allow modules to modify query
-        $queryParams = $app->hooks()->fire('post.single.query', array(
+        $queryParams = $app->hooks()->fire('post.single.query', [
             'collection' => 'posts',
-            'filter' => array('slug' => $slug, 'status' => 'published'),
-            'slug' => $slug
-        ));
+            'filter' => ['slug' => $slug, 'status' => 'published'],
+            'slug' => $slug,
+        ]);
 
         $posts = app()->db()->query($queryParams['collection'], $queryParams['filter']);
 
@@ -177,13 +177,13 @@ class PageController {
         $readingTime = max(1, (int)ceil($wordCount / 200));
 
         // Prepare view data
-        $data = array(
+        $data = [
             'post' => $post,
             'readingTime' => $readingTime,
             'prevPost' => $adjacent['prev'],
             'nextPost' => $adjacent['next'],
-            'title' => $post['title'] . ' - ' . config('site.name', 'Mantra CMS')
-        );
+            'title' => $post['title'] . ' - ' . config('site.name', 'Mantra CMS'),
+        ];
 
         // Hook: allow modules to add data to view
         $data = $app->hooks()->fire('post.single.data', $data);
@@ -198,7 +198,7 @@ class PageController {
      * Get template for page (supports hierarchy)
      */
     private function getPageTemplate($page) {
-        $templates = array();
+        $templates = [];
 
         // Custom template from page meta
         if (isset($page['template']) && !empty($page['template'])) {
@@ -219,7 +219,7 @@ class PageController {
      * Get template for post (supports hierarchy)
      */
     private function getPostTemplate($post) {
-        $templates = array();
+        $templates = [];
 
         // Custom template from post meta
         if (isset($post['template']) && !empty($post['template'])) {
@@ -247,22 +247,22 @@ class PageController {
      * @return array ['prev' => array|null, 'next' => array|null]
      */
     private function getAdjacentPosts($currentPost) {
-        $allPosts = app()->db()->query('posts', array('status' => 'published'), array(
+        $allPosts = app()->db()->query('posts', ['status' => 'published'], [
             'sort' => 'created_at',
             'order' => 'desc',
-        ));
+        ]);
 
         $prev = null;
         $next = null;
         foreach ($allPosts as $i => $p) {
             if ($p['_id'] === $currentPost['_id']) {
-                $next = isset($allPosts[$i - 1]) ? $allPosts[$i - 1] : null;
-                $prev = isset($allPosts[$i + 1]) ? $allPosts[$i + 1] : null;
+                $next = $allPosts[$i - 1] ?? null;
+                $prev = $allPosts[$i + 1] ?? null;
                 break;
             }
         }
 
-        return array('prev' => $prev, 'next' => $next);
+        return ['prev' => $prev, 'next' => $next];
     }
 
     /**
@@ -287,7 +287,7 @@ class PageController {
     /**
      * 404 Not Found
      */
-    private function notFound() {
+    private function notFound(): void {
         abort(404);
     }
 }

@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * BaseAdminModule - Base class for admin panel modules
  * 
@@ -21,20 +21,20 @@ abstract class BaseAdminModule extends Module {
      * module manifest (module.json) and registers them automatically.
      * Subclasses should call parent::init() to keep this behaviour.
      */
-    public function init() {
+    public function init(): void {
         $manifest = $this->getManifest();
-        $admin = isset($manifest['admin']) && is_array($manifest['admin']) ? $manifest['admin'] : array();
+        $admin = isset($manifest['admin']) && is_array($manifest['admin']) ? $manifest['admin'] : [];
 
         // Auto-register sidebar item from manifest
         if (isset($admin['sidebar']) && is_array($admin['sidebar'])) {
             $sb = $admin['sidebar'];
-            $item = array(
-                'id'    => isset($sb['id']) ? $sb['id'] : $this->getId(),
-                'title' => isset($sb['title']) ? $sb['title'] : $this->getId() . '.title',
-                'icon'  => isset($sb['icon']) ? $sb['icon'] : '',
-                'group' => isset($sb['group']) ? $sb['group'] : '',
+            $item = [
+                'id' => $sb['id'] ?? $this->getId(),
+                'title' => $sb['title'] ?? $this->getId() . '.title',
+                'icon' => $sb['icon'] ?? '',
+                'group' => $sb['group'] ?? '',
                 'order' => isset($sb['order']) ? (int)$sb['order'] : 50,
-            );
+            ];
             if (isset($sb['url'])) {
                 $item['url'] = base_url($sb['url']);
             }
@@ -47,12 +47,12 @@ abstract class BaseAdminModule extends Module {
                 if (!is_array($qa) || empty($qa['title'])) {
                     continue;
                 }
-                $action = array(
-                    'id'    => isset($qa['id']) ? $qa['id'] : $this->getId() . '-qa',
+                $action = [
+                    'id' => $qa['id'] ?? $this->getId() . '-qa',
                     'title' => $qa['title'],
-                    'icon'  => isset($qa['icon']) ? $qa['icon'] : '',
+                    'icon' => $qa['icon'] ?? '',
                     'order' => isset($qa['order']) ? (int)$qa['order'] : 50,
-                );
+                ];
                 if (isset($qa['url'])) {
                     $action['url'] = base_url($qa['url']);
                 }
@@ -67,7 +67,7 @@ abstract class BaseAdminModule extends Module {
      * @param string $pattern Route pattern (without /admin prefix)
      * @param callable $callback Route handler
      */
-    protected function registerAdminRoute($method, $pattern, $callback) {
+    protected function registerAdminRoute($method, $pattern, $callback): void {
         app()->hooks()->register('routes.register', function ($data) use ($method, $pattern, $callback) {
             $admin = app()->modules()->getModule('admin');
             if ($admin && method_exists($admin, 'adminRoute')) {
@@ -76,35 +76,35 @@ abstract class BaseAdminModule extends Module {
             return $data;
         });
     }
-    
+
     /**
      * Register sidebar item
      * @param array $item Sidebar item configuration
      */
-    protected function registerSidebarItem($item) {
+    protected function registerSidebarItem($item): void {
         app()->hooks()->register('admin.sidebar', function ($items) use ($item) {
             if (!is_array($items)) {
-                $items = array();
+                $items = [];
             }
             $items[] = $item;
             return $items;
         });
     }
-    
+
     /**
      * Register quick action
      * @param array $action Quick action configuration
      */
-    protected function registerQuickAction($action) {
+    protected function registerQuickAction($action): void {
         app()->hooks()->register('admin.quick_actions', function ($actions) use ($action) {
             if (!is_array($actions)) {
-                $actions = array();
+                $actions = [];
             }
             $actions[] = $action;
             return $actions;
         });
     }
-    
+
     /**
      * Render admin page
      * @param string $title Page title
@@ -112,7 +112,7 @@ abstract class BaseAdminModule extends Module {
      * @param array $extra Extra data
      * @return string
      */
-    protected function renderAdmin($title, $content, $extra = array()) {
+    protected function renderAdmin($title, $content, $extra = []) {
         $admin = app()->modules()->getModule('admin');
         if ($admin && method_exists($admin, 'render')) {
             return $admin->render($title, $content, $extra);
@@ -120,7 +120,7 @@ abstract class BaseAdminModule extends Module {
         http_response_code(500);
         echo 'Admin module not loaded';
     }
-    
+
     /**
      * Verify CSRF token (shorthand)
      * @return bool
@@ -137,7 +137,7 @@ abstract class BaseAdminModule extends Module {
         }
         return true;
     }
-    
+
     /**
      * Get current user
      * @return array|null
@@ -145,7 +145,7 @@ abstract class BaseAdminModule extends Module {
     protected function getUser() {
         return app()->auth()->user();
     }
-    
+
     /**
      * Check if user is authenticated
      * @return bool
@@ -153,22 +153,22 @@ abstract class BaseAdminModule extends Module {
     protected function isAuthenticated() {
         return app()->auth()->check();
     }
-    
+
     /**
      * Redirect to admin page
      * @param string $path Path relative to /admin
      */
-    protected function redirectAdmin($path = '') {
+    protected function redirectAdmin($path = ''): void {
         app()->response()->redirect(base_url('/admin/' . ltrim($path, '/')));
     }
-    
+
     /**
      * Render admin view (shorthand)
      * @param string $template Template name (module:template)
      * @param array $data Template data
      * @return string
      */
-    protected function renderView($template, $data = array()) {
+    protected function renderView($template, $data = []) {
         return app()->view()->fetch($template, $data);
     }
 }

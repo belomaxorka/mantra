@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Http;
 
@@ -10,7 +10,7 @@ class Request {
         if ($key === null) {
             return $_SERVER;
         }
-        return isset($_SERVER[$key]) ? $_SERVER[$key] : $default;
+        return $_SERVER[$key] ?? $default;
     }
 
     public function method() {
@@ -18,7 +18,7 @@ class Request {
     }
 
     public function uri() {
-        return isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '/';
+        return $_SERVER['REQUEST_URI'] ?? '/';
     }
 
     public function path() {
@@ -40,7 +40,7 @@ class Request {
         if ($key === null) {
             return $_GET;
         }
-        return isset($_GET[$key]) ? $_GET[$key] : $default;
+        return $_GET[$key] ?? $default;
     }
 
     public function post($key = null, $default = null) {
@@ -64,7 +64,7 @@ class Request {
             return $cur;
         }
 
-        return isset($_POST[$key]) ? $_POST[$key] : $default;
+        return $_POST[$key] ?? $default;
     }
 
     public function header($name, $default = null) {
@@ -77,7 +77,7 @@ class Request {
             $key = 'CONTENT_LENGTH';
         }
 
-        return isset($_SERVER[$key]) ? $_SERVER[$key] : $default;
+        return $_SERVER[$key] ?? $default;
     }
 
     public function acceptsJson() {
@@ -96,14 +96,14 @@ class Request {
     public function json($key = null, $default = null) {
         $data = $this->jsonBody();
         if (!is_array($data)) {
-            return $key === null ? array() : $default;
+            return $key === null ? [] : $default;
         }
 
         if ($key === null) {
             return $data;
         }
 
-        return isset($data[$key]) ? $data[$key] : $default;
+        return $data[$key] ?? $default;
     }
 
     public function jsonBody() {
@@ -143,7 +143,7 @@ class Request {
     }
 
     public function file($key) {
-        return isset($_FILES[$key]) ? $_FILES[$key] : null;
+        return $_FILES[$key] ?? null;
     }
 
     public function ip() {
@@ -166,9 +166,9 @@ class Request {
         }
 
         if (!empty($_SERVER['HTTP_X_FORWARDED_PROTO'])) {
-            $trusted = config('proxy.trusted_proxies', array());
+            $trusted = config('proxy.trusted_proxies', []);
             $trusted = self::parseCsv($trusted);
-            $remoteAddr = isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '';
+            $remoteAddr = $_SERVER['REMOTE_ADDR'] ?? '';
 
             if (!empty($trusted) && self::ipMatchesAny($remoteAddr, $trusted)) {
                 $proto = strtolower(trim(explode(',', $_SERVER['HTTP_X_FORWARDED_PROTO'])[0]));
@@ -191,23 +191,23 @@ class Request {
      * Get client IP address, considering trusted proxy headers.
      */
     public function clientIp() {
-        $remoteAddr = isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : null;
+        $remoteAddr = $_SERVER['REMOTE_ADDR'] ?? null;
         if (!$remoteAddr || !filter_var($remoteAddr, FILTER_VALIDATE_IP)) {
             return null;
         }
 
-        $trusted = config('proxy.trusted_proxies', array());
+        $trusted = config('proxy.trusted_proxies', []);
         $trusted = self::parseCsv($trusted);
 
         if (empty($trusted) || !self::ipMatchesAny($remoteAddr, $trusted)) {
             return $remoteAddr;
         }
 
-        $candidates = array(
-            isset($_SERVER['HTTP_CF_CONNECTING_IP']) ? $_SERVER['HTTP_CF_CONNECTING_IP'] : null,
-            isset($_SERVER['HTTP_FASTLY_CLIENT_IP']) ? $_SERVER['HTTP_FASTLY_CLIENT_IP'] : null,
-            isset($_SERVER['HTTP_X_REAL_IP']) ? $_SERVER['HTTP_X_REAL_IP'] : null,
-        );
+        $candidates = [
+            $_SERVER['HTTP_CF_CONNECTING_IP'] ?? null,
+            $_SERVER['HTTP_FASTLY_CLIENT_IP'] ?? null,
+            $_SERVER['HTTP_X_REAL_IP'] ?? null,
+        ];
 
         if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
             foreach (explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']) as $part) {
@@ -246,7 +246,7 @@ class Request {
         if (is_string($value)) {
             return array_filter(array_map('trim', explode(',', $value)), 'strlen');
         }
-        return array();
+        return [];
     }
 
     /**
@@ -270,11 +270,11 @@ class Request {
             return false;
         }
 
-        if (strpos($entry, '/') === false) {
+        if (!str_contains($entry, '/')  ) {
             return $ip === $entry;
         }
 
-        list($subnet, $bits) = array_pad(explode('/', $entry, 2), 2, null);
+        [$subnet, $bits] = array_pad(explode('/', $entry, 2), 2, null);
         if (!filter_var($subnet, FILTER_VALIDATE_IP)) {
             return false;
         }

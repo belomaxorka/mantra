@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * FileIO - Atomic file operations with locking
  *
@@ -33,8 +33,8 @@ class FileIOException extends Exception
 class FileIO
 {
 
-    const MAX_FILE_SIZE = 10485760; // 10MB
-    const LOCK_EXTENSION = '.lock';
+    public const MAX_FILE_SIZE = 10485760; // 10MB
+    public const LOCK_EXTENSION = '.lock';
 
     /**
      * Read file contents with shared lock.
@@ -82,7 +82,7 @@ class FileIO
     {
         $dir = dirname($path);
         if (!is_dir($dir)) {
-            if (!mkdir($dir, 0755, true) && !is_dir($dir)) {
+            if (!mkdir($dir, 0o755, true) && !is_dir($dir)) {
                 throw new FileIOException('Failed to create directory', $path);
             }
         }
@@ -151,11 +151,11 @@ class FileIO
      * @param int $size File size in bytes
      * @throws FileIOException If size exceeds maximum
      */
-    public static function validateFileSize($size)
+    public static function validateFileSize($size): void
     {
         if ($size > self::MAX_FILE_SIZE) {
             throw new FileIOException(
-                'File size exceeds maximum limit (' . self::MAX_FILE_SIZE . ' bytes)'
+                'File size exceeds maximum limit (' . self::MAX_FILE_SIZE . ' bytes)',
             );
         }
     }
@@ -228,7 +228,7 @@ class FileIO
      * @param string|null $path Optional file path for lock cleanup
      * @param bool $cleanup Whether to delete lock file after release
      */
-    private static function releaseLock($lockHandle, $path = null, $cleanup = false)
+    private static function releaseLock($lockHandle, $path = null, $cleanup = false): void
     {
         if (is_resource($lockHandle)) {
             flock($lockHandle, LOCK_UN);

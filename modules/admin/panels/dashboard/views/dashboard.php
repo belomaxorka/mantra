@@ -49,10 +49,10 @@
                                 </thead>
                                 <tbody>
                                     <?php foreach ($recentContent as $item):
-                                        $type = isset($item['_type']) ? $item['_type'] : 'post';
-                                        $title = isset($item['title']) ? $item['title'] : '';
-                                        $status = isset($item['status']) ? $item['status'] : 'draft';
-                                        $updatedAt = isset($item['updated_at']) ? $item['updated_at'] : '';
+                                        $type = $item['_type'] ?? 'post';
+                                        $title = $item['title'] ?? '';
+                                        $status = $item['status'] ?? 'draft';
+                                        $updatedAt = $item['updated_at'] ?? '';
                                         $editUrl = ($type === 'post')
                                             ? base_url('/admin/posts/edit/' . $item['_id'])
                                             : base_url('/admin/pages/edit/' . $item['_id']);

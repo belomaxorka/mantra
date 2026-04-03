@@ -37,7 +37,7 @@
     </div>
 
     <?php
-      $renderSidebarItems = function ($items, $level = 0) use (&$renderSidebarItems) {
+      $renderSidebarItems = function ($items, $level = 0) use (&$renderSidebarItems): void {
         if (empty($items) || !is_array($items)) {
           return;
         }
@@ -48,12 +48,12 @@
             continue;
           }
 
-          $url = isset($item['url']) ? $item['url'] : '#';
-          $title = isset($item['title']) ? $item['title'] : (isset($item['id']) ? $item['id'] : '');
-          $icon = isset($item['icon']) ? $item['icon'] : '';
+          $url = $item['url'] ?? '#';
+          $title = $item['title'] ?? ($item['id'] ?? '');
+          $icon = $item['icon'] ?? '';
           $active = !empty($item['active']);
           $expanded = !empty($item['expanded']);
-          $children = isset($item['children']) && is_array($item['children']) ? $item['children'] : array();
+          $children = isset($item['children']) && is_array($item['children']) ? $item['children'] : [];
           $hasChildren = !empty($children);
 
           $levelClass = 'level-' . (int)$level;
@@ -71,7 +71,7 @@
           }
           $classes .= e($levelClass);
 
-          $nodeId = isset($item['id']) ? $item['id'] : '';
+          $nodeId = $item['id'] ?? '';
           $collapseId = 'admin-nav-' . preg_replace('/[^a-z0-9_-]/i', '-', (string)$nodeId) . '-' . (int)$level;
 
           if ($hasChildren) {
@@ -112,7 +112,7 @@
             continue;
           }
 
-          $group = isset($item['group']) ? $item['group'] : '';
+          $group = $item['group'] ?? '';
           if ($group !== $currentGroup) {
             $currentGroup = $group;
             if ($currentGroup !== '') {
@@ -120,7 +120,7 @@
             }
           }
 
-          $renderSidebarItems(array($item), 0);
+          $renderSidebarItems([$item], 0);
         ?>
       <?php endforeach; ?>
     <?php endif; ?>
@@ -178,7 +178,7 @@
         </ol>
       </nav>
     <?php endif; ?>
-    <?php echo isset($content) ? $content : ''; ?>
+    <?php echo $content ?? ''; ?>
   </main>
 </div>
 

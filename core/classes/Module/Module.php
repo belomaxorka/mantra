@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Module - Base class for all modules
  * Provides common functionality and API access
@@ -9,40 +9,40 @@ namespace Module;
 use Application;
 
 abstract class Module implements ModuleInterface {
-    protected $manifest = array();
+    protected $manifest = [];
     protected $app = null;
     protected $moduleId = '';
     protected $modulePath = '';
-    
+
     public function __construct($manifest, $moduleId = '', $modulePath = '') {
-        $this->manifest = is_array($manifest) ? $manifest : array();
+        $this->manifest = is_array($manifest) ? $manifest : [];
         $this->moduleId = $moduleId;
         $this->modulePath = $modulePath;
         $this->app = Application::getInstance();
     }
-    
+
     /**
      * Initialize module
      */
-    public function init() {
+    public function init(): void {
     }
-    
+
     // ========== ModuleInterface Implementation ==========
-    
+
     /**
      * Get module manifest
      */
     public function getManifest() {
         return $this->manifest;
     }
-    
+
     /**
      * Get module ID (kebab-case identifier)
      */
     public function getId() {
         return $this->moduleId;
     }
-    
+
     /**
      * Get module name (human-readable)
      */
@@ -63,7 +63,7 @@ abstract class Module implements ModuleInterface {
     public function getDescription() {
         return isset($this->manifest['description']) ? \Config::resolveLocalized($this->manifest['description']) : '';
     }
-    
+
     /**
      * Check if module can be disabled
      */
@@ -73,7 +73,7 @@ abstract class Module implements ModuleInterface {
         }
         return $this->getType() !== ModuleType::CORE;
     }
-    
+
     /**
      * Check if module can be deleted
      */
@@ -83,39 +83,39 @@ abstract class Module implements ModuleInterface {
         }
         return $this->getType() !== ModuleType::CORE;
     }
-    
+
     /**
      * Get module dependencies
      */
     public function getDependencies() {
-        return isset($this->manifest['dependencies']) && is_array($this->manifest['dependencies']) 
-            ? $this->manifest['dependencies'] 
-            : array();
+        return isset($this->manifest['dependencies']) && is_array($this->manifest['dependencies'])
+            ? $this->manifest['dependencies']
+            : [];
     }
-    
+
     /**
      * Called when module is being enabled
      */
     public function onEnable() {
         return true;
     }
-    
+
     /**
      * Called when module is being disabled
      */
     public function onDisable() {
         return true;
     }
-    
+
     /**
      * Called when module is being uninstalled
      */
     public function onUninstall() {
         return true;
     }
-    
+
     // ========== Extended Module API ==========
-    
+
     /**
      * Get module type
      * @return string One of ModuleType constants
@@ -126,20 +126,18 @@ abstract class Module implements ModuleInterface {
         }
         return ModuleType::CUSTOM;
     }
-    
+
     /**
      * Get module capabilities
      * @return array Array of ModuleCapability constants
      */
     public function getCapabilities() {
         if (isset($this->manifest['capabilities']) && is_array($this->manifest['capabilities'])) {
-            return array_filter($this->manifest['capabilities'], function($cap) {
-                return ModuleCapability::isValid($cap);
-            });
+            return array_filter($this->manifest['capabilities'], fn($cap) => ModuleCapability::isValid($cap));
         }
-        return array();
+        return [];
     }
-    
+
     /**
      * Check if module has specific capability
      * @param string $capability
@@ -148,25 +146,25 @@ abstract class Module implements ModuleInterface {
     public function hasCapability($capability) {
         return in_array($capability, $this->getCapabilities(), true);
     }
-    
+
     public function getAuthor() {
-        return isset($this->manifest['author']) ? $this->manifest['author'] : '';
+        return $this->manifest['author'] ?? '';
     }
 
     public function getHomepage() {
-        return isset($this->manifest['homepage']) ? $this->manifest['homepage'] : '';
+        return $this->manifest['homepage'] ?? '';
     }
 
     public function getLicense() {
-        return isset($this->manifest['license']) ? $this->manifest['license'] : '';
+        return $this->manifest['license'] ?? '';
     }
 
     public function getTags() {
-        return isset($this->manifest['tags']) ? $this->manifest['tags'] : array();
+        return $this->manifest['tags'] ?? [];
     }
-    
+
     // ========== Helper Methods ==========
-    
+
     protected function hook($hookName, $callback, $priority = 10) {
         return $this->app->hooks()->register($hookName, $callback, $priority);
     }
@@ -181,7 +179,7 @@ abstract class Module implements ModuleInterface {
      * @param string         $name     Service name
      * @param callable|mixed $provider Callable (lazy) or a ready value
      */
-    protected function provide($name, $provider) {
+    protected function provide($name, $provider): void {
         $this->app->provide($name, $provider);
     }
 
@@ -195,13 +193,13 @@ abstract class Module implements ModuleInterface {
      * @param callable $callback Return false to halt the request
      * @param int      $priority Lower = runs first (default 10)
      */
-    protected function middleware($pattern, $callback, $priority = 10) {
+    protected function middleware($pattern, $callback, $priority = 10): void {
         $this->hook('routes.register', function ($data) use ($pattern, $callback, $priority) {
             app()->router()->addGlobalMiddleware($pattern, $callback, $priority);
             return $data;
         }, 5);
     }
-    
+
     protected function route($method, $pattern, $callback) {
         $router = $this->app->router();
         $m = strtoupper($method);
@@ -213,19 +211,19 @@ abstract class Module implements ModuleInterface {
             return $router->any($pattern, $callback);
         }
     }
-    
+
     protected function config($key, $default = null) {
         return $this->app->config($key, $default);
     }
-    
-    protected function view($template, $data = array()) {
+
+    protected function view($template, $data = []) {
         return $this->app->view()->render($template, $data);
     }
-    
+
     public function getPath() {
         return $this->modulePath;
     }
-    
+
     protected function loadFile($filename) {
         $path = $this->getPath() . '/' . $filename;
         if (file_exists($path)) {
@@ -234,24 +232,24 @@ abstract class Module implements ModuleInterface {
         }
         return false;
     }
-    
+
     protected function settings() {
         return \Module\ModuleSettings::instance($this->getId());
     }
-    
-    protected function log($level, $message, $context = array()) {
+
+    protected function log($level, $message, $context = []) {
         $context['module'] = $this->getId();
         return logger()->log($level, $message, $context);
     }
-    
+
     public function hasSettings() {
         return file_exists($this->getPath() . '/settings.schema.php');
     }
-    
+
     public function hasTranslations() {
         return is_dir($this->getPath() . '/lang');
     }
-    
+
     public function getViewsPath() {
         $viewsPath = $this->getPath() . '/views';
         return is_dir($viewsPath) ? $viewsPath : null;
@@ -290,11 +288,9 @@ abstract class Module implements ModuleInterface {
      * @param string $path Path relative to assets directory (e.g., "css/admin.css")
      * @param int $priority Hook priority (default: 10)
      */
-    protected function enqueueAdminStyle($path, $priority = 10) {
+    protected function enqueueAdminStyle($path, $priority = 10): void {
         $url = $this->asset($path);
-        $this->hook('admin.head', function($content) use ($url) {
-            return $content . "\n    <link rel=\"stylesheet\" href=\"" . e($url) . "\">";
-        }, $priority);
+        $this->hook('admin.head', fn($content) => $content . "\n    <link rel=\"stylesheet\" href=\"" . e($url) . "\">", $priority);
     }
 
     /**
@@ -302,11 +298,9 @@ abstract class Module implements ModuleInterface {
      * @param string $path Path relative to assets directory (e.g., "js/admin.js")
      * @param int $priority Hook priority (default: 10)
      */
-    protected function enqueueAdminScript($path, $priority = 10) {
+    protected function enqueueAdminScript($path, $priority = 10): void {
         $url = $this->asset($path);
-        $this->hook('admin.footer', function($content) use ($url) {
-            return $content . "\n    <script src=\"" . e($url) . "\"></script>";
-        }, $priority);
+        $this->hook('admin.footer', fn($content) => $content . "\n    <script src=\"" . e($url) . "\"></script>", $priority);
     }
 
     /**
@@ -314,10 +308,8 @@ abstract class Module implements ModuleInterface {
      * @param string $css CSS code
      * @param int $priority Hook priority (default: 10)
      */
-    protected function addAdminInlineStyle($css, $priority = 10) {
-        $this->hook('admin.head', function($content) use ($css) {
-            return $content . "\n    <style>\n" . $css . "\n    </style>";
-        }, $priority);
+    protected function addAdminInlineStyle($css, $priority = 10): void {
+        $this->hook('admin.head', fn($content) => $content . "\n    <style>\n" . $css . "\n    </style>", $priority);
     }
 
     /**
@@ -325,10 +317,8 @@ abstract class Module implements ModuleInterface {
      * @param string $js JavaScript code
      * @param int $priority Hook priority (default: 10)
      */
-    protected function addAdminInlineScript($js, $priority = 10) {
-        $this->hook('admin.footer', function($content) use ($js) {
-            return $content . "\n    <script>\n" . $js . "\n    </script>";
-        }, $priority);
+    protected function addAdminInlineScript($js, $priority = 10): void {
+        $this->hook('admin.footer', fn($content) => $content . "\n    <script>\n" . $js . "\n    </script>", $priority);
     }
 
     /**
@@ -336,11 +326,9 @@ abstract class Module implements ModuleInterface {
      * @param string $path Path relative to assets directory (e.g., "css/style.css")
      * @param int $priority Hook priority (default: 10)
      */
-    protected function enqueueStyle($path, $priority = 10) {
+    protected function enqueueStyle($path, $priority = 10): void {
         $url = $this->asset($path);
-        $this->hook('theme.head', function($content) use ($url) {
-            return $content . "\n    <link rel=\"stylesheet\" href=\"" . e($url) . "\">";
-        }, $priority);
+        $this->hook('theme.head', fn($content) => $content . "\n    <link rel=\"stylesheet\" href=\"" . e($url) . "\">", $priority);
     }
 
     /**
@@ -348,11 +336,9 @@ abstract class Module implements ModuleInterface {
      * @param string $path Path relative to assets directory (e.g., "js/script.js")
      * @param int $priority Hook priority (default: 10)
      */
-    protected function enqueueScript($path, $priority = 10) {
+    protected function enqueueScript($path, $priority = 10): void {
         $url = $this->asset($path);
-        $this->hook('theme.footer', function($content) use ($url) {
-            return $content . "\n    <script src=\"" . e($url) . "\"></script>";
-        }, $priority);
+        $this->hook('theme.footer', fn($content) => $content . "\n    <script src=\"" . e($url) . "\"></script>", $priority);
     }
 
     /**
@@ -360,10 +346,8 @@ abstract class Module implements ModuleInterface {
      * @param string $css CSS code
      * @param int $priority Hook priority (default: 10)
      */
-    protected function addInlineStyle($css, $priority = 10) {
-        $this->hook('theme.head', function($content) use ($css) {
-            return $content . "\n    <style>\n" . $css . "\n    </style>";
-        }, $priority);
+    protected function addInlineStyle($css, $priority = 10): void {
+        $this->hook('theme.head', fn($content) => $content . "\n    <style>\n" . $css . "\n    </style>", $priority);
     }
 
     /**
@@ -371,10 +355,8 @@ abstract class Module implements ModuleInterface {
      * @param string $js JavaScript code
      * @param int $priority Hook priority (default: 10)
      */
-    protected function addInlineScript($js, $priority = 10) {
-        $this->hook('theme.footer', function($content) use ($js) {
-            return $content . "\n    <script>\n" . $js . "\n    </script>";
-        }, $priority);
+    protected function addInlineScript($js, $priority = 10): void {
+        $this->hook('theme.footer', fn($content) => $content . "\n    <script>\n" . $js . "\n    </script>", $priority);
     }
 
 }

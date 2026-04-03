@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Base test case for Mantra CMS tests
  *
@@ -13,12 +13,12 @@ abstract class MantraTestCase extends TestCase
     /**
      * Recursively remove a directory and all its contents.
      */
-    protected function removeDirectory($dir)
+    protected function removeDirectory($dir): void
     {
         if (!is_dir($dir)) {
             return;
         }
-        $files = array_diff(scandir($dir), array('.', '..'));
+        $files = array_diff(scandir($dir), ['.', '..']);
         foreach ($files as $file) {
             $path = $dir . '/' . $file;
             is_dir($path) ? $this->removeDirectory($path) : unlink($path);
@@ -29,18 +29,18 @@ abstract class MantraTestCase extends TestCase
     /**
      * Ensure the core schemas directory exists.
      */
-    protected function ensureSchemasDir()
+    protected function ensureSchemasDir(): void
     {
         $dir = MANTRA_CORE . '/schemas';
         if (!is_dir($dir)) {
-            mkdir($dir, 0755, true);
+            mkdir($dir, 0o755, true);
         }
     }
 
     /**
      * Create a test schema file via var_export (no closures).
      */
-    protected function createTestSchema($collection, $schema)
+    protected function createTestSchema($collection, $schema): void
     {
         $this->ensureSchemasDir();
         $schemaPath = MANTRA_CORE . '/schemas/' . $collection . '.php';
@@ -51,7 +51,7 @@ abstract class MantraTestCase extends TestCase
     /**
      * Write a schema file with raw PHP code (supports closures).
      */
-    protected function writeSchemaFile($collection, $phpCode)
+    protected function writeSchemaFile($collection, $phpCode): void
     {
         $this->ensureSchemasDir();
         $schemaPath = MANTRA_CORE . '/schemas/' . $collection . '.php';
@@ -61,7 +61,7 @@ abstract class MantraTestCase extends TestCase
     /**
      * Clean up test schema files matching a glob pattern.
      */
-    protected function cleanupTestSchemas($pattern)
+    protected function cleanupTestSchemas($pattern): void
     {
         $schemas = glob(MANTRA_CORE . '/schemas/' . $pattern);
         foreach ($schemas as $schema) {

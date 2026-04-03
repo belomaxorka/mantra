@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Logger - Centralized logging system
  * Supports multiple log levels and channels
@@ -7,14 +7,14 @@
 class Logger implements \Psr\Log\LoggerInterface
 {
     // Log levels (PSR-3 compatible)
-    const EMERGENCY = 'emergency';
-    const ALERT     = 'alert';
-    const CRITICAL  = 'critical';
-    const ERROR     = 'error';
-    const WARNING   = 'warning';
-    const NOTICE    = 'notice';
-    const INFO      = 'info';
-    const DEBUG     = 'debug';
+    public const EMERGENCY = 'emergency';
+    public const ALERT = 'alert';
+    public const CRITICAL = 'critical';
+    public const ERROR = 'error';
+    public const WARNING = 'warning';
+    public const NOTICE = 'notice';
+    public const INFO = 'info';
+    public const DEBUG = 'debug';
 
     private $logPath = '';
     private $channel = 'app';
@@ -22,28 +22,27 @@ class Logger implements \Psr\Log\LoggerInterface
     private $includeContext = true;
     private $dateFormat = 'Y-m-d H:i:s';
 
-    private static $levels = array(
+    private static $levels = [
         self::EMERGENCY => 800,
-        self::ALERT     => 700,
-        self::CRITICAL  => 600,
-        self::ERROR     => 500,
-        self::WARNING   => 400,
-        self::NOTICE    => 300,
-        self::INFO      => 200,
-        self::DEBUG     => 100
-    );
+        self::ALERT => 700,
+        self::CRITICAL => 600,
+        self::ERROR => 500,
+        self::WARNING => 400,
+        self::NOTICE => 300,
+        self::INFO => 200,
+        self::DEBUG => 100,
+    ];
 
     /**
      * @param string $channel
      * @param array  $options Supported: logPath, minLevel, includeContext, dateFormat
      */
-    public function __construct($channel = 'app', $options = array())
+    public function __construct($channel = 'app', $options = [])
     {
         $this->channel = $channel;
 
-        $this->logPath = isset($options['logPath'])
-            ? $options['logPath']
-            : (MANTRA_STORAGE . '/logs');
+        $this->logPath = $options['logPath']
+            ?? (MANTRA_STORAGE . '/logs');
 
         if (isset($options['minLevel']) && isset(self::$levels[$options['minLevel']])) {
             $this->minLevel = $options['minLevel'];
@@ -59,51 +58,51 @@ class Logger implements \Psr\Log\LoggerInterface
 
         // Create logs directory if not exists
         if (!is_dir($this->logPath)) {
-            mkdir($this->logPath, 0755, true);
+            mkdir($this->logPath, 0o755, true);
         }
     }
 
-    public function emergency($message, array $context = array())
+    public function emergency($message, array $context = [])
     {
         return $this->log(self::EMERGENCY, $message, $context);
     }
 
-    public function alert($message, array $context = array())
+    public function alert($message, array $context = [])
     {
         return $this->log(self::ALERT, $message, $context);
     }
 
-    public function critical($message, array $context = array())
+    public function critical($message, array $context = [])
     {
         return $this->log(self::CRITICAL, $message, $context);
     }
 
-    public function error($message, array $context = array())
+    public function error($message, array $context = [])
     {
         return $this->log(self::ERROR, $message, $context);
     }
 
-    public function warning($message, array $context = array())
+    public function warning($message, array $context = [])
     {
         return $this->log(self::WARNING, $message, $context);
     }
 
-    public function notice($message, array $context = array())
+    public function notice($message, array $context = [])
     {
         return $this->log(self::NOTICE, $message, $context);
     }
 
-    public function info($message, array $context = array())
+    public function info($message, array $context = [])
     {
         return $this->log(self::INFO, $message, $context);
     }
 
-    public function debug($message, array $context = array())
+    public function debug($message, array $context = [])
     {
         return $this->log(self::DEBUG, $message, $context);
     }
 
-    public function log($level, $message, array $context = array())
+    public function log($level, $message, array $context = [])
     {
         if (!$this->shouldLog($level)) {
             return false;
@@ -131,14 +130,14 @@ class Logger implements \Psr\Log\LoggerInterface
             date($this->dateFormat),
             $this->channel,
             strtoupper($level),
-            $message
+            $message,
         );
 
         if ($this->includeContext && !empty($context)) {
             $entry .= ' ' . json_encode($this->normalizeContext($context), JSON_UNESCAPED_UNICODE);
         }
 
-        if (in_array($level, array(self::ERROR, self::CRITICAL, self::ALERT, self::EMERGENCY), true)) {
+        if (in_array($level, [self::ERROR, self::CRITICAL, self::ALERT, self::EMERGENCY], true)) {
             if (isset($context['exception']) && $this->isThrowable($context['exception'])) {
                 $entry .= "\n" . $this->formatException($context['exception']);
             }
@@ -149,7 +148,7 @@ class Logger implements \Psr\Log\LoggerInterface
 
     private function interpolate($message, $context)
     {
-        $replace = array();
+        $replace = [];
 
         foreach ($context as $key => $val) {
             if (is_scalar($val) || (is_object($val) && method_exists($val, '__toString'))) {
@@ -180,7 +179,7 @@ class Logger implements \Psr\Log\LoggerInterface
             $exception->getMessage(),
             $exception->getFile(),
             $exception->getLine(),
-            $exception->getTraceAsString()
+            $exception->getTraceAsString(),
         );
     }
 
@@ -190,15 +189,15 @@ class Logger implements \Psr\Log\LoggerInterface
             return $context;
         }
 
-        $out = array();
+        $out = [];
         foreach ($context as $key => $val) {
             if ($key === 'exception' && $this->isThrowable($val)) {
-                $out[$key] = array(
-                    'class' => get_class($val),
+                $out[$key] = [
+                    'class' => $val::class,
                     'message' => $val->getMessage(),
                     'file' => $val->getFile(),
-                    'line' => $val->getLine()
-                );
+                    'line' => $val->getLine(),
+                ];
                 continue;
             }
 
@@ -208,7 +207,7 @@ class Logger implements \Psr\Log\LoggerInterface
             }
 
             if (is_object($val) && !method_exists($val, '__toString')) {
-                $out[$key] = array('object' => get_class($val));
+                $out[$key] = ['object' => $val::class];
                 continue;
             }
 
@@ -221,7 +220,7 @@ class Logger implements \Psr\Log\LoggerInterface
     private function writeLog($level, $message)
     {
         // Determine log file based on level
-        if (in_array($level, array(self::ERROR, self::CRITICAL, self::ALERT, self::EMERGENCY), true)) {
+        if (in_array($level, [self::ERROR, self::CRITICAL, self::ALERT, self::EMERGENCY], true)) {
             $filename = 'error-' . date('Y-m-d') . '.log';
         } else {
             $filename = $this->channel . '-' . date('Y-m-d') . '.log';

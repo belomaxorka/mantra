@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * PermissionsPanel - Role permission management
  *
@@ -15,9 +15,9 @@ class PermissionsPanel extends AdminPanel {
         return 'permissions';
     }
 
-    public function registerRoutes($admin) {
-        $admin->adminRoute('GET',  'permissions', array($this, 'index'));
-        $admin->adminRoute('POST', 'permissions', array($this, 'save'));
+    public function registerRoutes($admin): void {
+        $admin->adminRoute('GET',  'permissions', [$this, 'index']);
+        $admin->adminRoute('POST', 'permissions', [$this, 'save']);
     }
 
     /**
@@ -30,7 +30,7 @@ class PermissionsPanel extends AdminPanel {
         if (!$registry) {
             return $this->renderAdmin(
                 t('admin-permissions.title'),
-                '<div class="alert alert-danger alert-permanent">Permission registry not available</div>'
+                '<div class="alert alert-danger alert-permanent">Permission registry not available</div>',
             );
         }
 
@@ -48,7 +48,7 @@ class PermissionsPanel extends AdminPanel {
         if (!$registry) {
             return $this->renderAdmin(
                 t('admin-permissions.title'),
-                '<div class="alert alert-danger alert-permanent">Permission registry not available</div>'
+                '<div class="alert alert-danger alert-permanent">Permission registry not available</div>',
             );
         }
 
@@ -70,9 +70,9 @@ class PermissionsPanel extends AdminPanel {
         $allPermissions = $registry->getAll();
 
         foreach ($configurableRoles as $role) {
-            $posted = app()->request()->post('role_' . $role, array());
+            $posted = app()->request()->post('role_' . $role, []);
             if (!is_array($posted)) {
-                $posted = array();
+                $posted = [];
             }
 
             // Filter to only valid registered permissions
@@ -94,28 +94,28 @@ class PermissionsPanel extends AdminPanel {
         $labels = $registry->getLabels();
 
         // Build role data
-        $roleData = array();
+        $roleData = [];
         foreach ($roles as $role) {
-            $roleData[$role] = array(
+            $roleData[$role] = [
                 'permissions' => $registry->getPermissionsForRole($role),
                 'hasOverride' => $registry->hasOverride($role),
-            );
+            ];
         }
 
-        $content = $this->renderView('permissions', array(
+        $content = $this->renderView('permissions', [
             'roles' => $roles,
             'grouped' => $grouped,
             'labels' => $labels,
             'roleData' => $roleData,
             'csrf_token' => $this->auth()->generateCsrfToken(),
             'notice' => $notice,
-        ));
+        ]);
 
-        return $this->renderAdmin(t('admin-permissions.title'), $content, array(
-            'breadcrumbs' => array(
-                array('title' => t('admin-dashboard.title'), 'url' => base_url('/admin')),
-                array('title' => t('admin-permissions.title')),
-            ),
-        ));
+        return $this->renderAdmin(t('admin-permissions.title'), $content, [
+            'breadcrumbs' => [
+                ['title' => t('admin-dashboard.title'), 'url' => base_url('/admin')],
+                ['title' => t('admin-permissions.title')],
+            ],
+        ]);
     }
 }

@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Database - Flat-file database abstraction
  * Provides CRUD operations for JSON-based storage
@@ -14,13 +14,13 @@ class Database
     private $markdownDriver = null;
 
     // Schema cache: collection => schema array
-    private $collectionSchemas = array();
+    private $collectionSchemas = [];
 
     // Module-registered schemas: collection => file path
-    private $registeredSchemas = array();
+    private $registeredSchemas = [];
 
     // In-request collection cache: collection => items array
-    private $collectionCache = array();
+    private $collectionCache = [];
 
     public function __construct($basePath = null)
     {
@@ -38,7 +38,7 @@ class Database
         $format = config('content.format', 'json');
 
         // Only pages and posts can use Markdown
-        $contentCollections = array('pages', 'posts');
+        $contentCollections = ['pages', 'posts'];
 
         if ($format === 'markdown' && in_array($collection, $contentCollections)) {
             return $this->markdownDriver;
@@ -62,11 +62,11 @@ class Database
         try {
             $data = $driver->read($collection, $id);
         } catch (Exception $e) {
-            logger()->error('Failed to read document', array(
+            logger()->error('Failed to read document', [
                 'collection' => $collection,
                 'id' => $id,
-                'error' => $e->getMessage()
-            ));
+                'error' => $e->getMessage(),
+            ]);
             throw $e;
         }
 
@@ -96,18 +96,18 @@ class Database
 
         // Validate collection name (prevent directory traversal)
         if (!$this->isValidCollectionName($collection)) {
-            logger()->error('Invalid collection name', array('collection' => $collection));
+            logger()->error('Invalid collection name', ['collection' => $collection]);
             throw new Exception('Invalid collection name');
         }
 
         // Validate ID (prevent directory traversal)
         if (!$this->isValidId($id)) {
-            logger()->error('Invalid ID', array('id' => $id));
+            logger()->error('Invalid ID', ['id' => $id]);
             throw new Exception('Invalid ID');
         }
 
         // Clone data to avoid modifying original
-        $data = array_merge(array(), $data);
+        $data = array_merge([], $data);
 
         // Sanitize input data
         $data = SchemaValidator::sanitize($data);
@@ -127,11 +127,11 @@ class Database
             try {
                 SchemaValidator::validateOrThrow($data, $schema);
             } catch (SchemaValidationException $e) {
-                logger()->error('Schema validation failed', array(
+                logger()->error('Schema validation failed', [
                     'collection' => $collection,
                     'id' => $id,
-                    'errors' => $e->getErrors()
-                ));
+                    'errors' => $e->getErrors(),
+                ]);
                 throw $e;
             }
         }
@@ -176,16 +176,16 @@ class Database
         try {
             $result = $driver->write($collection, $id, $data);
         } catch (Exception $e) {
-            logger()->error('Failed to write document', array(
+            logger()->error('Failed to write document', [
                 'collection' => $collection,
                 'id' => $id,
-                'error' => $e->getMessage()
-            ));
+                'error' => $e->getMessage(),
+            ]);
             throw $e;
         }
 
         if ($result) {
-            logger()->debug('Data written', array('collection' => $collection, 'id' => $id));
+            logger()->debug('Data written', ['collection' => $collection, 'id' => $id]);
         }
 
         return $result;
@@ -236,7 +236,7 @@ class Database
         }
 
         $driver = $this->getDriver($collection);
-        $items = array();
+        $items = [];
         $documents = $driver->readCollection($collection);
 
         foreach ($documents as $id => $data) {
@@ -257,7 +257,7 @@ class Database
     /**
      * Query collection with filters
      */
-    public function query($collection, $filters = array(), $options = array())
+    public function query($collection, $filters = [], $options = [])
     {
         $items = $this->readCollection($collection);
 
@@ -276,11 +276,11 @@ class Database
         // Apply sorting
         if (isset($options['sort'])) {
             $sortField = $options['sort'];
-            $sortOrder = isset($options['order']) ? $options['order'] : 'asc';
+            $sortOrder = $options['order'] ?? 'asc';
 
             usort($items, function ($a, $b) use ($sortField, $sortOrder) {
-                $valA = isset($a[$sortField]) ? $a[$sortField] : '';
-                $valB = isset($b[$sortField]) ? $b[$sortField] : '';
+                $valA = $a[$sortField] ?? '';
+                $valB = $b[$sortField] ?? '';
 
                 // Type-aware comparison
                 if (is_numeric($valA) && is_numeric($valB)) {
@@ -297,7 +297,7 @@ class Database
 
         // Apply limit
         if (isset($options['limit'])) {
-            $offset = isset($options['offset']) ? $options['offset'] : 0;
+            $offset = $options['offset'] ?? 0;
             $items = array_slice($items, $offset, $options['limit']);
         }
 
@@ -314,7 +314,7 @@ class Database
      * @param array  $filters    Key-value equality filters (same as query())
      * @return int
      */
-    public function count($collection, $filters = array())
+    public function count($collection, $filters = [])
     {
         // Fast path: no filters — count files without reading contents
         if (empty($filters)) {
@@ -357,7 +357,7 @@ class Database
     /**
      * Register a schema path for a collection (used by modules).
      */
-    public function registerSchema($collection, $schemaPath)
+    public function registerSchema($collection, $schemaPath): void
     {
         $this->registeredSchemas[$collection] = $schemaPath;
         unset($this->collectionSchemas[$collection]);
@@ -409,7 +409,7 @@ class Database
         if ($docVersion < $currentVersion && !empty($schema['migrate']) && is_callable($schema['migrate'])) {
             $data = call_user_func($schema['migrate'], $data, $docVersion, $currentVersion);
             if (!is_array($data)) {
-                $data = array();
+                $data = [];
             }
             $data['schema_version'] = $currentVersion;
         } elseif ($docVersion < $currentVersion) {
@@ -446,6 +446,6 @@ class Database
         }
 
         // Fallback (less secure)
-        return uniqid() . '-' . mt_rand(1000, 9999);
+        return uniqid() . '-' . random_int(1000, 9999);
     }
 }

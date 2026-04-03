@@ -1,11 +1,11 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * HookManager - Event/Hook system for extensibility
  * Allows modules to hook into system events
  */
 
 class HookManager {
-    private $hooks = array();
+    private $hooks = [];
     private $nextId = 1;
 
     /**
@@ -18,21 +18,19 @@ class HookManager {
      */
     public function register($hookName, $callback, $priority = 10) {
         if (!isset($this->hooks[$hookName])) {
-            $this->hooks[$hookName] = array();
+            $this->hooks[$hookName] = [];
         }
 
         $id = $this->nextId++;
 
-        $this->hooks[$hookName][] = array(
+        $this->hooks[$hookName][] = [
             'id' => $id,
             'callback' => $callback,
-            'priority' => $priority
-        );
+            'priority' => $priority,
+        ];
 
         // Sort by priority
-        usort($this->hooks[$hookName], function($a, $b) {
-            return $a['priority'] - $b['priority'];
-        });
+        usort($this->hooks[$hookName], fn($a, $b) => $a['priority'] - $b['priority']);
 
         return $id;
     }
@@ -58,7 +56,7 @@ class HookManager {
 
         return false;
     }
-    
+
     /**
      * Fire a hook
      * 
@@ -81,17 +79,17 @@ class HookManager {
                 }
             }
         }
-        
+
         return $data;
     }
-    
+
     /**
      * Check if hook has listeners
      */
     public function hasListeners($hookName) {
         return isset($this->hooks[$hookName]) && !empty($this->hooks[$hookName]);
     }
-    
+
     /**
      * Get listener count for a hook
      */
@@ -109,7 +107,7 @@ class HookManager {
     /**
      * Remove all listeners for a hook
      */
-    public function clear($hookName) {
+    public function clear($hookName): void {
         if (isset($this->hooks[$hookName])) {
             unset($this->hooks[$hookName]);
         }

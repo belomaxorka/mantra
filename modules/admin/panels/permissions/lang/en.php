@@ -1,6 +1,6 @@
-<?php
+<?php declare(strict_types=1);
 
-return array(
+return [
     'admin-permissions.title' => 'Permissions',
     'admin-permissions.saved' => 'Permissions saved successfully.',
     'admin-permissions.reset_success' => 'Permissions for role "%s" have been reset to defaults.',
@@ -14,4 +14,4 @@ return array(
     'admin-permissions.role.admin' => 'Admin',
     'admin-permissions.role.editor' => 'Editor',
     'admin-permissions.role.viewer' => 'Viewer',
-);
+];

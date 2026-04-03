@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * View Tests
  * Tests for View class template rendering, layout wrapping, and output buffering
@@ -39,7 +39,7 @@ class ViewTest extends MantraTestCase
      * Reset HookManager to a clean state.
      * Call before any test that registers hooks to prevent leakage.
      */
-    private function resetHookManager()
+    private function resetHookManager(): void
     {
         $app = Application::getInstance();
 
@@ -50,20 +50,20 @@ class ViewTest extends MantraTestCase
         $hookManagerProperty->setValue($app, new HookManager());
     }
 
-    private function setupTestEnvironment()
+    private function setupTestEnvironment(): void
     {
         // Create directory structure
-        $dirs = array(
+        $dirs = [
             $this->themePath . '/templates',
             $this->themePath . '/templates/partials',
             $this->themePath . '/assets',
             $this->modulePath . '/views',
-            $this->modulePath . '/views/partials'
-        );
+            $this->modulePath . '/views/partials',
+        ];
 
         foreach ($dirs as $dir) {
             if (!is_dir($dir)) {
-                mkdir($dir, 0755, true);
+                mkdir($dir, 0o755, true);
             }
         }
 
@@ -71,7 +71,7 @@ class ViewTest extends MantraTestCase
         $this->createTestTemplates();
     }
 
-    private function createTestTemplates()
+    private function createTestTemplates(): void
     {
         // Theme layout
         file_put_contents($this->themePath . '/templates/layout.php',
@@ -102,20 +102,20 @@ class ViewTest extends MantraTestCase
         config()->set('theme.active', $testThemeName);
 
         $view = new View();
-        $output = $view->fetch('page', array('title' => 'Test Page'));
+        $output = $view->fetch('page', ['title' => 'Test Page']);
 
         // Should contain the title
         $this->assertStringContainsString(
             '<h1>Test Page</h1>',
             $output,
-            'Template renders with data'
+            'Template renders with data',
         );
 
         // Should be wrapped in layout
         $this->assertStringContainsString(
             '<!DOCTYPE html>',
             $output,
-            'Template is wrapped in layout'
+            'Template is wrapped in layout',
         );
 
         // Restore config
@@ -131,11 +131,11 @@ class ViewTest extends MantraTestCase
         $view = new View();
 
         // Theme template should be wrapped
-        $output = $view->fetch('page', array('title' => 'Test'));
+        $output = $view->fetch('page', ['title' => 'Test']);
         $this->assertStringContainsString(
             '<!DOCTYPE html>',
             $output,
-            'Theme template is wrapped in layout'
+            'Theme template is wrapped in layout',
         );
 
         config()->set('theme.active', $originalTheme);
@@ -151,29 +151,29 @@ class ViewTest extends MantraTestCase
         $view = new View();
 
         // Explicit module syntax
-        $output = $view->fetch($testModuleName . ':admin', array('message' => 'Admin Panel'));
+        $output = $view->fetch($testModuleName . ':admin', ['message' => 'Admin Panel']);
         $this->assertStringContainsString(
             '<div class="admin">Admin Panel</div>',
             $output,
-            'Module template renders with explicit syntax'
+            'Module template renders with explicit syntax',
         );
         $this->assertStringNotContainsString(
             '<!DOCTYPE html>',
             $output,
-            'Module template (explicit) is NOT wrapped in layout'
+            'Module template (explicit) is NOT wrapped in layout',
         );
 
         // _module parameter syntax
-        $output2 = $view->fetch('admin', array('_module' => $testModuleName, 'message' => 'Admin'));
+        $output2 = $view->fetch('admin', ['_module' => $testModuleName, 'message' => 'Admin']);
         $this->assertStringContainsString(
             '<div class="admin">Admin</div>',
             $output2,
-            'Module template renders with _module parameter'
+            'Module template renders with _module parameter',
         );
         $this->assertStringNotContainsString(
             '<!DOCTYPE html>',
             $output2,
-            'Module template (_module) is NOT wrapped in layout'
+            'Module template (_module) is NOT wrapped in layout',
         );
 
         config()->set('theme.active', $originalTheme);
@@ -201,22 +201,22 @@ class ViewTest extends MantraTestCase
         $view = new View();
 
         // Pass 'content' in data - should NOT override rendered content
-        $output = $view->fetch('test', array('content' => 'USER DATA'));
+        $output = $view->fetch('test', ['content' => 'USER DATA']);
 
         $this->assertStringContainsString(
             '<p>Template content</p>',
             $output,
-            'Rendered template content is preserved'
+            'Rendered template content is preserved',
         );
         $this->assertStringContainsString(
             '<main>',
             $output,
-            'Layout renders correctly'
+            'Layout renders correctly',
         );
         $this->assertStringNotContainsString(
             'USER DATA',
             $output,
-            'User data "content" does not override rendered content'
+            'User data "content" does not override rendered content',
         );
 
         // Restore original layout
@@ -241,12 +241,12 @@ class ViewTest extends MantraTestCase
         $this->assertStringNotContainsString(
             '//themes',
             $url,
-            'No double slash in URL with trailing slash base'
+            'No double slash in URL with trailing slash base',
         );
         $this->assertStringContainsString(
             'http://example.com/themes',
             $url,
-            'Asset URL is correctly formed'
+            'Asset URL is correctly formed',
         );
 
         // Test without trailing slash
@@ -257,7 +257,7 @@ class ViewTest extends MantraTestCase
         $this->assertStringContainsString(
             'http://example.com/themes',
             $url2,
-            'Asset URL works without trailing slash'
+            'Asset URL works without trailing slash',
         );
 
         config()->set('theme.active', $originalTheme);
@@ -272,14 +272,14 @@ class ViewTest extends MantraTestCase
         $this->assertSame(
             '&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;',
             $escaped,
-            'HTML is properly escaped'
+            'HTML is properly escaped',
         );
 
-        $escapedArray = $view->escape(array('<b>test</b>', '<i>test</i>'));
+        $escapedArray = $view->escape(['<b>test</b>', '<i>test</i>']);
         $this->assertSame(
             '&lt;b&gt;test&lt;/b&gt;',
             $escapedArray[0],
-            'Array values are escaped'
+            'Array values are escaped',
         );
 
         // Test alias
@@ -287,7 +287,7 @@ class ViewTest extends MantraTestCase
         $this->assertSame(
             '&lt;div&gt;',
             $aliasEscaped,
-            'e() alias works correctly'
+            'e() alias works correctly',
         );
     }
 
@@ -305,15 +305,15 @@ class ViewTest extends MantraTestCase
         $this->assertStringContainsString(
             '<aside>Sidebar</aside>',
             $partial,
-            'Theme partial renders'
+            'Theme partial renders',
         );
 
         // Theme partial with params
-        $partial2 = $view->partial('sidebar', array('content' => 'Custom'));
+        $partial2 = $view->partial('sidebar', ['content' => 'Custom']);
         $this->assertStringContainsString(
             '<aside>Custom</aside>',
             $partial2,
-            'Theme partial renders with parameters'
+            'Theme partial renders with parameters',
         );
 
         // Module partial
@@ -321,7 +321,7 @@ class ViewTest extends MantraTestCase
         $this->assertStringContainsString(
             '<nav>Menu</nav>',
             $partial3,
-            'Module partial renders'
+            'Module partial renders',
         );
 
         // Non-existent partial
@@ -329,7 +329,7 @@ class ViewTest extends MantraTestCase
         $this->assertStringContainsString(
             '<!-- Partial not found',
             $partial4,
-            'Non-existent partial returns comment'
+            'Non-existent partial returns comment',
         );
 
         config()->set('theme.active', $originalTheme);
@@ -350,21 +350,21 @@ class ViewTest extends MantraTestCase
 
         $exceptionThrown = false;
         try {
-            $view->fetch('error', array());
+            $view->fetch('error', []);
         } catch (Exception $e) {
             $exceptionThrown = true;
         }
 
         $this->assertTrue(
             $exceptionThrown,
-            'Exception is properly thrown from template'
+            'Exception is properly thrown from template',
         );
 
         // Verify output buffer is clean
         $level = ob_get_level();
         $this->assertTrue(
             $level >= 0,
-            'Output buffer level is valid after exception'
+            'Output buffer level is valid after exception',
         );
 
         config()->set('theme.active', $originalTheme);
@@ -381,7 +381,7 @@ class ViewTest extends MantraTestCase
         $exceptionThrown = false;
         $exceptionMessage = '';
         try {
-            $view->fetch('nonexistent-template', array());
+            $view->fetch('nonexistent-template', []);
         } catch (Exception $e) {
             $exceptionThrown = true;
             $exceptionMessage = $e->getMessage();
@@ -389,12 +389,12 @@ class ViewTest extends MantraTestCase
 
         $this->assertTrue(
             $exceptionThrown,
-            'Exception thrown for non-existent template'
+            'Exception thrown for non-existent template',
         );
         $this->assertStringContainsString(
             'Template not found',
             $exceptionMessage,
-            'Exception message is descriptive'
+            'Exception message is descriptive',
         );
 
         config()->set('theme.active', $originalTheme);
@@ -414,7 +414,7 @@ class ViewTest extends MantraTestCase
         config()->set('theme.active', $testThemeName);
 
         $view = new View();
-        $output = $view->fetch('outer', array('view' => $view));
+        $output = $view->fetch('outer', ['view' => $view]);
 
         $this->assertStringContainsString('<outer>', $output, 'Nested templates render correctly (outer tag)');
         $this->assertStringContainsString('<inner>nested</inner>', $output, 'Nested templates render correctly (inner tag)');
@@ -434,13 +434,13 @@ class ViewTest extends MantraTestCase
 
         $view = new View();
         $levelBefore = ob_get_level();
-        $output = $view->fetch('with-partial', array('view' => $view));
+        $output = $view->fetch('with-partial', ['view' => $view]);
         $levelAfter = ob_get_level();
 
         $this->assertSame(
             $levelBefore,
             $levelAfter,
-            'Output buffer level is restored after nested buffering'
+            'Output buffer level is restored after nested buffering',
         );
         $this->assertStringContainsString('<page>', $output, 'Nested buffering produces correct output (page tag)');
         $this->assertStringContainsString('<aside>', $output, 'Nested buffering produces correct output (aside tag)');
@@ -467,12 +467,12 @@ class ViewTest extends MantraTestCase
         $this->assertStringContainsString(
             '<!-- Partial error:',
             $output,
-            'Partial exception returns error comment'
+            'Partial exception returns error comment',
         );
         $this->assertSame(
             $levelBefore,
             $levelAfter,
-            'Output buffer is cleaned after partial exception'
+            'Output buffer is cleaned after partial exception',
         );
 
         config()->set('theme.active', $originalTheme);
@@ -500,7 +500,7 @@ class ViewTest extends MantraTestCase
         $levelBefore = ob_get_level();
 
         try {
-            $view->fetch('simple', array());
+            $view->fetch('simple', []);
         } catch (Exception $e) {
             $exceptionThrown = true;
         }
@@ -509,12 +509,12 @@ class ViewTest extends MantraTestCase
 
         $this->assertTrue(
             $exceptionThrown,
-            'Layout exception is thrown'
+            'Layout exception is thrown',
         );
         $this->assertSame(
             $levelBefore,
             $levelAfter,
-            'Output buffer is cleaned after layout exception'
+            'Output buffer is cleaned after layout exception',
         );
 
         // Restore original layout
@@ -538,12 +538,10 @@ class ViewTest extends MantraTestCase
 
         // Register hook to modify content
         $app = Application::getInstance();
-        $app->hooks()->register('view.render', function($content) {
-            return str_replace('Original', 'Modified', $content);
-        });
+        $app->hooks()->register('view.render', fn($content) => str_replace('Original', 'Modified', $content));
 
         $view = new View();
-        $output = $view->fetch('hooktest', array());
+        $output = $view->fetch('hooktest', []);
 
         $this->assertStringContainsString('Modified', $output, 'view.render hook modifies content');
         $this->assertStringNotContainsString('Original', $output, 'view.render hook removes original content');
@@ -569,20 +567,16 @@ class ViewTest extends MantraTestCase
 
         // Register multiple hooks with different priorities
         $app = Application::getInstance();
-        $app->hooks()->register('view.render', function($content) {
-            return str_replace('Text', 'Step1', $content);
-        }, 10);
-        $app->hooks()->register('view.render', function($content) {
-            return str_replace('Step1', 'Step2', $content);
-        }, 20);
+        $app->hooks()->register('view.render', fn($content) => str_replace('Text', 'Step1', $content), 10);
+        $app->hooks()->register('view.render', fn($content) => str_replace('Step1', 'Step2', $content), 20);
 
         $view = new View();
-        $output = $view->fetch('multihook', array());
+        $output = $view->fetch('multihook', []);
 
         $this->assertStringContainsString(
             'Step2',
             $output,
-            'Multiple hooks execute in order'
+            'Multiple hooks execute in order',
         );
 
         config()->set('theme.active', $originalTheme);
@@ -601,7 +595,7 @@ class ViewTest extends MantraTestCase
         config()->set('theme.active', $testThemeName);
 
         $view = new View();
-        $output = $view->fetch('empty', array());
+        $output = $view->fetch('empty', []);
 
         // Just check that layout wrapper is present
         $this->assertStringContainsString('<!DOCTYPE html>', $output, 'Empty template renders with layout (doctype)');
@@ -621,11 +615,11 @@ class ViewTest extends MantraTestCase
         config()->set('theme.active', $testThemeName);
 
         $view = new View();
-        $output = $view->fetch('whitespace', array());
+        $output = $view->fetch('whitespace', []);
 
         $this->assertNotEmpty(
             $output,
-            'Whitespace template produces output'
+            'Whitespace template produces output',
         );
 
         config()->set('theme.active', $originalTheme);
@@ -644,13 +638,13 @@ class ViewTest extends MantraTestCase
         $view = new View();
 
         ob_start();
-        $view->render('echo-test', array());
+        $view->render('echo-test', []);
         $output = ob_get_clean();
 
         $this->assertStringContainsString(
             '<p>Echo test</p>',
             $output,
-            'render() method echoes output'
+            'render() method echoes output',
         );
 
         config()->set('theme.active', $originalTheme);
@@ -665,16 +659,16 @@ class ViewTest extends MantraTestCase
         $this->assertSame(
             '',
             $escaped,
-            'Null is escaped to empty string'
+            'Null is escaped to empty string',
         );
 
         // Nested arrays
-        $nested = array('a' => array('b' => '<script>'));
+        $nested = ['a' => ['b' => '<script>']];
         $escapedNested = $view->escape($nested);
         $this->assertSame(
             '&lt;script&gt;',
             $escapedNested['a']['b'],
-            'Nested arrays are escaped recursively'
+            'Nested arrays are escaped recursively',
         );
 
         // Already escaped string (double escaping)
@@ -683,7 +677,7 @@ class ViewTest extends MantraTestCase
         $this->assertSame(
             '&amp;lt;div&amp;gt;',
             $doubleEscaped,
-            'Already escaped strings are double-escaped'
+            'Already escaped strings are double-escaped',
         );
 
         // Empty string
@@ -691,7 +685,7 @@ class ViewTest extends MantraTestCase
         $this->assertSame(
             '',
             $emptyEscaped,
-            'Empty string remains empty'
+            'Empty string remains empty',
         );
     }
 
@@ -711,7 +705,7 @@ class ViewTest extends MantraTestCase
         $this->assertStringNotContainsString(
             '//assets',
             $url1,
-            'Empty path does not create double slash'
+            'Empty path does not create double slash',
         );
 
         // Path with leading slash
@@ -719,7 +713,7 @@ class ViewTest extends MantraTestCase
         $this->assertStringNotContainsString(
             '//css',
             $url2,
-            'Leading slash is handled correctly'
+            'Leading slash is handled correctly',
         );
 
         // Path with multiple slashes
@@ -727,7 +721,7 @@ class ViewTest extends MantraTestCase
         $this->assertStringContainsString(
             'css//style.css',
             $url3,
-            'Multiple slashes in path are preserved'
+            'Multiple slashes in path are preserved',
         );
 
         config()->set('theme.active', $originalTheme);
@@ -746,12 +740,12 @@ class ViewTest extends MantraTestCase
         config()->set('theme.active', $testThemeName);
 
         $view = new View();
-        $output = $view->fetch('undefined', array());
+        $output = $view->fetch('undefined', []);
 
         $this->assertStringContainsString(
             'default',
             $output,
-            'Template handles undefined variables gracefully'
+            'Template handles undefined variables gracefully',
         );
 
         config()->set('theme.active', $originalTheme);
@@ -769,7 +763,7 @@ class ViewTest extends MantraTestCase
         config()->set('theme.active', $testThemeName);
 
         $view = new View();
-        $output = $view->partial('outer', array('view' => $view));
+        $output = $view->partial('outer', ['view' => $view]);
 
         $this->assertStringContainsString('<div>', $output, 'Nested partials render correctly (div tag)');
         $this->assertStringContainsString('<aside>', $output, 'Nested partials render correctly (aside tag)');
@@ -787,7 +781,7 @@ class ViewTest extends MantraTestCase
         // Create theme override for module partial
         $overrideDir = $this->themePath . '/templates/partials/' . $testModuleName;
         if (!is_dir($overrideDir)) {
-            mkdir($overrideDir, 0755, true);
+            mkdir($overrideDir, 0o755, true);
         }
         file_put_contents($overrideDir . '/menu.php',
             '<nav>Theme Override Menu</nav>');
@@ -799,12 +793,12 @@ class ViewTest extends MantraTestCase
         $this->assertStringContainsString(
             'Theme Override Menu',
             $output,
-            'Theme partial overrides module partial'
+            'Theme partial overrides module partial',
         );
         $this->assertStringNotContainsString(
             '<nav>Menu</nav>',
             $output,
-            'Original module partial is not used when theme override exists'
+            'Original module partial is not used when theme override exists',
         );
 
         // Clean up override
@@ -816,7 +810,7 @@ class ViewTest extends MantraTestCase
         $this->assertStringContainsString(
             '<nav>Menu</nav>',
             $output2,
-            'Module partial renders when no theme override'
+            'Module partial renders when no theme override',
         );
 
         config()->set('theme.active', $originalTheme);
@@ -834,7 +828,7 @@ class ViewTest extends MantraTestCase
         $this->assertStringContainsString(
             '<!-- Partial not found: nonexistent-module:some-partial',
             $output,
-            'Nonexistent module partial returns not-found comment'
+            'Nonexistent module partial returns not-found comment',
         );
 
         config()->set('theme.active', $originalTheme);
@@ -859,17 +853,17 @@ class ViewTest extends MantraTestCase
         $this->assertStringContainsString(
             '<div class="error">',
             $output,
-            'abort() renders theme 404 template'
+            'abort() renders theme 404 template',
         );
         $this->assertStringContainsString(
             '<!DOCTYPE html>',
             $output,
-            'abort() output is wrapped in layout'
+            'abort() output is wrapped in layout',
         );
         $this->assertSame(
             404,
             http_response_code(),
-            'abort() sets correct HTTP status code'
+            'abort() sets correct HTTP status code',
         );
 
         config()->set('theme.active', $originalTheme);
@@ -889,22 +883,22 @@ class ViewTest extends MantraTestCase
         $this->assertStringContainsString(
             '403',
             $output,
-            'abort() fallback contains status code'
+            'abort() fallback contains status code',
         );
         $this->assertStringContainsString(
             'Forbidden',
             $output,
-            'abort() fallback contains status title'
+            'abort() fallback contains status title',
         );
         $this->assertStringContainsString(
             'Access denied',
             $output,
-            'abort() fallback contains custom message'
+            'abort() fallback contains custom message',
         );
         $this->assertSame(
             403,
             http_response_code(),
-            'abort() sets correct HTTP status for fallback'
+            'abort() sets correct HTTP status for fallback',
         );
 
         config()->set('theme.active', $originalTheme);

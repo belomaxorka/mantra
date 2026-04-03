@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Mantra CMS - Global Helpers
  *
@@ -39,11 +39,11 @@ function config($key = null, $default = null)
  */
 function logger($channel = 'app')
 {
-    static $loggers = array();
+    static $loggers = [];
     if (!isset($loggers[$channel])) {
-        $loggers[$channel] = new Logger($channel, array(
-            'minLevel' => Logger::resolveLevel()
-        ));
+        $loggers[$channel] = new Logger($channel, [
+            'minLevel' => Logger::resolveLevel(),
+        ]);
     }
     return $loggers[$channel];
 }
@@ -82,7 +82,7 @@ function sanitize($value)
 /**
  * Translation shorthand.
  */
-function t($key, $params = array())
+function t($key, $params = [])
 {
     return app()->translator()->translate($key, $params);
 }
@@ -103,7 +103,7 @@ function base_url($path = '')
 /**
  * Render a template partial (without layout wrapping).
  */
-function partial($name, $params = array())
+function partial($name, $params = [])
 {
     return app()->view()->partial($name, $params);
 }
@@ -111,23 +111,23 @@ function partial($name, $params = array())
 /**
  * Abort with HTTP error page.
  */
-function abort($code = 404, $message = '')
+function abort($code = 404, $message = ''): void
 {
     http_response_code($code);
 
-    $titles = array(
+    $titles = [
         403 => 'Forbidden',
         404 => 'Page Not Found',
         500 => 'Internal Server Error',
-    );
-    $title = isset($titles[$code]) ? $titles[$code] : 'Error';
+    ];
+    $title = $titles[$code] ?? 'Error';
 
     try {
-        app()->view()->render((string)$code, array(
+        app()->view()->render((string)$code, [
             'title' => $code . ' - ' . $title,
             'code' => $code,
             'message' => $message,
-        ));
+        ]);
     } catch (Exception $e) {
         echo '<h1>' . $code . ' - ' . htmlspecialchars($title) . '</h1>';
         if ($message !== '') {
@@ -143,7 +143,7 @@ function abort($code = 404, $message = '')
  */
 function slugify($text)
 {
-    $cyrillic = array(
+    $cyrillic = [
         'а' => 'a', 'б' => 'b', 'в' => 'v', 'г' => 'g', 'д' => 'd',
         'е' => 'e', 'ё' => 'yo', 'ж' => 'zh', 'з' => 'z', 'и' => 'i',
         'й' => 'y', 'к' => 'k', 'л' => 'l', 'м' => 'm', 'н' => 'n',
@@ -157,8 +157,8 @@ function slugify($text)
         'О' => 'O', 'П' => 'P', 'Р' => 'R', 'С' => 'S', 'Т' => 'T',
         'У' => 'U', 'Ф' => 'F', 'Х' => 'H', 'Ц' => 'Ts', 'Ч' => 'Ch',
         'Ш' => 'Sh', 'Щ' => 'Sch', 'Ъ' => '', 'Ы' => 'Y', 'Ь' => '',
-        'Э' => 'E', 'Ю' => 'Yu', 'Я' => 'Ya'
-    );
+        'Э' => 'E', 'Ю' => 'Yu', 'Я' => 'Ya',
+    ];
 
     $text = strtr($text, $cyrillic);
     $text = preg_replace('~[^\pL\d]+~u', '-', $text);
@@ -176,20 +176,4 @@ function slugify($text)
     $text = strtolower($text);
 
     return empty($text) ? 'n-a' : $text;
-}
-
-// ── Polyfills ───────────────────────────────────────────────────────────────
-
-if (!function_exists('str_contains')) {
-    function str_contains($haystack, $needle)
-    {
-        return strpos($haystack, $needle) !== false;
-    }
-}
-
-if (!function_exists('str_starts_with')) {
-    function str_starts_with($haystack, $needle)
-    {
-        return strpos($haystack, $needle) === 0;
-    }
 }

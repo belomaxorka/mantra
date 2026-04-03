@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * MarkdownStorageDriver - Markdown file storage implementation
  *
@@ -32,12 +32,12 @@ class MarkdownStorageDriver implements StorageDriverInterface
             $raw = FileIO::readLocked($path);
             return $this->parseMarkdown($raw);
         } catch (Exception $e) {
-            logger()->error('Failed to read Markdown document', array(
+            logger()->error('Failed to read Markdown document', [
                 'collection' => $collection,
                 'id' => $id,
                 'path' => $path,
-                'error' => $e->getMessage()
-            ));
+                'error' => $e->getMessage(),
+            ]);
             throw $e;
         }
     }
@@ -49,15 +49,15 @@ class MarkdownStorageDriver implements StorageDriverInterface
 
         try {
             FileIO::writeAtomic($path, $content);
-            logger()->debug('Markdown data written', array('collection' => $collection, 'id' => $id));
+            logger()->debug('Markdown data written', ['collection' => $collection, 'id' => $id]);
             return true;
         } catch (Exception $e) {
-            logger()->error('Failed to write Markdown document', array(
+            logger()->error('Failed to write Markdown document', [
                 'collection' => $collection,
                 'id' => $id,
                 'path' => $path,
-                'error' => $e->getMessage()
-            ));
+                'error' => $e->getMessage(),
+            ]);
             throw $e;
         }
     }
@@ -79,10 +79,10 @@ class MarkdownStorageDriver implements StorageDriverInterface
         $collectionPath = $this->basePath . '/' . $collection;
 
         if (!is_dir($collectionPath)) {
-            return array();
+            return [];
         }
 
-        $items = array();
+        $items = [];
         $files = glob($collectionPath . '/*' . $this->getExtension());
 
         foreach ($files as $file) {
@@ -96,12 +96,12 @@ class MarkdownStorageDriver implements StorageDriverInterface
 
                 $data = $this->parseMarkdown($content);
             } catch (Exception $e) {
-                logger()->error('Failed to read Markdown document in collection', array(
+                logger()->error('Failed to read Markdown document in collection', [
                     'collection' => $collection,
                     'id' => $id,
                     'path' => $file,
-                    'error' => $e->getMessage()
-                ));
+                    'error' => $e->getMessage(),
+                ]);
                 continue;
             }
 
@@ -127,12 +127,12 @@ class MarkdownStorageDriver implements StorageDriverInterface
         $collectionPath = $this->basePath . '/' . $collection;
 
         if (!is_dir($collectionPath)) {
-            return array();
+            return [];
         }
 
         $ext = $this->getExtension();
         $files = glob($collectionPath . '/*' . $ext);
-        $ids = array();
+        $ids = [];
 
         foreach ($files as $file) {
             $ids[] = basename($file, $ext);
@@ -159,7 +159,7 @@ class MarkdownStorageDriver implements StorageDriverInterface
      */
     private function parseMarkdown($content)
     {
-        $data = array();
+        $data = [];
 
         // Check for YAML frontmatter
         if (preg_match('/^---\s*\n(.*?)\n---\s*\n(.*)$/s', $content, $matches)) {
@@ -190,7 +190,7 @@ class MarkdownStorageDriver implements StorageDriverInterface
      */
     private function buildMarkdown($data)
     {
-        $frontmatter = array();
+        $frontmatter = [];
         $content = '';
 
         // Extract content field
@@ -228,7 +228,7 @@ class MarkdownStorageDriver implements StorageDriverInterface
      */
     private function parseYaml($yaml)
     {
-        $data = array();
+        $data = [];
         $lines = explode("\n", $yaml);
 
         foreach ($lines as $line) {
@@ -237,8 +237,8 @@ class MarkdownStorageDriver implements StorageDriverInterface
                 continue;
             }
 
-            if (strpos($line, ':') !== false) {
-                list($key, $value) = explode(':', $line, 2);
+            if (str_contains($line, ':')  ) {
+                [$key, $value] = explode(':', $line, 2);
                 $key = trim($key);
                 $value = trim($value);
 
@@ -284,7 +284,7 @@ class MarkdownStorageDriver implements StorageDriverInterface
                 $value = (string)$value;
             } elseif (is_string($value)) {
                 // Escape quotes and wrap in quotes if contains special chars
-                if (strpos($value, ':') !== false || strpos($value, "\n") !== false) {
+                if (str_contains($value, ':') || str_contains($value, "\n")  ) {
                     $value = '"' . str_replace('"', '\\"', $value) . '"';
                 }
             } else {

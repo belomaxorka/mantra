@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * SEO Module - Example of extensibility features
  *
@@ -15,15 +15,15 @@ use Module\Module;
 class SeoModule extends Module
 {
 
-    public function init()
+    public function init(): void
     {
         // Hook into theme head to add meta tags
-        $this->hook('theme.head', array($this, 'addMetaTags'));
+        $this->hook('theme.head', [$this, 'addMetaTags']);
 
         // Hook into page data to add SEO fields
-        $this->hook('page.single.data', array($this, 'addSeoData'));
-        $this->hook('post.single.data', array($this, 'addSeoData'));
-        $this->hook('product.single.data', array($this, 'addSeoData'));
+        $this->hook('page.single.data', [$this, 'addSeoData']);
+        $this->hook('post.single.data', [$this, 'addSeoData']);
+        $this->hook('product.single.data', [$this, 'addSeoData']);
 
     }
 
@@ -45,7 +45,7 @@ class SeoModule extends Module
 
         // Open Graph
         $ogImage = $settings->get('og.default_image', '');
-        if (strpos($ogImage, 'http') !== 0) {
+        if (!str_starts_with($ogImage, 'http')  ) {
             $ogImage = base_url($ogImage);
         }
         $ogSiteName = $settings->get('og.site_name', '');
@@ -62,7 +62,7 @@ class SeoModule extends Module
         $robots = $settings->get('robots.default', 'index,follow');
 
         // Build meta tags
-        $meta = array();
+        $meta = [];
 
         // Basic SEO
         $meta[] = '<meta name="description" content="' . e($description) . '">';
@@ -111,21 +111,21 @@ class SeoModule extends Module
         $homeText = $settings->get('breadcrumbs.home_text', 'Home');
 
         // Add breadcrumbs data
-        $breadcrumbs = array(
-            array('title' => $homeText, 'url' => base_url())
-        );
+        $breadcrumbs = [
+            ['title' => $homeText, 'url' => base_url()],
+        ];
 
         if (isset($data['page'])) {
-            $breadcrumbs[] = array(
+            $breadcrumbs[] = [
                 'title' => $data['page']['title'],
-                'url' => null
-            );
+                'url' => null,
+            ];
         } elseif (isset($data['post'])) {
-            $breadcrumbs[] = array('title' => 'Blog', 'url' => base_url('/blog'));
-            $breadcrumbs[] = array(
+            $breadcrumbs[] = ['title' => 'Blog', 'url' => base_url('/blog')];
+            $breadcrumbs[] = [
                 'title' => $data['post']['title'],
-                'url' => null
-            );
+                'url' => null,
+            ];
         }
 
         $data['breadcrumbs'] = $breadcrumbs;

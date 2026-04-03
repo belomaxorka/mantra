@@ -1,6 +1,6 @@
-<?php
+<?php declare(strict_types=1);
 
-return array(
+return [
     // Module name
     'admin-settings.name' => 'Настройки',
 
@@ -126,4 +126,4 @@ return array(
 
     // Debug settings
     'admin-settings.debug.enabled' => 'Включить режим отладки',
-);
+];

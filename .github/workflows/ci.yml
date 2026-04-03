@@ -1,4 +1,4 @@
-name: Tests
+name: CI
 
 on:
   push:
@@ -7,8 +7,24 @@ on:
     branches: [main]
 
 jobs:
+  lint:
+    name: Code Style
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          tools: php-cs-fixer
+
+      - name: Check code style
+        run: php-cs-fixer fix --dry-run --diff --config=.php-cs-fixer.php
+
   tests:
     name: PHP ${{ matrix.php }}
+    needs: lint
     runs-on: ubuntu-latest
 
     strategy:
@@ -26,7 +42,7 @@ jobs:
           extensions: json, session, openssl, mbstring
           coverage: none
 
-      - name: Install Composer dependencies
+      - name: Install dependencies
         run: composer install --no-interaction --prefer-dist
 
       - name: Run tests

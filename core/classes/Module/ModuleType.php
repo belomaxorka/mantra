@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * ModuleType - Defines standard module types
  * Helps categorize modules for better organization
@@ -8,13 +8,13 @@ namespace Module;
 
 class ModuleType
 {
-    const CORE = 'core';              // Core system modules (cannot be disabled)
-    const FEATURE = 'feature';        // Feature modules (pages, posts, etc.)
-    const ADMIN = 'admin';            // Admin panel modules
-    const INTEGRATION = 'integration'; // Third-party integrations
-    const THEME = 'theme';            // Theme-related modules
-    const UTILITY = 'utility';        // Utility/helper modules
-    const CUSTOM = 'custom';          // Custom/user-created modules
+    public const CORE = 'core';              // Core system modules (cannot be disabled)
+    public const FEATURE = 'feature';        // Feature modules (pages, posts, etc.)
+    public const ADMIN = 'admin';            // Admin panel modules
+    public const INTEGRATION = 'integration'; // Third-party integrations
+    public const THEME = 'theme';            // Theme-related modules
+    public const UTILITY = 'utility';        // Utility/helper modules
+    public const CUSTOM = 'custom';          // Custom/user-created modules
 
     /**
      * Get all available types
@@ -22,7 +22,7 @@ class ModuleType
      */
     public static function all()
     {
-        return array(
+        return [
             self::CORE,
             self::FEATURE,
             self::ADMIN,
@@ -30,7 +30,7 @@ class ModuleType
             self::THEME,
             self::UTILITY,
             self::CUSTOM,
-        );
+        ];
     }
 
     /**

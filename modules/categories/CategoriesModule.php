@@ -1,10 +1,10 @@
-<?php
+<?php declare(strict_types=1);
 
 use Module\BaseAdminModule;
 
 class CategoriesModule extends BaseAdminModule
 {
-    public function init()
+    public function init(): void
     {
         parent::init();
 
@@ -15,48 +15,48 @@ class CategoriesModule extends BaseAdminModule
         app()->translator()->registerDomain('categories', $this->getPath() . '/lang');
 
         // Admin CRUD routes
-        $this->registerAdminRoute('GET',  'categories',              array($this, 'listCategories'));
-        $this->registerAdminRoute('GET',  'categories/new',          array($this, 'newCategory'));
-        $this->registerAdminRoute('POST', 'categories/new',          array($this, 'createCategory'));
-        $this->registerAdminRoute('GET',  'categories/edit/{id}',    array($this, 'editCategory'));
-        $this->registerAdminRoute('POST', 'categories/edit/{id}',    array($this, 'updateCategory'));
-        $this->registerAdminRoute('POST', 'categories/delete/{id}',  array($this, 'deleteCategory'));
+        $this->registerAdminRoute('GET',  'categories',              [$this, 'listCategories']);
+        $this->registerAdminRoute('GET',  'categories/new',          [$this, 'newCategory']);
+        $this->registerAdminRoute('POST', 'categories/new',          [$this, 'createCategory']);
+        $this->registerAdminRoute('GET',  'categories/edit/{id}',    [$this, 'editCategory']);
+        $this->registerAdminRoute('POST', 'categories/edit/{id}',    [$this, 'updateCategory']);
+        $this->registerAdminRoute('POST', 'categories/delete/{id}',  [$this, 'deleteCategory']);
 
         // Permissions
-        $this->hook('permissions.register', array($this, 'registerPermissions'));
+        $this->hook('permissions.register', [$this, 'registerPermissions']);
 
         // Post edit form integration
-        $this->hook('admin.posts.edit.sidebar', array($this, 'renderCategorySelector'));
-        $this->hook('admin.posts.form_data', array($this, 'extractCategoryField'));
+        $this->hook('admin.posts.edit.sidebar', [$this, 'renderCategorySelector']);
+        $this->hook('admin.posts.form_data', [$this, 'extractCategoryField']);
 
         // Post list integration
-        $this->hook('admin.posts.list.columns.head', array($this, 'renderCategoryColumnHead'));
-        $this->hook('admin.posts.list.columns.body', array($this, 'renderCategoryColumnBody'));
+        $this->hook('admin.posts.list.columns.head', [$this, 'renderCategoryColumnHead']);
+        $this->hook('admin.posts.list.columns.body', [$this, 'renderCategoryColumnBody']);
 
         // Public route
-        $this->hook('routes.register', array($this, 'registerPublicRoutes'));
+        $this->hook('routes.register', [$this, 'registerPublicRoutes']);
 
         // Enrich single post with category info
-        $this->hook('post.single.data', array($this, 'enrichPostCategory'));
+        $this->hook('post.single.data', [$this, 'enrichPostCategory']);
     }
 
     // ========== Permissions ==========
 
     public function registerPermissions($registry)
     {
-        $registry->registerPermissions(array(
-            'categories.view'   => 'View categories',
+        $registry->registerPermissions([
+            'categories.view' => 'View categories',
             'categories.create' => 'Create categories',
-            'categories.edit'   => 'Edit categories',
+            'categories.edit' => 'Edit categories',
             'categories.delete' => 'Delete categories',
-        ), 'Categories');
+        ], 'Categories');
 
-        $registry->addRoleDefaults('editor', array(
+        $registry->addRoleDefaults('editor', [
             'categories.view', 'categories.create', 'categories.edit',
-        ));
-        $registry->addRoleDefaults('viewer', array(
+        ]);
+        $registry->addRoleDefaults('viewer', [
             'categories.view',
-        ));
+        ]);
 
         return $registry;
     }
@@ -65,66 +65,66 @@ class CategoriesModule extends BaseAdminModule
 
     public function listCategories()
     {
-        $categories = app()->db()->query('categories', array(), array(
+        $categories = app()->db()->query('categories', [], [
             'sort' => 'order',
             'order' => 'asc',
-        ));
+        ]);
 
         // Count posts per category
-        $posts = app()->db()->query('posts', array(), array());
-        $counts = array();
+        $posts = app()->db()->query('posts', [], []);
+        $counts = [];
         foreach ($posts as $p) {
-            $cat = isset($p['category']) ? $p['category'] : '';
+            $cat = $p['category'] ?? '';
             if ($cat !== '') {
                 $counts[$cat] = isset($counts[$cat]) ? $counts[$cat] + 1 : 1;
             }
         }
 
-        $content = $this->renderView('categories:admin-list', array(
+        $content = $this->renderView('categories:admin-list', [
             'categories' => $categories,
             'counts' => $counts,
-        ));
+        ]);
 
-        return $this->renderAdmin(t('categories.title'), $content, array(
-            'breadcrumbs' => array(
-                array('title' => t('admin-dashboard.title'), 'url' => base_url('/admin')),
-                array('title' => t('categories.title')),
-            ),
-        ));
+        return $this->renderAdmin(t('categories.title'), $content, [
+            'breadcrumbs' => [
+                ['title' => t('admin-dashboard.title'), 'url' => base_url('/admin')],
+                ['title' => t('categories.title')],
+            ],
+        ]);
     }
 
     public function newCategory()
     {
-        $content = $this->renderView('categories:admin-edit', array(
-            'category' => array(
+        $content = $this->renderView('categories:admin-edit', [
+            'category' => [
                 'title' => '',
                 'slug' => '',
                 'description' => '',
                 'order' => 0,
-            ),
+            ],
             'isNew' => true,
             'csrf_token' => app()->auth()->generateCsrfToken(),
-        ));
+        ]);
 
-        return $this->renderAdmin(t('categories.new_category'), $content, array(
-            'breadcrumbs' => array(
-                array('title' => t('admin-dashboard.title'), 'url' => base_url('/admin')),
-                array('title' => t('categories.title'), 'url' => base_url('/admin/categories')),
-                array('title' => t('categories.new_category')),
-            ),
-        ));
+        return $this->renderAdmin(t('categories.new_category'), $content, [
+            'breadcrumbs' => [
+                ['title' => t('admin-dashboard.title'), 'url' => base_url('/admin')],
+                ['title' => t('categories.title'), 'url' => base_url('/admin/categories')],
+                ['title' => t('categories.new_category')],
+            ],
+        ]);
     }
 
-    public function createCategory()
+    public function createCategory(): void
     {
         if (!$this->verifyCsrf()) return;
 
-        $data = array(
+        $data = [
             'title' => app()->request()->postTrimmed('title'),
             'slug' => app()->request()->postTrimmed('slug'),
             'description' => app()->request()->post('description', ''),
             'order' => (int)app()->request()->post('order', 0),
-        );
+        ];
 
         if (empty($data['slug']) && !empty($data['title'])) {
             $data['slug'] = slugify($data['title']);
@@ -147,7 +147,7 @@ class CategoriesModule extends BaseAdminModule
 
     public function editCategory($params)
     {
-        $id = isset($params['id']) ? $params['id'] : '';
+        $id = $params['id'] ?? '';
         $category = app()->db()->read('categories', $id);
 
         if (!$category) {
@@ -156,26 +156,26 @@ class CategoriesModule extends BaseAdminModule
                 '<div class="alert alert-danger alert-permanent">Category not found</div>');
         }
 
-        $content = $this->renderView('categories:admin-edit', array(
+        $content = $this->renderView('categories:admin-edit', [
             'category' => $category,
             'isNew' => false,
             'csrf_token' => app()->auth()->generateCsrfToken(),
-        ));
+        ]);
 
-        return $this->renderAdmin(t('categories.edit_category'), $content, array(
-            'breadcrumbs' => array(
-                array('title' => t('admin-dashboard.title'), 'url' => base_url('/admin')),
-                array('title' => t('categories.title'), 'url' => base_url('/admin/categories')),
-                array('title' => t('categories.edit_category')),
-            ),
-        ));
+        return $this->renderAdmin(t('categories.edit_category'), $content, [
+            'breadcrumbs' => [
+                ['title' => t('admin-dashboard.title'), 'url' => base_url('/admin')],
+                ['title' => t('categories.title'), 'url' => base_url('/admin/categories')],
+                ['title' => t('categories.edit_category')],
+            ],
+        ]);
     }
 
-    public function updateCategory($params)
+    public function updateCategory($params): void
     {
         if (!$this->verifyCsrf()) return;
 
-        $id = isset($params['id']) ? $params['id'] : '';
+        $id = $params['id'] ?? '';
         $existing = app()->db()->read('categories', $id);
 
         if (!$existing) {
@@ -183,12 +183,12 @@ class CategoriesModule extends BaseAdminModule
             return;
         }
 
-        $data = array(
+        $data = [
             'title' => app()->request()->postTrimmed('title'),
             'slug' => app()->request()->postTrimmed('slug'),
             'description' => app()->request()->post('description', ''),
             'order' => (int)app()->request()->post('order', 0),
-        );
+        ];
 
         if (empty($data['slug']) && !empty($data['title'])) {
             $data['slug'] = slugify($data['title']);
@@ -204,11 +204,11 @@ class CategoriesModule extends BaseAdminModule
         $this->redirectAdmin('categories');
     }
 
-    public function deleteCategory($params)
+    public function deleteCategory($params): void
     {
         if (!$this->verifyCsrf()) return;
 
-        $id = isset($params['id']) ? $params['id'] : '';
+        $id = $params['id'] ?? '';
         app()->db()->delete('categories', $id);
 
         $this->redirectAdmin('categories');
@@ -218,17 +218,17 @@ class CategoriesModule extends BaseAdminModule
 
     public function renderCategorySelector($html, $post)
     {
-        $currentCategory = isset($post['category']) ? $post['category'] : '';
+        $currentCategory = $post['category'] ?? '';
 
-        $categories = app()->db()->query('categories', array(), array(
+        $categories = app()->db()->query('categories', [], [
             'sort' => 'order',
             'order' => 'asc',
-        ));
+        ]);
 
-        return $html . partial('categories:category-selector', array(
+        return $html . partial('categories:category-selector', [
             'categories' => $categories,
             'currentCategory' => $currentCategory,
-        ));
+        ]);
     }
 
     public function extractCategoryField($data)
@@ -254,15 +254,15 @@ class CategoriesModule extends BaseAdminModule
 
     public function registerPublicRoutes($data)
     {
-        $this->route('GET', '/category/{slug}', array($this, 'categoryPage'));
+        $this->route('GET', '/category/{slug}', [$this, 'categoryPage']);
         return $data;
     }
 
-    public function categoryPage($params)
+    public function categoryPage($params): void
     {
-        $slug = isset($params['slug']) ? $params['slug'] : '';
+        $slug = $params['slug'] ?? '';
 
-        $categories = app()->db()->query('categories', array('slug' => $slug));
+        $categories = app()->db()->query('categories', ['slug' => $slug]);
         if (empty($categories)) {
             abort(404);
             return;
@@ -272,28 +272,28 @@ class CategoriesModule extends BaseAdminModule
         $perPage = (int)config('content.posts_per_page', 10);
         $page = max(1, (int)app()->request()->query('page', 1));
 
-        $total = app()->db()->count('posts', array(
+        $total = app()->db()->count('posts', [
             'status' => 'published',
             'category' => $slug,
-        ));
+        ]);
         $paginator = new Paginator($total, $perPage, $page);
 
-        $posts = app()->db()->query('posts', array(
+        $posts = app()->db()->query('posts', [
             'status' => 'published',
             'category' => $slug,
-        ), array(
+        ], [
             'sort' => 'created_at',
             'order' => 'desc',
             'limit' => $paginator->perPage(),
             'offset' => $paginator->offset(),
-        ));
+        ]);
 
-        $data = array(
+        $data = [
             'category' => $category,
             'posts' => $posts,
             'paginator' => $paginator,
             'title' => $category['title'] . ' - ' . config('site.name', 'Mantra CMS'),
-        );
+        ];
 
         // Template fallback: theme category.php → module template (with site layout)
         $theme = config('theme.active', 'default');
@@ -304,7 +304,7 @@ class CategoriesModule extends BaseAdminModule
         } elseif (file_exists($themePath . '/category.php')) {
             app()->view()->render('category', $data);
         } else {
-            app()->view()->render('categories:category', $data, array('layout' => true));
+            app()->view()->render('categories:category', $data, ['layout' => true]);
         }
     }
 
@@ -317,7 +317,7 @@ class CategoriesModule extends BaseAdminModule
         }
 
         $slug = $data['post']['category'];
-        $categories = app()->db()->query('categories', array('slug' => $slug));
+        $categories = app()->db()->query('categories', ['slug' => $slug]);
         if (!empty($categories)) {
             $data['categoryInfo'] = $categories[0];
         }

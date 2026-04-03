@@ -1,6 +1,6 @@
-<?php
+<?php declare(strict_types=1);
 
-return array(
+return [
     // Module name
     'admin-dashboard.name' => 'Панель управления',
 
@@ -21,4 +21,4 @@ return array(
     'admin-dashboard.recent.empty' => 'Контент пока отсутствует.',
     'admin-dashboard.recent.post' => 'Запись',
     'admin-dashboard.recent.page' => 'Страница',
-);
+];

@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Admin;
 
@@ -17,7 +17,7 @@ class PagesPanel extends ContentPanel {
     }
 
     protected function getDefaultItem() {
-        return array(
+        return [
             'title' => '',
             'slug' => '',
             'content' => '',
@@ -27,57 +27,57 @@ class PagesPanel extends ContentPanel {
             'author' => '',
             'author_id' => '',
             'created_at' => '',
-            'updated_at' => ''
-        );
+            'updated_at' => '',
+        ];
     }
 
     protected function extractFormData() {
-        return array(
+        return [
             'title' => app()->request()->postTrimmed('title'),
             'slug' => app()->request()->postTrimmed('slug'),
             'content' => app()->request()->post('content', ''),
             'status' => app()->request()->post('status', 'draft'),
             'show_in_navigation' => (bool)app()->request()->post('show_in_navigation', false),
             'navigation_order' => (int)app()->request()->post('navigation_order', 50),
-        );
+        ];
     }
 
-    public function init($admin) {
+    public function init($admin): void {
         parent::init($admin);
 
         app()->db()->registerSchema('pages', $this->getPath() . '/schema.php');
         $this->registerPanelHooks();
         $this->registerContentHooks();
-        $this->hook('permissions.register', array($this, 'registerPermissions'));
-        $this->hook('theme.navigation', array($this, 'addPagesToNavigation'));
+        $this->hook('permissions.register', [$this, 'registerPermissions']);
+        $this->hook('theme.navigation', [$this, 'addPagesToNavigation']);
     }
 
-    private function registerContentHooks() {
+    private function registerContentHooks(): void {
         $s = 'pages';
-        \HookRegistry::define('page.single.query', 'Modify query parameters for a single page', 'array', 'array', array('source' => $s));
-        \HookRegistry::define('page.single.loaded', 'Filter the loaded page document before rendering', 'array', 'array', array('source' => $s));
-        \HookRegistry::define('page.single.data', 'Modify template data for a single page', 'array', 'array', array('source' => $s));
+        \HookRegistry::define('page.single.query', 'Modify query parameters for a single page', 'array', 'array', ['source' => $s]);
+        \HookRegistry::define('page.single.loaded', 'Filter the loaded page document before rendering', 'array', 'array', ['source' => $s]);
+        \HookRegistry::define('page.single.data', 'Modify template data for a single page', 'array', 'array', ['source' => $s]);
     }
 
     /**
      * Register page permissions with the central registry.
      */
     public function registerPermissions($registry) {
-        $registry->registerPermissions(array(
-            'pages.view'       => 'View pages',
-            'pages.create'     => 'Create pages',
-            'pages.edit'       => 'Edit all pages',
-            'pages.edit.own'   => 'Edit own pages',
-            'pages.delete'     => 'Delete all pages',
+        $registry->registerPermissions([
+            'pages.view' => 'View pages',
+            'pages.create' => 'Create pages',
+            'pages.edit' => 'Edit all pages',
+            'pages.edit.own' => 'Edit own pages',
+            'pages.delete' => 'Delete all pages',
             'pages.delete.own' => 'Delete own pages',
-        ), 'Pages');
+        ], 'Pages');
 
-        $registry->addRoleDefaults('editor', array(
+        $registry->addRoleDefaults('editor', [
             'pages.view', 'pages.create', 'pages.edit', 'pages.delete',
-        ));
-        $registry->addRoleDefaults('viewer', array(
+        ]);
+        $registry->addRoleDefaults('viewer', [
             'pages.view',
-        ));
+        ]);
 
         return $registry;
     }
@@ -87,21 +87,21 @@ class PagesPanel extends ContentPanel {
      */
     public function addPagesToNavigation($navItems) {
         if (!is_array($navItems)) {
-            $navItems = array();
+            $navItems = [];
         }
 
-        $pages = app()->db()->query('pages', array(
+        $pages = app()->db()->query('pages', [
             'status' => 'published',
-            'show_in_navigation' => true
-        ));
+            'show_in_navigation' => true,
+        ]);
 
         foreach ($pages as $page) {
-            $navItems[] = array(
+            $navItems[] = [
                 'id' => 'page-' . $page['slug'],
                 'title' => $page['title'],
                 'url' => base_url('/' . $page['slug']),
                 'order' => isset($page['navigation_order']) ? (int)$page['navigation_order'] : 50,
-            );
+            ];
         }
 
         return $navItems;

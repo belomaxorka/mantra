@@ -50,11 +50,11 @@
                                         <td class="ps-4">
                                             <code class="small"><?php echo e($permission); ?></code>
                                             <br>
-                                            <small class="text-muted"><?php echo e(isset($labels[$permission]) ? $labels[$permission] : ''); ?></small>
+                                            <small class="text-muted"><?php echo e($labels[$permission] ?? ''); ?></small>
                                         </td>
                                         <?php foreach ($roles as $role): ?>
                                             <?php
-                                                $rolePerms = isset($roleData[$role]['permissions']) ? $roleData[$role]['permissions'] : array();
+                                                $rolePerms = $roleData[$role]['permissions'] ?? [];
                                                 $checked = in_array($permission, $rolePerms, true);
                                             ?>
                                             <td class="text-center align-middle">

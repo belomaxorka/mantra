@@ -1,6 +1,6 @@
-<?php
+<?php declare(strict_types=1);
 
-return array(
+return [
     // Module name
     'admin-posts.name' => 'Posts',
 
@@ -48,4 +48,4 @@ return array(
     // Help text
     'admin-posts.slug_help' => 'URL-friendly version of the title. Leave empty to auto-generate.',
     'admin-posts.excerpt_help' => 'Short summary of the post (optional)',
-);
+];

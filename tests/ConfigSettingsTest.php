@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * ConfigSettings Tests (PHPUnit 10.x)
  *
@@ -47,12 +47,12 @@ class ConfigSettingsTest extends MantraTestCase
     public function testMigrationV1toV2AdminSubModules(): void
     {
         // Write a v1 config with admin sub-modules in modules.enabled
-        $this->writeConfig(array(
+        $this->writeConfig([
             'schema_version' => 1,
-            'modules' => array(
-                'enabled' => array('admin', 'admin-dashboard', 'admin-pages', 'admin-posts', 'admin-settings', 'seo')
-            )
-        ));
+            'modules' => [
+                'enabled' => ['admin', 'admin-dashboard', 'admin-pages', 'admin-posts', 'admin-settings', 'seo'],
+            ],
+        ]);
 
         $cs = new ConfigSettings();
         $cs->load();
@@ -68,11 +68,11 @@ class ConfigSettingsTest extends MantraTestCase
 
         // Verify schema_version bumped
         $schema = $cs->schema();
-        $currentVersion = isset($schema['version']) ? $schema['version'] : 0;
+        $currentVersion = $schema['version'] ?? 0;
         $this->assertSame(
             $currentVersion,
             $cs->get('schema_version'),
-            'schema_version bumped to current (' . $currentVersion . ')'
+            'schema_version bumped to current (' . $currentVersion . ')',
         );
     }
 
@@ -83,9 +83,9 @@ class ConfigSettingsTest extends MantraTestCase
     public function testFieldDefaultsFromTabs(): void
     {
         // Write a minimal config (missing most fields)
-        $this->writeConfig(array(
-            'site' => array('name' => 'Test Site')
-        ));
+        $this->writeConfig([
+            'site' => ['name' => 'Test Site'],
+        ]);
 
         $cs = new ConfigSettings();
         $cs->load();
@@ -94,28 +94,28 @@ class ConfigSettingsTest extends MantraTestCase
         $this->assertSame(
             'UTC',
             $cs->get('locale.timezone'),
-            'timezone default applied from schema tab'
+            'timezone default applied from schema tab',
         );
         $this->assertSame(
             10,
             $cs->get('content.posts_per_page'),
-            'posts_per_page default applied from schema tab'
+            'posts_per_page default applied from schema tab',
         );
         $this->assertSame(
             7200,
             $cs->get('session.lifetime'),
-            'session.lifetime default applied from schema tab'
+            'session.lifetime default applied from schema tab',
         );
         $this->assertTrue(
             $cs->get('debug.enabled'),
-            'debug.enabled default applied from schema tab'
+            'debug.enabled default applied from schema tab',
         );
 
         // Explicitly set value should not be overwritten
         $this->assertSame(
             'Test Site',
             $cs->get('site.name'),
-            'Explicit site.name not overwritten by default'
+            'Explicit site.name not overwritten by default',
         );
     }
 
@@ -126,9 +126,9 @@ class ConfigSettingsTest extends MantraTestCase
     public function testOverridesOnlySaving(): void
     {
         // Write config with one override
-        $this->writeConfig(array(
-            'site' => array('name' => 'Custom Name')
-        ));
+        $this->writeConfig([
+            'site' => ['name' => 'Custom Name'],
+        ]);
 
         $cs = new ConfigSettings();
         $cs->load();
@@ -150,7 +150,7 @@ class ConfigSettingsTest extends MantraTestCase
 
     public function testGetSetHas(): void
     {
-        $this->writeConfig(array());
+        $this->writeConfig([]);
 
         $cs = new ConfigSettings();
 
@@ -160,31 +160,31 @@ class ConfigSettingsTest extends MantraTestCase
         $this->assertSame(
             'Mantra CMS',
             $cs->get('site.name'),
-            'get() returns default value'
+            'get() returns default value',
         );
         $this->assertSame(
             'fallback',
             $cs->get('nonexistent', 'fallback'),
-            'get() returns fallback for missing key'
+            'get() returns fallback for missing key',
         );
 
         $cs->set('site.name', 'New Name');
         $this->assertSame(
             'New Name',
             $cs->get('site.name'),
-            'set() updates value in memory'
+            'set() updates value in memory',
         );
     }
 
     public function testSetMultiple(): void
     {
-        $this->writeConfig(array());
+        $this->writeConfig([]);
 
         $cs = new ConfigSettings();
-        $cs->setMultiple(array(
+        $cs->setMultiple([
             'site.name' => 'Bulk Name',
-            'locale.timezone' => 'Europe/Moscow'
-        ));
+            'locale.timezone' => 'Europe/Moscow',
+        ]);
         $cs->save();
 
         $this->assertSame('Bulk Name', $cs->get('site.name'), 'First value set');
@@ -204,7 +204,7 @@ class ConfigSettingsTest extends MantraTestCase
 
     public function testSchemaVersionPreservedAfterSave(): void
     {
-        $this->writeConfig(array('site' => array('name' => 'SV Test')));
+        $this->writeConfig(['site' => ['name' => 'SV Test']]);
 
         $cs = new ConfigSettings();
         $cs->load();
@@ -220,19 +220,19 @@ class ConfigSettingsTest extends MantraTestCase
         $this->assertSame(
             $expectedVersion,
             $raw['schema_version'],
-            'schema_version (' . $expectedVersion . ') present in saved file'
+            'schema_version (' . $expectedVersion . ') present in saved file',
         );
     }
 
     public function testMigrationNotReapplied(): void
     {
         // Write v1 config
-        $this->writeConfig(array(
+        $this->writeConfig([
             'schema_version' => 1,
-            'modules' => array(
-                'enabled' => array('admin', 'admin-dashboard', 'seo')
-            )
-        ));
+            'modules' => [
+                'enabled' => ['admin', 'admin-dashboard', 'seo'],
+            ],
+        ]);
 
         // First load: migration runs
         $cs1 = new ConfigSettings();
@@ -247,12 +247,12 @@ class ConfigSettingsTest extends MantraTestCase
         $this->assertSame(
             $enabled1,
             $enabled2,
-            'Second load produces same result (migration not re-applied)'
+            'Second load produces same result (migration not re-applied)',
         );
         $this->assertNotContains(
             'admin-dashboard',
             $enabled2,
-            'admin-dashboard still absent on second load'
+            'admin-dashboard still absent on second load',
         );
     }
 
@@ -273,12 +273,12 @@ class ConfigSettingsTest extends MantraTestCase
         $this->assertSame(
             'Mantra CMS',
             $cs->get('site.name'),
-            'Default site.name used when config.json missing'
+            'Default site.name used when config.json missing',
         );
         $this->assertSame(
             'UTC',
             $cs->get('locale.timezone'),
-            'Default timezone used when config.json missing'
+            'Default timezone used when config.json missing',
         );
     }
 
@@ -286,11 +286,11 @@ class ConfigSettingsTest extends MantraTestCase
     // Helpers
     // ---------------------------------------------------------------
 
-    private function writeConfig($data)
+    private function writeConfig($data): void
     {
         $dir = dirname($this->configPath);
         if (!is_dir($dir)) {
-            mkdir($dir, 0755, true);
+            mkdir($dir, 0o755, true);
         }
         file_put_contents($this->configPath, json_encode($data));
     }

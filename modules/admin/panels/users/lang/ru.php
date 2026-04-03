@@ -1,6 +1,6 @@
-<?php
+<?php declare(strict_types=1);
 
-return array(
+return [
     // Module name
     'admin-users.name' => 'Пользователи',
 
@@ -44,4 +44,4 @@ return array(
     'admin-users.create_error' => 'Не удалось создать пользователя. Имя пользователя может быть занято или пароль не указан.',
     'admin-users.access_denied' => 'Доступ запрещён. Требуются права администратора.',
     'admin-users.is_you' => 'Вы',
-);
+];

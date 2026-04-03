@@ -51,7 +51,7 @@
                                    class="form-control"
                                    id="email"
                                    name="email"
-                                   value="<?php echo $this->escape(isset($user['email']) ? $user['email'] : ''); ?>"
+                                   value="<?php echo $this->escape($user['email'] ?? ''); ?>"
                                    maxlength="255">
                         </div>
 
@@ -83,9 +83,9 @@
                     <div class="card-body">
                         <div class="btn-group w-100" role="group">
                             <?php
-                                $roles = array('admin', 'editor', 'viewer');
-                                $roleColors = array('admin' => 'primary', 'editor' => 'success', 'viewer' => 'secondary');
-                                $currentRole = isset($user['role']) ? $user['role'] : 'editor';
+                                $roles = ['admin', 'editor', 'viewer'];
+                                $roleColors = ['admin' => 'primary', 'editor' => 'success', 'viewer' => 'secondary'];
+                                $currentRole = $user['role'] ?? 'editor';
                             ?>
                             <?php foreach ($roles as $r): ?>
                                 <input type="radio"
@@ -109,9 +109,9 @@
                     <div class="card-body">
                         <div class="btn-group w-100" role="group">
                             <?php
-                                $statuses = array('active', 'inactive', 'banned');
-                                $statusColors = array('active' => 'success', 'inactive' => 'secondary', 'banned' => 'danger');
-                                $currentStatus = isset($user['status']) ? $user['status'] : 'active';
+                                $statuses = ['active', 'inactive', 'banned'];
+                                $statusColors = ['active' => 'success', 'inactive' => 'secondary', 'banned' => 'danger'];
+                                $currentStatus = $user['status'] ?? 'active';
                             ?>
                             <?php foreach ($statuses as $s): ?>
                                 <input type="radio"

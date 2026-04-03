@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * ModuleValidator - Validates module manifests and structure
  */
@@ -10,7 +10,7 @@ use InvalidArgumentException;
 use Exception;
 
 class ModuleValidator {
-    
+
     /**
      * Check if module ID is valid
      * @param string $id
@@ -19,14 +19,14 @@ class ModuleValidator {
     public static function isValidModuleId($id) {
         return is_string($id) && $id !== '' && preg_match('/^[a-z0-9_-]+$/', $id);
     }
-    
+
     /**
      * Assert module ID is valid (throws exception if not)
      * @param string $id
      * @param string|null $context
      * @throws InvalidArgumentException
      */
-    public static function assertValidModuleId($id, $context = null) {
+    public static function assertValidModuleId($id, $context = null): void {
         if (!self::isValidModuleId($id)) {
             $message = "Invalid module ID: '{$id}'";
             if ($context) {
@@ -35,41 +35,41 @@ class ModuleValidator {
             throw new InvalidArgumentException($message);
         }
     }
-    
+
     /**
      * Validate module manifest
      * @param array $manifest
      * @return array Array of validation errors (empty if valid)
      */
     public static function validateManifest($manifest) {
-        $errors = array();
-        
+        $errors = [];
+
         // Required: id
         if (!isset($manifest['id'])) {
             $errors[] = 'Missing required field: id';
         } elseif (!self::isValidModuleId($manifest['id'])) {
             $errors[] = 'Invalid id format (must be lowercase with hyphens or underscores)';
         }
-        
+
         // Required: version
         if (!isset($manifest['version'])) {
             $errors[] = 'Missing required field: version';
         } elseif (!is_string($manifest['version']) || !preg_match('/^\d+\.\d+\.\d+$/', $manifest['version'])) {
             $errors[] = 'Invalid version format (must be semantic: MAJOR.MINOR.PATCH)';
         }
-        
+
         // Required: name
         if (!isset($manifest['name'])) {
             $errors[] = 'Missing required field: name';
         } elseif (!is_string($manifest['name']) || trim($manifest['name']) === '') {
             $errors[] = 'Invalid name (must be non-empty string)';
         }
-        
+
         // Optional: type
         if (isset($manifest['type']) && !ModuleType::isValid($manifest['type'])) {
             $errors[] = 'Invalid type (must be one of: ' . implode(', ', ModuleType::all()) . ')';
         }
-        
+
         // Optional: capabilities
         if (isset($manifest['capabilities'])) {
             if (!is_array($manifest['capabilities'])) {
@@ -82,7 +82,7 @@ class ModuleValidator {
                 }
             }
         }
-        
+
         // Optional: dependencies
         if (isset($manifest['dependencies'])) {
             if (!is_array($manifest['dependencies'])) {
@@ -95,25 +95,25 @@ class ModuleValidator {
                 }
             }
         }
-        
+
         return $errors;
     }
-    
+
     /**
      * Validate module structure
      * @param string $moduleId
      * @return array Array of validation errors (empty if valid)
      */
     public static function validateStructure($moduleId) {
-        $errors = array();
+        $errors = [];
         $modulePath = MANTRA_MODULES . '/' . $moduleId;
-        
+
         // Check module directory exists
         if (!is_dir($modulePath)) {
             $errors[] = "Module directory not found: {$modulePath}";
             return $errors;
         }
-        
+
         // Check manifest exists
         $manifestPath = $modulePath . '/module.json';
         if (!file_exists($manifestPath)) {
@@ -127,47 +127,47 @@ class ModuleValidator {
                 $errors[] = 'Invalid module.json: ' . $e->getMessage();
             }
         }
-        
+
         // Check module class exists
         $parts = explode('-', $moduleId);
         $pascalCase = implode('', array_map('ucfirst', $parts));
         $classFile = $modulePath . '/' . $pascalCase . 'Module.php';
-        
+
         if (!file_exists($classFile)) {
             $errors[] = "Missing module class file: {$pascalCase}Module.php";
         }
-        
+
         return $errors;
     }
-    
+
     /**
      * Validate all modules
      * @return array Validation results keyed by module ID
      */
     public static function validateAll() {
-        $results = array();
-        
+        $results = [];
+
         if (!is_dir(MANTRA_MODULES)) {
             return $results;
         }
-        
+
         $dirs = scandir(MANTRA_MODULES);
         foreach ($dirs as $dir) {
             if ($dir === '.' || $dir === '..') {
                 continue;
             }
-            
+
             if (!is_dir(MANTRA_MODULES . '/' . $dir)) {
                 continue;
             }
-            
+
             $errors = self::validateStructure($dir);
-            $results[$dir] = array(
+            $results[$dir] = [
                 'valid' => empty($errors),
                 'errors' => $errors,
-            );
+            ];
         }
-        
+
         return $results;
     }
 }

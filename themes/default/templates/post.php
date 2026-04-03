@@ -1,7 +1,7 @@
 <article>
     <?php
     if (isset($breadcrumbs) && !empty($breadcrumbs)) {
-        echo partial('seo:breadcrumbs', array('breadcrumbs' => $breadcrumbs));
+        echo partial('seo:breadcrumbs', ['breadcrumbs' => $breadcrumbs]);
     }
     ?>
 

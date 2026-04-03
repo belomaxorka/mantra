@@ -1,14 +1,14 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Router - Simple but powerful routing system
  * Supports dynamic routes, parameters, and middleware
  */
 
 class Router {
-    private $routes = array();
-    private $globalMiddleware = array();
+    private $routes = [];
+    private $globalMiddleware = [];
     private $currentRoute = null;
-    
+
     /**
      * Add GET route
      */
@@ -16,7 +16,7 @@ class Router {
         $this->addRoute('GET', $pattern, $callback);
         return $this;
     }
-    
+
     /**
      * Add POST route
      */
@@ -24,7 +24,7 @@ class Router {
         $this->addRoute('POST', $pattern, $callback);
         return $this;
     }
-    
+
     /**
      * Add route for any method
      */
@@ -32,19 +32,19 @@ class Router {
         $this->addRoute('ANY', $pattern, $callback);
         return $this;
     }
-    
+
     /**
      * Add route
      */
-    private function addRoute($method, $pattern, $callback) {
-        $this->routes[] = array(
+    private function addRoute($method, $pattern, $callback): void {
+        $this->routes[] = [
             'method' => $method,
             'pattern' => $pattern,
             'callback' => $callback,
-            'middleware' => array()
-        );
+            'middleware' => [],
+        ];
     }
-    
+
     /**
      * Add middleware to last route
      */
@@ -69,22 +69,20 @@ class Router {
      * @param callable $callback Middleware callable; return false to halt
      * @param int      $priority Lower = runs first (default 10)
      */
-    public function addGlobalMiddleware($pattern, $callback, $priority = 10) {
-        $this->globalMiddleware[] = array(
-            'pattern'  => $pattern,
+    public function addGlobalMiddleware($pattern, $callback, $priority = 10): void {
+        $this->globalMiddleware[] = [
+            'pattern' => $pattern,
             'callback' => $callback,
             'priority' => $priority,
-        );
+        ];
 
-        usort($this->globalMiddleware, function ($a, $b) {
-            return $a['priority'] - $b['priority'];
-        });
+        usort($this->globalMiddleware, fn ($a, $b) => $a['priority'] - $b['priority']);
     }
-    
+
     /**
      * Dispatch current request
      */
-    public function dispatch() {
+    public function dispatch(): void {
         $method = app()->request()->method();
         $uri = $this->getUri();
 
@@ -93,13 +91,13 @@ class Router {
             if ($route['method'] !== 'ANY' && $route['method'] !== $method) {
                 continue;
             }
-            
+
             // Check pattern
             $params = $this->matchPattern($route['pattern'], $uri);
             if ($params === false) {
                 continue;
             }
-            
+
             // Route matched
             $this->currentRoute = $route;
 
@@ -121,7 +119,7 @@ class Router {
                     }
                 }
             }
-            
+
             // Execute callback
             // NOTE: $params is an associative array (named params). Passing it to call_user_func_array()
             // would be treated as PHP 8 named arguments and can break handlers expecting a single $params array.
@@ -135,14 +133,14 @@ class Router {
                 // Format: "ModuleName:method"
                 $this->executeControllerAction($route['callback'], $params);
             }
-            
+
             return;
         }
-        
+
         // No route found - 404
         $this->notFound();
     }
-    
+
     /**
      * Get clean URI
      */
@@ -163,7 +161,7 @@ class Router {
 
         return '/' . trim($uri, '/');
     }
-    
+
     /**
      * Match pattern against URI
      */
@@ -171,10 +169,10 @@ class Router {
         // Convert pattern to regex
         $pattern = preg_replace('/\{([a-zA-Z0-9_]+)\}/', '(?P<$1>[a-zA-Z0-9_-]+)', $pattern);
         $pattern = '#^' . $pattern . '$#';
-        
+
         if (preg_match($pattern, $uri, $matches)) {
             // Extract named parameters
-            $params = array();
+            $params = [];
             foreach ($matches as $key => $value) {
                 if (is_string($key)) {
                     $params[$key] = $value;
@@ -182,35 +180,35 @@ class Router {
             }
             return $params;
         }
-        
+
         return false;
     }
-    
+
     /**
      * Execute controller action
      */
-    private function executeControllerAction($action, $params) {
+    private function executeControllerAction($action, $params): void {
         $parts = explode(':', $action);
         if (count($parts) !== 2) {
             throw new Exception('Invalid controller action format');
         }
-        
-        list($moduleName, $method) = $parts;
-        
+
+        [$moduleName, $method] = $parts;
+
         $app = Application::getInstance();
         $module = $app->modules()->getModule($moduleName);
-        
+
         if ($module && method_exists($module, $method)) {
             if (empty($params)) {
-                call_user_func(array($module, $method));
+                call_user_func([$module, $method]);
             } else {
-                call_user_func(array($module, $method), $params);
+                call_user_func([$module, $method], $params);
             }
         } else {
             throw new Exception('Controller action not found: ' . $action);
         }
     }
-    
+
     /**
      * Check if a middleware pattern matches the given URI.
      */
@@ -222,7 +220,7 @@ class Router {
         // Prefix match: "/admin/*" matches "/admin" and "/admin/pages"
         if (substr($pattern, -2) === '/*') {
             $prefix = substr($pattern, 0, -2);
-            return $uri === $prefix || strpos($uri, $prefix . '/') === 0;
+            return $uri === $prefix || str_starts_with($uri, $prefix . '/')  ;
         }
 
         // Exact match
@@ -232,14 +230,14 @@ class Router {
     /**
      * 404 handler
      */
-    private function notFound() {
+    private function notFound(): void {
         abort(404);
     }
-    
+
     /**
      * Redirect helper
      */
-    public function redirect($url, $code = 302) {
+    public function redirect($url, $code = 302): void {
         app()->response()->redirect($url, $code);
     }
 }

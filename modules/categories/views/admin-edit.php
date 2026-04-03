@@ -48,7 +48,7 @@
                             <textarea class="form-control"
                                       id="description"
                                       name="description"
-                                      rows="3"><?php echo e(isset($category['description']) ? $category['description'] : ''); ?></textarea>
+                                      rows="3"><?php echo e($category['description'] ?? ''); ?></textarea>
                         </div>
 
                         <div class="mb-3">
@@ -59,7 +59,7 @@
                                    class="form-control"
                                    id="order"
                                    name="order"
-                                   value="<?php echo (int)(isset($category['order']) ? $category['order'] : 0); ?>"
+                                   value="<?php echo (int)($category['order'] ?? 0); ?>"
                                    min="0"
                                    max="999">
                             <div class="form-text"><?php echo t('categories.order_help'); ?></div>

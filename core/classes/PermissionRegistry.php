@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * PermissionRegistry - Central authority for permission management
  *
@@ -10,19 +10,19 @@
 class PermissionRegistry {
 
     /** @var array All registered permissions: array of permission strings */
-    private $permissions = array();
+    private $permissions = [];
 
     /** @var array Grouped permissions for UI: group => array of permission strings */
-    private $groups = array();
+    private $groups = [];
 
     /** @var array Permission labels for UI: permission => label */
-    private $labels = array();
+    private $labels = [];
 
     /** @var array Built-in default role permissions: role => array of permission strings */
-    private $defaults = array();
+    private $defaults = [];
 
     /** @var array Cached resolved permissions per role: role => array of permission strings */
-    private $resolved = array();
+    private $resolved = [];
 
     /**
      * Constructor. The registry starts empty.
@@ -40,13 +40,13 @@ class PermissionRegistry {
      * @param array  $permissions Keyed array: permission => label, or numeric array of permission strings
      * @param string $group       Group name for UI display
      */
-    public function registerPermissions($permissions, $group = '') {
+    public function registerPermissions($permissions, $group = ''): void {
         if ($group === '') {
             $group = 'Other';
         }
 
         if (!isset($this->groups[$group])) {
-            $this->groups[$group] = array();
+            $this->groups[$group] = [];
         }
 
         foreach ($permissions as $key => $value) {
@@ -69,7 +69,7 @@ class PermissionRegistry {
         }
 
         // Clear resolved cache since permissions changed
-        $this->resolved = array();
+        $this->resolved = [];
     }
 
     /**
@@ -79,14 +79,14 @@ class PermissionRegistry {
      * @param string $role        Role name
      * @param array  $permissions Array of permission strings to add to defaults
      */
-    public function addRoleDefaults($role, $permissions) {
+    public function addRoleDefaults($role, $permissions): void {
         if (!isset($this->defaults[$role])) {
-            $this->defaults[$role] = array();
+            $this->defaults[$role] = [];
         }
         $this->defaults[$role] = array_values(array_unique(
-            array_merge($this->defaults[$role], $permissions)
+            array_merge($this->defaults[$role], $permissions),
         ));
-        $this->resolved = array();
+        $this->resolved = [];
     }
 
     // ========== Query API ==========
@@ -116,7 +116,7 @@ class PermissionRegistry {
      * @return string
      */
     public function getLabel($permission) {
-        return isset($this->labels[$permission]) ? $this->labels[$permission] : $permission;
+        return $this->labels[$permission] ?? $permission;
     }
 
     /**
@@ -134,7 +134,7 @@ class PermissionRegistry {
      * @return array
      */
     public function getConfigurableRoles() {
-        return array('editor', 'viewer');
+        return ['editor', 'viewer'];
     }
 
     /**
@@ -143,7 +143,7 @@ class PermissionRegistry {
      * @return array
      */
     public function getRoles() {
-        return array('admin', 'editor', 'viewer');
+        return ['admin', 'editor', 'viewer'];
     }
 
     /**
@@ -153,7 +153,7 @@ class PermissionRegistry {
      * @return array
      */
     public function getDefaultsForRole($role) {
-        return isset($this->defaults[$role]) ? $this->defaults[$role] : array();
+        return $this->defaults[$role] ?? [];
     }
 
     /**
@@ -242,7 +242,7 @@ class PermissionRegistry {
      * @param string $role
      * @param array  $permissions
      */
-    public function setRolePermissions($role, $permissions) {
+    public function setRolePermissions($role, $permissions): void {
         if ($role === 'admin') {
             return;
         }
@@ -262,12 +262,12 @@ class PermissionRegistry {
      *
      * @param string $role
      */
-    public function resetRole($role) {
+    public function resetRole($role): void {
         if ($role === 'admin') {
             return;
         }
 
-        config()->set('permissions.roles.' . $role, array());
+        config()->set('permissions.roles.' . $role, []);
         config()->save();
 
         unset($this->resolved[$role]);

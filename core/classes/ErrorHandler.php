@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 /**
  * ErrorHandler - Centralized PHP error/exception/fatal handling.
@@ -15,7 +15,7 @@ class ErrorHandler
         return MANTRA_CLI;
     }
 
-    private static function writeCli($text)
+    private static function writeCli($text): void
     {
         fwrite(STDERR, $text);
     }
@@ -25,7 +25,7 @@ class ErrorHandler
      *
      * @param Logger|null $logger
      */
-    public static function register($logger = null)
+    public static function register($logger = null): void
     {
         if (self::$registered) {
             return;
@@ -34,9 +34,9 @@ class ErrorHandler
 
         self::$logger = $logger;
 
-        set_error_handler(array(__CLASS__, 'handleError'));
-        set_exception_handler(array(__CLASS__, 'handleException'));
-        register_shutdown_function(array(__CLASS__, 'handleShutdown'));
+        set_error_handler([__CLASS__, 'handleError']);
+        set_exception_handler([__CLASS__, 'handleException']);
+        register_shutdown_function([__CLASS__, 'handleShutdown']);
     }
 
     private static function getLogger()
@@ -46,7 +46,7 @@ class ErrorHandler
         }
 
         $minLevel = Logger::resolveLevel();
-        self::$logger = new Logger('php', array('minLevel' => $minLevel));
+        self::$logger = new Logger('php', ['minLevel' => $minLevel]);
         return self::$logger;
     }
 
@@ -59,26 +59,26 @@ class ErrorHandler
 
         $level = self::mapErrorSeverityToLevel($severity);
 
-        self::getLogger()->log($level, 'PHP error: {message}', array(
+        self::getLogger()->log($level, 'PHP error: {message}', [
             'message' => $message,
             'severity' => $severity,
             'file' => $file,
             'line' => $line,
-            'url' => isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : null,
-            'method' => isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : null
-        ));
+            'url' => $_SERVER['REQUEST_URI'] ?? null,
+            'method' => $_SERVER['REQUEST_METHOD'] ?? null,
+        ]);
 
         // Let PHP continue with its internal handler as well.
         return false;
     }
 
-    public static function handleException($exception)
+    public static function handleException($exception): void
     {
-        self::getLogger()->error('Uncaught exception', array(
+        self::getLogger()->error('Uncaught exception', [
             'exception' => $exception,
-            'url' => isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : null,
-            'method' => isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : null
-        ));
+            'url' => $_SERVER['REQUEST_URI'] ?? null,
+            'method' => $_SERVER['REQUEST_METHOD'] ?? null,
+        ]);
 
         if (self::isCli()) {
             // CLI-friendly output
@@ -105,7 +105,7 @@ class ErrorHandler
         }
     }
 
-    public static function handleShutdown()
+    public static function handleShutdown(): void
     {
         $error = error_get_last();
         if (!$error) {
@@ -116,19 +116,19 @@ class ErrorHandler
             return;
         }
 
-        self::getLogger()->critical('Fatal error during shutdown: {message}', array(
-            'message' => isset($error['message']) ? $error['message'] : null,
-            'severity' => isset($error['type']) ? $error['type'] : null,
-            'file' => isset($error['file']) ? $error['file'] : null,
-            'line' => isset($error['line']) ? $error['line'] : null,
-            'url' => isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : null,
-            'method' => isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : null
-        ));
+        self::getLogger()->critical('Fatal error during shutdown: {message}', [
+            'message' => $error['message'] ?? null,
+            'severity' => $error['type'] ?? null,
+            'file' => $error['file'] ?? null,
+            'line' => $error['line'] ?? null,
+            'url' => $_SERVER['REQUEST_URI'] ?? null,
+            'method' => $_SERVER['REQUEST_METHOD'] ?? null,
+        ]);
 
         if (self::isCli()) {
-            $msg = isset($error['message']) ? $error['message'] : 'unknown error';
-            $file = isset($error['file']) ? $error['file'] : 'unknown file';
-            $line = isset($error['line']) ? $error['line'] : 0;
+            $msg = $error['message'] ?? 'unknown error';
+            $file = $error['file'] ?? 'unknown file';
+            $line = $error['line'] ?? 0;
             self::writeCli("Fatal error: {$msg} in {$file}:{$line}\n");
             exit(1);
         }
@@ -145,7 +145,7 @@ class ErrorHandler
     /**
      * Discard all open output buffers so error output reaches the client.
      */
-    private static function cleanOutputBuffers()
+    private static function cleanOutputBuffers(): void
     {
         while (ob_get_level() > 0) {
             ob_end_clean();
@@ -154,7 +154,7 @@ class ErrorHandler
 
     private static function isFatalErrorType($type)
     {
-        return in_array($type, array(
+        return in_array($type, [
             E_ERROR,
             E_PARSE,
             E_CORE_ERROR,
@@ -162,8 +162,8 @@ class ErrorHandler
             E_COMPILE_ERROR,
             E_COMPILE_WARNING,
             E_USER_ERROR,
-            E_RECOVERABLE_ERROR
-        ), true);
+            E_RECOVERABLE_ERROR,
+        ], true);
     }
 
     private static function mapErrorSeverityToLevel($severity)

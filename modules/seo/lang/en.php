@@ -1,6 +1,6 @@
-<?php
+<?php declare(strict_types=1);
 
-return array(
+return [
     // Module name
     'seo.name' => 'SEO',
 
@@ -41,4 +41,4 @@ return array(
     'seo.settings.breadcrumbs.enabled.help' => 'Show breadcrumb navigation on pages',
     'seo.settings.breadcrumbs.home_text' => 'Breadcrumb Home Text',
     'seo.settings.breadcrumbs.home_text.help' => 'Text for home link in breadcrumbs',
-);
+];

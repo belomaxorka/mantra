@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * ContentAdminModule - Base class for content management modules
  * 
@@ -9,31 +9,31 @@
 namespace Module;
 
 abstract class ContentAdminModule extends BaseAdminModule {
-    
+
     /**
      * Get content type name (singular)
      * @return string
      */
     abstract protected function getContentType();
-    
+
     /**
      * Get collection name for database
      * @return string
      */
     abstract protected function getCollectionName();
-    
+
     /**
      * Get default item data
      * @return array
      */
     abstract protected function getDefaultItem();
-    
+
     /**
      * Extract form data from request
      * @return array
      */
     abstract protected function extractFormData();
-    
+
     /**
      * Get admin path for redirects (without /admin prefix)
      * Override this if module ID differs from route path
@@ -47,7 +47,7 @@ abstract class ContentAdminModule extends BaseAdminModule {
      * Initialize module — registers CRUD routes + manifest sidebar/quick_actions.
      * Subclasses should call parent::init() before adding custom hooks.
      */
-    public function init() {
+    public function init(): void {
         parent::init();
         $this->registerCrudRoutes();
     }
@@ -58,17 +58,17 @@ abstract class ContentAdminModule extends BaseAdminModule {
      * Registers: list, new (GET+POST), edit (GET+POST), delete (POST).
      * Override to add/remove routes or change patterns.
      */
-    protected function registerCrudRoutes() {
+    protected function registerCrudRoutes(): void {
         $path = $this->getAdminPath();
 
-        $this->registerAdminRoute('GET',  $path,                   array($this, 'listItems'));
-        $this->registerAdminRoute('GET',  $path . '/new',          array($this, 'newItem'));
-        $this->registerAdminRoute('POST', $path . '/new',          array($this, 'createItem'));
-        $this->registerAdminRoute('GET',  $path . '/edit/{id}',    array($this, 'editItem'));
-        $this->registerAdminRoute('POST', $path . '/edit/{id}',    array($this, 'updateItem'));
-        $this->registerAdminRoute('POST', $path . '/delete/{id}',  array($this, 'deleteItem'));
+        $this->registerAdminRoute('GET',  $path,                   [$this, 'listItems']);
+        $this->registerAdminRoute('GET',  $path . '/new',          [$this, 'newItem']);
+        $this->registerAdminRoute('POST', $path . '/new',          [$this, 'createItem']);
+        $this->registerAdminRoute('GET',  $path . '/edit/{id}',    [$this, 'editItem']);
+        $this->registerAdminRoute('POST', $path . '/edit/{id}',    [$this, 'updateItem']);
+        $this->registerAdminRoute('POST', $path . '/delete/{id}',  [$this, 'deleteItem']);
     }
-    
+
     /**
      * Get list view template
      * @return string
@@ -76,7 +76,7 @@ abstract class ContentAdminModule extends BaseAdminModule {
     protected function getListTemplate() {
         return $this->getId() . ':list';
     }
-    
+
     /**
      * Get edit view template
      * @return string
@@ -84,7 +84,7 @@ abstract class ContentAdminModule extends BaseAdminModule {
     protected function getEditTemplate() {
         return $this->getId() . ':edit';
     }
-    
+
     /**
      * Generate ID for new item
      * @param array $data Item data (must have slug already set via ensureSlug)
@@ -92,7 +92,7 @@ abstract class ContentAdminModule extends BaseAdminModule {
      */
     protected function generateId($data) {
         $slug = $data['slug'];
-        
+
         $id = $slug;
         if (app()->db()->exists($this->getCollectionName(), $id)) {
             $id = $slug . '-' . uniqid();
@@ -100,7 +100,7 @@ abstract class ContentAdminModule extends BaseAdminModule {
 
         return $id;
     }
-    
+
     /**
      * Ensure slug is set, generate from title if empty
      * @param array $data Item data
@@ -114,19 +114,19 @@ abstract class ContentAdminModule extends BaseAdminModule {
         }
         return $data;
     }
-    
+
     /**
      * List all items
      */
     public function listItems() {
-        $items = app()->db()->query($this->getCollectionName(), array(), array(
+        $items = app()->db()->query($this->getCollectionName(), [], [
             'sort' => 'updated_at',
-            'order' => 'desc'
-        ));
+            'order' => 'desc',
+        ]);
 
-        $content = $this->renderView($this->getListTemplate(), array(
-            strtolower($this->getCollectionName()) => $items
-        ));
+        $content = $this->renderView($this->getListTemplate(), [
+            strtolower($this->getCollectionName()) => $items,
+        ]);
 
         $titleKey = $this->getId() . '.title';
         $title = t($titleKey);
@@ -138,11 +138,11 @@ abstract class ContentAdminModule extends BaseAdminModule {
      * Show new item form
      */
     public function newItem() {
-        $templateData = array(
+        $templateData = [
             strtolower($this->getContentType()) => $this->getDefaultItem(),
             'isNew' => true,
-            'csrf_token' => app()->auth()->generateCsrfToken()
-        );
+            'csrf_token' => app()->auth()->generateCsrfToken(),
+        ];
         $templateData = $this->fireHook('admin.' . $this->getCollectionName() . '.edit.data', $templateData);
 
         $content = $this->renderView($this->getEditTemplate(), $templateData);
@@ -152,36 +152,36 @@ abstract class ContentAdminModule extends BaseAdminModule {
 
         return $this->renderAdmin($title, $content);
     }
-    
+
     /**
      * Create new item
      */
-    public function createItem() {
+    public function createItem(): void {
         if (!$this->verifyCsrf()) {
             return;
         }
-        
+
         $data = $this->extractFormData();
         $data = $this->fireHook('admin.' . $this->getCollectionName() . '.form_data', $data);
         $data = $this->ensureSlug($data);
         $user = $this->getUser();
-        $data['author'] = isset($user['username']) ? $user['username'] : 'Unknown';
-        $data['author_id'] = isset($user['_id']) ? $user['_id'] : '';
+        $data['author'] = $user['username'] ?? 'Unknown';
+        $data['author_id'] = $user['_id'] ?? '';
         $data['created_at'] = clock()->timestamp();
         $data['updated_at'] = clock()->timestamp();
 
         $id = $this->generateId($data);
 
         app()->db()->write($this->getCollectionName(), $id, $data);
-        
+
         $this->redirectAdmin($this->getAdminPath());
     }
-    
+
     /**
      * Show edit item form
      */
     public function editItem($params) {
-        $id = isset($params['id']) ? $params['id'] : '';
+        $id = $params['id'] ?? '';
         $item = app()->db()->read($this->getCollectionName(), $id);
 
         if (!$item) {
@@ -189,11 +189,11 @@ abstract class ContentAdminModule extends BaseAdminModule {
             return $this->renderAdmin('Not Found', '<div class="alert alert-danger alert-dismissible fade show alert-permanent" role="alert">' . $this->getContentType() . ' not found<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>');
         }
 
-        $templateData = array(
+        $templateData = [
             strtolower($this->getContentType()) => $item,
             'isNew' => false,
-            'csrf_token' => app()->auth()->generateCsrfToken()
-        );
+            'csrf_token' => app()->auth()->generateCsrfToken(),
+        ];
         $templateData = $this->fireHook('admin.' . $this->getCollectionName() . '.edit.data', $templateData);
 
         $content = $this->renderView($this->getEditTemplate(), $templateData);
@@ -204,7 +204,7 @@ abstract class ContentAdminModule extends BaseAdminModule {
 
         return $this->renderAdmin($title, $content);
     }
-    
+
     /**
      * Update existing item
      */
@@ -212,8 +212,8 @@ abstract class ContentAdminModule extends BaseAdminModule {
         if (!$this->verifyCsrf()) {
             return;
         }
-        
-        $id = isset($params['id']) ? $params['id'] : '';
+
+        $id = $params['id'] ?? '';
         $item = app()->db()->read($this->getCollectionName(), $id);
 
         if (!$item) {
@@ -227,29 +227,29 @@ abstract class ContentAdminModule extends BaseAdminModule {
         $data['updated_at'] = clock()->timestamp();
 
         // Preserve original fields
-        $data['author'] = isset($item['author']) ? $item['author'] : 'Unknown';
-        $data['author_id'] = isset($item['author_id']) ? $item['author_id'] : '';
-        $data['created_at'] = isset($item['created_at']) ? $item['created_at'] : clock()->timestamp();
+        $data['author'] = $item['author'] ?? 'Unknown';
+        $data['author_id'] = $item['author_id'] ?? '';
+        $data['created_at'] = $item['created_at'] ?? clock()->timestamp();
 
         app()->db()->write($this->getCollectionName(), $id, $data);
-        
+
         $this->redirectAdmin($this->getAdminPath());
     }
-    
+
     /**
      * Delete item
      */
-    public function deleteItem($params) {
+    public function deleteItem($params): void {
         if (!$this->verifyCsrf()) {
             return;
         }
-        
-        $id = isset($params['id']) ? $params['id'] : '';
+
+        $id = $params['id'] ?? '';
 
         if (app()->db()->exists($this->getCollectionName(), $id)) {
             app()->db()->delete($this->getCollectionName(), $id);
         }
-        
+
         $this->redirectAdmin($this->getAdminPath());
     }
 }

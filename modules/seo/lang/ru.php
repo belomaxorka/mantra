@@ -1,6 +1,6 @@
-<?php
+<?php declare(strict_types=1);
 
-return array(
+return [
     // Module name
     'seo.name' => 'SEO',
 
@@ -41,4 +41,4 @@ return array(
     'seo.settings.breadcrumbs.enabled.help' => 'Показывать навигационные хлебные крошки на страницах',
     'seo.settings.breadcrumbs.home_text' => 'Текст ссылки "Главная"',
     'seo.settings.breadcrumbs.home_text.help' => 'Текст для ссылки на главную страницу в хлебных крошках',
-);
+];

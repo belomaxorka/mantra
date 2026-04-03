@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * JsonStorageDriver - JSON file storage implementation
  *
@@ -34,12 +34,12 @@ class JsonStorageDriver implements StorageDriverInterface
             $raw = FileIO::readLocked($path);
             return JsonCodec::decode($raw);
         } catch (Exception $e) {
-            logger()->error('Failed to read JSON document', array(
+            logger()->error('Failed to read JSON document', [
                 'collection' => $collection,
                 'id' => $id,
                 'path' => $path,
-                'error' => $e->getMessage()
-            ));
+                'error' => $e->getMessage(),
+            ]);
             throw $e;
         }
     }
@@ -51,25 +51,25 @@ class JsonStorageDriver implements StorageDriverInterface
         try {
             $content = JsonCodec::encode($data);
         } catch (JsonCodecException $e) {
-            logger()->error('Failed to encode JSON document', array(
+            logger()->error('Failed to encode JSON document', [
                 'collection' => $collection,
                 'id' => $id,
-                'error' => $e->getMessage()
-            ));
+                'error' => $e->getMessage(),
+            ]);
             throw $e;
         }
 
         try {
             FileIO::writeAtomic($path, $content);
-            logger()->debug('Data written', array('collection' => $collection, 'id' => $id));
+            logger()->debug('Data written', ['collection' => $collection, 'id' => $id]);
             return true;
         } catch (Exception $e) {
-            logger()->error('Failed to write JSON document', array(
+            logger()->error('Failed to write JSON document', [
                 'collection' => $collection,
                 'id' => $id,
                 'path' => $path,
-                'error' => $e->getMessage()
-            ));
+                'error' => $e->getMessage(),
+            ]);
             throw $e;
         }
     }
@@ -91,10 +91,10 @@ class JsonStorageDriver implements StorageDriverInterface
         $collectionPath = $this->basePath . '/' . $collection;
 
         if (!is_dir($collectionPath)) {
-            return array();
+            return [];
         }
 
-        $items = array();
+        $items = [];
         $files = glob($collectionPath . '/*' . $this->getExtension());
 
         foreach ($files as $file) {
@@ -108,12 +108,12 @@ class JsonStorageDriver implements StorageDriverInterface
 
                 $data = JsonCodec::decode($raw);
             } catch (Exception $e) {
-                logger()->error('Failed to read JSON document in collection', array(
+                logger()->error('Failed to read JSON document in collection', [
                     'collection' => $collection,
                     'id' => $id,
                     'path' => $file,
-                    'error' => $e->getMessage()
-                ));
+                    'error' => $e->getMessage(),
+                ]);
                 continue;
             }
 
@@ -139,12 +139,12 @@ class JsonStorageDriver implements StorageDriverInterface
         $collectionPath = $this->basePath . '/' . $collection;
 
         if (!is_dir($collectionPath)) {
-            return array();
+            return [];
         }
 
         $ext = $this->getExtension();
         $files = glob($collectionPath . '/*' . $ext);
-        $ids = array();
+        $ids = [];
 
         foreach ($files as $file) {
             $ids[] = basename($file, $ext);

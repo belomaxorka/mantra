@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 /**
  * Language - i18n translator (module/theme scoped)
@@ -25,9 +25,9 @@ class Language
     private $fallbackLocale;
     private $theme;
 
-    private $themeTranslations = array(); // [locale => array]
-    private $moduleTranslations = array(); // [module => [locale => array]]
-    private $childModulesCache = array(); // [parent => [child1, child2, ...]]
+    private $themeTranslations = []; // [locale => array]
+    private $moduleTranslations = []; // [module => [locale => array]]
+    private $childModulesCache = []; // [parent => [child1, child2, ...]]
 
     public function __construct()
     {
@@ -59,7 +59,7 @@ class Language
     /**
      * Translate a key with optional {param} interpolation.
      */
-    public function translate($key, $params = array())
+    public function translate($key, $params = [])
     {
         $key = (string)$key;
 
@@ -84,12 +84,12 @@ class Language
         $domain = $this->domainFromKey($key);
         if ($domain === 'theme') {
             $dict = $this->loadTheme($locale);
-            return isset($dict[$key]) ? $dict[$key] : null;
+            return $dict[$key] ?? null;
         }
 
         if ($domain) {
             $dict = $this->loadModule($domain, $locale);
-            return isset($dict[$key]) ? $dict[$key] : null;
+            return $dict[$key] ?? null;
         }
 
         return null;
@@ -118,7 +118,7 @@ class Language
     private function loadModule($module, $locale)
     {
         if (!isset($this->moduleTranslations[$module])) {
-            $this->moduleTranslations[$module] = array();
+            $this->moduleTranslations[$module] = [];
         }
         if (isset($this->moduleTranslations[$module][$locale])) {
             return $this->moduleTranslations[$module][$locale];
@@ -130,7 +130,7 @@ class Language
 
         // Secondary: For parent namespaces (without hyphen), also check child modules
         // Example: "admin" key can load from "admin-dashboard", "admin-pages", etc.
-        if (strpos($module, '-') === false) {
+        if (!str_contains($module, '-')  ) {
             // This is a parent namespace (e.g., "admin")
             // Check all child modules (e.g., "admin-dashboard", "admin-pages")
             $childModules = $this->findChildModules($module);
@@ -160,7 +160,7 @@ class Language
             return $this->childModulesCache[$parentNamespace];
         }
 
-        $children = array();
+        $children = [];
         $modulesDir = MANTRA_MODULES;
 
         if (!is_dir($modulesDir)) {
@@ -186,7 +186,7 @@ class Language
     private function loadTranslationFile($filePath)
     {
         if (!is_string($filePath) || $filePath === '' || !file_exists($filePath)) {
-            return array();
+            return [];
         }
 
         $data = include $filePath;
@@ -199,7 +199,7 @@ class Language
             return $data;
         }
 
-        return array();
+        return [];
     }
 }
 

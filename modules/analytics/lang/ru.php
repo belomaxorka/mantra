@@ -1,6 +1,6 @@
-<?php
+<?php declare(strict_types=1);
 
-return array(
+return [
     // Module name
     'analytics.name' => 'Аналитика',
 
@@ -17,4 +17,4 @@ return array(
     // Custom Code
     'analytics.settings.custom_code' => 'Пользовательский код отслеживания',
     'analytics.settings.custom_code.help' => 'Добавьте пользовательские скрипты аналитики или отслеживания (будут вставлены в footer)',
-);
+];

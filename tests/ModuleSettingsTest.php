@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * ModuleSettings Tests (PHPUnit 10.x)
  *
@@ -22,12 +22,12 @@ class ModuleSettingsTest extends MantraTestCase
         // Ensure directories exist
         $moduleDir = MANTRA_MODULES . '/' . $this->testModule;
         if (!is_dir($moduleDir)) {
-            mkdir($moduleDir, 0755, true);
+            mkdir($moduleDir, 0o755, true);
         }
 
         $settingsDir = MANTRA_CONTENT . '/settings';
         if (!is_dir($settingsDir)) {
-            mkdir($settingsDir, 0755, true);
+            mkdir($settingsDir, 0o755, true);
         }
     }
 
@@ -44,10 +44,10 @@ class ModuleSettingsTest extends MantraTestCase
         }
 
         // Clean up test settings files
-        $patterns = array(
+        $patterns = [
             MANTRA_CONTENT . '/settings/' . $this->testModule . '.json',
             MANTRA_CONTENT . '/settings/tmig_noschema.json',
-        );
+        ];
         foreach ($patterns as $p) {
             if (file_exists($p)) {
                 @unlink($p);
@@ -63,18 +63,18 @@ class ModuleSettingsTest extends MantraTestCase
 
     public function testSchemaLoading(): void
     {
-        $this->writeModuleSchema(array(
+        $this->writeModuleSchema([
             'version' => 1,
-            'tabs' => array(
-                array(
+            'tabs' => [
+                [
                     'id' => 'general',
                     'title' => 'General',
-                    'fields' => array(
-                        array('path' => 'api_key', 'type' => 'text', 'default' => ''),
-                    ),
-                ),
-            ),
-        ));
+                    'fields' => [
+                        ['path' => 'api_key', 'type' => 'text', 'default' => ''],
+                    ],
+                ],
+            ],
+        ]);
 
         $ms = new Module\ModuleSettings($this->testModule);
         $schema = $ms->schema();
@@ -86,20 +86,20 @@ class ModuleSettingsTest extends MantraTestCase
 
     public function testDefaultsFromTabs(): void
     {
-        $this->writeModuleSchema(array(
+        $this->writeModuleSchema([
             'version' => 1,
-            'tabs' => array(
-                array(
+            'tabs' => [
+                [
                     'id' => 'general',
                     'title' => 'General',
-                    'fields' => array(
-                        array('path' => 'api_key', 'type' => 'text', 'default' => ''),
-                        array('path' => 'enabled', 'type' => 'toggle', 'default' => true),
-                        array('path' => 'max_items', 'type' => 'number', 'default' => 25),
-                    ),
-                ),
-            ),
-        ));
+                    'fields' => [
+                        ['path' => 'api_key', 'type' => 'text', 'default' => ''],
+                        ['path' => 'enabled', 'type' => 'toggle', 'default' => true],
+                        ['path' => 'max_items', 'type' => 'number', 'default' => 25],
+                    ],
+                ],
+            ],
+        ]);
 
         // No settings file on disk
         $this->removeSettingsFile();
@@ -114,19 +114,19 @@ class ModuleSettingsTest extends MantraTestCase
 
     public function testDefaultsForNestedPaths(): void
     {
-        $this->writeModuleSchema(array(
+        $this->writeModuleSchema([
             'version' => 1,
-            'tabs' => array(
-                array(
+            'tabs' => [
+                [
                     'id' => 'advanced',
                     'title' => 'Advanced',
-                    'fields' => array(
-                        array('path' => 'cache.enabled', 'type' => 'toggle', 'default' => false),
-                        array('path' => 'cache.ttl', 'type' => 'number', 'default' => 3600),
-                    ),
-                ),
-            ),
-        ));
+                    'fields' => [
+                        ['path' => 'cache.enabled', 'type' => 'toggle', 'default' => false],
+                        ['path' => 'cache.ttl', 'type' => 'number', 'default' => 3600],
+                    ],
+                ],
+            ],
+        ]);
 
         $this->removeSettingsFile();
 
@@ -144,35 +144,35 @@ class ModuleSettingsTest extends MantraTestCase
     {
         $schemaPath = MANTRA_MODULES . '/' . $this->testModule . '/settings.schema.php';
         file_put_contents($schemaPath, <<<'PHP'
-<?php
-return array(
-    'version' => 2,
-    'tabs' => array(
-        array(
-            'id' => 'general',
-            'title' => 'General',
-            'fields' => array(
-                array('path' => 'tracker_id', 'type' => 'text', 'default' => ''),
-            ),
-        ),
-    ),
-    'migrate' => function($data, $from, $to) {
-        // v1->v2: rename analytics_id -> tracker_id
-        if ($from < 2 && isset($data['analytics_id'])) {
-            $data['tracker_id'] = $data['analytics_id'];
-            unset($data['analytics_id']);
-        }
-        $data['schema_version'] = $to;
-        return $data;
-    }
-);
-PHP
+            <?php
+            return array(
+                'version' => 2,
+                'tabs' => array(
+                    array(
+                        'id' => 'general',
+                        'title' => 'General',
+                        'fields' => array(
+                            array('path' => 'tracker_id', 'type' => 'text', 'default' => ''),
+                        ),
+                    ),
+                ),
+                'migrate' => function($data, $from, $to) {
+                    // v1->v2: rename analytics_id -> tracker_id
+                    if ($from < 2 && isset($data['analytics_id'])) {
+                        $data['tracker_id'] = $data['analytics_id'];
+                        unset($data['analytics_id']);
+                    }
+                    $data['schema_version'] = $to;
+                    return $data;
+                }
+            );
+            PHP
         );
 
-        $this->writeSettingsFile(array(
+        $this->writeSettingsFile([
             'analytics_id' => 'UA-12345',
-            'schema_version' => 1
-        ));
+            'schema_version' => 1,
+        ]);
 
         $ms = new Module\ModuleSettings($this->testModule);
         $ms->load();
@@ -181,7 +181,7 @@ PHP
         $this->assertSame(
             'UA-12345',
             $ms->get('tracker_id'),
-            'Value migrated to new field name'
+            'Value migrated to new field name',
         );
 
         // Verify on disk
@@ -193,29 +193,29 @@ PHP
     {
         $schemaPath = MANTRA_MODULES . '/' . $this->testModule . '/settings.schema.php';
         file_put_contents($schemaPath, <<<'PHP'
-<?php
-return array(
-    'version' => 1,
-    'tabs' => array(
-        array(
-            'id' => 'general',
-            'title' => 'General',
-            'fields' => array(
-                array('path' => 'color', 'type' => 'text', 'default' => 'blue'),
-            ),
-        ),
-    ),
-    'migrate' => function($data, $from, $to) {
-        $data['_was_migrated'] = true;
-        $data['_from'] = $from;
-        return $data;
-    }
-);
-PHP
+            <?php
+            return array(
+                'version' => 1,
+                'tabs' => array(
+                    array(
+                        'id' => 'general',
+                        'title' => 'General',
+                        'fields' => array(
+                            array('path' => 'color', 'type' => 'text', 'default' => 'blue'),
+                        ),
+                    ),
+                ),
+                'migrate' => function($data, $from, $to) {
+                    $data['_was_migrated'] = true;
+                    $data['_from'] = $from;
+                    return $data;
+                }
+            );
+            PHP
         );
 
         // Settings without schema_version
-        $this->writeSettingsFile(array('color' => 'red'));
+        $this->writeSettingsFile(['color' => 'red']);
 
         $ms = new Module\ModuleSettings($this->testModule);
         $ms->load();
@@ -227,20 +227,20 @@ PHP
 
     public function testMigrationNotReapplied(): void
     {
-        $this->writeModuleSchema(array(
+        $this->writeModuleSchema([
             'version' => 1,
-            'tabs' => array(
-                array(
+            'tabs' => [
+                [
                     'id' => 'general',
                     'title' => 'General',
-                    'fields' => array(
-                        array('path' => 'value', 'type' => 'text', 'default' => 'default'),
-                    ),
-                ),
-            ),
-        ));
+                    'fields' => [
+                        ['path' => 'value', 'type' => 'text', 'default' => 'default'],
+                    ],
+                ],
+            ],
+        ]);
 
-        $this->writeSettingsFile(array('value' => 'custom'));
+        $this->writeSettingsFile(['value' => 'custom']);
 
         // First load
         $ms1 = new Module\ModuleSettings($this->testModule);
@@ -253,7 +253,7 @@ PHP
         $this->assertSame(
             'custom',
             $ms2->get('value'),
-            'Value stable across loads'
+            'Value stable across loads',
         );
 
         $raw = json_decode(file_get_contents(MANTRA_CONTENT . '/settings/' . $this->testModule . '.json'), true);
@@ -267,19 +267,19 @@ PHP
 
     public function testGetSetHas(): void
     {
-        $this->writeModuleSchema(array(
+        $this->writeModuleSchema([
             'version' => 1,
-            'tabs' => array(
-                array(
+            'tabs' => [
+                [
                     'id' => 'general',
                     'title' => 'General',
-                    'fields' => array(
-                        array('path' => 'key1', 'type' => 'text', 'default' => 'val1'),
-                        array('path' => 'key2', 'type' => 'text', 'default' => 'val2'),
-                    ),
-                ),
-            ),
-        ));
+                    'fields' => [
+                        ['path' => 'key1', 'type' => 'text', 'default' => 'val1'],
+                        ['path' => 'key2', 'type' => 'text', 'default' => 'val2'],
+                    ],
+                ],
+            ],
+        ]);
 
         $this->removeSettingsFile();
 
@@ -296,24 +296,24 @@ PHP
 
     public function testSetMultiple(): void
     {
-        $this->writeModuleSchema(array(
+        $this->writeModuleSchema([
             'version' => 1,
-            'tabs' => array(
-                array(
+            'tabs' => [
+                [
                     'id' => 'general',
                     'title' => 'General',
-                    'fields' => array(
-                        array('path' => 'a', 'type' => 'text', 'default' => ''),
-                        array('path' => 'b', 'type' => 'text', 'default' => ''),
-                    ),
-                ),
-            ),
-        ));
+                    'fields' => [
+                        ['path' => 'a', 'type' => 'text', 'default' => ''],
+                        ['path' => 'b', 'type' => 'text', 'default' => ''],
+                    ],
+                ],
+            ],
+        ]);
 
         $this->removeSettingsFile();
 
         $ms = new Module\ModuleSettings($this->testModule);
-        $ms->setMultiple(array('a' => 'x', 'b' => 'y'));
+        $ms->setMultiple(['a' => 'x', 'b' => 'y']);
         $ms->save();
 
         $this->assertSame('x', $ms->get('a'), 'First value set');
@@ -326,19 +326,19 @@ PHP
 
     public function testOverridesOnlySaving(): void
     {
-        $this->writeModuleSchema(array(
+        $this->writeModuleSchema([
             'version' => 1,
-            'tabs' => array(
-                array(
+            'tabs' => [
+                [
                     'id' => 'general',
                     'title' => 'General',
-                    'fields' => array(
-                        array('path' => 'color', 'type' => 'text', 'default' => 'blue'),
-                        array('path' => 'size', 'type' => 'number', 'default' => 10),
-                    ),
-                ),
-            ),
-        ));
+                    'fields' => [
+                        ['path' => 'color', 'type' => 'text', 'default' => 'blue'],
+                        ['path' => 'size', 'type' => 'number', 'default' => 10],
+                    ],
+                ],
+            ],
+        ]);
 
         $this->removeSettingsFile();
 
@@ -357,25 +357,25 @@ PHP
 
     public function testUnknownKeysPreserved(): void
     {
-        $this->writeModuleSchema(array(
+        $this->writeModuleSchema([
             'version' => 1,
-            'tabs' => array(
-                array(
+            'tabs' => [
+                [
                     'id' => 'general',
                     'title' => 'General',
-                    'fields' => array(
-                        array('path' => 'name', 'type' => 'text', 'default' => ''),
-                    ),
-                ),
-            ),
-        ));
+                    'fields' => [
+                        ['path' => 'name', 'type' => 'text', 'default' => ''],
+                    ],
+                ],
+            ],
+        ]);
 
         // Settings file with extra keys not in schema
-        $this->writeSettingsFile(array(
+        $this->writeSettingsFile([
             'name' => 'Test',
-            'custom_plugin_data' => array('foo' => 'bar'),
-            'legacy_flag' => true
-        ));
+            'custom_plugin_data' => ['foo' => 'bar'],
+            'legacy_flag' => true,
+        ]);
 
         $ms = new Module\ModuleSettings($this->testModule);
         $ms->set('name', 'Updated');
@@ -400,7 +400,7 @@ PHP
 
         // Write settings file but no schema
         $settingsPath = MANTRA_CONTENT . '/settings/' . $noSchemaModule . '.json';
-        file_put_contents($settingsPath, json_encode(array('key' => 'value')));
+        file_put_contents($settingsPath, json_encode(['key' => 'value']));
 
         $ms = new Module\ModuleSettings($noSchemaModule);
         $schema = $ms->schema();
@@ -411,18 +411,18 @@ PHP
 
     public function testMissingSettingsFile(): void
     {
-        $this->writeModuleSchema(array(
+        $this->writeModuleSchema([
             'version' => 1,
-            'tabs' => array(
-                array(
+            'tabs' => [
+                [
                     'id' => 'general',
                     'title' => 'General',
-                    'fields' => array(
-                        array('path' => 'mode', 'type' => 'text', 'default' => 'auto'),
-                    ),
-                ),
-            ),
-        ));
+                    'fields' => [
+                        ['path' => 'mode', 'type' => 'text', 'default' => 'auto'],
+                    ],
+                ],
+            ],
+        ]);
 
         $this->removeSettingsFile();
 
@@ -432,7 +432,7 @@ PHP
         $this->assertSame(
             'auto',
             $ms->get('mode'),
-            'Default value used when settings file missing'
+            'Default value used when settings file missing',
         );
     }
 
@@ -440,20 +440,20 @@ PHP
     // Helpers
     // ---------------------------------------------------------------
 
-    private function writeModuleSchema($schema)
+    private function writeModuleSchema($schema): void
     {
         $schemaPath = MANTRA_MODULES . '/' . $this->testModule . '/settings.schema.php';
         $content = "<?php\nreturn " . var_export($schema, true) . ";\n";
         file_put_contents($schemaPath, $content);
     }
 
-    private function writeSettingsFile($data)
+    private function writeSettingsFile($data): void
     {
         $path = MANTRA_CONTENT . '/settings/' . $this->testModule . '.json';
         file_put_contents($path, json_encode($data));
     }
 
-    private function removeSettingsFile()
+    private function removeSettingsFile(): void
     {
         $path = MANTRA_CONTENT . '/settings/' . $this->testModule . '.json';
         if (file_exists($path)) {

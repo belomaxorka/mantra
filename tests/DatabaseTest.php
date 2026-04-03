@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Database Tests
  * Tests for Database class, schema validation, and defaults
@@ -12,9 +12,9 @@ class DatabaseTest extends MantraTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->testDir = MANTRA_STORAGE . '/test-db-' . time() . '-' . mt_rand(1000, 9999);
+        $this->testDir = MANTRA_STORAGE . '/test-db-' . time() . '-' . random_int(1000, 9999);
         if (!is_dir($this->testDir)) {
-            mkdir($this->testDir, 0755, true);
+            mkdir($this->testDir, 0o755, true);
         }
         $this->db = new Database($this->testDir);
     }
@@ -28,22 +28,22 @@ class DatabaseTest extends MantraTestCase
 
     public function testWriteAndRead(): void
     {
-        $this->createTestSchema('test_items', array(
+        $this->createTestSchema('test_items', [
             'version' => 1,
-            'defaults' => array(
+            'defaults' => [
                 'name' => '',
-                'count' => 0
-            ),
-            'fields' => array(
-                'name' => array('type' => 'string', 'required' => true),
-                'count' => array('type' => 'integer', 'required' => false)
-            )
-        ));
+                'count' => 0,
+            ],
+            'fields' => [
+                'name' => ['type' => 'string', 'required' => true],
+                'count' => ['type' => 'integer', 'required' => false],
+            ],
+        ]);
 
         $db = new Database($this->testDir);
 
         $id = $db->generateId();
-        $data = array('name' => 'Test Item', 'count' => 5);
+        $data = ['name' => 'Test Item', 'count' => 5];
 
         $written = $db->write('test_items', $id, $data);
         $this->assertTrue($written, 'Write operation returns true');
@@ -56,25 +56,25 @@ class DatabaseTest extends MantraTestCase
 
     public function testDefaultsApplied(): void
     {
-        $this->createTestSchema('test_defaults', array(
+        $this->createTestSchema('test_defaults', [
             'version' => 1,
-            'defaults' => array(
+            'defaults' => [
                 'name' => '',
                 'status' => 'active',
-                'count' => 0
-            ),
-            'fields' => array(
-                'name' => array('type' => 'string', 'required' => true),
-                'status' => array('type' => 'string', 'required' => true),
-                'count' => array('type' => 'integer', 'required' => false)
-            )
-        ));
+                'count' => 0,
+            ],
+            'fields' => [
+                'name' => ['type' => 'string', 'required' => true],
+                'status' => ['type' => 'string', 'required' => true],
+                'count' => ['type' => 'integer', 'required' => false],
+            ],
+        ]);
 
         $db = new Database($this->testDir);
 
         $id = $db->generateId();
         // Only provide name, status and count should get defaults
-        $data = array('name' => 'Test');
+        $data = ['name' => 'Test'];
 
         $written = $db->write('test_defaults', $id, $data);
         $this->assertTrue($written, 'Write with partial data succeeds');
@@ -86,18 +86,18 @@ class DatabaseTest extends MantraTestCase
 
     public function testValidationRequired(): void
     {
-        $this->createTestSchema('test_required', array(
+        $this->createTestSchema('test_required', [
             'version' => 1,
-            'defaults' => array('name' => ''),
-            'fields' => array(
-                'name' => array('type' => 'string', 'required' => true)
-            )
-        ));
+            'defaults' => ['name' => ''],
+            'fields' => [
+                'name' => ['type' => 'string', 'required' => true],
+            ],
+        ]);
 
         $db = new Database($this->testDir);
 
         $id = $db->generateId();
-        $data = array(); // Missing required field
+        $data = []; // Missing required field
 
         try {
             $db->write('test_required', $id, $data);
@@ -109,25 +109,25 @@ class DatabaseTest extends MantraTestCase
 
     public function testValidationEmail(): void
     {
-        $this->createTestSchema('test_email', array(
+        $this->createTestSchema('test_email', [
             'version' => 1,
-            'defaults' => array('email' => ''),
-            'fields' => array(
-                'email' => array('type' => 'email', 'required' => false)
-            )
-        ));
+            'defaults' => ['email' => ''],
+            'fields' => [
+                'email' => ['type' => 'email', 'required' => false],
+            ],
+        ]);
 
         $db = new Database($this->testDir);
 
         // Test valid email
         $id1 = $db->generateId();
-        $data1 = array('email' => 'user@example.com');
+        $data1 = ['email' => 'user@example.com'];
         $written1 = $db->write('test_email', $id1, $data1);
         $this->assertTrue($written1, 'Valid email passes validation');
 
         // Test invalid email
         $id2 = $db->generateId();
-        $data2 = array('email' => 'invalid-email');
+        $data2 = ['email' => 'invalid-email'];
 
         try {
             $db->write('test_email', $id2, $data2);
@@ -138,36 +138,36 @@ class DatabaseTest extends MantraTestCase
 
         // Test empty email (should pass since not required)
         $id3 = $db->generateId();
-        $data3 = array('email' => '');
+        $data3 = ['email' => ''];
         $written3 = $db->write('test_email', $id3, $data3);
         $this->assertTrue($written3, 'Empty email passes when not required');
     }
 
     public function testValidationEnum(): void
     {
-        $this->createTestSchema('test_enum', array(
+        $this->createTestSchema('test_enum', [
             'version' => 1,
-            'defaults' => array('role' => 'viewer'),
-            'fields' => array(
-                'role' => array(
+            'defaults' => ['role' => 'viewer'],
+            'fields' => [
+                'role' => [
                     'type' => 'enum',
-                    'values' => array('admin', 'editor', 'viewer'),
-                    'required' => true
-                )
-            )
-        ));
+                    'values' => ['admin', 'editor', 'viewer'],
+                    'required' => true,
+                ],
+            ],
+        ]);
 
         $db = new Database($this->testDir);
 
         // Test valid enum
         $id1 = $db->generateId();
-        $data1 = array('role' => 'admin');
+        $data1 = ['role' => 'admin'];
         $written1 = $db->write('test_enum', $id1, $data1);
         $this->assertTrue($written1, 'Valid enum value passes');
 
         // Test invalid enum
         $id2 = $db->generateId();
-        $data2 = array('role' => 'superadmin');
+        $data2 = ['role' => 'superadmin'];
 
         try {
             $db->write('test_enum', $id2, $data2);
@@ -179,18 +179,18 @@ class DatabaseTest extends MantraTestCase
 
     public function testSchemaVersion(): void
     {
-        $this->createTestSchema('test_version', array(
+        $this->createTestSchema('test_version', [
             'version' => 2,
-            'defaults' => array('name' => ''),
-            'fields' => array(
-                'name' => array('type' => 'string', 'required' => true)
-            )
-        ));
+            'defaults' => ['name' => ''],
+            'fields' => [
+                'name' => ['type' => 'string', 'required' => true],
+            ],
+        ]);
 
         $db = new Database($this->testDir);
 
         $id = $db->generateId();
-        $data = array('name' => 'Test');
+        $data = ['name' => 'Test'];
 
         $db->write('test_version', $id, $data);
         $read = $db->read('test_version', $id);
@@ -202,49 +202,49 @@ class DatabaseTest extends MantraTestCase
     public function testOptionalEmail(): void
     {
         // Create test schema mimicking users schema
-        $this->createTestSchema('test_users', array(
+        $this->createTestSchema('test_users', [
             'version' => 1,
-            'defaults' => array(
+            'defaults' => [
                 'username' => '',
                 'email' => '',
                 'password' => '',
-                'role' => 'editor'
-            ),
-            'fields' => array(
-                'username' => array(
+                'role' => 'editor',
+            ],
+            'fields' => [
+                'username' => [
                     'type' => 'string',
                     'required' => true,
                     'minLength' => 3,
-                    'maxLength' => 50
-                ),
-                'email' => array(
+                    'maxLength' => 50,
+                ],
+                'email' => [
                     'type' => 'email',
                     'required' => false,
-                    'maxLength' => 255
-                ),
-                'password' => array(
+                    'maxLength' => 255,
+                ],
+                'password' => [
                     'type' => 'string',
                     'required' => true,
-                    'minLength' => 60
-                ),
-                'role' => array(
+                    'minLength' => 60,
+                ],
+                'role' => [
                     'type' => 'enum',
-                    'values' => array('admin', 'editor', 'viewer'),
-                    'required' => true
-                )
-            )
-        ));
+                    'values' => ['admin', 'editor', 'viewer'],
+                    'required' => true,
+                ],
+            ],
+        ]);
 
         $db = new Database($this->testDir);
         $id = $db->generateId();
         $auth = new Auth();
 
         // Create user without email (like in install.php)
-        $userData = array(
+        $userData = [
             'username' => 'testuser',
             'password' => $auth->hashPassword('testpass123'),
-            'role' => 'admin'
-        );
+            'role' => 'admin',
+        ];
 
         $written = $db->write('test_users', $id, $userData);
         $this->assertTrue($written, 'User created without email');
@@ -259,32 +259,32 @@ class DatabaseTest extends MantraTestCase
     public function testSchemaMigration(): void
     {
         // Create initial schema v1
-        $this->createTestSchema('test_migrate', array(
+        $this->createTestSchema('test_migrate', [
             'version' => 1,
-            'defaults' => array('name' => ''),
-            'fields' => array(
-                'name' => array('type' => 'string', 'required' => true)
-            )
-        ));
+            'defaults' => ['name' => ''],
+            'fields' => [
+                'name' => ['type' => 'string', 'required' => true],
+            ],
+        ]);
 
         $db1 = new Database($this->testDir);
         $id = $db1->generateId();
 
         // Write document with v1 schema
-        $db1->write('test_migrate', $id, array('name' => 'Old Document'));
+        $db1->write('test_migrate', $id, ['name' => 'Old Document']);
 
         // Update schema to v2 with new field
-        $this->createTestSchema('test_migrate', array(
+        $this->createTestSchema('test_migrate', [
             'version' => 2,
-            'defaults' => array(
+            'defaults' => [
                 'name' => '',
-                'status' => 'migrated'
-            ),
-            'fields' => array(
-                'name' => array('type' => 'string', 'required' => true),
-                'status' => array('type' => 'string', 'required' => true)
-            )
-        ));
+                'status' => 'migrated',
+            ],
+            'fields' => [
+                'name' => ['type' => 'string', 'required' => true],
+                'status' => ['type' => 'string', 'required' => true],
+            ],
+        ]);
 
         // Read with new schema - should apply new defaults
         $db2 = new Database($this->testDir);
@@ -301,31 +301,31 @@ class DatabaseTest extends MantraTestCase
 
     public function testValidationTypes(): void
     {
-        $this->createTestSchema('test_types', array(
+        $this->createTestSchema('test_types', [
             'version' => 1,
-            'defaults' => array(
+            'defaults' => [
                 'text' => '',
                 'number' => 0,
-                'flag' => false
-            ),
-            'fields' => array(
-                'text' => array('type' => 'string', 'required' => false),
-                'number' => array('type' => 'integer', 'required' => false),
-                'flag' => array('type' => 'boolean', 'required' => false)
-            )
-        ));
+                'flag' => false,
+            ],
+            'fields' => [
+                'text' => ['type' => 'string', 'required' => false],
+                'number' => ['type' => 'integer', 'required' => false],
+                'flag' => ['type' => 'boolean', 'required' => false],
+            ],
+        ]);
 
         $db = new Database($this->testDir);
 
         // Valid types
         $id1 = $db->generateId();
-        $data1 = array('text' => 'hello', 'number' => 42, 'flag' => true);
+        $data1 = ['text' => 'hello', 'number' => 42, 'flag' => true];
         $written1 = $db->write('test_types', $id1, $data1);
         $this->assertTrue($written1, 'Valid types pass validation');
 
         // Invalid string type
         $id2 = $db->generateId();
-        $data2 = array('text' => 123);
+        $data2 = ['text' => 123];
         try {
             $db->write('test_types', $id2, $data2);
             $this->fail('Expected SchemaValidationException');
@@ -335,7 +335,7 @@ class DatabaseTest extends MantraTestCase
 
         // Invalid integer type
         $id3 = $db->generateId();
-        $data3 = array('number' => 'not a number');
+        $data3 = ['number' => 'not a number'];
         try {
             $db->write('test_types', $id3, $data3);
             $this->fail('Expected SchemaValidationException');
@@ -346,30 +346,30 @@ class DatabaseTest extends MantraTestCase
 
     public function testValidationStringLength(): void
     {
-        $this->createTestSchema('test_length', array(
+        $this->createTestSchema('test_length', [
             'version' => 1,
-            'defaults' => array('username' => ''),
-            'fields' => array(
-                'username' => array(
+            'defaults' => ['username' => ''],
+            'fields' => [
+                'username' => [
                     'type' => 'string',
                     'required' => true,
                     'minLength' => 3,
-                    'maxLength' => 10
-                )
-            )
-        ));
+                    'maxLength' => 10,
+                ],
+            ],
+        ]);
 
         $db = new Database($this->testDir);
 
         // Valid length
         $id1 = $db->generateId();
-        $data1 = array('username' => 'john');
+        $data1 = ['username' => 'john'];
         $written1 = $db->write('test_length', $id1, $data1);
         $this->assertTrue($written1, 'Valid length passes validation');
 
         // Too short
         $id2 = $db->generateId();
-        $data2 = array('username' => 'ab');
+        $data2 = ['username' => 'ab'];
         try {
             $db->write('test_length', $id2, $data2);
             $this->fail('Expected SchemaValidationException');
@@ -379,7 +379,7 @@ class DatabaseTest extends MantraTestCase
 
         // Too long
         $id3 = $db->generateId();
-        $data3 = array('username' => 'verylongusername');
+        $data3 = ['username' => 'verylongusername'];
         try {
             $db->write('test_length', $id3, $data3);
             $this->fail('Expected SchemaValidationException');
@@ -390,29 +390,29 @@ class DatabaseTest extends MantraTestCase
 
     public function testValidationPattern(): void
     {
-        $this->createTestSchema('test_pattern', array(
+        $this->createTestSchema('test_pattern', [
             'version' => 1,
-            'defaults' => array('username' => ''),
-            'fields' => array(
-                'username' => array(
+            'defaults' => ['username' => ''],
+            'fields' => [
+                'username' => [
                     'type' => 'string',
                     'required' => true,
-                    'pattern' => '/^[a-zA-Z0-9_-]+$/'
-                )
-            )
-        ));
+                    'pattern' => '/^[a-zA-Z0-9_-]+$/',
+                ],
+            ],
+        ]);
 
         $db = new Database($this->testDir);
 
         // Valid pattern
         $id1 = $db->generateId();
-        $data1 = array('username' => 'user_name-123');
+        $data1 = ['username' => 'user_name-123'];
         $written1 = $db->write('test_pattern', $id1, $data1);
         $this->assertTrue($written1, 'Valid pattern passes validation');
 
         // Invalid pattern (contains spaces)
         $id2 = $db->generateId();
-        $data2 = array('username' => 'user name');
+        $data2 = ['username' => 'user name'];
         try {
             $db->write('test_pattern', $id2, $data2);
             $this->fail('Expected SchemaValidationException');
@@ -422,7 +422,7 @@ class DatabaseTest extends MantraTestCase
 
         // Invalid pattern (special chars)
         $id3 = $db->generateId();
-        $data3 = array('username' => 'user@name!');
+        $data3 = ['username' => 'user@name!'];
         try {
             $db->write('test_pattern', $id3, $data3);
             $this->fail('Expected SchemaValidationException');
@@ -433,36 +433,36 @@ class DatabaseTest extends MantraTestCase
 
     public function testValidationNumericRange(): void
     {
-        $this->createTestSchema('test_range', array(
+        $this->createTestSchema('test_range', [
             'version' => 1,
-            'defaults' => array('age' => 0, 'score' => 0.0),
-            'fields' => array(
-                'age' => array(
+            'defaults' => ['age' => 0, 'score' => 0.0],
+            'fields' => [
+                'age' => [
                     'type' => 'integer',
                     'required' => false,
                     'min' => 18,
-                    'max' => 100
-                ),
-                'score' => array(
+                    'max' => 100,
+                ],
+                'score' => [
                     'type' => 'number',
                     'required' => false,
                     'min' => 0.0,
-                    'max' => 10.0
-                )
-            )
-        ));
+                    'max' => 10.0,
+                ],
+            ],
+        ]);
 
         $db = new Database($this->testDir);
 
         // Valid range
         $id1 = $db->generateId();
-        $data1 = array('age' => 25, 'score' => 7.5);
+        $data1 = ['age' => 25, 'score' => 7.5];
         $written1 = $db->write('test_range', $id1, $data1);
         $this->assertTrue($written1, 'Valid range passes validation');
 
         // Below minimum
         $id2 = $db->generateId();
-        $data2 = array('age' => 15);
+        $data2 = ['age' => 15];
         try {
             $db->write('test_range', $id2, $data2);
             $this->fail('Expected SchemaValidationException');
@@ -472,7 +472,7 @@ class DatabaseTest extends MantraTestCase
 
         // Above maximum
         $id3 = $db->generateId();
-        $data3 = array('score' => 15.5);
+        $data3 = ['score' => 15.5];
         try {
             $db->write('test_range', $id3, $data3);
             $this->fail('Expected SchemaValidationException');
@@ -483,25 +483,25 @@ class DatabaseTest extends MantraTestCase
 
     public function testValidationUrl(): void
     {
-        $this->createTestSchema('test_url', array(
+        $this->createTestSchema('test_url', [
             'version' => 1,
-            'defaults' => array('website' => ''),
-            'fields' => array(
-                'website' => array('type' => 'url', 'required' => false)
-            )
-        ));
+            'defaults' => ['website' => ''],
+            'fields' => [
+                'website' => ['type' => 'url', 'required' => false],
+            ],
+        ]);
 
         $db = new Database($this->testDir);
 
         // Valid URL
         $id1 = $db->generateId();
-        $data1 = array('website' => 'https://example.com');
+        $data1 = ['website' => 'https://example.com'];
         $written1 = $db->write('test_url', $id1, $data1);
         $this->assertTrue($written1, 'Valid URL passes validation');
 
         // Invalid URL
         $id2 = $db->generateId();
-        $data2 = array('website' => 'not-a-url');
+        $data2 = ['website' => 'not-a-url'];
         try {
             $db->write('test_url', $id2, $data2);
             $this->fail('Expected SchemaValidationException');
@@ -512,30 +512,30 @@ class DatabaseTest extends MantraTestCase
 
     public function testValidationDate(): void
     {
-        $this->createTestSchema('test_date', array(
+        $this->createTestSchema('test_date', [
             'version' => 1,
-            'defaults' => array('published' => ''),
-            'fields' => array(
-                'published' => array('type' => 'date', 'required' => false)
-            )
-        ));
+            'defaults' => ['published' => ''],
+            'fields' => [
+                'published' => ['type' => 'date', 'required' => false],
+            ],
+        ]);
 
         $db = new Database($this->testDir);
 
         // Valid dates
         $id1 = $db->generateId();
-        $data1 = array('published' => '2026-03-17');
+        $data1 = ['published' => '2026-03-17'];
         $written1 = $db->write('test_date', $id1, $data1);
         $this->assertTrue($written1, 'Valid date (Y-m-d) passes validation');
 
         $id2 = $db->generateId();
-        $data2 = array('published' => '2026-03-17 14:30:00');
+        $data2 = ['published' => '2026-03-17 14:30:00'];
         $written2 = $db->write('test_date', $id2, $data2);
         $this->assertTrue($written2, 'Valid datetime passes validation');
 
         // Invalid date
         $id3 = $db->generateId();
-        $data3 = array('published' => 'not-a-date');
+        $data3 = ['published' => 'not-a-date'];
         try {
             $db->write('test_date', $id3, $data3);
             $this->fail('Expected SchemaValidationException');
@@ -546,25 +546,25 @@ class DatabaseTest extends MantraTestCase
 
     public function testValidationBoolean(): void
     {
-        $this->createTestSchema('test_bool', array(
+        $this->createTestSchema('test_bool', [
             'version' => 1,
-            'defaults' => array('active' => false),
-            'fields' => array(
-                'active' => array('type' => 'boolean', 'required' => false)
-            )
-        ));
+            'defaults' => ['active' => false],
+            'fields' => [
+                'active' => ['type' => 'boolean', 'required' => false],
+            ],
+        ]);
 
         $db = new Database($this->testDir);
 
         // Valid boolean
         $id1 = $db->generateId();
-        $data1 = array('active' => true);
+        $data1 = ['active' => true];
         $written1 = $db->write('test_bool', $id1, $data1);
         $this->assertTrue($written1, 'Valid boolean passes validation');
 
         // Invalid boolean (string)
         $id2 = $db->generateId();
-        $data2 = array('active' => 'yes');
+        $data2 = ['active' => 'yes'];
         try {
             $db->write('test_bool', $id2, $data2);
             $this->fail('Expected SchemaValidationException');
@@ -575,25 +575,25 @@ class DatabaseTest extends MantraTestCase
 
     public function testValidationArray(): void
     {
-        $this->createTestSchema('test_array', array(
+        $this->createTestSchema('test_array', [
             'version' => 1,
-            'defaults' => array('tags' => array()),
-            'fields' => array(
-                'tags' => array('type' => 'array', 'required' => false)
-            )
-        ));
+            'defaults' => ['tags' => []],
+            'fields' => [
+                'tags' => ['type' => 'array', 'required' => false],
+            ],
+        ]);
 
         $db = new Database($this->testDir);
 
         // Valid array
         $id1 = $db->generateId();
-        $data1 = array('tags' => array('php', 'cms', 'web'));
+        $data1 = ['tags' => ['php', 'cms', 'web']];
         $written1 = $db->write('test_array', $id1, $data1);
         $this->assertTrue($written1, 'Valid array passes validation');
 
         // Invalid array (string)
         $id2 = $db->generateId();
-        $data2 = array('tags' => 'not-an-array');
+        $data2 = ['tags' => 'not-an-array'];
         try {
             $db->write('test_array', $id2, $data2);
             $this->fail('Expected SchemaValidationException');
@@ -604,20 +604,20 @@ class DatabaseTest extends MantraTestCase
 
     public function testSanitization(): void
     {
-        $this->createTestSchema('test_sanitize', array(
+        $this->createTestSchema('test_sanitize', [
             'version' => 1,
-            'defaults' => array('name' => '', 'description' => ''),
-            'fields' => array(
-                'name' => array('type' => 'string', 'required' => true),
-                'description' => array('type' => 'string', 'required' => false)
-            )
-        ));
+            'defaults' => ['name' => '', 'description' => ''],
+            'fields' => [
+                'name' => ['type' => 'string', 'required' => true],
+                'description' => ['type' => 'string', 'required' => false],
+            ],
+        ]);
 
         $db = new Database($this->testDir);
 
         // Test trimming whitespace
         $id1 = $db->generateId();
-        $data1 = array('name' => '  trimmed  ', 'description' => "\t\nspaces\n\t");
+        $data1 = ['name' => '  trimmed  ', 'description' => "\t\nspaces\n\t"];
         $db->write('test_sanitize', $id1, $data1);
         $read1 = $db->read('test_sanitize', $id1);
         $this->assertSame('trimmed', $read1['name'], 'Whitespace trimmed from strings');
@@ -625,23 +625,23 @@ class DatabaseTest extends MantraTestCase
 
         // Test null byte removal
         $id2 = $db->generateId();
-        $data2 = array('name' => "test\0null");
+        $data2 = ['name' => "test\0null"];
         $db->write('test_sanitize', $id2, $data2);
         $read2 = $db->read('test_sanitize', $id2);
         $this->assertStringNotContainsString("\0", $read2['name'], 'Null bytes removed');
 
         // Test nested array sanitization
-        $this->createTestSchema('test_sanitize_nested', array(
+        $this->createTestSchema('test_sanitize_nested', [
             'version' => 1,
-            'defaults' => array('data' => array()),
-            'fields' => array(
-                'data' => array('type' => 'array', 'required' => false)
-            )
-        ));
+            'defaults' => ['data' => []],
+            'fields' => [
+                'data' => ['type' => 'array', 'required' => false],
+            ],
+        ]);
 
         $db3 = new Database($this->testDir);
         $id3 = $db3->generateId();
-        $data3 = array('data' => array('key' => '  value  '));
+        $data3 = ['data' => ['key' => '  value  ']];
         $db3->write('test_sanitize_nested', $id3, $data3);
         $read3 = $db3->read('test_sanitize_nested', $id3);
         $this->assertSame('value', $read3['data']['key'], 'Nested array values sanitized');
@@ -649,19 +649,19 @@ class DatabaseTest extends MantraTestCase
 
     public function testDelete(): void
     {
-        $this->createTestSchema('test_delete', array(
+        $this->createTestSchema('test_delete', [
             'version' => 1,
-            'defaults' => array('name' => ''),
-            'fields' => array(
-                'name' => array('type' => 'string', 'required' => true)
-            )
-        ));
+            'defaults' => ['name' => ''],
+            'fields' => [
+                'name' => ['type' => 'string', 'required' => true],
+            ],
+        ]);
 
         $db = new Database($this->testDir);
 
         // Create and delete
         $id = $db->generateId();
-        $db->write('test_delete', $id, array('name' => 'To Delete'));
+        $db->write('test_delete', $id, ['name' => 'To Delete']);
 
         $exists = $db->exists('test_delete', $id);
         $this->assertTrue($exists, 'Document exists after creation');
@@ -678,13 +678,13 @@ class DatabaseTest extends MantraTestCase
 
     public function testExists(): void
     {
-        $this->createTestSchema('test_exists', array(
+        $this->createTestSchema('test_exists', [
             'version' => 1,
-            'defaults' => array('name' => ''),
-            'fields' => array(
-                'name' => array('type' => 'string', 'required' => true)
-            )
-        ));
+            'defaults' => ['name' => ''],
+            'fields' => [
+                'name' => ['type' => 'string', 'required' => true],
+            ],
+        ]);
 
         $db = new Database($this->testDir);
 
@@ -693,7 +693,7 @@ class DatabaseTest extends MantraTestCase
         $existsBefore = $db->exists('test_exists', $id);
         $this->assertFalse($existsBefore, 'Non-existent document returns false');
 
-        $db->write('test_exists', $id, array('name' => 'Test'));
+        $db->write('test_exists', $id, ['name' => 'Test']);
 
         $existsAfter = $db->exists('test_exists', $id);
         $this->assertTrue($existsAfter, 'Existing document returns true');
@@ -701,20 +701,20 @@ class DatabaseTest extends MantraTestCase
 
     public function testQuery(): void
     {
-        $this->createTestSchema('test_query', array(
+        $this->createTestSchema('test_query', [
             'version' => 1,
-            'defaults' => array('name' => ''),
-            'fields' => array(
-                'name' => array('type' => 'string', 'required' => true)
-            )
-        ));
+            'defaults' => ['name' => ''],
+            'fields' => [
+                'name' => ['type' => 'string', 'required' => true],
+            ],
+        ]);
 
         $db = new Database($this->testDir);
 
         // Create multiple items
-        $db->write('test_query', 'item1', array('name' => 'First'));
-        $db->write('test_query', 'item2', array('name' => 'Second'));
-        $db->write('test_query', 'item3', array('name' => 'Third'));
+        $db->write('test_query', 'item1', ['name' => 'First']);
+        $db->write('test_query', 'item2', ['name' => 'Second']);
+        $db->write('test_query', 'item3', ['name' => 'Third']);
 
         $results = $db->query('test_query');
 
@@ -724,22 +724,22 @@ class DatabaseTest extends MantraTestCase
 
     public function testQueryWithFilters(): void
     {
-        $this->createTestSchema('test_filter', array(
+        $this->createTestSchema('test_filter', [
             'version' => 1,
-            'defaults' => array('name' => '', 'status' => 'active'),
-            'fields' => array(
-                'name' => array('type' => 'string', 'required' => true),
-                'status' => array('type' => 'string', 'required' => true)
-            )
-        ));
+            'defaults' => ['name' => '', 'status' => 'active'],
+            'fields' => [
+                'name' => ['type' => 'string', 'required' => true],
+                'status' => ['type' => 'string', 'required' => true],
+            ],
+        ]);
 
         $db = new Database($this->testDir);
 
-        $db->write('test_filter', 'f1', array('name' => 'Active 1', 'status' => 'active'));
-        $db->write('test_filter', 'f2', array('name' => 'Inactive', 'status' => 'inactive'));
-        $db->write('test_filter', 'f3', array('name' => 'Active 2', 'status' => 'active'));
+        $db->write('test_filter', 'f1', ['name' => 'Active 1', 'status' => 'active']);
+        $db->write('test_filter', 'f2', ['name' => 'Inactive', 'status' => 'inactive']);
+        $db->write('test_filter', 'f3', ['name' => 'Active 2', 'status' => 'active']);
 
-        $results = $db->query('test_filter', array('status' => 'active'));
+        $results = $db->query('test_filter', ['status' => 'active']);
 
         $this->assertCount(2, $results, 'Filter returns correct count');
         $this->assertSame('active', $results[0]['status'], 'Filtered results match criteria');
@@ -748,71 +748,71 @@ class DatabaseTest extends MantraTestCase
 
     public function testQueryWithSort(): void
     {
-        $this->createTestSchema('test_sort', array(
+        $this->createTestSchema('test_sort', [
             'version' => 1,
-            'defaults' => array('name' => '', 'order' => 0),
-            'fields' => array(
-                'name' => array('type' => 'string', 'required' => true),
-                'order' => array('type' => 'integer', 'required' => false)
-            )
-        ));
+            'defaults' => ['name' => '', 'order' => 0],
+            'fields' => [
+                'name' => ['type' => 'string', 'required' => true],
+                'order' => ['type' => 'integer', 'required' => false],
+            ],
+        ]);
 
         $db = new Database($this->testDir);
 
-        $db->write('test_sort', 's1', array('name' => 'Charlie', 'order' => 3));
-        $db->write('test_sort', 's2', array('name' => 'Alice', 'order' => 1));
-        $db->write('test_sort', 's3', array('name' => 'Bob', 'order' => 2));
+        $db->write('test_sort', 's1', ['name' => 'Charlie', 'order' => 3]);
+        $db->write('test_sort', 's2', ['name' => 'Alice', 'order' => 1]);
+        $db->write('test_sort', 's3', ['name' => 'Bob', 'order' => 2]);
 
         // Sort ascending
-        $resultsAsc = $db->query('test_sort', array(), array('sort' => 'name', 'order' => 'asc'));
+        $resultsAsc = $db->query('test_sort', [], ['sort' => 'name', 'order' => 'asc']);
         $this->assertSame('Alice', $resultsAsc[0]['name'], 'Sort ascending works');
         $this->assertSame('Charlie', $resultsAsc[2]['name'], 'Sort ascending order correct');
 
         // Sort descending
-        $resultsDesc = $db->query('test_sort', array(), array('sort' => 'name', 'order' => 'desc'));
+        $resultsDesc = $db->query('test_sort', [], ['sort' => 'name', 'order' => 'desc']);
         $this->assertSame('Charlie', $resultsDesc[0]['name'], 'Sort descending works');
         $this->assertSame('Alice', $resultsDesc[2]['name'], 'Sort descending order correct');
     }
 
     public function testQueryWithLimit(): void
     {
-        $this->createTestSchema('test_limit', array(
+        $this->createTestSchema('test_limit', [
             'version' => 1,
-            'defaults' => array('name' => ''),
-            'fields' => array(
-                'name' => array('type' => 'string', 'required' => true)
-            )
-        ));
+            'defaults' => ['name' => ''],
+            'fields' => [
+                'name' => ['type' => 'string', 'required' => true],
+            ],
+        ]);
 
         $db = new Database($this->testDir);
 
         for ($i = 1; $i <= 10; $i++) {
-            $db->write('test_limit', 'item' . $i, array('name' => 'Item ' . $i));
+            $db->write('test_limit', 'item' . $i, ['name' => 'Item ' . $i]);
         }
 
         // Test limit
-        $limited = $db->query('test_limit', array(), array('limit' => 3));
+        $limited = $db->query('test_limit', [], ['limit' => 3]);
         $this->assertCount(3, $limited, 'Limit restricts result count');
 
         // Test offset
-        $offset = $db->query('test_limit', array(), array('limit' => 3, 'offset' => 5));
+        $offset = $db->query('test_limit', [], ['limit' => 3, 'offset' => 5]);
         $this->assertCount(3, $offset, 'Offset with limit returns correct count');
     }
 
     public function testMetadata(): void
     {
-        $this->createTestSchema('test_metadata', array(
+        $this->createTestSchema('test_metadata', [
             'version' => 1,
-            'defaults' => array('name' => ''),
-            'fields' => array(
-                'name' => array('type' => 'string', 'required' => true)
-            )
-        ));
+            'defaults' => ['name' => ''],
+            'fields' => [
+                'name' => ['type' => 'string', 'required' => true],
+            ],
+        ]);
 
         $db = new Database($this->testDir);
 
         $id = $db->generateId();
-        $db->write('test_metadata', $id, array('name' => 'Test'));
+        $db->write('test_metadata', $id, ['name' => 'Test']);
         $read = $db->read('test_metadata', $id);
 
         $this->assertArrayHasKey('created_at', $read, 'created_at is set');
@@ -825,7 +825,7 @@ class DatabaseTest extends MantraTestCase
 
         // Update document (wait 1 second to ensure different timestamp)
         sleep(1);
-        $db->write('test_metadata', $id, array('name' => 'Updated'));
+        $db->write('test_metadata', $id, ['name' => 'Updated']);
         $readUpdated = $db->read('test_metadata', $id);
 
         $this->assertSame($createdAt, $readUpdated['created_at'], 'created_at unchanged on update');
@@ -839,67 +839,67 @@ class DatabaseTest extends MantraTestCase
 
         // Test invalid collection name (directory traversal)
         try {
-            $db->write('../evil', 'test', array('data' => 'hack'));
+            $db->write('../evil', 'test', ['data' => 'hack']);
             $this->fail('Expected Exception for directory traversal in collection name');
         } catch (Exception $e) {
             $this->assertStringContainsString('Invalid collection name', $e->getMessage(), 'Correct error message for invalid collection');
         }
 
         // Test invalid ID (directory traversal)
-        $this->createTestSchema('test_security', array(
+        $this->createTestSchema('test_security', [
             'version' => 1,
-            'defaults' => array('name' => ''),
-            'fields' => array('name' => array('type' => 'string', 'required' => true))
-        ));
+            'defaults' => ['name' => ''],
+            'fields' => ['name' => ['type' => 'string', 'required' => true]],
+        ]);
 
         try {
-            $db->write('test_security', '../evil-id', array('name' => 'hack'));
+            $db->write('test_security', '../evil-id', ['name' => 'hack']);
             $this->fail('Expected Exception for directory traversal in ID');
         } catch (Exception $e) {
             $this->assertStringContainsString('Invalid ID', $e->getMessage(), 'Correct error message for invalid ID');
         }
 
         // Test valid collection and ID
-        $validWrite = $db->write('test_security', 'valid-id_123', array('name' => 'Safe'));
+        $validWrite = $db->write('test_security', 'valid-id_123', ['name' => 'Safe']);
         $this->assertTrue($validWrite, 'Valid collection and ID names work');
     }
 
     public function testValidationMultipleErrors(): void
     {
-        $this->createTestSchema('test_multi_errors', array(
+        $this->createTestSchema('test_multi_errors', [
             'version' => 1,
-            'defaults' => array(
+            'defaults' => [
                 'username' => '',
                 'email' => '',
-                'age' => 0
-            ),
-            'fields' => array(
-                'username' => array(
+                'age' => 0,
+            ],
+            'fields' => [
+                'username' => [
                     'type' => 'string',
                     'required' => true,
-                    'minLength' => 3
-                ),
-                'email' => array(
+                    'minLength' => 3,
+                ],
+                'email' => [
                     'type' => 'email',
-                    'required' => true
-                ),
-                'age' => array(
+                    'required' => true,
+                ],
+                'age' => [
                     'type' => 'integer',
                     'required' => true,
-                    'min' => 18
-                )
-            )
-        ));
+                    'min' => 18,
+                ],
+            ],
+        ]);
 
         $db = new Database($this->testDir);
 
         // Multiple validation errors
         $id = $db->generateId();
-        $data = array(
+        $data = [
             'username' => 'ab',  // Too short
             'email' => 'invalid',  // Invalid email
-            'age' => 15  // Below minimum
-        );
+            'age' => 15,  // Below minimum
+        ];
 
         $errorCount = 0;
         try {
@@ -915,17 +915,17 @@ class DatabaseTest extends MantraTestCase
 
     public function testSecurityExtended(): void
     {
-        $this->createTestSchema('test_security_ext', array(
+        $this->createTestSchema('test_security_ext', [
             'version' => 1,
-            'defaults' => array('name' => ''),
-            'fields' => array('name' => array('type' => 'string', 'required' => true))
-        ));
+            'defaults' => ['name' => ''],
+            'fields' => ['name' => ['type' => 'string', 'required' => true]],
+        ]);
 
         $db = new Database($this->testDir);
 
         // Test absolute path in collection
         try {
-            $db->write('/etc/passwd', 'test', array('name' => 'hack'));
+            $db->write('/etc/passwd', 'test', ['name' => 'hack']);
             $this->fail('Expected Exception for absolute path in collection');
         } catch (Exception $e) {
             $this->assertTrue(true, 'Absolute path in collection blocked');
@@ -933,7 +933,7 @@ class DatabaseTest extends MantraTestCase
 
         // Test null byte in collection name
         try {
-            $db->write("test\0null", 'test', array('name' => 'hack'));
+            $db->write("test\0null", 'test', ['name' => 'hack']);
             $this->fail('Expected Exception for null byte in collection name');
         } catch (Exception $e) {
             $this->assertTrue(true, 'Null byte in collection name blocked');
@@ -941,7 +941,7 @@ class DatabaseTest extends MantraTestCase
 
         // Test null byte in ID
         try {
-            $db->write('test_security_ext', "test\0null", array('name' => 'hack'));
+            $db->write('test_security_ext', "test\0null", ['name' => 'hack']);
             $this->fail('Expected Exception for null byte in ID');
         } catch (Exception $e) {
             $this->assertTrue(true, 'Null byte in ID blocked');
@@ -949,7 +949,7 @@ class DatabaseTest extends MantraTestCase
 
         // Test special characters in collection
         try {
-            $db->write('test@collection!', 'test', array('name' => 'hack'));
+            $db->write('test@collection!', 'test', ['name' => 'hack']);
             $this->fail('Expected Exception for special characters in collection');
         } catch (Exception $e) {
             $this->assertTrue(true, 'Special characters in collection blocked');
@@ -957,7 +957,7 @@ class DatabaseTest extends MantraTestCase
 
         // Test special characters in ID
         try {
-            $db->write('test_security_ext', 'test@id!', array('name' => 'hack'));
+            $db->write('test_security_ext', 'test@id!', ['name' => 'hack']);
             $this->fail('Expected Exception for special characters in ID');
         } catch (Exception $e) {
             $this->assertTrue(true, 'Special characters in ID blocked');
@@ -965,7 +965,7 @@ class DatabaseTest extends MantraTestCase
 
         // Test backslash path traversal
         try {
-            $db->write('..\\evil', 'test', array('name' => 'hack'));
+            $db->write('..\\evil', 'test', ['name' => 'hack']);
             $this->fail('Expected Exception for backslash path traversal');
         } catch (Exception $e) {
             $this->assertTrue(true, 'Backslash path traversal blocked');
@@ -974,11 +974,11 @@ class DatabaseTest extends MantraTestCase
 
     public function testErrorHandling(): void
     {
-        $this->createTestSchema('test_errors', array(
+        $this->createTestSchema('test_errors', [
             'version' => 1,
-            'defaults' => array('name' => ''),
-            'fields' => array('name' => array('type' => 'string', 'required' => true))
-        ));
+            'defaults' => ['name' => ''],
+            'fields' => ['name' => ['type' => 'string', 'required' => true]],
+        ]);
 
         $db = new Database($this->testDir);
 
@@ -992,7 +992,7 @@ class DatabaseTest extends MantraTestCase
 
         // Test corrupted JSON recovery
         $id = $db->generateId();
-        $db->write('test_errors', $id, array('name' => 'Test'));
+        $db->write('test_errors', $id, ['name' => 'Test']);
 
         // Corrupt the JSON file
         $collectionDir = $this->testDir . '/test_errors';
@@ -1017,7 +1017,7 @@ class DatabaseTest extends MantraTestCase
         $db2 = new Database($this->testDir);
         // Should handle invalid schema gracefully
         $id2 = $db2->generateId();
-        $written = $db2->write('test_invalid_schema', $id2, array('data' => 'test'));
+        $written = $db2->write('test_invalid_schema', $id2, ['data' => 'test']);
         $this->assertTrue($written, 'Invalid schema handled gracefully');
 
         @unlink($invalidSchemaPath);
@@ -1031,11 +1031,11 @@ class DatabaseTest extends MantraTestCase
             $this->markTestSkipped('Logging directory not configured');
         }
 
-        $this->createTestSchema('test_logging', array(
+        $this->createTestSchema('test_logging', [
             'version' => 1,
-            'defaults' => array('name' => ''),
-            'fields' => array('name' => array('type' => 'string', 'required' => true))
-        ));
+            'defaults' => ['name' => ''],
+            'fields' => ['name' => ['type' => 'string', 'required' => true]],
+        ]);
 
         $db = new Database($this->testDir);
 
@@ -1045,13 +1045,13 @@ class DatabaseTest extends MantraTestCase
         $id = $db->generateId();
         $errorLogged = false;
         try {
-            $db->write('test_logging', $id, array()); // Missing required field
+            $db->write('test_logging', $id, []); // Missing required field
         } catch (SchemaValidationException $e) {
             // Check if error was logged
             if (file_exists($errorLogFile)) {
                 $logContent = file_get_contents($errorLogFile);
-                $errorLogged = strpos($logContent, 'Schema validation failed') !== false
-                    && strpos($logContent, 'test_logging') !== false;
+                $errorLogged = str_contains($logContent, 'Schema validation failed')
+                    && str_contains($logContent, 'test_logging')  ;
             }
         }
         $this->assertTrue($errorLogged, 'Validation errors are logged to error log');
@@ -1059,60 +1059,60 @@ class DatabaseTest extends MantraTestCase
         // Trigger an invalid collection error (should be logged to error log)
         $securityErrorLogged = false;
         try {
-            $db->write('../invalid', 'test', array('name' => 'test'));
+            $db->write('../invalid', 'test', ['name' => 'test']);
         } catch (Exception $e) {
             // Check if error was logged
             if (file_exists($errorLogFile)) {
                 $logContent = file_get_contents($errorLogFile);
-                $securityErrorLogged = strpos($logContent, 'Invalid collection name') !== false;
+                $securityErrorLogged = str_contains($logContent, 'Invalid collection name')  ;
             }
         }
         $this->assertTrue($securityErrorLogged, 'Security errors are logged to error log');
 
         // Test successful write
         $id2 = $db->generateId();
-        $db->write('test_logging', $id2, array('name' => 'Test'));
+        $db->write('test_logging', $id2, ['name' => 'Test']);
         $this->assertTrue(true, 'Successful operations complete without errors');
     }
 
     public function testSchemaMigrationWithCallback(): void
     {
         // Create initial schema v1 with old field name
-        $this->createTestSchema('test_migrate_cb', array(
+        $this->createTestSchema('test_migrate_cb', [
             'version' => 1,
-            'defaults' => array('old_name' => ''),
-            'fields' => array(
-                'old_name' => array('type' => 'string', 'required' => true)
-            )
-        ));
+            'defaults' => ['old_name' => ''],
+            'fields' => [
+                'old_name' => ['type' => 'string', 'required' => true],
+            ],
+        ]);
 
         $db1 = new Database($this->testDir);
         $id = $db1->generateId();
 
         // Write document with v1 schema
-        $db1->write('test_migrate_cb', $id, array('old_name' => 'Test Value'));
+        $db1->write('test_migrate_cb', $id, ['old_name' => 'Test Value']);
 
         // Update schema to v2 with migrate callback that renames field
         // Must write closure directly as PHP code, not via var_export
         $schemaPath = MANTRA_CORE . '/schemas/test_migrate_cb.php';
         $schemaContent = <<<'PHP'
-<?php
-return array(
-    'version' => 2,
-    'defaults' => array('new_name' => ''),
-    'fields' => array(
-        'new_name' => array('type' => 'string', 'required' => true)
-    ),
-    'migrate' => function($doc, $from, $to) {
-        if ($from < 2 && isset($doc['old_name'])) {
-            $doc['new_name'] = $doc['old_name'];
-            unset($doc['old_name']);
-        }
-        $doc['schema_version'] = 2;
-        return $doc;
-    }
-);
-PHP;
+            <?php
+            return array(
+                'version' => 2,
+                'defaults' => array('new_name' => ''),
+                'fields' => array(
+                    'new_name' => array('type' => 'string', 'required' => true)
+                ),
+                'migrate' => function($doc, $from, $to) {
+                    if ($from < 2 && isset($doc['old_name'])) {
+                        $doc['new_name'] = $doc['old_name'];
+                        unset($doc['old_name']);
+                    }
+                    $doc['schema_version'] = 2;
+                    return $doc;
+                }
+            );
+            PHP;
         file_put_contents($schemaPath, $schemaContent);
 
         // Read with new schema - should trigger migration
@@ -1131,11 +1131,11 @@ PHP;
 
     public function testCollectionAutoCreation(): void
     {
-        $this->createTestSchema('test_autocreate', array(
+        $this->createTestSchema('test_autocreate', [
             'version' => 1,
-            'defaults' => array('name' => ''),
-            'fields' => array('name' => array('type' => 'string', 'required' => true))
-        ));
+            'defaults' => ['name' => ''],
+            'fields' => ['name' => ['type' => 'string', 'required' => true]],
+        ]);
 
         $db = new Database($this->testDir);
 
@@ -1148,7 +1148,7 @@ PHP;
 
         // Write to non-existent collection
         $id = $db->generateId();
-        $written = $db->write('test_autocreate', $id, array('name' => 'Auto Created'));
+        $written = $db->write('test_autocreate', $id, ['name' => 'Auto Created']);
 
         $this->assertTrue($written, 'Write to non-existent collection succeeds');
         $this->assertDirectoryExists($collectionPath, 'Collection directory created automatically');
@@ -1161,18 +1161,18 @@ PHP;
 
     public function testReadCollectionWithPartialErrors(): void
     {
-        $this->createTestSchema('test_partial', array(
+        $this->createTestSchema('test_partial', [
             'version' => 1,
-            'defaults' => array('name' => ''),
-            'fields' => array('name' => array('type' => 'string', 'required' => true))
-        ));
+            'defaults' => ['name' => ''],
+            'fields' => ['name' => ['type' => 'string', 'required' => true]],
+        ]);
 
         $db = new Database($this->testDir);
 
         // Create multiple valid documents
-        $db->write('test_partial', 'valid1', array('name' => 'Valid 1'));
-        $db->write('test_partial', 'valid2', array('name' => 'Valid 2'));
-        $db->write('test_partial', 'valid3', array('name' => 'Valid 3'));
+        $db->write('test_partial', 'valid1', ['name' => 'Valid 1']);
+        $db->write('test_partial', 'valid2', ['name' => 'Valid 2']);
+        $db->write('test_partial', 'valid3', ['name' => 'Valid 3']);
 
         // Corrupt one document
         $collectionPath = $this->testDir . '/test_partial';
@@ -1184,7 +1184,7 @@ PHP;
 
         $this->assertCount(2, $results, 'Query returns only valid documents');
 
-        $names = array();
+        $names = [];
         foreach ($results as $item) {
             $names[] = $item['name'];
         }
@@ -1195,11 +1195,11 @@ PHP;
 
     public function testFileSizeLimit(): void
     {
-        $this->createTestSchema('test_filesize', array(
+        $this->createTestSchema('test_filesize', [
             'version' => 1,
-            'defaults' => array('data' => ''),
-            'fields' => array('data' => array('type' => 'string', 'required' => false))
-        ));
+            'defaults' => ['data' => ''],
+            'fields' => ['data' => ['type' => 'string', 'required' => false]],
+        ]);
 
         $db = new Database($this->testDir);
 
@@ -1209,7 +1209,7 @@ PHP;
         $id = $db->generateId();
 
         try {
-            $db->write('test_filesize', $id, array('data' => $largeData));
+            $db->write('test_filesize', $id, ['data' => $largeData]);
             $this->fail('Expected Exception for oversized data');
         } catch (Exception $e) {
             $this->assertStringContainsString('exceeds maximum limit', $e->getMessage(), 'Correct exception message for size limit');
@@ -1231,7 +1231,7 @@ PHP;
         $this->assertCount(0, $results, 'Query returns empty array for non-existent collection');
 
         // Query with filters on non-existent collection
-        $resultsFiltered = $db->query('nonexistent_collection', array('status' => 'active'));
+        $resultsFiltered = $db->query('nonexistent_collection', ['status' => 'active']);
         $this->assertCount(0, $resultsFiltered, 'Filtered query returns empty array');
 
         // Read from non-existent collection
@@ -1245,14 +1245,14 @@ PHP;
 
     public function testEmptyStringRequiredField(): void
     {
-        $this->createTestSchema('test_empty_required', array(
+        $this->createTestSchema('test_empty_required', [
             'version' => 1,
-            'defaults' => array('name' => '', 'description' => ''),
-            'fields' => array(
-                'name' => array('type' => 'string', 'required' => true),
-                'description' => array('type' => 'string', 'required' => false)
-            )
-        ));
+            'defaults' => ['name' => '', 'description' => ''],
+            'fields' => [
+                'name' => ['type' => 'string', 'required' => true],
+                'description' => ['type' => 'string', 'required' => false],
+            ],
+        ]);
 
         $db = new Database($this->testDir);
 
@@ -1260,7 +1260,7 @@ PHP;
         $id = $db->generateId();
 
         try {
-            $db->write('test_empty_required', $id, array('name' => ''));
+            $db->write('test_empty_required', $id, ['name' => '']);
             $this->fail('Expected SchemaValidationException');
         } catch (SchemaValidationException $e) {
             $this->assertArrayHasKey('name', $e->getErrors(), 'Validation error for empty required field');
@@ -1268,7 +1268,7 @@ PHP;
 
         // Test empty string for optional field - should pass
         $id2 = $db->generateId();
-        $written = $db->write('test_empty_required', $id2, array('name' => 'Valid Name', 'description' => ''));
+        $written = $db->write('test_empty_required', $id2, ['name' => 'Valid Name', 'description' => '']);
         $this->assertTrue($written, 'Empty string allowed for optional field');
 
         $read = $db->read('test_empty_required', $id2);
@@ -1277,11 +1277,11 @@ PHP;
 
     public function testMetadataOverride(): void
     {
-        $this->createTestSchema('test_metadata_override', array(
+        $this->createTestSchema('test_metadata_override', [
             'version' => 1,
-            'defaults' => array('name' => ''),
-            'fields' => array('name' => array('type' => 'string', 'required' => true))
-        ));
+            'defaults' => ['name' => ''],
+            'fields' => ['name' => ['type' => 'string', 'required' => true]],
+        ]);
 
         $db = new Database($this->testDir);
 
@@ -1290,11 +1290,11 @@ PHP;
         $customCreatedAt = '2020-01-01 00:00:00';
         $customUpdatedAt = '2020-01-01 00:00:00';
 
-        $db->write('test_metadata_override', $id, array(
+        $db->write('test_metadata_override', $id, [
             'name' => 'Test',
             'created_at' => $customCreatedAt,
-            'updated_at' => $customUpdatedAt
-        ));
+            'updated_at' => $customUpdatedAt,
+        ]);
 
         $read = $db->read('test_metadata_override', $id);
 
@@ -1305,10 +1305,10 @@ PHP;
         // Update document with custom created_at - should preserve original
         sleep(1);
         $newCustomCreatedAt = '2021-01-01 00:00:00';
-        $db->write('test_metadata_override', $id, array(
+        $db->write('test_metadata_override', $id, [
             'name' => 'Updated',
-            'created_at' => $newCustomCreatedAt
-        ));
+            'created_at' => $newCustomCreatedAt,
+        ]);
 
         $readUpdated = $db->read('test_metadata_override', $id);
 
@@ -1319,14 +1319,14 @@ PHP;
 
     public function testLargeCollectionPerformance(): void
     {
-        $this->createTestSchema('test_performance', array(
+        $this->createTestSchema('test_performance', [
             'version' => 1,
-            'defaults' => array('name' => '', 'value' => 0),
-            'fields' => array(
-                'name' => array('type' => 'string', 'required' => true),
-                'value' => array('type' => 'integer', 'required' => false)
-            )
-        ));
+            'defaults' => ['name' => '', 'value' => 0],
+            'fields' => [
+                'name' => ['type' => 'string', 'required' => true],
+                'value' => ['type' => 'integer', 'required' => false],
+            ],
+        ]);
 
         $db = new Database($this->testDir);
 
@@ -1335,10 +1335,10 @@ PHP;
         $startTime = microtime(true);
 
         for ($i = 1; $i <= $itemCount; $i++) {
-            $db->write('test_performance', 'item' . $i, array(
+            $db->write('test_performance', 'item' . $i, [
                 'name' => 'Item ' . $i,
-                'value' => $i
-            ));
+                'value' => $i,
+            ]);
         }
 
         $writeTime = microtime(true) - $startTime;
@@ -1354,7 +1354,7 @@ PHP;
 
         // Query with filter
         $startTime = microtime(true);
-        $filtered = $db->query('test_performance', array(), array('sort' => 'value', 'order' => 'desc', 'limit' => 10));
+        $filtered = $db->query('test_performance', [], ['sort' => 'value', 'order' => 'desc', 'limit' => 10]);
         $filterTime = microtime(true) - $startTime;
 
         $this->assertCount(10, $filtered, 'Filtered query returns correct count');
@@ -1374,42 +1374,42 @@ PHP;
 
     public function testCountWithoutFilters(): void
     {
-        $this->createTestSchema('test_count', array(
+        $this->createTestSchema('test_count', [
             'version' => 1,
-            'defaults' => array('name' => ''),
-            'fields' => array(
-                'name' => array('type' => 'string', 'required' => true)
-            )
-        ));
+            'defaults' => ['name' => ''],
+            'fields' => [
+                'name' => ['type' => 'string', 'required' => true],
+            ],
+        ]);
 
         $db = new Database($this->testDir);
 
-        $db->write('test_count', 'a', array('name' => 'Alpha'));
-        $db->write('test_count', 'b', array('name' => 'Beta'));
-        $db->write('test_count', 'c', array('name' => 'Gamma'));
+        $db->write('test_count', 'a', ['name' => 'Alpha']);
+        $db->write('test_count', 'b', ['name' => 'Beta']);
+        $db->write('test_count', 'c', ['name' => 'Gamma']);
 
         $this->assertSame(3, $db->count('test_count'));
     }
 
     public function testCountWithFilters(): void
     {
-        $this->createTestSchema('test_count_f', array(
+        $this->createTestSchema('test_count_f', [
             'version' => 1,
-            'defaults' => array('name' => '', 'status' => 'draft'),
-            'fields' => array(
-                'name' => array('type' => 'string', 'required' => true),
-                'status' => array('type' => 'string', 'required' => true)
-            )
-        ));
+            'defaults' => ['name' => '', 'status' => 'draft'],
+            'fields' => [
+                'name' => ['type' => 'string', 'required' => true],
+                'status' => ['type' => 'string', 'required' => true],
+            ],
+        ]);
 
         $db = new Database($this->testDir);
 
-        $db->write('test_count_f', 'a', array('name' => 'A', 'status' => 'published'));
-        $db->write('test_count_f', 'b', array('name' => 'B', 'status' => 'draft'));
-        $db->write('test_count_f', 'c', array('name' => 'C', 'status' => 'published'));
+        $db->write('test_count_f', 'a', ['name' => 'A', 'status' => 'published']);
+        $db->write('test_count_f', 'b', ['name' => 'B', 'status' => 'draft']);
+        $db->write('test_count_f', 'c', ['name' => 'C', 'status' => 'published']);
 
-        $this->assertSame(2, $db->count('test_count_f', array('status' => 'published')));
-        $this->assertSame(1, $db->count('test_count_f', array('status' => 'draft')));
+        $this->assertSame(2, $db->count('test_count_f', ['status' => 'published']));
+        $this->assertSame(1, $db->count('test_count_f', ['status' => 'draft']));
     }
 
     public function testCountEmptyCollection(): void
@@ -1420,18 +1420,18 @@ PHP;
 
     public function testListIds(): void
     {
-        $this->createTestSchema('test_list', array(
+        $this->createTestSchema('test_list', [
             'version' => 1,
-            'defaults' => array('name' => ''),
-            'fields' => array(
-                'name' => array('type' => 'string', 'required' => true)
-            )
-        ));
+            'defaults' => ['name' => ''],
+            'fields' => [
+                'name' => ['type' => 'string', 'required' => true],
+            ],
+        ]);
 
         $db = new Database($this->testDir);
 
-        $db->write('test_list', 'x1', array('name' => 'One'));
-        $db->write('test_list', 'x2', array('name' => 'Two'));
+        $db->write('test_list', 'x1', ['name' => 'One']);
+        $db->write('test_list', 'x2', ['name' => 'Two']);
 
         $ids = $db->listIds('test_list');
         sort($ids);
@@ -1443,18 +1443,18 @@ PHP;
 
     public function testCollectionCachePreventsDuplicateReads(): void
     {
-        $this->createTestSchema('test_cache', array(
+        $this->createTestSchema('test_cache', [
             'version' => 1,
-            'defaults' => array('name' => ''),
-            'fields' => array(
-                'name' => array('type' => 'string', 'required' => true)
-            )
-        ));
+            'defaults' => ['name' => ''],
+            'fields' => [
+                'name' => ['type' => 'string', 'required' => true],
+            ],
+        ]);
 
         $db = new Database($this->testDir);
 
         for ($i = 1; $i <= 50; $i++) {
-            $db->write('test_cache', 'item' . $i, array('name' => 'Item ' . $i));
+            $db->write('test_cache', 'item' . $i, ['name' => 'Item ' . $i]);
         }
 
         // First call reads from disk, second uses cache — should be faster
@@ -1474,40 +1474,40 @@ PHP;
 
     public function testCacheInvalidatedOnWrite(): void
     {
-        $this->createTestSchema('test_cache_inv', array(
+        $this->createTestSchema('test_cache_inv', [
             'version' => 1,
-            'defaults' => array('name' => ''),
-            'fields' => array(
-                'name' => array('type' => 'string', 'required' => true)
-            )
-        ));
+            'defaults' => ['name' => ''],
+            'fields' => [
+                'name' => ['type' => 'string', 'required' => true],
+            ],
+        ]);
 
         $db = new Database($this->testDir);
 
-        $db->write('test_cache_inv', 'a', array('name' => 'Alpha'));
+        $db->write('test_cache_inv', 'a', ['name' => 'Alpha']);
         $results1 = $db->query('test_cache_inv');
         $this->assertCount(1, $results1);
 
         // Write a new document — cache should be invalidated
-        $db->write('test_cache_inv', 'b', array('name' => 'Beta'));
+        $db->write('test_cache_inv', 'b', ['name' => 'Beta']);
         $results2 = $db->query('test_cache_inv');
         $this->assertCount(2, $results2);
     }
 
     public function testCacheInvalidatedOnDelete(): void
     {
-        $this->createTestSchema('test_cache_del', array(
+        $this->createTestSchema('test_cache_del', [
             'version' => 1,
-            'defaults' => array('name' => ''),
-            'fields' => array(
-                'name' => array('type' => 'string', 'required' => true)
-            )
-        ));
+            'defaults' => ['name' => ''],
+            'fields' => [
+                'name' => ['type' => 'string', 'required' => true],
+            ],
+        ]);
 
         $db = new Database($this->testDir);
 
-        $db->write('test_cache_del', 'a', array('name' => 'Alpha'));
-        $db->write('test_cache_del', 'b', array('name' => 'Beta'));
+        $db->write('test_cache_del', 'a', ['name' => 'Alpha']);
+        $db->write('test_cache_del', 'b', ['name' => 'Beta']);
         $results1 = $db->query('test_cache_del');
         $this->assertCount(2, $results1);
 

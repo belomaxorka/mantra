@@ -138,10 +138,10 @@
                     <?php echo t('admin-posts.featured_image'); ?>
                 </div>
                 <div class="card-body">
-                    <input type="hidden" name="image" id="image" value="<?php echo e(isset($post['image']) ? $post['image'] : ''); ?>">
+                    <input type="hidden" name="image" id="image" value="<?php echo e($post['image'] ?? ''); ?>">
 
                     <div id="imagePreview" class="mb-3 text-center <?php echo empty($post['image']) ? 'd-none' : ''; ?>">
-                        <img src="<?php echo e(isset($post['image']) ? $post['image'] : ''); ?>"
+                        <img src="<?php echo e($post['image'] ?? ''); ?>"
                              id="imagePreviewImg"
                              alt=""
                              class="img-fluid rounded"

@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * AdminModule - Admin panel functionality
  *
@@ -11,35 +11,35 @@ use Module\Module;
 class AdminModule extends Module
 {
     /** @var Admin\AdminPanelInterface[] */
-    private $panels = array();
+    private $panels = [];
 
-    public function init()
+    public function init(): void
     {
         $this->registerAdminHooks();
         $this->registerPermissionService();
         $this->registerAppearanceOverrides();
         $this->loadPanels();
-        $this->hook('routes.register', array($this, 'registerRoutes'));
+        $this->hook('routes.register', [$this, 'registerRoutes']);
     }
 
     /**
      * Register admin-owned hooks in the HookRegistry.
      */
-    private function registerAdminHooks()
+    private function registerAdminHooks(): void
     {
         $s = 'admin';
-        \HookRegistry::define('admin.head', 'Inject HTML into the admin <head> section', 'string', 'string', array('source' => $s));
-        \HookRegistry::define('admin.footer', 'Inject scripts/HTML into the admin footer', 'string', 'string', array('source' => $s));
-        \HookRegistry::define('admin.sidebar', 'Build admin sidebar navigation items', 'array', 'array', array('source' => $s));
-        \HookRegistry::define('admin.quick_actions', 'Register dashboard quick action buttons', 'array', 'array', array('source' => $s));
-        \HookRegistry::define('permissions.register', 'Register module permissions with the PermissionRegistry', 'PermissionRegistry', 'PermissionRegistry', array('source' => $s));
+        \HookRegistry::define('admin.head', 'Inject HTML into the admin <head> section', 'string', 'string', ['source' => $s]);
+        \HookRegistry::define('admin.footer', 'Inject scripts/HTML into the admin footer', 'string', 'string', ['source' => $s]);
+        \HookRegistry::define('admin.sidebar', 'Build admin sidebar navigation items', 'array', 'array', ['source' => $s]);
+        \HookRegistry::define('admin.quick_actions', 'Register dashboard quick action buttons', 'array', 'array', ['source' => $s]);
+        \HookRegistry::define('permissions.register', 'Register module permissions with the PermissionRegistry', 'PermissionRegistry', 'PermissionRegistry', ['source' => $s]);
     }
 
     /**
      * Register PermissionRegistry as a lazy service.
      * Panels and modules register their own permissions via the 'permissions.register' hook.
      */
-    private function registerPermissionService()
+    private function registerPermissionService(): void
     {
         $module = $this;
         $this->provide('permissions', function () use ($module) {
@@ -53,9 +53,9 @@ class AdminModule extends Module
     /**
      * Register admin.head hook for accent color CSS overrides.
      */
-    private function registerAppearanceOverrides()
+    private function registerAppearanceOverrides(): void
     {
-        $this->hook('admin.head', array($this, 'injectAppearanceStyle'), 20);
+        $this->hook('admin.head', [$this, 'injectAppearanceStyle'], 20);
     }
 
     /**
@@ -64,7 +64,7 @@ class AdminModule extends Module
     public function injectAppearanceStyle($html)
     {
         $config = \ConfigSettings::instance();
-        $lines = array();
+        $lines = [];
         $extra = '';
 
         // Accent color
@@ -122,15 +122,15 @@ class AdminModule extends Module
     {
         $file = $this->getPath() . '/' . $filename;
         if (!file_exists($file)) {
-            return array();
+            return [];
         }
 
         $presets = require $file;
         if (!is_array($presets) || !isset($presets[$key]) || !is_array($presets[$key])) {
-            return array();
+            return [];
         }
 
-        $lines = array();
+        $lines = [];
         foreach ($presets[$key] as $prop => $value) {
             $lines[] = '  ' . $prop . ': ' . $value . ';';
         }
@@ -163,7 +163,7 @@ class AdminModule extends Module
     /**
      * Discover and load panels from modules/admin/panels/
      */
-    private function loadPanels()
+    private function loadPanels(): void
     {
         $panelsDir = $this->getPath() . '/panels';
         if (!is_dir($panelsDir)) {
@@ -193,7 +193,7 @@ class AdminModule extends Module
             try {
                 $metadata = JsonCodec::decode(file_get_contents($metaPath));
             } catch (Exception $e) {
-                logger()->warning('Failed to read panel.json', array('panel' => $dir, 'error' => $e->getMessage()));
+                logger()->warning('Failed to read panel.json', ['panel' => $dir, 'error' => $e->getMessage()]);
                 continue;
             }
 
@@ -206,14 +206,14 @@ class AdminModule extends Module
 
             $classFile = $panelPath . '/' . $baseName . '.php';
             if (!file_exists($classFile)) {
-                logger()->warning('Panel class file not found', array('panel' => $dir, 'file' => $classFile));
+                logger()->warning('Panel class file not found', ['panel' => $dir, 'file' => $classFile]);
                 continue;
             }
 
             require_once $classFile;
 
             if (!class_exists($className)) {
-                logger()->warning('Panel class not found', array('panel' => $dir, 'class' => $className));
+                logger()->warning('Panel class not found', ['panel' => $dir, 'class' => $className]);
                 continue;
             }
 
@@ -228,7 +228,7 @@ class AdminModule extends Module
 
             $this->panels[$panelId] = $panel;
 
-            logger()->debug('Panel loaded', array('panel' => $panelId));
+            logger()->debug('Panel loaded', ['panel' => $panelId]);
         }
     }
 
@@ -248,7 +248,7 @@ class AdminModule extends Module
      */
     public function getPanel($id)
     {
-        return isset($this->panels[$id]) ? $this->panels[$id] : null;
+        return $this->panels[$id] ?? null;
     }
 
     public function adminRoute($method, $pattern, $callback)
@@ -257,12 +257,12 @@ class AdminModule extends Module
         $pattern = '/admin' . ($pattern === '' ? '' : ('/' . ltrim($pattern, '/')));
 
         if ($method === 'GET') {
-            return $router->get($pattern, $callback)->middleware(array($this, 'requireAuth'));
+            return $router->get($pattern, $callback)->middleware([$this, 'requireAuth']);
         }
         if ($method === 'POST') {
-            return $router->post($pattern, $callback)->middleware(array($this, 'requireAuth'));
+            return $router->post($pattern, $callback)->middleware([$this, 'requireAuth']);
         }
-        return $router->any($pattern, $callback)->middleware(array($this, 'requireAuth'));
+        return $router->any($pattern, $callback)->middleware([$this, 'requireAuth']);
     }
 
     /**
@@ -273,10 +273,10 @@ class AdminModule extends Module
         $router = $data['router'];
 
         // Auth routes (no middleware — public)
-        $router->get('/admin/login', array($this, 'loginForm'));
-        $router->post('/admin/login', array($this, 'loginProcess'));
-        $router->post('/admin/logout', array($this, 'logout'));
-        $router->get('/admin/logout', function() { app()->response()->redirect(base_url('/admin')); });
+        $router->get('/admin/login', [$this, 'loginForm']);
+        $router->post('/admin/login', [$this, 'loginProcess']);
+        $router->post('/admin/logout', [$this, 'logout']);
+        $router->get('/admin/logout', function(): void { app()->response()->redirect(base_url('/admin')); });
 
         // Panel routes (auth middleware applied by adminRoute())
         foreach ($this->panels as $panel) {
@@ -289,7 +289,7 @@ class AdminModule extends Module
     private function normalizeSidebarItem($item)
     {
         if (!is_array($item)) {
-            $item = array();
+            $item = [];
         }
 
         $id = isset($item['id']) ? (string)$item['id'] : '';
@@ -314,8 +314,8 @@ class AdminModule extends Module
             }
         }
 
-        $children = isset($item['children']) && is_array($item['children']) ? $item['children'] : array();
-        $normalizedChildren = array();
+        $children = isset($item['children']) && is_array($item['children']) ? $item['children'] : [];
+        $normalizedChildren = [];
         foreach ($children as $child) {
             $normalizedChildren[] = $this->normalizeSidebarItem($child);
         }
@@ -324,10 +324,10 @@ class AdminModule extends Module
         return $item;
     }
 
-    private function sortSidebarTree(&$items)
+    private function sortSidebarTree(&$items): void
     {
         if (!is_array($items)) {
-            $items = array();
+            $items = [];
             return;
         }
 
@@ -404,9 +404,9 @@ class AdminModule extends Module
     private function buildSidebarItems()
     {
         // Collect from hooks (backward compat with BaseAdminModule / third-party modules)
-        $items = $this->fireHook('admin.sidebar', array());
+        $items = $this->fireHook('admin.sidebar', []);
         if (!is_array($items)) {
-            $items = array();
+            $items = [];
         }
 
         // Collect from panels (declarative)
@@ -419,7 +419,7 @@ class AdminModule extends Module
 
         $path = app()->request()->path();
 
-        $normalized = array();
+        $normalized = [];
         foreach ($items as $item) {
             $normalized[] = $this->normalizeSidebarItem($item);
         }
@@ -454,19 +454,19 @@ class AdminModule extends Module
         return $normalized;
     }
 
-    public function render($title, $content, $extra = array())
+    public function render($title, $content, $extra = [])
     {
         return $this->renderAdminLayout($title, $content, $extra);
     }
 
-    private function renderAdminLayout($title, $content, $extra = array())
+    private function renderAdminLayout($title, $content, $extra = [])
     {
-        $data = array_merge(array(
+        $data = array_merge([
             'title' => $title,
             'content' => $content,
             'sidebarItems' => $this->buildSidebarItems(),
             'user' => app()->auth()->user(),
-        ), is_array($extra) ? $extra : array());
+        ], is_array($extra) ? $extra : []);
 
         return app()->view()->render('admin:layout', $data);
     }
@@ -486,22 +486,22 @@ class AdminModule extends Module
     /**
      * Login form
      */
-    public function loginForm()
+    public function loginForm(): void
     {
         if (app()->auth()->check()) {
             app()->response()->redirect(base_url('/admin'));
             return;
         }
 
-        $this->view('admin:login', array(
-            'csrf_token' => app()->auth()->generateCsrfToken()
-        ));
+        $this->view('admin:login', [
+            'csrf_token' => app()->auth()->generateCsrfToken(),
+        ]);
     }
 
     /**
      * Process login
      */
-    public function loginProcess()
+    public function loginProcess(): void
     {
         $token = (string)app()->request()->post('csrf_token', '');
         if (!app()->auth()->verifyCsrfToken($token)) {
@@ -515,17 +515,17 @@ class AdminModule extends Module
         if (app()->auth()->login($username, $password)) {
             app()->response()->redirect(base_url('/admin'));
         } else {
-            $this->view('admin:login', array(
+            $this->view('admin:login', [
                 'error' => 'Invalid credentials',
-                'csrf_token' => app()->auth()->generateCsrfToken()
-            ));
+                'csrf_token' => app()->auth()->generateCsrfToken(),
+            ]);
         }
     }
 
     /**
      * Logout
      */
-    public function logout()
+    public function logout(): void
     {
         $token = (string)app()->request()->post('csrf_token', '');
         if (!app()->auth()->verifyCsrfToken($token)) {

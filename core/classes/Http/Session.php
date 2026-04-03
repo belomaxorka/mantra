@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Http;
 
@@ -7,7 +7,7 @@ class Session {
         return session_status();
     }
 
-    public function start($options = array()) {
+    public function start($options = []): void {
         if (MANTRA_CLI) {
             return;
         }
@@ -17,10 +17,10 @@ class Session {
         }
 
         if (headers_sent($file, $line)) {
-            logger()->warning('Cannot start session: headers already sent', array(
+            logger()->warning('Cannot start session: headers already sent', [
                 'file' => $file,
-                'line' => $line
-            ));
+                'line' => $line,
+            ]);
             return;
         }
 
@@ -48,19 +48,19 @@ class Session {
             $samesite = config('session.cookie_samesite', 'Lax');
 
             // Validate SameSite value
-            $validSameSite = array('Lax', 'Strict', 'None');
+            $validSameSite = ['Lax', 'Strict', 'None'];
             if (!in_array($samesite, $validSameSite, true)) {
                 $samesite = 'Lax';
             }
 
-            session_set_cookie_params(array(
+            session_set_cookie_params([
                 'lifetime' => $lifetime,
                 'path' => $path,
                 'domain' => $domain,
                 'secure' => $secure,
                 'httponly' => $httponly,
-                'samesite' => $samesite
-            ));
+                'samesite' => $samesite,
+            ]);
         } else {
             session_set_cookie_params($lifetime, $path, $domain, $secure, $httponly);
         }
@@ -75,10 +75,10 @@ class Session {
     }
 
     public function get($key, $default = null) {
-        return isset($_SESSION[$key]) ? $_SESSION[$key] : $default;
+        return $_SESSION[$key] ?? $default;
     }
 
-    public function set($key, $value) {
+    public function set($key, $value): void {
         $_SESSION[$key] = $value;
     }
 
@@ -86,7 +86,7 @@ class Session {
         return isset($_SESSION[$key]);
     }
 
-    public function delete($key) {
+    public function delete($key): void {
         if (isset($_SESSION[$key])) {
             unset($_SESSION[$key]);
         }
@@ -103,7 +103,7 @@ class Session {
         if (MANTRA_CLI) {
             return false;
         }
-        $_SESSION = array();
+        $_SESSION = [];
         return session_destroy();
     }
 }

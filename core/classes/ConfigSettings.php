@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * ConfigSettings - Schema-driven settings storage for global config.
  *
@@ -17,8 +17,8 @@ class ConfigSettings
     private $schema = null;
 
     private $loaded = false;
-    private $data = array();
-    private $defaults = array();
+    private $data = [];
+    private $defaults = [];
 
     private static $instance = null;
 
@@ -76,7 +76,7 @@ class ConfigSettings
         $schema = $this->schema();
 
         $this->defaults = Config::defaults();
-        $raw = array();
+        $raw = [];
 
         if (file_exists($this->path)) {
             try {
@@ -86,10 +86,10 @@ class ConfigSettings
                     $raw = $decoded;
                 }
             } catch (Exception $e) {
-                logger()->warning('Failed to read config.json, using defaults', array(
+                logger()->warning('Failed to read config.json, using defaults', [
                     'path' => $this->path,
                     'error' => $e->getMessage(),
-                ));
+                ]);
             }
         }
 
@@ -157,7 +157,7 @@ class ConfigSettings
 
         $overrides = Config::diffOverrides($this->defaults, $this->data);
         if (!is_array($overrides)) {
-            $overrides = array();
+            $overrides = [];
         }
 
         if ($schemaVersion > 0) {
@@ -166,7 +166,7 @@ class ConfigSettings
 
         $dir = dirname($this->path);
         if (!is_dir($dir)) {
-            mkdir($dir, 0755, true);
+            mkdir($dir, 0o755, true);
         }
 
         return FileIO::writeAtomic($this->path, JsonCodec::encode($overrides));
@@ -183,7 +183,7 @@ class ConfigSettings
             if (isset($schema['migrate']) && is_callable($schema['migrate'])) {
                 $data = call_user_func($schema['migrate'], $data, $from, $to);
                 if (!is_array($data)) {
-                    $data = array();
+                    $data = [];
                 }
             }
             $data['schema_version'] = $to;

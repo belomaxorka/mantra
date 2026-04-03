@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Paginator - Universal pagination value object
  *
@@ -113,7 +113,7 @@ class Paginator {
      */
     public function pages($window = 2) {
         if ($this->totalPages <= 1) {
-            return array(1);
+            return [1];
         }
 
         // If total pages fit within a reasonable range, show all
@@ -122,7 +122,7 @@ class Paginator {
             return range(1, $this->totalPages);
         }
 
-        $pages = array();
+        $pages = [];
 
         // Always include first page
         $pages[] = 1;

@@ -27,6 +27,7 @@ desktop.ini
 
 /vendor/
 /.phpunit.cache/
+.php-cs-fixer.cache
 composer.phar
 
 *.tmp.*

@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * UploadsPanel - File upload and management
  *
@@ -12,10 +12,10 @@ namespace Admin;
 class UploadsPanel extends AdminPanel {
 
     /** @var int Maximum upload size in bytes (10 MB) */
-    const MAX_UPLOAD_SIZE = 10485760;
+    public const MAX_UPLOAD_SIZE = 10485760;
 
     /** @var array Allowed MIME types */
-    private static $allowedMimes = array(
+    private static $allowedMimes = [
         'image/jpeg',
         'image/png',
         'image/gif',
@@ -25,47 +25,47 @@ class UploadsPanel extends AdminPanel {
         'text/plain',
         'application/zip',
         'application/x-zip-compressed',
-    );
+    ];
 
     public function id() {
         return 'uploads';
     }
 
-    public function init($admin) {
+    public function init($admin): void {
         parent::init($admin);
 
         app()->db()->registerSchema('uploads', $this->getPath() . '/schema.php');
-        $this->hook('permissions.register', array($this, 'registerPermissions'));
+        $this->hook('permissions.register', [$this, 'registerPermissions']);
     }
 
     /**
      * Register upload permissions.
      */
     public function registerPermissions($registry) {
-        $registry->registerPermissions(array(
-            'uploads.view'       => 'View uploads',
-            'uploads.upload'     => 'Upload files',
-            'uploads.delete'     => 'Delete any file',
+        $registry->registerPermissions([
+            'uploads.view' => 'View uploads',
+            'uploads.upload' => 'Upload files',
+            'uploads.delete' => 'Delete any file',
             'uploads.delete.own' => 'Delete own files',
-        ), 'Uploads');
+        ], 'Uploads');
 
-        $registry->addRoleDefaults('editor', array(
+        $registry->addRoleDefaults('editor', [
             'uploads.view', 'uploads.upload', 'uploads.delete',
-        ));
-        $registry->addRoleDefaults('viewer', array(
+        ]);
+        $registry->addRoleDefaults('viewer', [
             'uploads.view',
-        ));
+        ]);
 
         return $registry;
     }
 
-    public function registerRoutes($admin) {
-        $admin->adminRoute('GET',  'uploads',              array($this, 'listFiles'));
-        $admin->adminRoute('POST', 'uploads',              array($this, 'uploadFile'));
-        $admin->adminRoute('GET',  'uploads/edit/{id}',    array($this, 'editFile'));
-        $admin->adminRoute('POST', 'uploads/edit/{id}',    array($this, 'updateFile'));
-        $admin->adminRoute('POST', 'uploads/delete/{id}',  array($this, 'deleteFile'));
-        $admin->adminRoute('POST', 'uploads/api/upload',   array($this, 'apiUpload'));
+    public function registerRoutes($admin): void {
+        $admin->adminRoute('GET',  'uploads',              [$this, 'listFiles']);
+        $admin->adminRoute('POST', 'uploads',              [$this, 'uploadFile']);
+        $admin->adminRoute('GET',  'uploads/edit/{id}',    [$this, 'editFile']);
+        $admin->adminRoute('POST', 'uploads/edit/{id}',    [$this, 'updateFile']);
+        $admin->adminRoute('POST', 'uploads/delete/{id}',  [$this, 'deleteFile']);
+        $admin->adminRoute('POST', 'uploads/api/upload',   [$this, 'apiUpload']);
     }
 
     // ========== Actions ==========
@@ -76,28 +76,28 @@ class UploadsPanel extends AdminPanel {
     public function listFiles() {
         if (!$this->requirePermission('uploads.view')) return;
 
-        $files = app()->db()->query('uploads', array(), array(
+        $files = app()->db()->query('uploads', [], [
             'sort' => 'created_at',
             'order' => 'desc',
-        ));
+        ]);
 
         $userManager = new \User();
         $user = $this->getUser();
 
-        $content = $this->renderView('list', array(
-            'files'     => $files,
+        $content = $this->renderView('list', [
+            'files' => $files,
             'canUpload' => (bool)$userManager->hasPermission($user, 'uploads.upload'),
             'canDelete' => $userManager->hasPermission($user, 'uploads.delete'),
             'csrf_token' => $this->auth()->generateCsrfToken(),
             'uploadsUrl' => $this->getUploadsBaseUrl(),
-        ));
+        ]);
 
-        return $this->renderAdmin(t('admin-uploads.title'), $content, array(
-            'breadcrumbs' => array(
-                array('title' => t('admin-dashboard.title'), 'url' => base_url('/admin')),
-                array('title' => t('admin-uploads.title')),
-            ),
-        ));
+        return $this->renderAdmin(t('admin-uploads.title'), $content, [
+            'breadcrumbs' => [
+                ['title' => t('admin-dashboard.title'), 'url' => base_url('/admin')],
+                ['title' => t('admin-uploads.title')],
+            ],
+        ]);
     }
 
     /**
@@ -110,29 +110,29 @@ class UploadsPanel extends AdminPanel {
         $error = $this->processUpload();
 
         if ($error !== null) {
-            $files = app()->db()->query('uploads', array(), array(
+            $files = app()->db()->query('uploads', [], [
                 'sort' => 'created_at',
                 'order' => 'desc',
-            ));
+            ]);
 
             $userManager = new \User();
             $user = $this->getUser();
 
-            $content = $this->renderView('list', array(
-                'files'     => $files,
+            $content = $this->renderView('list', [
+                'files' => $files,
                 'canUpload' => true,
                 'canDelete' => $userManager->hasPermission($user, 'uploads.delete'),
                 'csrf_token' => $this->auth()->generateCsrfToken(),
                 'uploadsUrl' => $this->getUploadsBaseUrl(),
-                'error'     => $error,
-            ));
+                'error' => $error,
+            ]);
 
-            return $this->renderAdmin(t('admin-uploads.title'), $content, array(
-                'breadcrumbs' => array(
-                    array('title' => t('admin-dashboard.title'), 'url' => base_url('/admin')),
-                    array('title' => t('admin-uploads.title')),
-                ),
-            ));
+            return $this->renderAdmin(t('admin-uploads.title'), $content, [
+                'breadcrumbs' => [
+                    ['title' => t('admin-dashboard.title'), 'url' => base_url('/admin')],
+                    ['title' => t('admin-uploads.title')],
+                ],
+            ]);
         }
 
         $this->redirectAdmin('uploads');
@@ -142,37 +142,37 @@ class UploadsPanel extends AdminPanel {
      * API endpoint for CKEditor / AJAX uploads.
      * Returns JSON response.
      */
-    public function apiUpload() {
+    public function apiUpload(): void {
         header('Content-Type: application/json; charset=utf-8');
 
         $userManager = new \User();
         $user = $this->getUser();
         if (!$user || !$userManager->hasPermission($user, 'uploads.upload')) {
             http_response_code(403);
-            echo json_encode(array('error' => array('message' => 'Permission denied')));
+            echo json_encode(['error' => ['message' => 'Permission denied']]);
             return;
         }
 
         $error = $this->processUpload();
         if ($error !== null) {
             http_response_code(400);
-            echo json_encode(array('error' => array('message' => $error)));
+            echo json_encode(['error' => ['message' => $error]]);
             return;
         }
 
         // Return the URL of the last uploaded file
-        $files = app()->db()->query('uploads', array(), array(
+        $files = app()->db()->query('uploads', [], [
             'sort' => 'created_at',
             'order' => 'desc',
             'limit' => 1,
-        ));
+        ]);
 
         if (!empty($files)) {
             $url = $this->getUploadsBaseUrl() . '/' . $files[0]['path'];
-            echo json_encode(array('url' => $url));
+            echo json_encode(['url' => $url]);
         } else {
             http_response_code(500);
-            echo json_encode(array('error' => array('message' => 'Upload failed')));
+            echo json_encode(['error' => ['message' => 'Upload failed']]);
         }
     }
 
@@ -182,7 +182,7 @@ class UploadsPanel extends AdminPanel {
     public function editFile($params) {
         if (!$this->requirePermission('uploads.view')) return;
 
-        $id = isset($params['id']) ? $params['id'] : '';
+        $id = $params['id'] ?? '';
         $file = app()->db()->read('uploads', $id);
 
         if (!$file) {
@@ -194,21 +194,21 @@ class UploadsPanel extends AdminPanel {
         $userManager = new \User();
         $user = $this->getUser();
 
-        $content = $this->renderView('edit', array(
-            'file'       => $file,
-            'canDelete'  => $userManager->hasPermission($user, 'uploads.delete'),
+        $content = $this->renderView('edit', [
+            'file' => $file,
+            'canDelete' => $userManager->hasPermission($user, 'uploads.delete'),
             'csrf_token' => $this->auth()->generateCsrfToken(),
             'uploadsUrl' => $this->getUploadsBaseUrl(),
-        ));
+        ]);
 
         $title = t('admin-uploads.edit_file');
-        return $this->renderAdmin($title, $content, array(
-            'breadcrumbs' => array(
-                array('title' => t('admin-dashboard.title'), 'url' => base_url('/admin')),
-                array('title' => t('admin-uploads.title'), 'url' => base_url('/admin/uploads')),
-                array('title' => $title),
-            ),
-        ));
+        return $this->renderAdmin($title, $content, [
+            'breadcrumbs' => [
+                ['title' => t('admin-dashboard.title'), 'url' => base_url('/admin')],
+                ['title' => t('admin-uploads.title'), 'url' => base_url('/admin/uploads')],
+                ['title' => $title],
+            ],
+        ]);
     }
 
     /**
@@ -218,7 +218,7 @@ class UploadsPanel extends AdminPanel {
         if (!$this->requirePermission('uploads.upload')) return;
         if (!$this->verifyCsrf()) return;
 
-        $id = isset($params['id']) ? $params['id'] : '';
+        $id = $params['id'] ?? '';
         $file = app()->db()->read('uploads', $id);
 
         if (!$file) {
@@ -238,12 +238,12 @@ class UploadsPanel extends AdminPanel {
     /**
      * Delete a file (physical + metadata).
      */
-    public function deleteFile($params) {
+    public function deleteFile($params): void {
         $access = $this->requirePermission('uploads.delete');
         if ($access === false) return;
         if (!$this->verifyCsrf()) return;
 
-        $id = isset($params['id']) ? $params['id'] : '';
+        $id = $params['id'] ?? '';
         $file = app()->db()->read('uploads', $id);
 
         if (!$file) {
@@ -258,7 +258,7 @@ class UploadsPanel extends AdminPanel {
                 http_response_code(403);
                 echo $this->renderAdmin(
                     t('admin.common.access_denied'),
-                    '<div class="alert alert-danger alert-permanent">' . e(t('admin.common.access_denied')) . '</div>'
+                    '<div class="alert alert-danger alert-permanent">' . e(t('admin.common.access_denied')) . '</div>',
                 );
                 return;
             }
@@ -312,7 +312,7 @@ class UploadsPanel extends AdminPanel {
         $subdir = date('Y/m');
         $targetDir = MANTRA_UPLOADS . '/' . $subdir;
         if (!is_dir($targetDir)) {
-            mkdir($targetDir, 0755, true);
+            mkdir($targetDir, 0o755, true);
         }
 
         // Ensure unique filename
@@ -328,16 +328,16 @@ class UploadsPanel extends AdminPanel {
         // Save metadata
         $user = $this->getUser();
         $id = app()->db()->generateId();
-        $metadata = array(
-            'filename'      => $filename,
+        $metadata = [
+            'filename' => $filename,
             'original_name' => $fileData['name'],
-            'mime_type'     => $mime,
-            'size'          => (int)$fileData['size'],
-            'path'          => $relativePath,
-            'author'        => isset($user['username']) ? $user['username'] : 'Unknown',
-            'author_id'     => isset($user['_id']) ? $user['_id'] : '',
-            'created_at'    => clock()->timestamp(),
-        );
+            'mime_type' => $mime,
+            'size' => (int)$fileData['size'],
+            'path' => $relativePath,
+            'author' => $user['username'] ?? 'Unknown',
+            'author_id' => $user['_id'] ?? '',
+            'created_at' => clock()->timestamp(),
+        ];
 
         app()->db()->write('uploads', $id, $metadata);
 
@@ -359,15 +359,15 @@ class UploadsPanel extends AdminPanel {
 
         // Fallback to extension-based detection
         $ext = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
-        $map = array(
+        $map = [
             'jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg',
             'png' => 'image/png', 'gif' => 'image/gif',
             'webp' => 'image/webp', 'svg' => 'image/svg+xml',
             'pdf' => 'application/pdf', 'txt' => 'text/plain',
             'zip' => 'application/zip',
-        );
+        ];
 
-        return isset($map[$ext]) ? $map[$ext] : 'application/octet-stream';
+        return $map[$ext] ?? 'application/octet-stream';
     }
 
     /**
@@ -376,7 +376,7 @@ class UploadsPanel extends AdminPanel {
     private function sanitizeFilename($name) {
         $info = pathinfo($name);
         $ext = isset($info['extension']) ? strtolower($info['extension']) : '';
-        $base = isset($info['filename']) ? $info['filename'] : '';
+        $base = $info['filename'] ?? '';
 
         // Transliterate common chars, strip anything non-alphanumeric
         $base = preg_replace('/[^a-zA-Z0-9_-]/', '-', $base);
@@ -445,7 +445,7 @@ class UploadsPanel extends AdminPanel {
      * Check if a MIME type is an image.
      */
     public static function isImage($mime) {
-        return strpos($mime, 'image/') === 0;
+        return str_starts_with($mime, 'image/')  ;
     }
 
     /**

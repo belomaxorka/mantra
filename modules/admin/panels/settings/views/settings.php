@@ -1,6 +1,6 @@
 <div class="container-fluid">
   <div class="admin-page-header mb-4">
-      <h1 class="h3"><?php echo e(isset($pageTitle) ? $pageTitle : 'Settings'); ?></h1>
+      <h1 class="h3"><?php echo e($pageTitle ?? 'Settings'); ?></h1>
   </div>
 
   <div class="row">
@@ -20,11 +20,11 @@
       <?php endif; ?>
 
       <ul class="nav nav-tabs mb-3" role="tablist">
-        <?php foreach ((isset($tabs) ? $tabs : array()) as $tab): ?>
+        <?php foreach (($tabs ?? []) as $tab): ?>
           <?php
-            $tabId = (string)(isset($tab['id']) ? $tab['id'] : 'tab');
-            $tabTitle = (string)(isset($tab['title']) ? $tab['title'] : $tabId);
-            $tabUrl = (string)(isset($tab['url']) ? $tab['url'] : '#');
+            $tabId = (string)($tab['id'] ?? 'tab');
+            $tabTitle = (string)($tab['title'] ?? $tabId);
+            $tabUrl = (string)($tab['url'] ?? '#');
             $isActive = !empty($tab['active']);
           ?>
           <li class="nav-item" role="presentation">
@@ -36,7 +36,7 @@
       </ul>
 
       <div>
-        <?php echo isset($contentHtml) ? $contentHtml : ''; ?>
+        <?php echo $contentHtml ?? ''; ?>
       </div>
     </div>
   </div>

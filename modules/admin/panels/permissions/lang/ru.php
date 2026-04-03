@@ -1,6 +1,6 @@
-<?php
+<?php declare(strict_types=1);
 
-return array(
+return [
     'admin-permissions.title' => 'Права доступа',
     'admin-permissions.saved' => 'Права доступа сохранены.',
     'admin-permissions.reset_success' => 'Права роли "%s" сброшены на стандартные.',
@@ -14,4 +14,4 @@ return array(
     'admin-permissions.role.admin' => 'Администратор',
     'admin-permissions.role.editor' => 'Редактор',
     'admin-permissions.role.viewer' => 'Читатель',
-);
+];

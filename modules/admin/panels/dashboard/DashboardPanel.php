@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Admin;
 
@@ -8,8 +8,8 @@ class DashboardPanel extends AdminPanel {
         return 'dashboard';
     }
 
-    public function registerRoutes($admin) {
-        $admin->adminRoute('GET', '', array($this, 'dashboard'));
+    public function registerRoutes($admin): void {
+        $admin->adminRoute('GET', '', [$this, 'dashboard']);
     }
 
     public function dashboard() {
@@ -20,55 +20,51 @@ class DashboardPanel extends AdminPanel {
         $pages = $db->query('pages');
         $users = $db->query('users');
 
-        $publishedPosts = array_filter($posts, function ($p) {
-            return isset($p['status']) && $p['status'] === 'published';
-        });
-        $publishedPages = array_filter($pages, function ($p) {
-            return isset($p['status']) && $p['status'] === 'published';
-        });
+        $publishedPosts = array_filter($posts, fn ($p) => isset($p['status']) && $p['status'] === 'published');
+        $publishedPages = array_filter($pages, fn ($p) => isset($p['status']) && $p['status'] === 'published');
 
-        $stats = array(
-            array(
+        $stats = [
+            [
                 'title' => t('admin-dashboard.stats.posts'),
                 'value' => count($posts),
-                'sub'   => t('admin-dashboard.stats.published', array('count' => count($publishedPosts))),
-                'icon'  => 'bi-file-earmark-text',
+                'sub' => t('admin-dashboard.stats.published', ['count' => count($publishedPosts)]),
+                'icon' => 'bi-file-earmark-text',
                 'color' => 'primary',
-                'url'   => base_url('/admin/posts'),
-            ),
-            array(
+                'url' => base_url('/admin/posts'),
+            ],
+            [
                 'title' => t('admin-dashboard.stats.pages'),
                 'value' => count($pages),
-                'sub'   => t('admin-dashboard.stats.published', array('count' => count($publishedPages))),
-                'icon'  => 'bi-file-earmark-richtext',
+                'sub' => t('admin-dashboard.stats.published', ['count' => count($publishedPages)]),
+                'icon' => 'bi-file-earmark-richtext',
                 'color' => 'success',
-                'url'   => base_url('/admin/pages'),
-            ),
-            array(
+                'url' => base_url('/admin/pages'),
+            ],
+            [
                 'title' => t('admin-dashboard.stats.users'),
                 'value' => count($users),
-                'icon'  => 'bi-people',
+                'icon' => 'bi-people',
                 'color' => 'warning',
-                'url'   => base_url('/admin/users'),
-            ),
-        );
+                'url' => base_url('/admin/users'),
+            ],
+        ];
 
         // Recent content (last 5 by updated_at)
         $allContent = array_merge(
             array_map(function ($p) { $p['_type'] = 'post'; return $p; }, $posts),
-            array_map(function ($p) { $p['_type'] = 'page'; return $p; }, $pages)
+            array_map(function ($p) { $p['_type'] = 'page'; return $p; }, $pages),
         );
         usort($allContent, function ($a, $b) {
-            $ta = isset($a['updated_at']) ? $a['updated_at'] : '';
-            $tb = isset($b['updated_at']) ? $b['updated_at'] : '';
+            $ta = $a['updated_at'] ?? '';
+            $tb = $b['updated_at'] ?? '';
             return strcmp($tb, $ta);
         });
         $recentContent = array_slice($allContent, 0, 5);
 
         // Quick actions
-        $quickActions = app()->hooks()->fire('admin.quick_actions', array());
+        $quickActions = app()->hooks()->fire('admin.quick_actions', []);
         if (!is_array($quickActions)) {
-            $quickActions = array();
+            $quickActions = [];
         }
 
         foreach ($this->admin->getPanels() as $panel) {
@@ -93,15 +89,15 @@ class DashboardPanel extends AdminPanel {
             return $orderA - $orderB;
         });
 
-        $content = $this->renderView('dashboard', array(
+        $content = $this->renderView('dashboard', [
             'user' => $this->getUser(),
             'quickActions' => $quickActions,
             'stats' => $stats,
             'recentContent' => $recentContent,
-        ));
+        ]);
 
-        return $this->renderAdmin(t('admin-dashboard.title'), $content, array(
+        return $this->renderAdmin(t('admin-dashboard.title'), $content, [
             'user' => $this->getUser(),
-        ));
+        ]);
     }
 }

@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Clock - Centralized time management
  *
@@ -9,7 +9,7 @@
  */
 class Clock {
     /** Storage format for timestamps in JSON documents. */
-    const STORAGE_FORMAT = 'Y-m-d H:i:s';
+    public const STORAGE_FORMAT = 'Y-m-d H:i:s';
 
     private $timezone;
     private $dateFormat;
@@ -145,31 +145,31 @@ class Clock {
 
         if ($diff < 3600) {
             $count = (int)floor($diff / 60);
-            return t('core.time.minutes_ago', array('count' => $count));
+            return t('core.time.minutes_ago', ['count' => $count]);
         }
 
         if ($diff < 86400) {
             $count = (int)floor($diff / 3600);
-            return t('core.time.hours_ago', array('count' => $count));
+            return t('core.time.hours_ago', ['count' => $count]);
         }
 
         if ($diff < 604800) {
             $count = (int)floor($diff / 86400);
-            return t('core.time.days_ago', array('count' => $count));
+            return t('core.time.days_ago', ['count' => $count]);
         }
 
         if ($diff < 2592000) {
             $count = (int)floor($diff / 604800);
-            return t('core.time.weeks_ago', array('count' => $count));
+            return t('core.time.weeks_ago', ['count' => $count]);
         }
 
         if ($diff < 31536000) {
             $count = (int)floor($diff / 2592000);
-            return t('core.time.months_ago', array('count' => $count));
+            return t('core.time.months_ago', ['count' => $count]);
         }
 
         $count = (int)floor($diff / 31536000);
-        return t('core.time.years_ago', array('count' => $count));
+        return t('core.time.years_ago', ['count' => $count]);
     }
 
     // ── Accessors ───────────────────────────────────────────────────────

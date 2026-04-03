@@ -1,6 +1,6 @@
-<?php
+<?php declare(strict_types=1);
 
-return array(
+return [
     // Module name
     'admin.name' => 'Admin Panel',
 
@@ -60,4 +60,4 @@ return array(
     'admin.sidebar.group.general' => 'General',
     'admin.sidebar.group.content' => 'Content',
     'admin.sidebar.group.system' => 'System',
-);
+];

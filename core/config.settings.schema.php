@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 /**
  * UI Schema for global config settings (Admin -> Settings -> General).
@@ -11,311 +11,311 @@
  * Options for dynamic selects (themes/modules list) are injected at runtime by AdminModule.
  */
 
-return array(
+return [
     'version' => 3,
     'migrate' => function ($data, $from, $to) {
         // v2: admin sub-modules replaced by panels — strip from modules.enabled
         if ($from < 2 && isset($data['modules']['enabled']) && is_array($data['modules']['enabled'])) {
-            $panelIds = array('admin-dashboard', 'admin-pages', 'admin-posts', 'admin-settings');
+            $panelIds = ['admin-dashboard', 'admin-pages', 'admin-posts', 'admin-settings'];
             $data['modules']['enabled'] = array_values(array_diff($data['modules']['enabled'], $panelIds));
         }
         // v3: admin.accent_color — no data migration needed, gets default automatically
         $data['schema_version'] = $to;
         return $data;
     },
-    'tabs' => array(
-        array(
+    'tabs' => [
+        [
             'id' => 'site',
             'title' => 'admin-settings.group.site',
-            'fields' => array(
-                array(
+            'fields' => [
+                [
                     'path' => 'site.name',
                     'type' => 'text',
                     'title' => 'admin-settings.site.name',
                     'default' => 'Mantra CMS',
-                ),
-                array(
+                ],
+                [
                     'path' => 'site.url',
                     'type' => 'text',
                     'title' => 'admin-settings.site.url',
                     'default' => '',
-                ),
-            ),
-        ),
-        array(
+                ],
+            ],
+        ],
+        [
             'id' => 'locale',
             'title' => 'admin-settings.group.locale',
-            'fields' => array(
-                array(
+            'fields' => [
+                [
                     'path' => 'locale.timezone',
                     'type' => 'timezone_select',
                     'title' => 'admin-settings.locale.timezone',
                     'default' => 'UTC',
-                    'options' => array(),
-                ),
-                array(
+                    'options' => [],
+                ],
+                [
                     'path' => 'locale.date_format',
                     'type' => 'select',
                     'title' => 'admin-settings.locale.date_format',
                     'default' => 'j F Y',
-                    'options' => array(
-                        'j F Y'  => '',
-                        'd.m.Y'  => '',
-                        'm/d/Y'  => '',
-                        'Y-m-d'  => '',
-                        'd M Y'  => '',
+                    'options' => [
+                        'j F Y' => '',
+                        'd.m.Y' => '',
+                        'm/d/Y' => '',
+                        'Y-m-d' => '',
+                        'd M Y' => '',
                         'F j, Y' => '',
-                    ),
-                ),
-                array(
+                    ],
+                ],
+                [
                     'path' => 'locale.time_format',
                     'type' => 'select',
                     'title' => 'admin-settings.locale.time_format',
                     'default' => 'H:i',
-                    'options' => array(
-                        'H:i'   => '',
+                    'options' => [
+                        'H:i' => '',
                         'g:i A' => '',
-                    ),
-                ),
-                array(
+                    ],
+                ],
+                [
                     'path' => 'locale.default_language',
                     'type' => 'select',
                     'title' => 'admin-settings.locale.default_language',
                     'default' => 'en',
-                    'options' => array(),
-                ),
-                array(
+                    'options' => [],
+                ],
+                [
                     'path' => 'locale.fallback_locale',
                     'type' => 'select',
                     'title' => 'admin-settings.locale.fallback_locale',
                     'default' => 'en',
-                    'options' => array(),
-                ),
-            ),
-        ),
-        array(
+                    'options' => [],
+                ],
+            ],
+        ],
+        [
             'id' => 'theme',
             'title' => 'admin-settings.group.theme',
-            'fields' => array(
-                array(
+            'fields' => [
+                [
                     'path' => 'theme.active',
                     'type' => 'select',
                     'title' => 'admin-settings.theme.active',
                     'default' => 'default',
-                    'options' => array(),
-                ),
-            ),
-        ),
-        array(
+                    'options' => [],
+                ],
+            ],
+        ],
+        [
             'id' => 'appearance',
             'title' => 'admin-settings.group.appearance',
-            'fields' => array(
-                array(
+            'fields' => [
+                [
                     'path' => 'admin.accent_color',
                     'type' => 'select',
                     'title' => 'admin-settings.appearance.accent_color',
                     'default' => 'indigo',
                     'help' => 'admin-settings.appearance.accent_color.help',
-                    'options' => array(),
-                ),
-                array(
+                    'options' => [],
+                ],
+                [
                     'path' => 'admin.sidebar_color',
                     'type' => 'select',
                     'title' => 'admin-settings.appearance.sidebar_color',
                     'default' => 'dark',
                     'help' => 'admin-settings.appearance.sidebar_color.help',
-                    'options' => array(),
-                ),
-                array(
+                    'options' => [],
+                ],
+                [
                     'path' => 'admin.font',
                     'type' => 'select',
                     'title' => 'admin-settings.appearance.font',
                     'default' => 'inter',
                     'help' => 'admin-settings.appearance.font.help',
-                    'options' => array(),
-                ),
-                array(
+                    'options' => [],
+                ],
+                [
                     'path' => 'admin.theme',
                     'type' => 'select',
                     'title' => 'admin-settings.appearance.theme',
                     'default' => 'light',
-                    'options' => array(
+                    'options' => [
                         'light' => 'admin-settings.appearance.theme.light',
                         'dark' => 'admin-settings.appearance.theme.dark',
-                    ),
-                ),
-            ),
-        ),
-        array(
+                    ],
+                ],
+            ],
+        ],
+        [
             'id' => 'content',
             'title' => 'admin-settings.group.content',
-            'fields' => array(
-                array(
+            'fields' => [
+                [
                     'path' => 'content.format',
                     'type' => 'select',
                     'title' => 'admin-settings.content.format',
                     'default' => 'json',
-                    'options' => array(
+                    'options' => [
                         'json' => 'JSON',
                         'markdown' => 'Markdown',
-                    ),
-                ),
-                array(
+                    ],
+                ],
+                [
                     'path' => 'content.posts_per_page',
                     'type' => 'number',
                     'title' => 'admin-settings.content.posts_per_page',
                     'default' => 10,
-                ),
-            ),
-        ),
-        array(
+                ],
+            ],
+        ],
+        [
             'id' => 'modules',
             'title' => 'admin-settings.group.modules',
-            'fields' => array(
-                array(
+            'fields' => [
+                [
                     'path' => 'modules.enabled',
                     'type' => 'module_cards',
                     'title' => 'admin-settings.modules.enabled',
-                    'default' => array('admin'),
-                    'options' => array(),
-                ),
-            ),
-        ),
-        array(
+                    'default' => ['admin'],
+                    'options' => [],
+                ],
+            ],
+        ],
+        [
             'id' => 'security',
             'title' => 'admin-settings.group.security',
-            'fields' => array(
-                array(
+            'fields' => [
+                [
                     'path' => 'security.password_hash_algo',
                     'type' => 'select',
                     'title' => 'admin-settings.security.password_hash_algo',
                     'default' => 'PASSWORD_DEFAULT',
-                    'options' => array(),
-                ),
-                array(
+                    'options' => [],
+                ],
+                [
                     'path' => 'security.csrf_token_name',
                     'type' => 'text',
                     'title' => 'admin-settings.security.csrf_token_name',
                     'default' => 'mantra_csrf',
-                ),
-            ),
-        ),
-        array(
+                ],
+            ],
+        ],
+        [
             'id' => 'session',
             'title' => 'admin-settings.group.session',
-            'fields' => array(
-                array(
+            'fields' => [
+                [
                     'path' => 'session.name',
                     'type' => 'text',
                     'title' => 'admin-settings.session.name',
                     'default' => 'mantra_session',
-                ),
-                array(
+                ],
+                [
                     'path' => 'session.lifetime',
                     'type' => 'number',
                     'title' => 'admin-settings.session.lifetime',
                     'default' => 7200,
                     'help' => 'admin-settings.session.lifetime.help',
-                ),
-                array(
+                ],
+                [
                     'path' => 'session.cookie_secure',
                     'type' => 'select',
                     'title' => 'admin-settings.session.cookie_secure',
                     'default' => 'auto',
-                    'options' => array(
+                    'options' => [
                         'auto' => 'Auto (detect HTTPS)',
                         'true' => 'Always secure',
                         'false' => 'Never secure',
-                    ),
+                    ],
                     'help' => 'admin-settings.session.cookie_secure.help',
-                ),
-                array(
+                ],
+                [
                     'path' => 'session.cookie_httponly',
                     'type' => 'toggle',
                     'title' => 'admin-settings.session.cookie_httponly',
                     'default' => true,
                     'help' => 'admin-settings.session.cookie_httponly.help',
-                ),
-                array(
+                ],
+                [
                     'path' => 'session.cookie_samesite',
                     'type' => 'select',
                     'title' => 'admin-settings.session.cookie_samesite',
                     'default' => 'Lax',
-                    'options' => array(),
+                    'options' => [],
                     'help' => 'admin-settings.session.cookie_samesite.help',
-                ),
-                array(
+                ],
+                [
                     'path' => 'session.cookie_path',
                     'type' => 'text',
                     'title' => 'admin-settings.session.cookie_path',
                     'default' => '/',
                     'help' => 'admin-settings.session.cookie_path.help',
-                ),
-                array(
+                ],
+                [
                     'path' => 'session.cookie_domain',
                     'type' => 'text',
                     'title' => 'admin-settings.session.cookie_domain',
                     'default' => '',
                     'help' => 'admin-settings.session.cookie_domain.help',
-                ),
-            ),
-        ),
-        array(
+                ],
+            ],
+        ],
+        [
             'id' => 'logging',
             'title' => 'admin-settings.group.logging',
-            'fields' => array(
-                array(
+            'fields' => [
+                [
                     'path' => 'logging.level',
                     'type' => 'select',
                     'title' => 'admin-settings.logging.level',
                     'default' => 'debug',
-                    'options' => array(),
-                ),
-                array(
+                    'options' => [],
+                ],
+                [
                     'path' => 'logging.retention_days',
                     'type' => 'number',
                     'title' => 'admin-settings.logging.retention_days',
                     'default' => 30,
-                ),
-            ),
-        ),
-        array(
+                ],
+            ],
+        ],
+        [
             'id' => 'proxy',
             'title' => 'admin-settings.group.proxy',
-            'fields' => array(
-                array(
+            'fields' => [
+                [
                     'path' => 'proxy.trusted_proxies',
                     'type' => 'textarea',
                     'title' => 'admin-settings.proxy.trusted_proxies',
-                    'default' => array(),
+                    'default' => [],
                     'help' => 'admin-settings.proxy.trusted_proxies.help',
-                ),
-            ),
-        ),
-        array(
+                ],
+            ],
+        ],
+        [
             'id' => 'performance',
             'title' => 'admin-settings.group.performance',
-            'fields' => array(
-                array(
+            'fields' => [
+                [
                     'path' => 'performance.gzip_compression',
                     'type' => 'toggle',
                     'title' => 'admin-settings.performance.gzip_compression',
                     'default' => false,
                     'help' => 'admin-settings.performance.gzip_compression.help',
-                ),
-            ),
-        ),
-        array(
+                ],
+            ],
+        ],
+        [
             'id' => 'debug',
             'title' => 'admin-settings.group.debug',
-            'fields' => array(
-                array(
+            'fields' => [
+                [
                     'path' => 'debug.enabled',
                     'type' => 'toggle',
                     'title' => 'admin-settings.debug.enabled',
                     'default' => true,
-                ),
-            ),
-        ),
-    ),
-);
+                ],
+            ],
+        ],
+    ],
+];

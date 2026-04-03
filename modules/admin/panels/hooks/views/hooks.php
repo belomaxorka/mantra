@@ -1,6 +1,6 @@
 <?php
 // Reusable hook table renderer
-function renderHookTable($hooks) {
+function renderHookTable($hooks): void {
     ?>
     <div class="table-responsive">
         <table class="table table-hover mb-0">
@@ -49,14 +49,14 @@ function renderHookTable($hooks) {
     <?php
 }
 
-$coreGroupLabels = array(
-    'system'  => t('admin-hooks.group.system'),
-    'theme'   => t('admin-hooks.group.theme'),
-    'admin'   => t('admin-hooks.group.admin'),
+$coreGroupLabels = [
+    'system' => t('admin-hooks.group.system'),
+    'theme' => t('admin-hooks.group.theme'),
+    'admin' => t('admin-hooks.group.admin'),
     'content' => t('admin-hooks.group.content'),
-    'other'   => t('admin-hooks.group.other'),
-);
-$coreGroupOrder = array('system', 'theme', 'admin', 'content', 'other');
+    'other' => t('admin-hooks.group.other'),
+];
+$coreGroupOrder = ['system', 'theme', 'admin', 'content', 'other'];
 ?>
 
 <div class="container-fluid">
@@ -65,9 +65,9 @@ $coreGroupOrder = array('system', 'theme', 'admin', 'content', 'other');
             <div class="admin-page-header">
                 <h1 class="h3"><?php echo t('admin-hooks.title'); ?></h1>
                 <span class="text-muted">
-                    <?php echo t('admin-hooks.total_hooks', array('count' => $totalHooks)); ?>
+                    <?php echo t('admin-hooks.total_hooks', ['count' => $totalHooks]); ?>
                     &middot;
-                    <?php echo t('admin-hooks.total_listeners', array('count' => $totalListeners)); ?>
+                    <?php echo t('admin-hooks.total_listeners', ['count' => $totalListeners]); ?>
                 </span>
             </div>
         </div>

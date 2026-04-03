@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * FileIO Tests (PHPUnit)
  * Tests for atomic file operations: locking, atomic writes, size validation
@@ -16,7 +16,7 @@ class FileIOTest extends MantraTestCase
         parent::setUp();
         $this->testDir = MANTRA_STORAGE . '/test-fileio-' . time();
         if (!is_dir($this->testDir)) {
-            mkdir($this->testDir, 0755, true);
+            mkdir($this->testDir, 0o755, true);
         }
     }
 
@@ -212,12 +212,12 @@ class FileIOTest extends MantraTestCase
     public function testJsonCodecIntegration(): void
     {
         $path = $this->testDir . '/integration.json';
-        $data = array(
+        $data = [
             'key' => 'value',
             'number' => 42,
-            'nested' => array('deep' => true),
+            'nested' => ['deep' => true],
             'russian' => "\xD0\x9F\xD1\x80\xD0\xB8\xD0\xB2\xD0\xB5\xD1\x82",
-        );
+        ];
 
         // Write: JsonCodec::encode + FileIO::writeAtomic
         $json = JsonCodec::encode($data);
@@ -236,7 +236,7 @@ class FileIOTest extends MantraTestCase
     public function testCleanOrphanedLocks(): void
     {
         $lockDir = $this->testDir . '/locks-orphaned';
-        mkdir($lockDir, 0755, true);
+        mkdir($lockDir, 0o755, true);
 
         // Create a fake orphaned lock file with old timestamp
         $lockFile = $lockDir . '/orphan.json.lock';
@@ -251,7 +251,7 @@ class FileIOTest extends MantraTestCase
     public function testCleanOrphanedLocksPreservesFresh(): void
     {
         $lockDir = $this->testDir . '/locks-fresh';
-        mkdir($lockDir, 0755, true);
+        mkdir($lockDir, 0o755, true);
 
         // Create a fresh lock file (just created)
         $freshLock = $lockDir . '/fresh.json.lock';

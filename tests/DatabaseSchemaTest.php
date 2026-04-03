@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Database Schema Tests
  *
@@ -20,7 +20,7 @@ class DatabaseSchemaTest extends MantraTestCase
     {
         $this->testDir = MANTRA_STORAGE . '/test-schema-' . time();
         if (!is_dir($this->testDir)) {
-            mkdir($this->testDir, 0755, true);
+            mkdir($this->testDir, 0o755, true);
         }
     }
 
@@ -38,22 +38,22 @@ class DatabaseSchemaTest extends MantraTestCase
     {
         $collection = 'tschema_mig_nosv';
         $this->writeSchemaFile($collection, <<<'PHP'
-<?php
-return array(
-    'version' => 2,
-    'defaults' => array('name' => '', 'status' => 'active'),
-    'migrate' => function($doc, $from, $to) {
-        $doc['_migrated_from'] = $from;
-        $doc['schema_version'] = $to;
-        return $doc;
-    }
-);
-PHP
+            <?php
+            return array(
+                'version' => 2,
+                'defaults' => array('name' => '', 'status' => 'active'),
+                'migrate' => function($doc, $from, $to) {
+                    $doc['_migrated_from'] = $from;
+                    $doc['schema_version'] = $to;
+                    return $doc;
+                }
+            );
+            PHP
         );
 
         // Write a raw document WITHOUT schema_version (simulates pre-schema data)
         $id = 'pre-schema-doc';
-        $this->writeRawJson($collection, $id, array('name' => 'Legacy'));
+        $this->writeRawJson($collection, $id, ['name' => 'Legacy']);
 
         $db = new Database($this->testDir);
         $doc = $db->read($collection, $id);
@@ -71,27 +71,27 @@ PHP
     {
         $collection = 'tschema_mig_rename';
         $this->writeSchemaFile($collection, <<<'PHP'
-<?php
-return array(
-    'version' => 2,
-    'defaults' => array('username' => '', 'email' => ''),
-    'migrate' => function($doc, $from, $to) {
-        if ($from < 2 && isset($doc['login']) && !isset($doc['username'])) {
-            $doc['username'] = $doc['login'];
-            unset($doc['login']);
-        }
-        $doc['schema_version'] = $to;
-        return $doc;
-    }
-);
-PHP
+            <?php
+            return array(
+                'version' => 2,
+                'defaults' => array('username' => '', 'email' => ''),
+                'migrate' => function($doc, $from, $to) {
+                    if ($from < 2 && isset($doc['login']) && !isset($doc['username'])) {
+                        $doc['username'] = $doc['login'];
+                        unset($doc['login']);
+                    }
+                    $doc['schema_version'] = $to;
+                    return $doc;
+                }
+            );
+            PHP
         );
 
         $id = 'old-user';
-        $this->writeRawJson($collection, $id, array(
+        $this->writeRawJson($collection, $id, [
             'login' => 'admin',
-            'email' => 'admin@test.com'
-        ));
+            'email' => 'admin@test.com',
+        ]);
 
         $db = new Database($this->testDir);
         $doc = $db->read($collection, $id);
@@ -111,23 +111,23 @@ PHP
     {
         $collection = 'tschema_mig_skip';
         $this->writeSchemaFile($collection, <<<'PHP'
-<?php
-return array(
-    'version' => 1,
-    'defaults' => array('name' => ''),
-    'migrate' => function($doc, $from, $to) {
-        $doc['_should_not_exist'] = true;
-        return $doc;
-    }
-);
-PHP
+            <?php
+            return array(
+                'version' => 1,
+                'defaults' => array('name' => ''),
+                'migrate' => function($doc, $from, $to) {
+                    $doc['_should_not_exist'] = true;
+                    return $doc;
+                }
+            );
+            PHP
         );
 
         $id = 'current-doc';
-        $this->writeRawJson($collection, $id, array(
+        $this->writeRawJson($collection, $id, [
             'name' => 'Up to date',
-            'schema_version' => 1
-        ));
+            'schema_version' => 1,
+        ]);
 
         $db = new Database($this->testDir);
         $doc = $db->read($collection, $id);
@@ -139,16 +139,16 @@ PHP
     public function testMigrationBumpsVersionWithoutCallback(): void
     {
         $collection = 'tschema_mig_bump';
-        $this->createTestSchema($collection, array(
+        $this->createTestSchema($collection, [
             'version' => 3,
-            'defaults' => array('name' => '', 'new_field' => 'default_val')
-        ));
+            'defaults' => ['name' => '', 'new_field' => 'default_val'],
+        ]);
 
         $id = 'old-ver-doc';
-        $this->writeRawJson($collection, $id, array(
+        $this->writeRawJson($collection, $id, [
             'name' => 'Test',
-            'schema_version' => 1
-        ));
+            'schema_version' => 1,
+        ]);
 
         $db = new Database($this->testDir);
         $doc = $db->read($collection, $id);
@@ -165,23 +165,23 @@ PHP
     {
         $collection = 'tschema_order';
         $this->writeSchemaFile($collection, <<<'PHP'
-<?php
-return array(
-    'version' => 2,
-    'defaults' => array('title' => '', 'subtitle' => 'default subtitle'),
-    'migrate' => function($doc, $from, $to) {
-        // Migration checks if 'subtitle' is absent - should be true
-        // because defaults have not been applied yet
-        $doc['_subtitle_was_absent'] = !isset($doc['subtitle']);
-        $doc['schema_version'] = $to;
-        return $doc;
-    }
-);
-PHP
+            <?php
+            return array(
+                'version' => 2,
+                'defaults' => array('title' => '', 'subtitle' => 'default subtitle'),
+                'migrate' => function($doc, $from, $to) {
+                    // Migration checks if 'subtitle' is absent - should be true
+                    // because defaults have not been applied yet
+                    $doc['_subtitle_was_absent'] = !isset($doc['subtitle']);
+                    $doc['schema_version'] = $to;
+                    return $doc;
+                }
+            );
+            PHP
         );
 
         $id = 'order-test';
-        $this->writeRawJson($collection, $id, array('title' => 'Hello'));
+        $this->writeRawJson($collection, $id, ['title' => 'Hello']);
 
         $db = new Database($this->testDir);
         $doc = $db->read($collection, $id);
@@ -200,26 +200,26 @@ PHP
 
         $collection = 'tschema_shadow';
         $this->writeSchemaFile($collection, <<<'PHP'
-<?php
-return array(
-    'version' => 2,
-    'defaults' => array('username' => '', 'status' => 'active'),
-    'migrate' => function($doc, $from, $to) {
-        if ($from < 2 && isset($doc['login']) && !isset($doc['username'])) {
-            $doc['username'] = $doc['login'];
-            unset($doc['login']);
-        }
-        $doc['schema_version'] = $to;
-        return $doc;
-    }
-);
-PHP
+            <?php
+            return array(
+                'version' => 2,
+                'defaults' => array('username' => '', 'status' => 'active'),
+                'migrate' => function($doc, $from, $to) {
+                    if ($from < 2 && isset($doc['login']) && !isset($doc['username'])) {
+                        $doc['username'] = $doc['login'];
+                        unset($doc['login']);
+                    }
+                    $doc['schema_version'] = $to;
+                    return $doc;
+                }
+            );
+            PHP
         );
 
         $id = 'shadow-test';
-        $this->writeRawJson($collection, $id, array(
-            'login' => 'john_doe'
-        ));
+        $this->writeRawJson($collection, $id, [
+            'login' => 'john_doe',
+        ]);
 
         $db = new Database($this->testDir);
         $doc = $db->read($collection, $id);
@@ -236,20 +236,20 @@ PHP
     public function testReadCollectionNormalizationPreservesTimestamps(): void
     {
         $collection = 'tschema_timestamps';
-        $this->createTestSchema($collection, array(
+        $this->createTestSchema($collection, [
             'version' => 2,
-            'defaults' => array('name' => '', 'new_field' => 'added')
-        ));
+            'defaults' => ['name' => '', 'new_field' => 'added'],
+        ]);
 
         // Write raw document with explicit timestamps and old schema_version
         $frozenTime = '2025-01-15 10:00:00';
         $id = 'ts-doc';
-        $this->writeRawJson($collection, $id, array(
+        $this->writeRawJson($collection, $id, [
             'name' => 'Timestamp Test',
             'schema_version' => 1,
             'created_at' => $frozenTime,
-            'updated_at' => $frozenTime
-        ));
+            'updated_at' => $frozenTime,
+        ]);
 
         $db = new Database($this->testDir);
 
@@ -280,13 +280,13 @@ PHP
         // Create a temp config.json with schema_version
         $tempDir = $this->testDir . '/settings';
         if (!is_dir($tempDir)) {
-            mkdir($tempDir, 0755, true);
+            mkdir($tempDir, 0o755, true);
         }
         $configPath = $tempDir . '/config.json';
-        file_put_contents($configPath, json_encode(array(
+        file_put_contents($configPath, json_encode([
             'schema_version' => 5,
-            'site' => array('name' => 'Test Site'),
-        )));
+            'site' => ['name' => 'Test Site'],
+        ]));
 
         $result = Config::bootstrap($configPath);
 
@@ -301,12 +301,12 @@ PHP
     {
         $tempDir = $this->testDir . '/settings2';
         if (!is_dir($tempDir)) {
-            mkdir($tempDir, 0755, true);
+            mkdir($tempDir, 0o755, true);
         }
         $configPath = $tempDir . '/config.json';
-        file_put_contents($configPath, json_encode(array(
-            'site' => array('name' => 'No Version'),
-        )));
+        file_put_contents($configPath, json_encode([
+            'site' => ['name' => 'No Version'],
+        ]));
 
         $result = Config::bootstrap($configPath);
 
@@ -323,11 +323,11 @@ PHP
     /**
      * Write a raw JSON file bypassing Database (simulates pre-existing data).
      */
-    private function writeRawJson($collection, $id, $data)
+    private function writeRawJson($collection, $id, $data): void
     {
         $dir = $this->testDir . '/' . $collection;
         if (!is_dir($dir)) {
-            mkdir($dir, 0755, true);
+            mkdir($dir, 0o755, true);
         }
         file_put_contents($dir . '/' . $id . '.json', json_encode($data));
     }

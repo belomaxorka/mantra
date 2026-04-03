@@ -1,6 +1,6 @@
-<?php
+<?php declare(strict_types=1);
 
-return array(
+return [
     'admin-uploads.title' => 'Uploads',
     'admin-uploads.edit_file' => 'File Details',
     'admin-uploads.no_files' => 'No files uploaded yet.',
@@ -35,4 +35,4 @@ return array(
     'admin-uploads.error_move_failed' => 'Failed to save the uploaded file.',
     'admin-uploads.error_partial' => 'The file was only partially uploaded.',
     'admin-uploads.error_upload_failed' => 'Upload failed. Please try again.',
-);
+];

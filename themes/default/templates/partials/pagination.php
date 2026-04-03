@@ -15,7 +15,7 @@ if (!isset($paginator) || !$paginator->hasPages()) {
 $currentParams = $_GET;
 unset($currentParams['page']);
 $queryPrefix = !empty($currentParams) ? '?' . http_build_query($currentParams) . '&' : '?';
-$base = isset($baseUrl) ? $baseUrl : strtok($_SERVER['REQUEST_URI'], '?');
+$base = $baseUrl ?? strtok($_SERVER['REQUEST_URI'], '?');
 ?>
 <nav aria-label="Page navigation">
   <ul class="pagination justify-content-center mb-0">

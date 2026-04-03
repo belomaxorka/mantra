@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * MarkdownStorageDriver Tests (PHPUnit 10.x)
  * Tests for Markdown file storage driver implementation
@@ -16,7 +16,7 @@ class MarkdownStorageDriverTest extends MantraTestCase
         // Use temporary test directory
         $this->testDir = MANTRA_STORAGE . '/test-md-storage-' . time();
         if (!is_dir($this->testDir)) {
-            mkdir($this->testDir, 0755, true);
+            mkdir($this->testDir, 0o755, true);
         }
         $this->driver = new MarkdownStorageDriver($this->testDir);
     }
@@ -35,12 +35,12 @@ class MarkdownStorageDriverTest extends MantraTestCase
 
     public function testWriteAndRead(): void
     {
-        $data = array(
+        $data = [
             'title' => 'Test Document',
             'slug' => 'test-doc',
             'status' => 'published',
-            'content' => 'This is test content'
-        );
+            'content' => 'This is test content',
+        ];
 
         $result = $this->driver->write('pages', 'test-1', $data);
         $this->assertTrue($result, 'write() returns true on success');
@@ -60,7 +60,7 @@ class MarkdownStorageDriverTest extends MantraTestCase
 
     public function testExists(): void
     {
-        $this->driver->write('pages', 'exists-test', array('title' => 'Test', 'content' => 'Content'));
+        $this->driver->write('pages', 'exists-test', ['title' => 'Test', 'content' => 'Content']);
 
         $exists = $this->driver->exists('pages', 'exists-test');
         $this->assertTrue($exists, 'exists() returns true for existing document');
@@ -71,7 +71,7 @@ class MarkdownStorageDriverTest extends MantraTestCase
 
     public function testDelete(): void
     {
-        $this->driver->write('pages', 'delete-test', array('title' => 'To Delete', 'content' => 'Content'));
+        $this->driver->write('pages', 'delete-test', ['title' => 'To Delete', 'content' => 'Content']);
 
         $result = $this->driver->delete('pages', 'delete-test');
         $this->assertTrue($result, 'delete() returns true on success');
@@ -88,12 +88,12 @@ class MarkdownStorageDriverTest extends MantraTestCase
 
     public function testYamlFrontmatter(): void
     {
-        $data = array(
+        $data = [
             'title' => 'YAML Test',
             'author' => 'Test Author',
             'date' => '2024-01-01',
-            'content' => 'Test content'
-        );
+            'content' => 'Test content',
+        ];
 
         $this->driver->write('posts', 'yaml-test', $data);
 
@@ -113,12 +113,12 @@ class MarkdownStorageDriverTest extends MantraTestCase
 
     public function testYamlBooleanValues(): void
     {
-        $data = array(
+        $data = [
             'title' => 'Boolean Test',
             'published' => true,
             'featured' => false,
-            'content' => 'Content'
-        );
+            'content' => 'Content',
+        ];
 
         $this->driver->write('posts', 'bool-test', $data);
 
@@ -129,12 +129,12 @@ class MarkdownStorageDriverTest extends MantraTestCase
 
     public function testYamlNumericValues(): void
     {
-        $data = array(
+        $data = [
             'title' => 'Numeric Test',
             'order' => 42,
             'rating' => 5,
-            'content' => 'Content'
-        );
+            'content' => 'Content',
+        ];
 
         $this->driver->write('posts', 'numeric-test', $data);
 
@@ -146,11 +146,11 @@ class MarkdownStorageDriverTest extends MantraTestCase
 
     public function testYamlSpecialCharacters(): void
     {
-        $data = array(
+        $data = [
             'title' => 'Special: Characters & Symbols',
             'description' => 'Text with "quotes" and colons:',
-            'content' => 'Content'
-        );
+            'content' => 'Content',
+        ];
 
         $this->driver->write('posts', 'special-test', $data);
 
@@ -162,11 +162,11 @@ class MarkdownStorageDriverTest extends MantraTestCase
     public function testYamlUtf8Values(): void
     {
         $col = 'utf8-yaml-' . time();
-        $data = array(
+        $data = [
             'title' => 'Привет мир',
             'author' => '日本語テスト',
-            'content' => 'Body text'
-        );
+            'content' => 'Body text',
+        ];
 
         $this->driver->write($col, 'utf8-yaml', $data);
         $read = $this->driver->read($col, 'utf8-yaml');
@@ -179,10 +179,10 @@ class MarkdownStorageDriverTest extends MantraTestCase
     {
         $col = 'md-content-' . time();
         $markdownBody = "# Heading\n\nThis is a paragraph with **bold** and *italic* text.\n\n- List item 1\n- List item 2";
-        $data = array(
+        $data = [
             'title' => 'Markdown Test',
-            'content' => $markdownBody
-        );
+            'content' => $markdownBody,
+        ];
 
         $this->driver->write($col, 'md-test', $data);
 
@@ -192,8 +192,8 @@ class MarkdownStorageDriverTest extends MantraTestCase
 
         // Content should be converted to HTML
         $this->assertTrue(
-            strpos($read['content'], '<h1>') !== false || strpos($read['content'], '<p>') !== false,
-            'Markdown converted to HTML'
+            str_contains($read['content'], '<h1>') || str_contains($read['content'], '<p>')  ,
+            'Markdown converted to HTML',
         );
         $this->assertStringContainsString('bold', $read['content'], 'HTML content contains original text');
     }
@@ -202,10 +202,10 @@ class MarkdownStorageDriverTest extends MantraTestCase
     {
         $col = 'md-roundtrip-' . time();
         $markdown = "Simple paragraph with **bold** text.";
-        $data = array(
+        $data = [
             'title' => 'Roundtrip',
-            'content' => $markdown
-        );
+            'content' => $markdown,
+        ];
 
         $this->driver->write($col, 'rt-test', $data);
         $read = $this->driver->read($col, 'rt-test');
@@ -213,19 +213,19 @@ class MarkdownStorageDriverTest extends MantraTestCase
         $this->assertStringContainsString(
             'bold',
             $read['_markdown'],
-            '_markdown field contains original text'
+            '_markdown field contains original text',
         );
         $this->assertStringNotContainsString(
             '<',
             $read['_markdown'],
-            '_markdown field does not contain HTML tags'
+            '_markdown field does not contain HTML tags',
         );
     }
 
     public function testEmptyContent(): void
     {
         $col = 'empty-content-' . time();
-        $data = array('title' => 'No Body', 'content' => '');
+        $data = ['title' => 'No Body', 'content' => ''];
 
         $this->driver->write($col, 'empty-c', $data);
         $read = $this->driver->read($col, 'empty-c');
@@ -240,7 +240,7 @@ class MarkdownStorageDriverTest extends MantraTestCase
         $filePath = $this->testDir . '/posts/no-frontmatter.md';
         $dir = dirname($filePath);
         if (!is_dir($dir)) {
-            mkdir($dir, 0755, true);
+            mkdir($dir, 0o755, true);
         }
 
         $markdownContent = '# Simple Markdown
@@ -259,28 +259,28 @@ This is content without YAML frontmatter.';
     {
         // Markdown horizontal rules use --- which conflicts with YAML frontmatter delimiter
         $col = 'hr-test-' . time();
-        $data = array(
+        $data = [
             'title' => 'HR Test',
-            'content' => "First section\n\n---\n\nSecond section"
-        );
+            'content' => "First section\n\n---\n\nSecond section",
+        ];
 
         $this->driver->write($col, 'hr-doc', $data);
         $read = $this->driver->read($col, 'hr-doc');
 
         $this->assertSame('HR Test', $read['title'], 'Title preserved when content has ---');
         $this->assertTrue(
-            strpos($read['_markdown'], 'First section') !== false && strpos($read['_markdown'], 'Second section') !== false,
-            'Both sections preserved when content contains ---'
+            str_contains($read['_markdown'], 'First section') && str_contains($read['_markdown'], 'Second section')  ,
+            'Both sections preserved when content contains ---',
         );
     }
 
     public function testHtmlToMarkdownConversion(): void
     {
         $col = 'html-conv-' . time();
-        $data = array(
+        $data = [
             'title' => 'HTML Test',
-            'content' => '<h1>HTML Heading</h1><p>This is <strong>HTML</strong> content.</p>'
-        );
+            'content' => '<h1>HTML Heading</h1><p>This is <strong>HTML</strong> content.</p>',
+        ];
 
         $this->driver->write($col, 'html-test', $data);
 
@@ -303,9 +303,9 @@ This is content without YAML frontmatter.';
     public function testReadCollection(): void
     {
         // Write multiple documents
-        $this->driver->write('articles', 'article-1', array('title' => 'Article 1', 'content' => 'Content 1'));
-        $this->driver->write('articles', 'article-2', array('title' => 'Article 2', 'content' => 'Content 2'));
-        $this->driver->write('articles', 'article-3', array('title' => 'Article 3', 'content' => 'Content 3'));
+        $this->driver->write('articles', 'article-1', ['title' => 'Article 1', 'content' => 'Content 1']);
+        $this->driver->write('articles', 'article-2', ['title' => 'Article 2', 'content' => 'Content 2']);
+        $this->driver->write('articles', 'article-3', ['title' => 'Article 3', 'content' => 'Content 3']);
 
         $collection = $this->driver->readCollection('articles');
         $this->assertIsArray($collection, 'readCollection() returns array');
@@ -326,8 +326,8 @@ This is content without YAML frontmatter.';
     public function testReadCollectionWithCorruptedFile(): void
     {
         $col = 'mixed-corrupt-md-' . time();
-        $this->driver->write($col, 'valid-1', array('title' => 'Valid 1', 'content' => 'Content 1'));
-        $this->driver->write($col, 'valid-2', array('title' => 'Valid 2', 'content' => 'Content 2'));
+        $this->driver->write($col, 'valid-1', ['title' => 'Valid 1', 'content' => 'Content 1']);
+        $this->driver->write($col, 'valid-2', ['title' => 'Valid 2', 'content' => 'Content 2']);
 
         // Create a file with invalid content that will cause parseMarkdown to fail
         // Write a binary file that might cause issues
@@ -348,7 +348,7 @@ This is content without YAML frontmatter.';
 
         $this->assertDirectoryDoesNotExist($collectionPath, 'Collection directory does not exist before write');
 
-        $this->driver->write($newCollection, 'first-doc', array('title' => 'First', 'content' => 'Content'));
+        $this->driver->write($newCollection, 'first-doc', ['title' => 'First', 'content' => 'Content']);
 
         $this->assertDirectoryExists($collectionPath, 'write() creates collection directory');
         $this->assertTrue($this->driver->exists($newCollection, 'first-doc'), 'Document exists after write');
@@ -361,21 +361,21 @@ This is content without YAML frontmatter.';
 
     public function testCountFiles(): void
     {
-        $this->driver->write('counted', 'a', array('title' => 'A', 'content' => 'test'));
-        $this->driver->write('counted', 'b', array('title' => 'B', 'content' => 'test'));
+        $this->driver->write('counted', 'a', ['title' => 'A', 'content' => 'test']);
+        $this->driver->write('counted', 'b', ['title' => 'B', 'content' => 'test']);
 
         $this->assertSame(2, $this->driver->countFiles('counted'));
     }
 
     public function testListIdsEmpty(): void
     {
-        $this->assertSame(array(), $this->driver->listIds('nonexistent'));
+        $this->assertSame([], $this->driver->listIds('nonexistent'));
     }
 
     public function testListIds(): void
     {
-        $this->driver->write('listed', 'first', array('title' => 'First', 'content' => 'x'));
-        $this->driver->write('listed', 'second', array('title' => 'Second', 'content' => 'y'));
+        $this->driver->write('listed', 'first', ['title' => 'First', 'content' => 'x']);
+        $this->driver->write('listed', 'second', ['title' => 'Second', 'content' => 'y']);
 
         $ids = $this->driver->listIds('listed');
         sort($ids);
@@ -387,12 +387,12 @@ This is content without YAML frontmatter.';
 
     public function testOverwriteExisting(): void
     {
-        $this->driver->write('pages', 'overwrite-test', array('title' => 'Original', 'version' => 1, 'content' => 'Original content'));
+        $this->driver->write('pages', 'overwrite-test', ['title' => 'Original', 'version' => 1, 'content' => 'Original content']);
 
         $original = $this->driver->read('pages', 'overwrite-test');
         $this->assertSame('Original', $original['title'], 'Original data written correctly');
 
-        $this->driver->write('pages', 'overwrite-test', array('title' => 'Updated', 'version' => 2, 'content' => 'Updated content'));
+        $this->driver->write('pages', 'overwrite-test', ['title' => 'Updated', 'version' => 2, 'content' => 'Updated content']);
 
         $updated = $this->driver->read('pages', 'overwrite-test');
         $this->assertSame('Updated', $updated['title'], 'write() overwrites existing document');

@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Admin;
 
@@ -10,24 +10,24 @@ class UsersPanel extends ContentPanel {
         return 'users';
     }
 
-    public function init($admin) {
+    public function init($admin): void {
         parent::init($admin);
 
         app()->db()->registerSchema('users', $this->getPath() . '/schema.php');
         $this->registerPanelHooks();
-        $this->hook('permissions.register', array($this, 'registerPermissions'));
+        $this->hook('permissions.register', [$this, 'registerPermissions']);
     }
 
     /**
      * Register user management permissions with the central registry.
      */
     public function registerPermissions($registry) {
-        $registry->registerPermissions(array(
-            'users.view'   => 'View users',
+        $registry->registerPermissions([
+            'users.view' => 'View users',
             'users.create' => 'Create users',
-            'users.edit'   => 'Edit users',
+            'users.edit' => 'Edit users',
             'users.delete' => 'Delete users',
-        ), 'Users');
+        ], 'Users');
 
         return $registry;
     }
@@ -41,21 +41,21 @@ class UsersPanel extends ContentPanel {
     }
 
     protected function getDefaultItem() {
-        return array(
+        return [
             'username' => '',
             'email' => '',
             'password' => '',
             'role' => 'editor',
             'status' => 'active',
-        );
+        ];
     }
 
     protected function extractFormData() {
-        $data = array(
-            'email'  => app()->request()->postTrimmed('email'),
-            'role'   => app()->request()->post('role', 'editor'),
+        $data = [
+            'email' => app()->request()->postTrimmed('email'),
+            'role' => app()->request()->post('role', 'editor'),
             'status' => app()->request()->post('status', 'active'),
-        );
+        ];
 
         // Password: empty means keep current (User::update handles this)
         $password = app()->request()->post('password', '');
@@ -97,17 +97,17 @@ class UsersPanel extends ContentPanel {
         $users = array_slice($allUsers, $paginator->offset(), $paginator->perPage());
 
         $content = $this->renderView($this->getListTemplate(), array_merge(
-            array(
+            [
                 'users' => $users,
                 'paginator' => $paginator,
-                'currentUserId' => isset($currentUser['_id']) ? $currentUser['_id'] : '',
-            ),
-            $this->getPermissionFlags()
+                'currentUserId' => $currentUser['_id'] ?? '',
+            ],
+            $this->getPermissionFlags(),
         ));
 
-        return $this->renderAdmin(t($this->getDomain() . '.title'), $content, array(
+        return $this->renderAdmin(t($this->getDomain() . '.title'), $content, [
             'breadcrumbs' => $this->getListBreadcrumbs(),
-        ));
+        ]);
     }
 
     public function createItem() {
@@ -119,7 +119,7 @@ class UsersPanel extends ContentPanel {
 
         // Only admins can assign roles
         $currentUser = $this->getUser();
-        $currentRole = isset($currentUser['role']) ? $currentUser['role'] : '';
+        $currentRole = $currentUser['role'] ?? '';
         if ($currentRole !== 'admin') {
             $data['role'] = 'viewer';
         }
@@ -129,15 +129,15 @@ class UsersPanel extends ContentPanel {
         if ($result === false) {
             $data['password'] = '';
             $title = t($this->getDomain() . '.new');
-            $content = $this->renderView($this->getEditTemplate(), array(
+            $content = $this->renderView($this->getEditTemplate(), [
                 'user' => $data,
                 'isNew' => true,
                 'csrf_token' => $this->auth()->generateCsrfToken(),
                 'error' => t('admin-users.create_error'),
-            ));
-            return $this->renderAdmin($title, $content, array(
+            ]);
+            return $this->renderAdmin($title, $content, [
                 'breadcrumbs' => $this->getItemBreadcrumbs($title),
-            ));
+            ]);
         }
 
         $this->redirectAdmin($this->getAdminPath());
@@ -147,7 +147,7 @@ class UsersPanel extends ContentPanel {
         if (!$this->requirePermission('users.edit')) return;
         if (!$this->verifyCsrf()) return;
 
-        $id = isset($params['id']) ? $params['id'] : '';
+        $id = $params['id'] ?? '';
         $user = $this->getUserManager()->find($id);
 
         if (!$user) {
@@ -160,18 +160,18 @@ class UsersPanel extends ContentPanel {
 
         // Escalation protection: only admins can change roles
         $currentUser = $this->getUser();
-        $currentRole = isset($currentUser['role']) ? $currentUser['role'] : '';
+        $currentRole = $currentUser['role'] ?? '';
         if ($currentRole !== 'admin') {
             unset($data['role']);
         }
 
         // Prevent non-admins from editing admin accounts
-        $targetRole = isset($user['role']) ? $user['role'] : '';
+        $targetRole = $user['role'] ?? '';
         if ($currentRole !== 'admin' && $targetRole === 'admin') {
             http_response_code(403);
             echo $this->renderAdmin(
                 t('admin.common.access_denied'),
-                '<div class="alert alert-danger alert-permanent">' . e(t('admin.common.access_denied')) . '</div>'
+                '<div class="alert alert-danger alert-permanent">' . e(t('admin.common.access_denied')) . '</div>',
             );
             return;
         }
@@ -180,11 +180,11 @@ class UsersPanel extends ContentPanel {
         $this->redirectAdmin($this->getAdminPath());
     }
 
-    public function deleteItem($params) {
+    public function deleteItem($params): void {
         if (!$this->requirePermission('users.delete')) return;
         if (!$this->verifyCsrf()) return;
 
-        $id = isset($params['id']) ? $params['id'] : '';
+        $id = $params['id'] ?? '';
         $currentUser = $this->getUser();
 
         // Prevent self-deletion
@@ -196,7 +196,7 @@ class UsersPanel extends ContentPanel {
         // Prevent deleting last admin
         $target = $this->getUserManager()->find($id);
         if ($target && isset($target['role']) && $target['role'] === 'admin') {
-            $admins = $this->getUserManager()->all(array('role' => 'admin'));
+            $admins = $this->getUserManager()->all(['role' => 'admin']);
             if (count($admins) <= 1) {
                 $this->redirectAdmin($this->getAdminPath());
                 return;

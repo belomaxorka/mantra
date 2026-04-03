@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * ContentPanel - CRUD scaffolding for admin panels
  *
@@ -65,30 +65,30 @@ abstract class ContentPanel extends AdminPanel {
      * Register standard content panel hooks in HookRegistry.
      * Call from init() so hooks appear on the /admin/hooks page.
      */
-    protected function registerPanelHooks() {
+    protected function registerPanelHooks(): void {
         $c = $this->getCollectionName();
         $type = ucfirst($this->getContentType());
         $source = $this->id();
 
         \HookRegistry::define('admin.' . $c . '.edit.data',
             'Modify template data for the ' . $c . ' edit form',
-            'array', 'array', array('source' => $source));
+            'array', 'array', ['source' => $source]);
 
         \HookRegistry::define('admin.' . $c . '.form_data',
             'Modify extracted form data before saving ' . strtolower($type),
-            'array', 'array', array('source' => $source));
+            'array', 'array', ['source' => $source]);
 
         \HookRegistry::define('admin.' . $c . '.edit.sidebar',
             'Inject HTML into the ' . $c . ' edit form sidebar',
-            'string', 'string', array('source' => $source, 'context' => 'array (the ' . strtolower($type) . ' item)'));
+            'string', 'string', ['source' => $source, 'context' => 'array (the ' . strtolower($type) . ' item)']);
 
         \HookRegistry::define('admin.' . $c . '.list.columns.head',
             'Inject <th> elements into the ' . $c . ' list table header',
-            'string', 'string', array('source' => $source));
+            'string', 'string', ['source' => $source]);
 
         \HookRegistry::define('admin.' . $c . '.list.columns.body',
             'Inject <td> elements into the ' . $c . ' list table row',
-            'string', 'string', array('source' => $source, 'context' => 'array (the ' . strtolower($type) . ' item)'));
+            'string', 'string', ['source' => $source, 'context' => 'array (the ' . strtolower($type) . ' item)']);
     }
 
     // ========== Route Registration ==========
@@ -97,15 +97,15 @@ abstract class ContentPanel extends AdminPanel {
      * Register standard CRUD routes.
      * Override to add/remove routes.
      */
-    public function registerRoutes($admin) {
+    public function registerRoutes($admin): void {
         $path = $this->getAdminPath();
 
-        $admin->adminRoute('GET',  $path,                   array($this, 'listItems'));
-        $admin->adminRoute('GET',  $path . '/new',          array($this, 'newItem'));
-        $admin->adminRoute('POST', $path . '/new',          array($this, 'createItem'));
-        $admin->adminRoute('GET',  $path . '/edit/{id}',    array($this, 'editItem'));
-        $admin->adminRoute('POST', $path . '/edit/{id}',    array($this, 'updateItem'));
-        $admin->adminRoute('POST', $path . '/delete/{id}',  array($this, 'deleteItem'));
+        $admin->adminRoute('GET',  $path,                   [$this, 'listItems']);
+        $admin->adminRoute('GET',  $path . '/new',          [$this, 'newItem']);
+        $admin->adminRoute('POST', $path . '/new',          [$this, 'createItem']);
+        $admin->adminRoute('GET',  $path . '/edit/{id}',    [$this, 'editItem']);
+        $admin->adminRoute('POST', $path . '/edit/{id}',    [$this, 'updateItem']);
+        $admin->adminRoute('POST', $path . '/delete/{id}',  [$this, 'deleteItem']);
     }
 
     // ========== Helpers ==========
@@ -139,18 +139,18 @@ abstract class ContentPanel extends AdminPanel {
     // ========== Breadcrumbs ==========
 
     protected function getListBreadcrumbs() {
-        return array(
-            array('title' => t('admin-dashboard.title'), 'url' => base_url('/admin')),
-            array('title' => t($this->getDomain() . '.title')),
-        );
+        return [
+            ['title' => t('admin-dashboard.title'), 'url' => base_url('/admin')],
+            ['title' => t($this->getDomain() . '.title')],
+        ];
     }
 
     protected function getItemBreadcrumbs($itemTitle) {
-        return array(
-            array('title' => t('admin-dashboard.title'), 'url' => base_url('/admin')),
-            array('title' => t($this->getDomain() . '.title'), 'url' => base_url('/admin/' . $this->getAdminPath())),
-            array('title' => $itemTitle),
-        );
+        return [
+            ['title' => t('admin-dashboard.title'), 'url' => base_url('/admin')],
+            ['title' => t($this->getDomain() . '.title'), 'url' => base_url('/admin/' . $this->getAdminPath())],
+            ['title' => $itemTitle],
+        ];
     }
 
     // ========== Ownership Check ==========
@@ -170,7 +170,7 @@ abstract class ContentPanel extends AdminPanel {
         http_response_code(403);
         echo $this->renderAdmin(
             t('admin.common.access_denied'),
-            '<div class="alert alert-danger alert-permanent">' . e(t('admin.common.access_denied')) . '</div>'
+            '<div class="alert alert-danger alert-permanent">' . e(t('admin.common.access_denied')) . '</div>',
         );
         return false;
     }
@@ -191,11 +191,11 @@ abstract class ContentPanel extends AdminPanel {
         $userManager = new \User();
         $user = $this->getUser();
         $prefix = $this->getPermissionPrefix();
-        return array(
+        return [
             'canCreate' => $userManager->hasPermission($user, $prefix . '.create'),
-            'canEdit'   => $userManager->hasPermission($user, $prefix . '.edit'),
+            'canEdit' => $userManager->hasPermission($user, $prefix . '.edit'),
             'canDelete' => $userManager->hasPermission($user, $prefix . '.delete'),
-        );
+        ];
     }
 
     // ========== CRUD Actions ==========
@@ -209,49 +209,49 @@ abstract class ContentPanel extends AdminPanel {
         $total = app()->db()->count($this->getCollectionName());
         $paginator = new \Paginator($total, $perPage, $page);
 
-        $items = app()->db()->query($this->getCollectionName(), array(), array(
+        $items = app()->db()->query($this->getCollectionName(), [], [
             'sort' => 'updated_at',
             'order' => 'desc',
             'limit' => $paginator->perPage(),
             'offset' => $paginator->offset(),
-        ));
+        ]);
 
         $content = $this->renderView($this->getListTemplate(), array_merge(
-            array(
+            [
                 strtolower($this->getCollectionName()) => $items,
                 'paginator' => $paginator,
-            ),
-            $this->getPermissionFlags()
+            ],
+            $this->getPermissionFlags(),
         ));
 
         $title = t($this->getDomain() . '.title');
 
-        return $this->renderAdmin($title, $content, array(
+        return $this->renderAdmin($title, $content, [
             'breadcrumbs' => $this->getListBreadcrumbs(),
-        ));
+        ]);
     }
 
     public function newItem() {
         $prefix = $this->getPermissionPrefix();
         if (!$this->requirePermission($prefix . '.create')) return;
 
-        $templateData = array(
+        $templateData = [
             strtolower($this->getContentType()) => $this->getDefaultItem(),
             'isNew' => true,
-            'csrf_token' => app()->auth()->generateCsrfToken()
-        );
+            'csrf_token' => app()->auth()->generateCsrfToken(),
+        ];
         $templateData = $this->fireHook('admin.' . $this->getCollectionName() . '.edit.data', $templateData);
 
         $content = $this->renderView($this->getEditTemplate(), $templateData);
 
         $title = t($this->getDomain() . '.new');
 
-        return $this->renderAdmin($title, $content, array(
+        return $this->renderAdmin($title, $content, [
             'breadcrumbs' => $this->getItemBreadcrumbs($title),
-        ));
+        ]);
     }
 
-    public function createItem() {
+    public function createItem(): void {
         $prefix = $this->getPermissionPrefix();
         if (!$this->requirePermission($prefix . '.create')) return;
         if (!$this->verifyCsrf()) {
@@ -271,11 +271,11 @@ abstract class ContentPanel extends AdminPanel {
 
         app()->db()->write($this->getCollectionName(), $id, $data);
 
-        app()->hooks()->fire('content.saved', array(
+        app()->hooks()->fire('content.saved', [
             'collection' => $this->getCollectionName(),
             'id' => $id,
             'action' => 'create',
-        ));
+        ]);
 
         $this->redirectAdmin($this->getAdminPath());
     }
@@ -285,7 +285,7 @@ abstract class ContentPanel extends AdminPanel {
         $access = $this->requirePermission($prefix . '.edit');
         if ($access === false) return;
 
-        $id = isset($params['id']) ? $params['id'] : '';
+        $id = $params['id'] ?? '';
         $item = app()->db()->read($this->getCollectionName(), $id);
 
         if (!$item) {
@@ -300,20 +300,20 @@ abstract class ContentPanel extends AdminPanel {
             return;
         }
 
-        $templateData = array(
+        $templateData = [
             strtolower($this->getContentType()) => $item,
             'isNew' => false,
-            'csrf_token' => app()->auth()->generateCsrfToken()
-        );
+            'csrf_token' => app()->auth()->generateCsrfToken(),
+        ];
         $templateData = $this->fireHook('admin.' . $this->getCollectionName() . '.edit.data', $templateData);
 
         $content = $this->renderView($this->getEditTemplate(), $templateData);
 
         $title = t($this->getDomain() . '.edit_' . strtolower($this->getContentType()));
 
-        return $this->renderAdmin($title, $content, array(
+        return $this->renderAdmin($title, $content, [
             'breadcrumbs' => $this->getItemBreadcrumbs($title),
-        ));
+        ]);
     }
 
     public function updateItem($params) {
@@ -324,7 +324,7 @@ abstract class ContentPanel extends AdminPanel {
             return;
         }
 
-        $id = isset($params['id']) ? $params['id'] : '';
+        $id = $params['id'] ?? '';
         $item = app()->db()->read($this->getCollectionName(), $id);
 
         if (!$item) {
@@ -351,16 +351,16 @@ abstract class ContentPanel extends AdminPanel {
 
         app()->db()->write($this->getCollectionName(), $id, $data);
 
-        app()->hooks()->fire('content.saved', array(
+        app()->hooks()->fire('content.saved', [
             'collection' => $this->getCollectionName(),
             'id' => $id,
             'action' => 'update',
-        ));
+        ]);
 
         $this->redirectAdmin($this->getAdminPath());
     }
 
-    public function deleteItem($params) {
+    public function deleteItem($params): void {
         $prefix = $this->getPermissionPrefix();
         $access = $this->requirePermission($prefix . '.delete');
         if ($access === false) return;
@@ -368,7 +368,7 @@ abstract class ContentPanel extends AdminPanel {
             return;
         }
 
-        $id = isset($params['id']) ? $params['id'] : '';
+        $id = $params['id'] ?? '';
         $item = app()->db()->read($this->getCollectionName(), $id);
 
         if (!$item) {
@@ -383,10 +383,10 @@ abstract class ContentPanel extends AdminPanel {
 
         app()->db()->delete($this->getCollectionName(), $id);
 
-        app()->hooks()->fire('content.deleted', array(
+        app()->hooks()->fire('content.deleted', [
             'collection' => $this->getCollectionName(),
             'id' => $id,
-        ));
+        ]);
 
         $this->redirectAdmin($this->getAdminPath());
     }

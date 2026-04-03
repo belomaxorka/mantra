@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Schema Migration System Tests
  *
@@ -22,7 +22,7 @@ class SchemaMigrationTest extends MantraTestCase
     {
         $this->testDir = MANTRA_STORAGE . '/test-migration-' . time();
         if (!is_dir($this->testDir)) {
-            mkdir($this->testDir, 0755, true);
+            mkdir($this->testDir, 0o755, true);
         }
     }
 
@@ -40,33 +40,33 @@ class SchemaMigrationTest extends MantraTestCase
     {
         $collection = 'tmig_multi';
         $this->writeSchemaFile($collection, <<<'PHP'
-<?php
-return array(
-    'version' => 3,
-    'defaults' => array('name' => '', 'display_name' => '', 'role' => 'user'),
-    'migrate' => function($doc, $from, $to) {
-        // v1->v2: rename 'login' to 'name'
-        if ($from < 2 && isset($doc['login'])) {
-            $doc['name'] = $doc['login'];
-            unset($doc['login']);
-        }
-        // v2->v3: split 'name' into 'name' + 'display_name'
-        if ($from < 3 && isset($doc['name']) && !isset($doc['display_name'])) {
-            $doc['display_name'] = ucfirst($doc['name']);
-        }
-        $doc['schema_version'] = $to;
-        return $doc;
-    }
-);
-PHP
+            <?php
+            return array(
+                'version' => 3,
+                'defaults' => array('name' => '', 'display_name' => '', 'role' => 'user'),
+                'migrate' => function($doc, $from, $to) {
+                    // v1->v2: rename 'login' to 'name'
+                    if ($from < 2 && isset($doc['login'])) {
+                        $doc['name'] = $doc['login'];
+                        unset($doc['login']);
+                    }
+                    // v2->v3: split 'name' into 'name' + 'display_name'
+                    if ($from < 3 && isset($doc['name']) && !isset($doc['display_name'])) {
+                        $doc['display_name'] = ucfirst($doc['name']);
+                    }
+                    $doc['schema_version'] = $to;
+                    return $doc;
+                }
+            );
+            PHP
         );
 
         // Document at v1 with 'login' field
         $id = 'multi-step';
-        $this->writeRawJson($collection, $id, array(
+        $this->writeRawJson($collection, $id, [
             'login' => 'admin',
-            'schema_version' => 1
-        ));
+            'schema_version' => 1,
+        ]);
 
         $db = new Database($this->testDir);
         $doc = $db->read($collection, $id);
@@ -82,22 +82,22 @@ PHP
     {
         $collection = 'tmig_zero';
         $this->writeSchemaFile($collection, <<<'PHP'
-<?php
-return array(
-    'version' => 2,
-    'defaults' => array('title' => '', 'status' => 'active'),
-    'migrate' => function($doc, $from, $to) {
-        $doc['_migrated'] = true;
-        $doc['_from'] = $from;
-        $doc['_to'] = $to;
-        return $doc;
-    }
-);
-PHP
+            <?php
+            return array(
+                'version' => 2,
+                'defaults' => array('title' => '', 'status' => 'active'),
+                'migrate' => function($doc, $from, $to) {
+                    $doc['_migrated'] = true;
+                    $doc['_from'] = $from;
+                    $doc['_to'] = $to;
+                    return $doc;
+                }
+            );
+            PHP
         );
 
         $id = 'zero-doc';
-        $this->writeRawJson($collection, $id, array('title' => 'Old'));
+        $this->writeRawJson($collection, $id, ['title' => 'Old']);
 
         $db = new Database($this->testDir);
         $doc = $db->read($collection, $id);
@@ -116,22 +116,22 @@ PHP
     {
         $collection = 'tmig_throws';
         $this->writeSchemaFile($collection, <<<'PHP'
-<?php
-return array(
-    'version' => 2,
-    'defaults' => array('name' => ''),
-    'migrate' => function($doc, $from, $to) {
-        throw new Exception('Migration failed intentionally');
-    }
-);
-PHP
+            <?php
+            return array(
+                'version' => 2,
+                'defaults' => array('name' => ''),
+                'migrate' => function($doc, $from, $to) {
+                    throw new Exception('Migration failed intentionally');
+                }
+            );
+            PHP
         );
 
         $id = 'throw-doc';
-        $this->writeRawJson($collection, $id, array(
+        $this->writeRawJson($collection, $id, [
             'name' => 'Original',
-            'schema_version' => 1
-        ));
+            'schema_version' => 1,
+        ]);
 
         $db = new Database($this->testDir);
 
@@ -142,13 +142,13 @@ PHP
             $this->assertStringContainsString(
                 'Migration failed intentionally',
                 $e->getMessage(),
-                'Migration exception propagates with original message'
+                'Migration exception propagates with original message',
             );
         }
 
         // Document should remain unchanged on disk
         $raw = json_decode(file_get_contents(
-            $this->testDir . '/' . $collection . '/' . $id . '.json'
+            $this->testDir . '/' . $collection . '/' . $id . '.json',
         ), true);
         $this->assertSame(1, $raw['schema_version'], 'Document unchanged on disk after failed migration');
     }
@@ -159,22 +159,22 @@ PHP
         // by resetting $data to empty array (same as ConfigSettings).
         $collection = 'tmig_nonarray';
         $this->writeSchemaFile($collection, <<<'PHP'
-<?php
-return array(
-    'version' => 2,
-    'defaults' => array('name' => 'fallback'),
-    'migrate' => function($doc, $from, $to) {
-        return 'not-an-array';
-    }
-);
-PHP
+            <?php
+            return array(
+                'version' => 2,
+                'defaults' => array('name' => 'fallback'),
+                'migrate' => function($doc, $from, $to) {
+                    return 'not-an-array';
+                }
+            );
+            PHP
         );
 
         $id = 'nonarray-doc';
-        $this->writeRawJson($collection, $id, array(
+        $this->writeRawJson($collection, $id, [
             'name' => 'Test',
-            'schema_version' => 1
-        ));
+            'schema_version' => 1,
+        ]);
 
         $db = new Database($this->testDir);
         $doc = $db->read($collection, $id);
@@ -192,25 +192,25 @@ PHP
     {
         $collection = 'tmig_unknown';
         $this->writeSchemaFile($collection, <<<'PHP'
-<?php
-return array(
-    'version' => 2,
-    'defaults' => array('name' => '', 'status' => 'active'),
-    'migrate' => function($doc, $from, $to) {
-        $doc['schema_version'] = $to;
-        return $doc;
-    }
-);
-PHP
+            <?php
+            return array(
+                'version' => 2,
+                'defaults' => array('name' => '', 'status' => 'active'),
+                'migrate' => function($doc, $from, $to) {
+                    $doc['schema_version'] = $to;
+                    return $doc;
+                }
+            );
+            PHP
         );
 
         $id = 'ext-doc';
-        $this->writeRawJson($collection, $id, array(
+        $this->writeRawJson($collection, $id, [
             'name' => 'Test',
             'custom_module_field' => 'module-data',
-            'nested_extra' => array('key' => 'value'),
-            'schema_version' => 1
-        ));
+            'nested_extra' => ['key' => 'value'],
+            'schema_version' => 1,
+        ]);
 
         $db = new Database($this->testDir);
         $doc = $db->read($collection, $id);
@@ -224,20 +224,20 @@ PHP
     public function testNestedDataPreserved(): void
     {
         $collection = 'tmig_nested';
-        $this->createTestSchema($collection, array(
+        $this->createTestSchema($collection, [
             'version' => 1,
-            'defaults' => array(
+            'defaults' => [
                 'title' => '',
-                'meta' => ''
-            )
-        ));
+                'meta' => '',
+            ],
+        ]);
 
         $id = 'nested-doc';
-        $this->writeRawJson($collection, $id, array(
+        $this->writeRawJson($collection, $id, [
             'title' => 'Test',
-            'meta' => array('og_title' => 'OG Test', 'og_desc' => 'Description'),
-            'tags' => array('php', 'cms')
-        ));
+            'meta' => ['og_title' => 'OG Test', 'og_desc' => 'Description'],
+            'tags' => ['php', 'cms'],
+        ]);
 
         $db = new Database($this->testDir);
         $doc = $db->read($collection, $id);
@@ -255,24 +255,24 @@ PHP
     public function testSchemaCachePerInstance(): void
     {
         $collection = 'tmig_cache';
-        $this->createTestSchema($collection, array(
+        $this->createTestSchema($collection, [
             'version' => 1,
-            'defaults' => array('name' => '', 'v1_field' => 'from_v1')
-        ));
+            'defaults' => ['name' => '', 'v1_field' => 'from_v1'],
+        ]);
 
         $db = new Database($this->testDir);
         $id = 'cache-doc';
 
         // Write through db so defaults are applied
-        $db->write($collection, $id, array('name' => 'Test'));
+        $db->write($collection, $id, ['name' => 'Test']);
         $doc1 = $db->read($collection, $id);
         $this->assertSame('from_v1', $doc1['v1_field'], 'v1 default applied');
 
         // Update schema on disk to v2
-        $this->createTestSchema($collection, array(
+        $this->createTestSchema($collection, [
             'version' => 2,
-            'defaults' => array('name' => '', 'v1_field' => 'from_v1', 'v2_field' => 'from_v2')
-        ));
+            'defaults' => ['name' => '', 'v1_field' => 'from_v1', 'v2_field' => 'from_v2'],
+        ]);
 
         // Same db instance: still uses cached v1 schema
         $doc2 = $db->read($collection, $id);
@@ -295,20 +295,20 @@ PHP
         // Schema stays at v1, but we add a new default field.
         // Documents at v1 should get the default without migration running.
         $collection = 'tmig_defonly';
-        $this->createTestSchema($collection, array(
+        $this->createTestSchema($collection, [
             'version' => 1,
-            'defaults' => array('name' => '', 'status' => 'active')
-        ));
+            'defaults' => ['name' => '', 'status' => 'active'],
+        ]);
 
         $db1 = new Database($this->testDir);
         $id = 'def-doc';
-        $db1->write($collection, $id, array('name' => 'Test'));
+        $db1->write($collection, $id, ['name' => 'Test']);
 
         // Now "evolve" schema: add new default, keep version 1
-        $this->createTestSchema($collection, array(
+        $this->createTestSchema($collection, [
             'version' => 1,
-            'defaults' => array('name' => '', 'status' => 'active', 'priority' => 'normal')
-        ));
+            'defaults' => ['name' => '', 'status' => 'active', 'priority' => 'normal'],
+        ]);
 
         $db2 = new Database($this->testDir);
         $doc = $db2->read($collection, $id);
@@ -321,20 +321,20 @@ PHP
     public function testNewDefaultFieldAddedWithoutMigration(): void
     {
         $collection = 'tmig_newdef';
-        $this->createTestSchema($collection, array(
+        $this->createTestSchema($collection, [
             'version' => 1,
-            'defaults' => array('name' => '')
-        ));
+            'defaults' => ['name' => ''],
+        ]);
 
         $db1 = new Database($this->testDir);
         $id = 'newdef-doc';
-        $db1->write($collection, $id, array('name' => 'Item'));
+        $db1->write($collection, $id, ['name' => 'Item']);
 
         // Bump version, add default, no migrate callback
-        $this->createTestSchema($collection, array(
+        $this->createTestSchema($collection, [
             'version' => 2,
-            'defaults' => array('name' => '', 'category' => 'uncategorized')
-        ));
+            'defaults' => ['name' => '', 'category' => 'uncategorized'],
+        ]);
 
         $db2 = new Database($this->testDir);
         $doc = $db2->read($collection, $id);
@@ -352,25 +352,25 @@ PHP
     {
         $collection = 'tmig_idempotent';
         $this->writeSchemaFile($collection, <<<'PHP'
-<?php
-return array(
-    'version' => 2,
-    'defaults' => array('username' => ''),
-    'migrate' => function($doc, $from, $to) {
-        if ($from < 2 && isset($doc['login']) && !isset($doc['username'])) {
-            $doc['username'] = $doc['login'];
-            unset($doc['login']);
-        }
-        $doc['schema_version'] = $to;
-        return $doc;
-    }
-);
-PHP
+            <?php
+            return array(
+                'version' => 2,
+                'defaults' => array('username' => ''),
+                'migrate' => function($doc, $from, $to) {
+                    if ($from < 2 && isset($doc['login']) && !isset($doc['username'])) {
+                        $doc['username'] = $doc['login'];
+                        unset($doc['login']);
+                    }
+                    $doc['schema_version'] = $to;
+                    return $doc;
+                }
+            );
+            PHP
         );
 
         // Pre-schema document
         $id = 'idemp-doc';
-        $this->writeRawJson($collection, $id, array('login' => 'root'));
+        $this->writeRawJson($collection, $id, ['login' => 'root']);
 
         $db = new Database($this->testDir);
 
@@ -390,14 +390,14 @@ PHP
     public function testRepeatedReadsNoExtraWrites(): void
     {
         $collection = 'tmig_nowrite';
-        $this->createTestSchema($collection, array(
+        $this->createTestSchema($collection, [
             'version' => 1,
-            'defaults' => array('name' => '', 'status' => 'active')
-        ));
+            'defaults' => ['name' => '', 'status' => 'active'],
+        ]);
 
         $db = new Database($this->testDir);
         $id = 'stable-doc';
-        $db->write($collection, $id, array('name' => 'Stable'));
+        $db->write($collection, $id, ['name' => 'Stable']);
 
         // Record file modification time
         $filePath = $this->testDir . '/' . $collection . '/' . $id . '.json';
@@ -425,43 +425,43 @@ PHP
     {
         $collection = 'tmig_mixed';
         $this->writeSchemaFile($collection, <<<'PHP'
-<?php
-return array(
-    'version' => 2,
-    'defaults' => array('name' => '', 'migrated' => false),
-    'migrate' => function($doc, $from, $to) {
-        $doc['migrated'] = true;
-        $doc['schema_version'] = $to;
-        return $doc;
-    }
-);
-PHP
+            <?php
+            return array(
+                'version' => 2,
+                'defaults' => array('name' => '', 'migrated' => false),
+                'migrate' => function($doc, $from, $to) {
+                    $doc['migrated'] = true;
+                    $doc['schema_version'] = $to;
+                    return $doc;
+                }
+            );
+            PHP
         );
 
         // v2 document (already migrated)
-        $this->writeRawJson($collection, 'doc-v2', array(
+        $this->writeRawJson($collection, 'doc-v2', [
             'name' => 'Already V2',
             'migrated' => true,
-            'schema_version' => 2
-        ));
+            'schema_version' => 2,
+        ]);
 
         // v1 document (needs migration)
-        $this->writeRawJson($collection, 'doc-v1', array(
+        $this->writeRawJson($collection, 'doc-v1', [
             'name' => 'Still V1',
-            'schema_version' => 1
-        ));
+            'schema_version' => 1,
+        ]);
 
         // v0 document (pre-schema)
-        $this->writeRawJson($collection, 'doc-v0', array(
-            'name' => 'Pre-schema'
-        ));
+        $this->writeRawJson($collection, 'doc-v0', [
+            'name' => 'Pre-schema',
+        ]);
 
         $db = new Database($this->testDir);
-        $items = $db->query($collection, array(), array('sort' => 'name'));
+        $items = $db->query($collection, [], ['sort' => 'name']);
 
         $this->assertCount(3, $items, 'All 3 documents returned');
 
-        $byId = array();
+        $byId = [];
         foreach ($items as $item) {
             $byId[$item['_id']] = $item;
         }
@@ -482,12 +482,12 @@ PHP
 
     public function testSchemaWithoutVersionField(): void
     {
-        $this->createTestSchema('tmig_nover', array(
-            'defaults' => array('name' => '', 'color' => 'blue')
-        ));
+        $this->createTestSchema('tmig_nover', [
+            'defaults' => ['name' => '', 'color' => 'blue'],
+        ]);
 
         $id = 'nover-doc';
-        $this->writeRawJson('tmig_nover', $id, array('name' => 'Test'));
+        $this->writeRawJson('tmig_nover', $id, ['name' => 'Test']);
 
         $db = new Database($this->testDir);
         $doc = $db->read('tmig_nover', $id);
@@ -502,10 +502,10 @@ PHP
         // No schema file created
 
         $id = 'raw-doc';
-        $this->writeRawJson($collection, $id, array(
+        $this->writeRawJson($collection, $id, [
             'foo' => 'bar',
-            'count' => 42
-        ));
+            'count' => 42,
+        ]);
 
         $db = new Database($this->testDir);
         $doc = $db->read($collection, $id);
@@ -519,23 +519,23 @@ PHP
     public function testEmptyMigrateCallback(): void
     {
         $this->writeSchemaFile('tmig_noop', <<<'PHP'
-<?php
-return array(
-    'version' => 3,
-    'defaults' => array('name' => ''),
-    'migrate' => function($doc, $from, $to) {
-        // No-op migration: just return the document
-        return $doc;
-    }
-);
-PHP
+            <?php
+            return array(
+                'version' => 3,
+                'defaults' => array('name' => ''),
+                'migrate' => function($doc, $from, $to) {
+                    // No-op migration: just return the document
+                    return $doc;
+                }
+            );
+            PHP
         );
 
         $id = 'noop-doc';
-        $this->writeRawJson('tmig_noop', $id, array(
+        $this->writeRawJson('tmig_noop', $id, [
             'name' => 'Unchanged',
-            'schema_version' => 1
-        ));
+            'schema_version' => 1,
+        ]);
 
         $db = new Database($this->testDir);
         $doc = $db->read('tmig_noop', $id);
@@ -551,11 +551,11 @@ PHP
     /**
      * Write a raw JSON file bypassing Database (simulates pre-existing data).
      */
-    private function writeRawJson($collection, $id, $data)
+    private function writeRawJson($collection, $id, $data): void
     {
         $dir = $this->testDir . '/' . $collection;
         if (!is_dir($dir)) {
-            mkdir($dir, 0755, true);
+            mkdir($dir, 0o755, true);
         }
         file_put_contents($dir . '/' . $id . '.json', json_encode($data));
     }

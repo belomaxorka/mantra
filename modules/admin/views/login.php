@@ -28,7 +28,7 @@
         <?php endif; ?>
 
         <form method="POST" action="<?php echo base_url('/admin/login'); ?>">
-          <input type="hidden" name="csrf_token" value="<?php echo e(isset($csrf_token) ? $csrf_token : ''); ?>">
+          <input type="hidden" name="csrf_token" value="<?php echo e($csrf_token ?? ''); ?>">
           <div class="mb-3">
             <label for="username" class="form-label"><?php echo t('admin.login.username'); ?></label>
             <input type="text" class="form-control" id="username" name="username" required autofocus>

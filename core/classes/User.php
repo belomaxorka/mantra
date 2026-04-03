@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * User - User management and permissions
  */
@@ -21,7 +21,7 @@ class User {
      * Get user by username
      */
     public function findByUsername($username) {
-        $users = $this->db->query('users', array('username' => $username));
+        $users = $this->db->query('users', ['username' => $username]);
         return !empty($users) ? $users[0] : null;
     }
 
@@ -29,18 +29,18 @@ class User {
      * Get user by email
      */
     public function findByEmail($email) {
-        $users = $this->db->query('users', array('email' => $email));
+        $users = $this->db->query('users', ['email' => $email]);
         return !empty($users) ? $users[0] : null;
     }
 
     /**
      * Get all users
      */
-    public function all($filters = array()) {
-        return $this->db->query('users', $filters, array(
+    public function all($filters = []) {
+        return $this->db->query('users', $filters, [
             'sort' => 'created_at',
-            'order' => 'desc'
-        ));
+            'order' => 'desc',
+        ]);
     }
 
     /**
@@ -156,15 +156,15 @@ class User {
         }
 
         // Primary: compare by author_id (stable identifier)
-        $authorId = isset($content['author_id']) ? $content['author_id'] : '';
-        $userId = isset($user['_id']) ? $user['_id'] : '';
+        $authorId = $content['author_id'] ?? '';
+        $userId = $user['_id'] ?? '';
         if ($authorId !== '' && $userId !== '') {
             return $authorId === $userId;
         }
 
         // Fallback: compare by username (pre-migration content)
-        $contentAuthor = isset($content['author']) ? $content['author'] : '';
-        $username = isset($user['username']) ? $user['username'] : '';
+        $contentAuthor = $content['author'] ?? '';
+        $username = $user['username'] ?? '';
 
         return $contentAuthor !== '' && $contentAuthor === $username;
     }

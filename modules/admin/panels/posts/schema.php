@@ -1,10 +1,10 @@
-<?php
+<?php declare(strict_types=1);
 
 // Collection schema for: posts
 
-return array(
+return [
     'version' => 2,
-    'defaults' => array(
+    'defaults' => [
         'title' => '',
         'slug' => '',
         'content' => '',
@@ -15,8 +15,8 @@ return array(
         'author' => '',
         'author_id' => '',
         'created_at' => '',
-        'updated_at' => ''
-    ),
+        'updated_at' => '',
+    ],
     'migrate' => function ($doc, $from, $to) {
         if ($from < 2) {
             // author_id added; existing docs keep author (username) for display,
@@ -28,28 +28,28 @@ return array(
         }
         return $doc;
     },
-    'fields' => array(
-        'title' => array(
-            'type' => 'string',
-            'required' => true,
-            'minLength' => 1,
-            'maxLength' => 255
-        ),
-        'slug' => array(
+    'fields' => [
+        'title' => [
             'type' => 'string',
             'required' => true,
             'minLength' => 1,
             'maxLength' => 255,
-            'pattern' => '/^[a-z0-9-]+$/'
-        ),
-        'status' => array(
-            'type' => 'enum',
-            'values' => array('draft', 'published', 'archived'),
-            'required' => true
-        ),
-        'excerpt' => array(
+        ],
+        'slug' => [
             'type' => 'string',
-            'maxLength' => 500
-        )
-    )
-);
+            'required' => true,
+            'minLength' => 1,
+            'maxLength' => 255,
+            'pattern' => '/^[a-z0-9-]+$/',
+        ],
+        'status' => [
+            'type' => 'enum',
+            'values' => ['draft', 'published', 'archived'],
+            'required' => true,
+        ],
+        'excerpt' => [
+            'type' => 'string',
+            'maxLength' => 500,
+        ],
+    ],
+];

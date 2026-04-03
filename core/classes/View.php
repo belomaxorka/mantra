@@ -1,11 +1,11 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * View - Template rendering engine
  * Simple but extensible template system
  */
 
 class View {
-    private $data = array();
+    private $data = [];
     private $themePath = '';
 
     public function __construct() {
@@ -21,7 +21,7 @@ class View {
      * 2. Explicit module syntax: "module:template" -> modules/{module}/views/{template}.php
      * 3. Smart fallback via _module parameter: modules/{_module}/views/{template}.php
      */
-    public function render($template, $data = array(), $options = array()) {
+    public function render($template, $data = [], $options = []): void {
         echo $this->fetch($template, $data, $options);
     }
 
@@ -33,7 +33,7 @@ class View {
      * @return string Rendered content
      */
     private function renderTemplate($templatePath, $data) {
-        return $this->captureOutput(function() use ($templatePath, $data) {
+        return $this->captureOutput(function() use ($templatePath, $data): void {
             extract($data, EXTR_SKIP);
             include $templatePath;
         });
@@ -49,9 +49,9 @@ class View {
      */
     private function renderLayout($layoutPath, $data, $content) {
         // Merge content into data to prevent extract() conflicts
-        $layoutData = array_merge($data, array('content' => $content));
+        $layoutData = array_merge($data, ['content' => $content]);
 
-        return $this->captureOutput(function() use ($layoutPath, $layoutData) {
+        return $this->captureOutput(function() use ($layoutPath, $layoutData): void {
             extract($layoutData, EXTR_SKIP);
             include $layoutPath;
         });
@@ -90,7 +90,7 @@ class View {
      * @param array $params Parameters to extract into partial scope
      * @return string Rendered HTML
      */
-    public function partial($name, $params = array()) {
+    public function partial($name, $params = []) {
         $partialPath = $this->resolvePartialPath($name);
 
         if ($partialPath === null) {
@@ -98,16 +98,16 @@ class View {
         }
 
         try {
-            return $this->captureOutput(function() use ($partialPath, $params) {
+            return $this->captureOutput(function() use ($partialPath, $params): void {
                 extract($params, EXTR_SKIP);
                 include $partialPath;
             });
         } catch (Exception $e) {
             // Don't throw - partials shouldn't break the page
-            logger()->error('Partial render error', array(
+            logger()->error('Partial render error', [
                 'partial' => $name,
-                'exception' => $e
-            ));
+                'exception' => $e,
+            ]);
             return '<!-- Partial error: ' . htmlspecialchars($name) . ' -->';
         }
     }
@@ -121,7 +121,7 @@ class View {
     private function resolvePartialPath($name) {
         if (str_contains($name, ':')) {
             // Module partial: "module:partial"
-            list($module, $partial) = explode(':', $name, 2);
+            [$module, $partial] = explode(':', $name, 2);
 
             // Theme can override module partials
             $themePath = $this->themePath . '/templates/partials/' . $module . '/' . $partial . '.php';
@@ -141,7 +141,7 @@ class View {
     /**
      * Render and return as string (without output)
      */
-    public function fetch($template, $data = array(), $options = array()) {
+    public function fetch($template, $data = [], $options = []) {
         $this->data = $data;
 
         // Try theme template first (allows theme to override)
@@ -152,7 +152,7 @@ class View {
         if (!file_exists($templatePath)) {
             // Template might be in format "module:template"
             if (str_contains($template, ':')) {
-                list($module, $tpl) = explode(':', $template, 2);
+                [$module, $tpl] = explode(':', $template, 2);
                 $templatePath = MANTRA_MODULES . '/' . $module . '/views/' . $tpl . '.php';
                 $isModuleTemplate = true;
                 // Auto-inject module context for moduleAsset() etc.
@@ -199,7 +199,7 @@ class View {
      */
     public function escape($value) {
         if (is_array($value)) {
-            return array_map(array($this, 'escape'), $value);
+            return array_map([$this, 'escape'], $value);
         }
         if ($value === null) {
             return '';
@@ -225,7 +225,7 @@ class View {
      * @param array  $data         Variables to extract into template scope
      * @return string Rendered HTML
      */
-    public function fetchPath($templatePath, $data = array()) {
+    public function fetchPath($templatePath, $data = []) {
         if (!file_exists($templatePath)) {
             throw new Exception("Template not found: $templatePath");
         }
@@ -256,7 +256,7 @@ class View {
         if ($path === null) {
             // One-arg form: resolve module from template context
             $path = $moduleOrPath;
-            $module = isset($this->data['_module']) ? $this->data['_module'] : null;
+            $module = $this->data['_module'] ?? null;
         } else {
             $module = $moduleOrPath;
         }

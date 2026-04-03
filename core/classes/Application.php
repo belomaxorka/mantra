@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Application - Main application singleton
  * Orchestrates the entire CMS lifecycle
@@ -8,18 +8,18 @@ use Module\ModuleManager;
 
 class Application {
     private static $instance = null;
-    private $config = array();
+    private $config = [];
     private $router = null;
     private $moduleManager = null;
     private $hookManager = null;
-    private $services = array();
-    
+    private $services = [];
+
     private function __construct() {
         $this->loadConfig();
         $this->registerCoreServices();
         $this->setupEnvironment();
     }
-    
+
     /**
      * Get singleton instance
      */
@@ -29,18 +29,18 @@ class Application {
         }
         return self::$instance;
     }
-    
+
     /**
      * Load configuration
      */
-    private function loadConfig() {
+    private function loadConfig(): void {
         $this->config = $GLOBALS['MANTRA_CONFIG'];
     }
-    
+
     /**
      * Setup environment
      */
-    private function setupEnvironment() {
+    private function setupEnvironment(): void {
         // Set timezone
         $tz = Config::getNested($this->config, 'locale.timezone', null);
         if (is_string($tz) && $tz !== '') {
@@ -54,7 +54,7 @@ class Application {
         } else {
             ini_set('display_errors', 0);
         }
-        
+
         // Start session
         $this->session()->start();
     }
@@ -62,21 +62,19 @@ class Application {
     /**
      * Register core lazy services
      */
-    private function registerCoreServices() {
-        $this->provide('request', function() { return new \Http\Request(); });
-        $this->provide('session', function() { return new \Http\Session(); });
-        $this->provide('response', function() { return new \Http\Response(); });
-        $this->provide('db', function() { return new \Database(); });
-        $this->provide('view', function() { return new \View(); });
-        $this->provide('translator', function() { return new \TranslationManager(); });
-        $this->provide('auth', function() { return new \Auth(); });
-        $this->provide('clock', function() {
-            return new \Clock(
+    private function registerCoreServices(): void {
+        $this->provide('request', fn() => new \Http\Request());
+        $this->provide('session', fn() => new \Http\Session());
+        $this->provide('response', fn() => new \Http\Response());
+        $this->provide('db', fn() => new \Database());
+        $this->provide('view', fn() => new \View());
+        $this->provide('translator', fn() => new \TranslationManager());
+        $this->provide('auth', fn() => new \Auth());
+        $this->provide('clock', fn() => new \Clock(
                 config('locale.timezone', 'UTC'),
                 config('locale.date_format', 'j F Y'),
-                config('locale.time_format', 'H:i')
-            );
-        });
+                config('locale.time_format', 'H:i'),
+            ));
     }
 
     /** @return \Http\Request */
@@ -99,11 +97,11 @@ class Application {
 
     /** @return \Auth */
     public function auth() { return $this->service('auth'); }
-    
+
     /**
      * Run application
      */
-    public function run() {
+    public function run(): void {
         try {
             logger()->info('Application started');
 
@@ -120,9 +118,9 @@ class Application {
             $this->moduleManager = new ModuleManager($this->config);
             $this->moduleManager->loadModules();
 
-            logger()->debug('Modules loaded', array(
-                'count' => count($this->moduleManager->getModules())
-            ));
+            logger()->debug('Modules loaded', [
+                'count' => count($this->moduleManager->getModules()),
+            ]);
 
             // Fire init hook
             $this->hookManager->fire('system.init');
@@ -131,7 +129,7 @@ class Application {
             $this->router = new Router();
 
             // Let modules register routes (specific routes like /admin/*)
-            $this->hookManager->fire('routes.register', array('router' => $this->router));
+            $this->hookManager->fire('routes.register', ['router' => $this->router]);
 
             // Register core public routes (fallback for content pages)
             $this->registerCoreRoutes();
@@ -147,30 +145,30 @@ class Application {
             $this->handleError($e);
         }
     }
-    
+
     /**
      * Register core public routes
      */
-    private function registerCoreRoutes() {
+    private function registerCoreRoutes(): void {
         $controller = new PageController();
 
         // Home page
-        $this->router->get('/', array($controller, 'home'));
+        $this->router->get('/', [$controller, 'home']);
 
         // Blog listing page
-        $this->router->get('/blog', array($controller, 'blog'));
+        $this->router->get('/blog', [$controller, 'blog']);
 
         // Single post (must be before catch-all page route)
-        $this->router->get('/post/{slug}', array($controller, 'post'));
+        $this->router->get('/post/{slug}', [$controller, 'post']);
 
         // Single page (catch-all, registered last)
-        $this->router->get('/{slug}', array($controller, 'page'));
+        $this->router->get('/{slug}', [$controller, 'page']);
     }
 
     /**
      * Clean old logs if needed (once per day)
      */
-    private function cleanOldLogsIfNeeded() {
+    private function cleanOldLogsIfNeeded(): void {
         $markerFile = MANTRA_STORAGE . '/logs/.last_cleanup';
         $now = time();
 
@@ -187,7 +185,7 @@ class Application {
         $deleted = logger()->clearOldLogs($retentionDays);
 
         if ($deleted > 0) {
-            logger()->info('Old logs cleaned', array('deleted' => $deleted, 'days' => $retentionDays));
+            logger()->info('Old logs cleaned', ['deleted' => $deleted, 'days' => $retentionDays]);
         }
 
         // Update marker
@@ -201,7 +199,7 @@ class Application {
      * so it does not interfere with the View output buffering stack and handles
      * error output correctly without manual buffer cleanup.
      */
-    private function startOutputCompression() {
+    private function startOutputCompression(): void {
         // Check if compression is enabled in config
         if (!(bool)$this->config('performance.gzip_compression', false)) {
             return;
@@ -223,17 +221,17 @@ class Application {
 
         logger()->debug('Output compression started (zlib)');
     }
-    
+
     /**
      * Handle application errors
      */
-    private function handleError($exception) {
+    private function handleError($exception): void {
         // Log error (use $_SERVER directly — service container may be in bad state)
-        logger()->error('Application error', array(
+        logger()->error('Application error', [
             'exception' => $exception,
-            'url' => isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : 'unknown',
-            'method' => isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : 'unknown'
-        ));
+            'url' => $_SERVER['REQUEST_URI'] ?? 'unknown',
+            'method' => $_SERVER['REQUEST_METHOD'] ?? 'unknown',
+        ]);
 
         // Discard any partial output left in ob buffers (e.g. from View)
         while (ob_get_level() > 0) {
@@ -252,7 +250,7 @@ class Application {
             echo '<p>Please try again later.</p>';
         }
     }
-    
+
     /**
      * Get configuration value
      */
@@ -266,14 +264,14 @@ class Application {
     public function router() {
         return $this->router;
     }
-    
+
     /**
      * Get module manager instance
      */
     public function modules() {
         return $this->moduleManager;
     }
-    
+
     /**
      * Get hook manager instance
      */
@@ -287,12 +285,12 @@ class Application {
      * @param string   $name     Service name (e.g. 'pages', 'search')
      * @param callable|mixed $provider  Callable (lazy) or a ready value
      */
-    public function provide($name, $provider) {
-        $this->services[$name] = array(
+    public function provide($name, $provider): void {
+        $this->services[$name] = [
             'provider' => $provider,
             'resolved' => false,
-            'value'    => null,
-        );
+            'value' => null,
+        ];
     }
 
     /**

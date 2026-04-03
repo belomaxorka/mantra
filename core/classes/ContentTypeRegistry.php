@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * ContentTypeRegistry - Register and manage custom content types
  * Allows modules to register new content types (events, etc.)
@@ -6,7 +6,7 @@
 
 class ContentTypeRegistry {
     private static $instance = null;
-    private $types = array();
+    private $types = [];
 
     private function __construct() {
         // Register default content types
@@ -23,24 +23,24 @@ class ContentTypeRegistry {
     /**
      * Register default content types
      */
-    private function registerDefaults() {
+    private function registerDefaults(): void {
         // Pages
-        $this->register('page', array(
+        $this->register('page', [
             'singular' => 'Page',
             'plural' => 'Pages',
             'route_pattern' => '/{slug}',
             'collection' => 'pages',
-            'supports' => array('title', 'content', 'slug', 'status', 'template')
-        ));
+            'supports' => ['title', 'content', 'slug', 'status', 'template'],
+        ]);
 
         // Posts
-        $this->register('post', array(
+        $this->register('post', [
             'singular' => 'Post',
             'plural' => 'Posts',
             'route_pattern' => '/post/{slug}',
             'collection' => 'posts',
-            'supports' => array('title', 'content', 'slug', 'status', 'category', 'template', 'author', 'excerpt')
-        ));
+            'supports' => ['title', 'content', 'slug', 'status', 'category', 'template', 'author', 'excerpt'],
+        ]);
     }
 
     /**
@@ -49,16 +49,16 @@ class ContentTypeRegistry {
      * @param string $type Content type identifier (e.g., 'product', 'event')
      * @param array $config Configuration array
      */
-    public function register($type, $config) {
-        $defaults = array(
+    public function register($type, $config): void {
+        $defaults = [
             'singular' => ucfirst($type),
             'plural' => ucfirst($type) . 's',
             'route_pattern' => '/' . $type . '/{slug}',
             'collection' => $type . 's',
-            'supports' => array('title', 'content', 'slug', 'status'),
+            'supports' => ['title', 'content', 'slug', 'status'],
             'controller' => null, // Optional custom controller
             'template' => $type, // Default template name
-        );
+        ];
 
         $this->types[$type] = array_merge($defaults, $config);
     }
@@ -67,7 +67,7 @@ class ContentTypeRegistry {
      * Get content type configuration
      */
     public function get($type) {
-        return isset($this->types[$type]) ? $this->types[$type] : null;
+        return $this->types[$type] ?? null;
     }
 
     /**
@@ -87,7 +87,7 @@ class ContentTypeRegistry {
     /**
      * Unregister a content type
      */
-    public function unregister($type) {
+    public function unregister($type): void {
         if (isset($this->types[$type])) {
             unset($this->types[$type]);
         }

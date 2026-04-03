@@ -1,6 +1,6 @@
-<?php
+<?php declare(strict_types=1);
 
-return array(
+return [
     // Module name
     'admin-pages.name' => 'Страницы',
 
@@ -45,4 +45,4 @@ return array(
     'admin-pages.show_in_nav_help' => 'Отображать эту страницу в меню навигации сайта',
     'admin-pages.nav_order' => 'Порядок в навигации',
     'admin-pages.nav_order_help' => 'Меньшие числа отображаются первыми (по умолчанию: 50)',
-);
+];

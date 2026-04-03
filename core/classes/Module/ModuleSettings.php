@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * ModuleSettings - Schema-driven settings storage for modules.
  *
@@ -23,12 +23,12 @@ class ModuleSettings
     private $schema = null;
 
     private $loaded = false;
-    private $data = array();
-    private $defaults = array();
-    private $raw = array();
+    private $data = [];
+    private $defaults = [];
+    private $raw = [];
     private $dirty = false;
 
-    private static $instances = array();
+    private static $instances = [];
 
     /**
      * Get cached ModuleSettings instance.
@@ -85,7 +85,7 @@ class ModuleSettings
 
         $schema = $this->schema();
 
-        $raw = array();
+        $raw = [];
         if (file_exists($this->path)) {
             try {
                 $fileContent = FileIO::readLocked($this->path);
@@ -95,19 +95,19 @@ class ModuleSettings
                 }
             } catch (Exception $e) {
                 // Treat unreadable settings as empty.
-                logger()->warning('Failed to read module settings, using empty doc', array(
+                logger()->warning('Failed to read module settings, using empty doc', [
                     'module' => $this->module,
                     'path' => $this->path,
                     'error' => $e->getMessage(),
-                ));
-                $raw = array();
+                ]);
+                $raw = [];
             }
         }
 
         $this->raw = $raw;
 
         // Compute defaults from schema field defaults.
-        $defaults = array();
+        $defaults = [];
         if (is_array($schema) && !empty($schema['tabs']) && is_array($schema['tabs'])) {
             foreach ($schema['tabs'] as $tab) {
                 if (empty($tab['fields']) || !is_array($tab['fields'])) {
@@ -186,14 +186,14 @@ class ModuleSettings
         $schema = $this->schema();
         $schemaVersion = is_array($schema) && isset($schema['version']) ? (int)$schema['version'] : 0;
 
-        $defaults = is_array($this->defaults) ? $this->defaults : array();
+        $defaults = is_array($this->defaults) ? $this->defaults : [];
 
         // Persist as overrides-only (diff from field defaults) for consistency with config.json.
         // Unlike global config, module settings may contain module-specific extra keys not declared in schema.
         // Preserve such keys to avoid data loss.
         $overrides = self::diffOverridesPreserveUnknown($defaults, $this->data);
         if (!is_array($overrides)) {
-            $overrides = array();
+            $overrides = [];
         }
 
         if ($schemaVersion > 0) {
@@ -215,7 +215,7 @@ class ModuleSettings
             if (isset($schema['migrate']) && is_callable($schema['migrate'])) {
                 $data = call_user_func($schema['migrate'], $data, $from, $to);
                 if (!is_array($data)) {
-                    $data = array();
+                    $data = [];
                 }
             }
             $data['schema_version'] = $to;
@@ -253,7 +253,7 @@ class ModuleSettings
             return $current;
         }
 
-        $out = array();
+        $out = [];
         $hasAny = false;
 
         // Known keys: diff against defaults.
@@ -282,4 +282,3 @@ class ModuleSettings
         return $hasAny ? $out : null;
     }
 }
-

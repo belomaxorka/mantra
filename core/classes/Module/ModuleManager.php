@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * ModuleManager - Manages module lifecycle
  * Loads, initializes, and provides access to modules
@@ -13,13 +13,13 @@ use Exception;
 
 class ModuleManager
 {
-    private $modules = array();
-    private $config = array();
-    private $loadedModules = array();
+    private $modules = [];
+    private $config = [];
+    private $loadedModules = [];
 
     // Tracks modules currently being loaded (for cycle detection).
-    private $loading = array();
-    private $loadingStack = array();
+    private $loading = [];
+    private $loadingStack = [];
 
     public function __construct($config)
     {
@@ -30,13 +30,13 @@ class ModuleManager
      * Validate module name to prevent path traversal / unexpected casing.
      * Only allows: lowercase latin letters, digits, underscore and dash.
      */
-    private function assertValidModuleName($name, $context = null)
+    private function assertValidModuleName($name, $context = null): void
     {
         if (!ModuleValidator::isValidModuleId($name)) {
-            logger()->error('Invalid module name', array(
+            logger()->error('Invalid module name', [
                 'module' => $name,
-                'context' => $context
-            ));
+                'context' => $context,
+            ]);
 
             $message = "Invalid module name";
             if (is_string($context) && $context !== '') {
@@ -51,11 +51,11 @@ class ModuleManager
     /**
      * Load all enabled modules
      */
-    public function loadModules()
+    public function loadModules(): void
     {
-        $enabledModules = Config::getNested($this->config, 'modules.enabled', array());
+        $enabledModules = Config::getNested($this->config, 'modules.enabled', []);
         if (!is_array($enabledModules)) {
-            $enabledModules = array();
+            $enabledModules = [];
         }
 
         foreach ($enabledModules as $moduleName) {
@@ -77,14 +77,14 @@ class ModuleManager
         if (isset($this->loading[$moduleName])) {
             $startIndex = array_search($moduleName, $this->loadingStack, true);
             $cyclePath = $startIndex === false
-                ? array_merge($this->loadingStack, array($moduleName))
-                : array_merge(array_slice($this->loadingStack, $startIndex), array($moduleName));
+                ? array_merge($this->loadingStack, [$moduleName])
+                : array_merge(array_slice($this->loadingStack, $startIndex), [$moduleName]);
 
             $cycleString = implode(' -> ', $cyclePath);
-            logger()->error('Cyclic module dependency detected', array(
+            logger()->error('Cyclic module dependency detected', [
                 'module' => $moduleName,
-                'cycle' => $cycleString
-            ));
+                'cycle' => $cycleString,
+            ]);
             throw new Exception("Cyclic module dependency: {$cycleString}");
         }
 
@@ -101,7 +101,7 @@ class ModuleManager
             $mainFile = $modulePath . '/' . $pascalCase . 'Module.php';
 
             if (!file_exists($manifestPath) || !file_exists($mainFile)) {
-                logger()->warning('Module not found', array('module' => $moduleName));
+                logger()->warning('Module not found', ['module' => $moduleName]);
                 return false;
             }
 
@@ -134,7 +134,7 @@ class ModuleManager
                         if ($depModule && !self::satisfiesVersion($depModule->getVersion(), $constraint)) {
                             throw new Exception(
                                 "Module '{$moduleName}' requires '{$depName}' {$constraint}, "
-                                . "but version {$depModule->getVersion()} is installed"
+                                . "but version {$depModule->getVersion()} is installed",
                             );
                         }
                     }
@@ -151,18 +151,18 @@ class ModuleManager
             $module = new $className($manifest, $moduleName, $modulePath);
             $module->init();
 
-            $this->modules[$moduleName] = array(
+            $this->modules[$moduleName] = [
                 'instance' => $module,
                 'manifest' => $manifest,
-                'path' => $modulePath
-            );
+                'path' => $modulePath,
+            ];
 
             $this->loadedModules[$moduleName] = true;
 
-            logger()->debug('Module loaded', array(
+            logger()->debug('Module loaded', [
                 'module' => $moduleName,
-                'version' => $manifest['version']
-            ));
+                'version' => $manifest['version'],
+            ]);
 
             return true;
         } finally {
@@ -216,7 +216,7 @@ class ModuleManager
      */
     public function getModulesByType($type)
     {
-        $result = array();
+        $result = [];
         foreach ($this->modules as $name => $data) {
             $module = $data['instance'];
             if ($module->getType() === $type) {
@@ -233,7 +233,7 @@ class ModuleManager
      */
     public function getModulesByCapability($capability)
     {
-        $result = array();
+        $result = [];
         foreach ($this->modules as $name => $data) {
             $module = $data['instance'];
             if ($module->hasCapability($capability)) {
@@ -253,7 +253,7 @@ class ModuleManager
         $this->assertValidModuleName($moduleName, 'enableModule');
 
         // Check if already enabled
-        $enabledModules = Config::getNested($this->config, 'modules.enabled', array());
+        $enabledModules = Config::getNested($this->config, 'modules.enabled', []);
         if (in_array($moduleName, $enabledModules, true)) {
             return true;
         }
@@ -272,13 +272,13 @@ class ModuleManager
 
         // Check if module can be enabled
         if (!$module->isDisableable()) {
-            logger()->warning('Cannot enable/disable core module', array('module' => $moduleName));
+            logger()->warning('Cannot enable/disable core module', ['module' => $moduleName]);
             return false;
         }
 
         // Call onEnable hook
         if (!$module->onEnable()) {
-            logger()->error('Module onEnable failed', array('module' => $moduleName));
+            logger()->error('Module onEnable failed', ['module' => $moduleName]);
             return false;
         }
 
@@ -290,18 +290,18 @@ class ModuleManager
         try {
             $configData = JsonCodec::decode(FileIO::readLocked($configPath));
             if (!isset($configData['modules'])) {
-                $configData['modules'] = array();
+                $configData['modules'] = [];
             }
             $configData['modules']['enabled'] = $enabledModules;
             FileIO::writeAtomic($configPath, JsonCodec::encode($configData));
 
-            logger()->info('Module enabled', array('module' => $moduleName));
+            logger()->info('Module enabled', ['module' => $moduleName]);
             return true;
         } catch (Exception $e) {
-            logger()->error('Failed to update config', array(
+            logger()->error('Failed to update config', [
                 'module' => $moduleName,
-                'error' => $e->getMessage()
-            ));
+                'error' => $e->getMessage(),
+            ]);
             return false;
         }
     }
@@ -322,39 +322,37 @@ class ModuleManager
 
         // Check if module can be disabled
         if (!$module->isDisableable()) {
-            logger()->warning('Cannot disable core module', array('module' => $moduleName));
+            logger()->warning('Cannot disable core module', ['module' => $moduleName]);
             return false;
         }
 
         // Call onDisable hook
         if (!$module->onDisable()) {
-            logger()->error('Module onDisable failed', array('module' => $moduleName));
+            logger()->error('Module onDisable failed', ['module' => $moduleName]);
             return false;
         }
 
         // Remove from enabled modules in config
-        $enabledModules = Config::getNested($this->config, 'modules.enabled', array());
-        $enabledModules = array_values(array_filter($enabledModules, function ($name) use ($moduleName) {
-            return $name !== $moduleName;
-        }));
+        $enabledModules = Config::getNested($this->config, 'modules.enabled', []);
+        $enabledModules = array_values(array_filter($enabledModules, fn ($name) => $name !== $moduleName));
 
         // Update config file
         $configPath = MANTRA_CONTENT . '/settings/config.json';
         try {
             $configData = JsonCodec::decode(FileIO::readLocked($configPath));
             if (!isset($configData['modules'])) {
-                $configData['modules'] = array();
+                $configData['modules'] = [];
             }
             $configData['modules']['enabled'] = $enabledModules;
             FileIO::writeAtomic($configPath, JsonCodec::encode($configData));
 
-            logger()->info('Module disabled', array('module' => $moduleName));
+            logger()->info('Module disabled', ['module' => $moduleName]);
             return true;
         } catch (Exception $e) {
-            logger()->error('Failed to update config', array(
+            logger()->error('Failed to update config', [
                 'module' => $moduleName,
-                'error' => $e->getMessage()
-            ));
+                'error' => $e->getMessage(),
+            ]);
             return false;
         }
     }
@@ -375,7 +373,7 @@ class ModuleManager
 
         // Check if module can be deleted
         if (!$module->isDeletable()) {
-            logger()->warning('Cannot delete core module', array('module' => $moduleName));
+            logger()->warning('Cannot delete core module', ['module' => $moduleName]);
             return false;
         }
 
@@ -386,11 +384,11 @@ class ModuleManager
 
         // Call onUninstall hook
         if (!$module->onUninstall()) {
-            logger()->error('Module onUninstall failed', array('module' => $moduleName));
+            logger()->error('Module onUninstall failed', ['module' => $moduleName]);
             return false;
         }
 
-        logger()->info('Module uninstalled', array('module' => $moduleName));
+        logger()->info('Module uninstalled', ['module' => $moduleName]);
         return true;
     }
 
@@ -400,7 +398,7 @@ class ModuleManager
      */
     public function discoverModules()
     {
-        $discovered = array();
+        $discovered = [];
 
         if (!is_dir(MANTRA_MODULES)) {
             return $discovered;
@@ -426,20 +424,20 @@ class ModuleManager
                 $manifest = JsonCodec::decode(file_get_contents($manifestPath));
 
                 // Determine module ID
-                $moduleId = isset($manifest['id']) ? $manifest['id'] :
+                $moduleId = $manifest['id'] ??
                     (isset($manifest['name']) ? strtolower($manifest['name']) : $dir);
 
-                $discovered[$moduleId] = array(
+                $discovered[$moduleId] = [
                     'id' => $moduleId,
                     'path' => $modulePath,
                     'manifest' => $manifest,
                     'enabled' => $this->isLoaded($moduleId),
-                );
+                ];
             } catch (Exception $e) {
-                logger()->warning('Failed to read module manifest', array(
+                logger()->warning('Failed to read module manifest', [
                     'module' => $dir,
-                    'error' => $e->getMessage()
-                ));
+                    'error' => $e->getMessage(),
+                ]);
             }
         }
 
@@ -462,7 +460,7 @@ class ModuleManager
         $data = $this->modules[$moduleName];
         $module = $data['instance'];
 
-        return array(
+        return [
             'id' => $module->getId(),
             'name' => $module->getName(),
             'description' => $module->getDescription(),
@@ -479,7 +477,7 @@ class ModuleManager
             'has_translations' => $module->hasTranslations(),
             'path' => $data['path'],
             'enabled' => true,
-        );
+        ];
     }
 
     /**

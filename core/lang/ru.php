@@ -1,6 +1,6 @@
-<?php
+<?php declare(strict_types=1);
 
-return array(
+return [
     // Relative time
     'core.time.just_now' => 'только что',
     'core.time.minutes_ago' => '{count} мин. назад',
@@ -9,4 +9,4 @@ return array(
     'core.time.weeks_ago' => '{count} нед. назад',
     'core.time.months_ago' => '{count} мес. назад',
     'core.time.years_ago' => '{count} г. назад',
-);
+];

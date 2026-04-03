@@ -1,6 +1,6 @@
-<?php
+<?php declare(strict_types=1);
 
-return array(
+return [
     // Module name
     'admin-users.name' => 'Users',
 
@@ -44,4 +44,4 @@ return array(
     'admin-users.create_error' => 'Failed to create user. Username may already exist or password is missing.',
     'admin-users.access_denied' => 'Access denied. Administrator privileges required.',
     'admin-users.is_you' => 'You',
-);
+];

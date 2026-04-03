@@ -1,6 +1,6 @@
-<?php
+<?php declare(strict_types=1);
 
-return array(
+return [
     // Module name
     'admin-posts.name' => 'Посты',
 
@@ -48,4 +48,4 @@ return array(
     // Help text
     'admin-posts.slug_help' => 'URL-адрес поста. Оставьте пустым для автоматической генерации.',
     'admin-posts.excerpt_help' => 'Краткое описание поста (опционально)',
-);
+];

@@ -1,6 +1,6 @@
-<?php
+<?php declare(strict_types=1);
 
-return array(
+return [
     // Module name
     'admin-settings.name' => 'Settings',
 
@@ -126,4 +126,4 @@ return array(
 
     // Debug settings
     'admin-settings.debug.enabled' => 'Enable debug mode',
-);
+];

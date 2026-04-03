@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * SettingsPanel - System settings and module management
  *
@@ -17,9 +17,9 @@ class SettingsPanel extends AdminPanel {
         return 'settings';
     }
 
-    public function registerRoutes($admin) {
-        $admin->adminRoute('GET',  'settings', array($this, 'settings'));
-        $admin->adminRoute('POST', 'settings', array($this, 'settings'));
+    public function registerRoutes($admin): void {
+        $admin->adminRoute('GET',  'settings', [$this, 'settings']);
+        $admin->adminRoute('POST', 'settings', [$this, 'settings']);
     }
 
     // ========== Main Action ==========
@@ -30,21 +30,21 @@ class SettingsPanel extends AdminPanel {
         $activeTab = (string)app()->request()->query('tab', 'general');
 
         // Build tabs
-        $tabs = array();
-        $tabs[] = array(
+        $tabs = [];
+        $tabs[] = [
             'id' => 'general',
             'title' => t('admin-settings.general'),
             'url' => base_url('/admin/settings?tab=general'),
             'active' => ($activeTab === 'general'),
-        );
+        ];
 
         foreach ($this->getModulesWithSettings() as $modId => $modTitle) {
-            $tabs[] = array(
+            $tabs[] = [
                 'id' => $modId,
                 'title' => $modTitle,
                 'url' => base_url('/admin/settings?tab=' . $modId),
                 'active' => ($activeTab === $modId),
-            );
+            ];
         }
 
         $notice = null;
@@ -52,11 +52,11 @@ class SettingsPanel extends AdminPanel {
 
         if ($activeTab === 'general') {
             $contentHtml = $this->buildConfigSettingsContent(
-                base_url('/admin/settings?tab=general'), $notice, $error
+                base_url('/admin/settings?tab=general'), $notice, $error,
             );
         } else {
             $contentHtml = $this->buildModuleSettingsContent(
-                $activeTab, base_url('/admin/settings?tab=' . $activeTab), $notice, $error
+                $activeTab, base_url('/admin/settings?tab=' . $activeTab), $notice, $error,
             );
         }
 
@@ -64,7 +64,7 @@ class SettingsPanel extends AdminPanel {
             http_response_code(404);
             return $this->renderAdmin(
                 t('admin-settings.title'),
-                '<div class="alert alert-danger alert-permanent">Settings not found</div>'
+                '<div class="alert alert-danger alert-permanent">Settings not found</div>',
             );
         }
 
@@ -77,27 +77,27 @@ class SettingsPanel extends AdminPanel {
             }
         }
 
-        $page = $this->renderView('settings', array(
+        $page = $this->renderView('settings', [
             'pageTitle' => $pageTitle,
             'tabs' => $tabs,
             'contentHtml' => $contentHtml,
             'notice' => $notice,
             'error' => $error,
-        ));
+        ]);
 
-        return $this->renderAdmin($pageTitle, $page, array(
+        return $this->renderAdmin($pageTitle, $page, [
             'user' => $this->getUser(),
-            'breadcrumbs' => array(
-                array('title' => t('admin-dashboard.title'), 'url' => base_url('/admin')),
-                array('title' => t('admin-settings.title')),
-            ),
-        ));
+            'breadcrumbs' => [
+                ['title' => t('admin-dashboard.title'), 'url' => base_url('/admin')],
+                ['title' => t('admin-settings.title')],
+            ],
+        ]);
     }
 
     // ========== Module discovery ==========
 
     private function getModulesWithSettings() {
-        $modules = array();
+        $modules = [];
         $moduleManager = app()->modules();
 
         foreach ($moduleManager->getModules() as $moduleId => $data) {
@@ -126,7 +126,7 @@ class SettingsPanel extends AdminPanel {
         $schema = $this->applyConfigSchemaRuntimeOptions($store->schema());
         return $this->buildSchemaSettingsContent(
             $store, $schema, $actionUrl, $notice, $error,
-            array('on_post' => array($this, 'handleConfigDeleteModuleAction'))
+            ['on_post' => [$this, 'handleConfigDeleteModuleAction']],
         );
     }
 
@@ -150,7 +150,7 @@ class SettingsPanel extends AdminPanel {
 
     // ========== Generic schema-driven form builder ==========
 
-    private function buildSchemaSettingsContent($store, $schema, $actionUrl, &$notice, &$error, $context = array()) {
+    private function buildSchemaSettingsContent($store, $schema, $actionUrl, &$notice, &$error, $context = []) {
         if (!is_array($schema)) {
             $error = 'This module has no settings';
             return null;
@@ -171,16 +171,16 @@ class SettingsPanel extends AdminPanel {
             } else {
                 $handledAction = false;
                 if (is_array($context) && !empty($context['on_post']) && is_callable($context['on_post'])) {
-                    $args = array(&$notice, &$error);
+                    $args = [&$notice, &$error];
                     $handledAction = (bool)call_user_func_array($context['on_post'], $args);
                 }
 
                 if (empty($error) && !$handledAction) {
-                    $updates = array();
-                    $schemaTabs = isset($schema['tabs']) ? $schema['tabs'] : array();
+                    $updates = [];
+                    $schemaTabs = $schema['tabs'] ?? [];
 
                     foreach ($schemaTabs as $tab) {
-                        $tabFields = isset($tab['fields']) ? $tab['fields'] : array();
+                        $tabFields = $tab['fields'] ?? [];
                         foreach ($tabFields as $field) {
                             if (!is_array($field) || empty($field['path']) || empty($field['type'])) {
                                 continue;
@@ -192,7 +192,7 @@ class SettingsPanel extends AdminPanel {
                             if ($type === 'module_cards') {
                                 $posted = app()->request()->post($path, null);
                                 if (is_array($posted)) {
-                                    $items = array();
+                                    $items = [];
                                     foreach ($posted as $item) {
                                         $item = trim((string)$item);
                                         if ($item !== '') {
@@ -220,7 +220,7 @@ class SettingsPanel extends AdminPanel {
                                 $updates[$path] = (int)$raw;
                             } elseif ($type === 'select') {
                                 $val = (string)$raw;
-                                $options = isset($field['options']) && is_array($field['options']) ? $field['options'] : array();
+                                $options = isset($field['options']) && is_array($field['options']) ? $field['options'] : [];
                                 if (array_key_exists($val, $options)) {
                                     $updates[$path] = $val;
                                 }
@@ -235,7 +235,7 @@ class SettingsPanel extends AdminPanel {
                     if (!empty($updates)) {
                         // Textarea fields that represent lists
                         foreach ($schemaTabs as $tab) {
-                            $tabFields2 = isset($tab['fields']) ? $tab['fields'] : array();
+                            $tabFields2 = $tab['fields'] ?? [];
                             foreach ($tabFields2 as $field) {
                                 if (!is_array($field) || empty($field['path']) || empty($field['type'])) {
                                     continue;
@@ -244,8 +244,8 @@ class SettingsPanel extends AdminPanel {
                                 if ((string)$field['type'] === 'textarea' && array_key_exists($path, $updates) && array_key_exists('default', $field) && is_array($field['default'])) {
                                     $raw = (string)$updates[$path];
                                     $lines = preg_split('/\r\n|\r|\n/', $raw);
-                                    $lines = is_array($lines) ? $lines : array();
-                                    $items = array();
+                                    $lines = is_array($lines) ? $lines : [];
+                                    $items = [];
                                     foreach ($lines as $line) {
                                         $line = trim((string)$line);
                                         if ($line !== '') {
@@ -282,22 +282,22 @@ class SettingsPanel extends AdminPanel {
             $activeInnerTab = (string)app()->request()->post('active_tab', '');
         }
 
-        $tabs = array();
-        $schemaTabs3 = isset($schema['tabs']) ? $schema['tabs'] : array();
+        $tabs = [];
+        $schemaTabs3 = $schema['tabs'] ?? [];
         foreach ($schemaTabs3 as $tab) {
             if (!is_array($tab)) {
                 continue;
             }
 
             $tabId = isset($tab['id']) ? (string)$tab['id'] : 'tab';
-            $tabTitle = t(isset($tab['title']) ? $tab['title'] : (isset($tab['label']) ? $tab['label'] : $tabId));
+            $tabTitle = t($tab['title'] ?? ($tab['label'] ?? $tabId));
 
             if ($activeInnerTab === '' && $tabId !== '') {
                 $activeInnerTab = $tabId;
             }
 
-            $fields = array();
-            $tabFields3 = isset($tab['fields']) ? $tab['fields'] : array();
+            $fields = [];
+            $tabFields3 = $tab['fields'] ?? [];
             foreach ($tabFields3 as $field) {
                 if (!is_array($field) || empty($field['path']) || empty($field['type'])) {
                     continue;
@@ -306,26 +306,26 @@ class SettingsPanel extends AdminPanel {
                 $path = (string)$field['path'];
                 $type = (string)$field['type'];
                 $name = $type === 'module_cards' ? $path : str_replace('.', '__', $path);
-                $options = isset($field['options']) && is_array($field['options']) ? $field['options'] : array();
+                $options = isset($field['options']) && is_array($field['options']) ? $field['options'] : [];
 
-                $f = array(
+                $f = [
                     'path' => $path,
                     'name' => $name,
                     'type' => $type,
-                    'title' => t(isset($field['title']) ? $field['title'] : (isset($field['label']) ? $field['label'] : $path)),
+                    'title' => t($field['title'] ?? ($field['label'] ?? $path)),
                     'help' => isset($field['help']) ? t($field['help']) : '',
                     'value' => $store->get($path, array_key_exists('default', $field) ? $field['default'] : null),
                     'options' => $options,
-                );
+                ];
 
                 if (isset($field['theme_metadata'])) {
                     $f['theme_metadata'] = $field['theme_metadata'];
                 }
 
                 if ($f['type'] === 'select' && is_array($f['options'])) {
-                    $skipTranslation = in_array($path, array(
+                    $skipTranslation = in_array($path, [
                         'locale.date_format', 'locale.time_format',
-                    ), true);
+                    ], true);
                     if (!$skipTranslation) {
                         foreach ($f['options'] as $k => $v) {
                             $f['options'][$k] = t($v);
@@ -340,14 +340,14 @@ class SettingsPanel extends AdminPanel {
                 $fields[] = $f;
             }
 
-            $tabs[] = array(
+            $tabs[] = [
                 'id' => $tabId,
                 'title' => $tabTitle,
                 'fields' => $fields,
-            );
+            ];
         }
 
-        return $this->renderView('module-settings', array(
+        return $this->renderView('module-settings', [
             'title' => '',
             'tabs' => $tabs,
             'active_tab' => $activeInnerTab,
@@ -355,7 +355,7 @@ class SettingsPanel extends AdminPanel {
             'csrf_token' => $this->auth()->generateCsrfToken(),
             'notice' => $notice,
             'error' => $error,
-        ));
+        ]);
     }
 
     // ========== Runtime option injectors ==========
@@ -403,7 +403,7 @@ class SettingsPanel extends AdminPanel {
                     $field['options'] = $this->getAvailableSameSiteOptions();
                 }
                 if ($path === 'logging.level' && (string)$field['type'] === 'select') {
-                    $field['options'] = array(
+                    $field['options'] = [
                         \Logger::DEBUG => 'debug',
                         \Logger::INFO => 'info',
                         \Logger::NOTICE => 'notice',
@@ -412,7 +412,7 @@ class SettingsPanel extends AdminPanel {
                         \Logger::CRITICAL => 'critical',
                         \Logger::ALERT => 'alert',
                         \Logger::EMERGENCY => 'emergency',
-                    );
+                    ];
                 }
                 if ($path === 'admin.accent_color' && (string)$field['type'] === 'select') {
                     $field['options'] = $this->availableAccentColorOptions();
@@ -437,15 +437,15 @@ class SettingsPanel extends AdminPanel {
     // ========== Option providers ==========
 
     private function availableAccentColorOptions() {
-        $presetsFile = dirname(dirname($this->panelPath)) . '/appearance-presets.php';
+        $presetsFile = dirname($this->panelPath, 2) . '/appearance-presets.php';
         if (!file_exists($presetsFile)) {
-            return array();
+            return [];
         }
         $presets = require $presetsFile;
         if (!is_array($presets)) {
-            return array();
+            return [];
         }
-        $options = array();
+        $options = [];
         foreach ($presets as $key => $vars) {
             $options[$key] = 'admin-settings.appearance.preset.' . $key;
         }
@@ -453,15 +453,15 @@ class SettingsPanel extends AdminPanel {
     }
 
     private function availableFontOptions() {
-        $presetsFile = dirname(dirname($this->panelPath)) . '/font-presets.php';
+        $presetsFile = dirname($this->panelPath, 2) . '/font-presets.php';
         if (!file_exists($presetsFile)) {
-            return array();
+            return [];
         }
         $presets = require $presetsFile;
         if (!is_array($presets)) {
-            return array();
+            return [];
         }
-        $options = array();
+        $options = [];
         foreach ($presets as $key => $meta) {
             $options[$key] = 'admin-settings.appearance.font.' . $key;
         }
@@ -469,15 +469,15 @@ class SettingsPanel extends AdminPanel {
     }
 
     private function availableSidebarColorOptions() {
-        $presetsFile = dirname(dirname($this->panelPath)) . '/sidebar-presets.php';
+        $presetsFile = dirname($this->panelPath, 2) . '/sidebar-presets.php';
         if (!file_exists($presetsFile)) {
-            return array();
+            return [];
         }
         $presets = require $presetsFile;
         if (!is_array($presets)) {
-            return array();
+            return [];
         }
-        $options = array();
+        $options = [];
         foreach ($presets as $key => $vars) {
             $options[$key] = 'admin-settings.appearance.sidebar.' . $key;
         }
@@ -485,7 +485,7 @@ class SettingsPanel extends AdminPanel {
     }
 
     private function availableThemeOptions() {
-        $options = array();
+        $options = [];
         $base = MANTRA_THEMES;
         if (!is_dir($base)) {
             return $options;
@@ -508,7 +508,7 @@ class SettingsPanel extends AdminPanel {
     }
 
     private function getAllThemesMetadata() {
-        $themes = array();
+        $themes = [];
         $base = MANTRA_THEMES;
         if (!is_dir($base)) {
             return $themes;
@@ -520,20 +520,20 @@ class SettingsPanel extends AdminPanel {
             } catch (\Exception $e) {
                 continue;
             }
-            $themes[$dir] = array(
+            $themes[$dir] = [
                 'id' => $dir,
                 'name' => isset($meta['name']) && is_string($meta['name']) ? (string)$meta['name'] : $dir,
                 'version' => isset($meta['version']) && is_string($meta['version']) ? (string)$meta['version'] : '',
                 'author' => isset($meta['author']) && is_string($meta['author']) ? (string)$meta['author'] : '',
                 'description' => isset($meta['description']) ? \Config::resolveLocalized($meta['description']) : '',
                 'homepage' => isset($meta['homepage']) && is_string($meta['homepage']) ? (string)$meta['homepage'] : '',
-            );
+            ];
         }
         return $themes;
     }
 
     private function availableLocaleOptions() {
-        $locales = array();
+        $locales = [];
 
         if (is_dir(MANTRA_MODULES)) {
             foreach (glob(MANTRA_MODULES . '/*/lang/*.php') as $path) {
@@ -565,17 +565,17 @@ class SettingsPanel extends AdminPanel {
         }
 
         if (empty($locales)) {
-            $locales = array('en' => 'EN');
+            $locales = ['en' => 'EN'];
         }
         ksort($locales);
         return $locales;
     }
 
     private function getAvailablePasswordAlgorithms() {
-        $algorithms = array(
+        $algorithms = [
             'PASSWORD_DEFAULT' => 'PASSWORD_DEFAULT',
             'PASSWORD_BCRYPT' => 'PASSWORD_BCRYPT',
-        );
+        ];
         if (defined('PASSWORD_ARGON2I')) {
             $algorithms['PASSWORD_ARGON2I'] = 'PASSWORD_ARGON2I';
         }
@@ -587,15 +587,15 @@ class SettingsPanel extends AdminPanel {
 
     private function getAvailableSameSiteOptions() {
         if (defined('PHP_VERSION_ID') && PHP_VERSION_ID >= 70300) {
-            return array(
+            return [
                 'Lax' => 'Lax (recommended)',
                 'Strict' => 'Strict',
                 'None' => 'None',
-            );
+            ];
         }
-        return array(
+        return [
             'not_supported' => 'Not supported (PHP 7.3+ required)',
-        );
+        ];
     }
 
     /**
@@ -604,7 +604,7 @@ class SettingsPanel extends AdminPanel {
      * Returns a nested array: region => array(timezone_id => label).
      */
     private function availableTimezoneOptions() {
-        $grouped = array();
+        $grouped = [];
         $now = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
 
         foreach (\DateTimeZone::listIdentifiers() as $tz) {
@@ -626,7 +626,7 @@ class SettingsPanel extends AdminPanel {
             }
 
             if (!isset($grouped[$region])) {
-                $grouped[$region] = array();
+                $grouped[$region] = [];
             }
             $grouped[$region][$tz] = $city . ' (' . $utcLabel . ')';
         }
@@ -645,14 +645,14 @@ class SettingsPanel extends AdminPanel {
      */
     private function dateFormatExamples() {
         $now = time();
-        return array(
-            'j F Y'  => date('j F Y', $now),
-            'd.m.Y'  => date('d.m.Y', $now),
-            'm/d/Y'  => date('m/d/Y', $now),
-            'Y-m-d'  => date('Y-m-d', $now),
-            'd M Y'  => date('d M Y', $now),
+        return [
+            'j F Y' => date('j F Y', $now),
+            'd.m.Y' => date('d.m.Y', $now),
+            'm/d/Y' => date('m/d/Y', $now),
+            'Y-m-d' => date('Y-m-d', $now),
+            'd M Y' => date('d M Y', $now),
             'F j, Y' => date('F j, Y', $now),
-        );
+        ];
     }
 
     /**
@@ -660,14 +660,14 @@ class SettingsPanel extends AdminPanel {
      */
     private function timeFormatExamples() {
         $now = time();
-        return array(
-            'H:i'   => date('H:i', $now),
+        return [
+            'H:i' => date('H:i', $now),
             'g:i A' => date('g:i A', $now),
-        );
+        ];
     }
 
     private function availableModuleCards() {
-        $cards = array();
+        $cards = [];
         $moduleManager = app()->modules();
         $allModules = $moduleManager->discoverModules();
 
@@ -687,27 +687,27 @@ class SettingsPanel extends AdminPanel {
                 $canDisable = $module->isDisableable();
                 $canDelete = $module->isDeletable();
             } else {
-                $title = \Config::resolveLocalized(isset($manifest['name']) ? $manifest['name'] : $moduleId);
-                $version = isset($manifest['version']) ? $manifest['version'] : '';
-                $author = isset($manifest['author']) ? $manifest['author'] : '';
-                $homepage = isset($manifest['homepage']) ? $manifest['homepage'] : '';
-                $description = \Config::resolveLocalized(isset($manifest['description']) ? $manifest['description'] : '');
-                $type = isset($manifest['type']) ? $manifest['type'] : 'custom';
+                $title = \Config::resolveLocalized($manifest['name'] ?? $moduleId);
+                $version = $manifest['version'] ?? '';
+                $author = $manifest['author'] ?? '';
+                $homepage = $manifest['homepage'] ?? '';
+                $description = \Config::resolveLocalized($manifest['description'] ?? '');
+                $type = $manifest['type'] ?? 'custom';
                 $hasSettings = file_exists($moduleData['path'] . '/settings.schema.php');
 
-                $adminConfig = isset($manifest['admin']) ? $manifest['admin'] : array();
+                $adminConfig = $manifest['admin'] ?? [];
                 if ($type === ModuleType::CORE) {
                     $canDisable = false;
                     $canDelete = false;
                 } else {
-                    $canDisable = isset($adminConfig['disableable']) ? $adminConfig['disableable'] : true;
-                    $canDelete = isset($adminConfig['deletable']) ? $adminConfig['deletable'] : true;
+                    $canDisable = $adminConfig['disableable'] ?? true;
+                    $canDelete = $adminConfig['deletable'] ?? true;
                 }
             }
 
             $requiredByEnabled = false;
             if ($isEnabled) {
-                $enabled = \ConfigSettings::instance()->get('modules.enabled', array('admin'));
+                $enabled = \ConfigSettings::instance()->get('modules.enabled', ['admin']);
                 $graph = $this->collectModuleDependencyGraph();
 
                 foreach ($enabled as $enabledMod) {
@@ -727,7 +727,7 @@ class SettingsPanel extends AdminPanel {
                 $canDelete = false;
             }
 
-            $cards[] = array(
+            $cards[] = [
                 'id' => $moduleId,
                 'title' => $title,
                 'version' => $version,
@@ -739,15 +739,13 @@ class SettingsPanel extends AdminPanel {
                 'has_settings' => $hasSettings,
                 'disableable' => $canDisable,
                 'deletable' => $canDelete,
-            );
+            ];
         }
 
-        usort($cards, function ($a, $b) {
-            return strcasecmp(
-                isset($a['title']) ? $a['title'] : '',
-                isset($b['title']) ? $b['title'] : ''
-            );
-        });
+        usort($cards, fn ($a, $b) => strcasecmp(
+                $a['title'] ?? '',
+                $b['title'] ?? '',
+            ));
 
         return $cards;
     }
@@ -755,7 +753,7 @@ class SettingsPanel extends AdminPanel {
     // ========== Dependency management ==========
 
     private function collectModuleDependencyGraph() {
-        $graph = array();
+        $graph = [];
         $base = MANTRA_MODULES;
         if (!is_dir($base)) {
             return $graph;
@@ -770,10 +768,10 @@ class SettingsPanel extends AdminPanel {
             try {
                 $meta = \JsonCodec::decode(file_get_contents($path));
             } catch (\Exception $e) {
-                $meta = array();
+                $meta = [];
             }
 
-            $deps = array();
+            $deps = [];
             if (isset($meta['dependencies']) && is_array($meta['dependencies'])) {
                 foreach ($meta['dependencies'] as $d) {
                     if (!is_string($d)) {
@@ -799,8 +797,8 @@ class SettingsPanel extends AdminPanel {
             return false;
         }
 
-        $visited = array();
-        $stack = array($start);
+        $visited = [];
+        $stack = [$start];
 
         while (!empty($stack)) {
             $cur = array_pop($stack);
@@ -809,7 +807,7 @@ class SettingsPanel extends AdminPanel {
             }
             $visited[$cur] = true;
 
-            $deps = isset($graph[$cur]) && is_array($graph[$cur]) ? $graph[$cur] : array();
+            $deps = isset($graph[$cur]) && is_array($graph[$cur]) ? $graph[$cur] : [];
             foreach ($deps as $d) {
                 if ($d === $target) {
                     return true;
@@ -828,9 +826,9 @@ class SettingsPanel extends AdminPanel {
             return 'Invalid modules list';
         }
 
-        $current = \ConfigSettings::instance()->get('modules.enabled', array('admin'));
+        $current = \ConfigSettings::instance()->get('modules.enabled', ['admin']);
         if (!is_array($current)) {
-            $current = array('admin');
+            $current = ['admin'];
         }
 
         $moduleManager = app()->modules();
@@ -853,13 +851,13 @@ class SettingsPanel extends AdminPanel {
                 if (file_exists($manifestPath)) {
                     try {
                         $manifest = \JsonCodec::decode(file_get_contents($manifestPath));
-                        $type = isset($manifest['type']) ? $manifest['type'] : 'custom';
+                        $type = $manifest['type'] ?? 'custom';
 
                         if ($type === ModuleType::CORE) {
                             return "Cannot disable core module '{$modId}'";
                         }
 
-                        $adminConfig = isset($manifest['admin']) ? $manifest['admin'] : array();
+                        $adminConfig = $manifest['admin'] ?? [];
                         if (isset($adminConfig['disableable']) && $adminConfig['disableable'] === false) {
                             return "Cannot disable module '{$modId}': protected by policy";
                         }
@@ -937,8 +935,8 @@ class SettingsPanel extends AdminPanel {
             if (file_exists($manifestPath)) {
                 try {
                     $manifest = \JsonCodec::decode(file_get_contents($manifestPath));
-                    $type = isset($manifest['type']) ? $manifest['type'] : 'custom';
-                    $adminConfig = isset($manifest['admin']) ? $manifest['admin'] : array();
+                    $type = $manifest['type'] ?? 'custom';
+                    $adminConfig = $manifest['admin'] ?? [];
 
                     if ($type === ModuleType::CORE) {
                         $error = 'Core modules cannot be deleted';
@@ -954,9 +952,9 @@ class SettingsPanel extends AdminPanel {
             }
         }
 
-        $enabled = \ConfigSettings::instance()->get('modules.enabled', array('admin'));
+        $enabled = \ConfigSettings::instance()->get('modules.enabled', ['admin']);
         if (!is_array($enabled)) {
-            $enabled = array('admin');
+            $enabled = ['admin'];
         }
 
         $graph = $this->collectModuleDependencyGraph();
@@ -982,7 +980,7 @@ class SettingsPanel extends AdminPanel {
             $this->rrmdirSafe($realModuleDir);
         }
 
-        $newEnabled = array_values(array_diff($enabled, array($deleteId)));
+        $newEnabled = array_values(array_diff($enabled, [$deleteId]));
         \ConfigSettings::instance()->set('modules.enabled', $newEnabled);
         \ConfigSettings::instance()->save();
 
@@ -990,7 +988,7 @@ class SettingsPanel extends AdminPanel {
         return true;
     }
 
-    private function rrmdirSafe($dirPath) {
+    private function rrmdirSafe($dirPath): void {
         $dirPath = (string)$dirPath;
         if ($dirPath === '' || !is_dir($dirPath)) {
             return;

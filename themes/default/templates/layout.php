@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="<?php echo isset($lang) ? $lang : 'en'; ?>">
+<html lang="<?php echo $lang ?? 'en'; ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -22,15 +22,13 @@
     // Build nav items once, render in desktop nav + mobile drawer
     $currentPath = strtok($_SERVER['REQUEST_URI'], '?');
     $siteUrl = config('site.url', '');
-    $navItems = array(
-        array('id' => 'home', 'title' => 'Home', 'url' => base_url(), 'order' => 0),
-    );
+    $navItems = [
+        ['id' => 'home', 'title' => 'Home', 'url' => base_url(), 'order' => 0],
+    ];
     $navItems = $app->hooks()->fire('theme.navigation', $navItems);
     $navHtml = '';
     if (is_array($navItems)) {
-        usort($navItems, function($a, $b) {
-            return (isset($a['order']) ? (int)$a['order'] : 100) - (isset($b['order']) ? (int)$b['order'] : 100);
-        });
+        usort($navItems, fn($a, $b) => (isset($a['order']) ? (int)$a['order'] : 100) - (isset($b['order']) ? (int)$b['order'] : 100));
         foreach ($navItems as $item) {
             if (!is_array($item) || empty($item['url']) || empty($item['title'])) continue;
             if (!empty($item['active'])) {
@@ -39,7 +37,7 @@
                 $itemPath = str_replace($siteUrl, '', $item['url']);
                 $itemPath = $itemPath === '' ? '/' : $itemPath;
                 $isActive = ($itemPath === '/' && $currentPath === '/')
-                    || ($itemPath !== '/' && strpos($currentPath, $itemPath) === 0);
+                    || ($itemPath !== '/' && str_starts_with($currentPath, $itemPath)  );
             }
             $active = $isActive ? ' active' : '';
             $url = htmlspecialchars($item['url'], ENT_QUOTES, 'UTF-8');
@@ -72,7 +70,7 @@
     </header>
 
     <?php
-    $sidebarItems = $app->hooks()->fire('theme.sidebar', array());
+    $sidebarItems = $app->hooks()->fire('theme.sidebar', []);
     $hasSidebar = is_array($sidebarItems) && !empty($sidebarItems);
     ?>
 
@@ -81,20 +79,18 @@
             <?php if ($hasSidebar): ?>
                 <div class="row g-4">
                     <div class="col-lg-8">
-                        <?php echo isset($content) ? $content : ''; ?>
+                        <?php echo $content ?? ''; ?>
                     </div>
                     <aside class="col-lg-4">
                         <?php
-                        usort($sidebarItems, function($a, $b) {
-                            return (isset($a['order']) ? (int)$a['order'] : 100) - (isset($b['order']) ? (int)$b['order'] : 100);
-                        });
+                        usort($sidebarItems, fn($a, $b) => (isset($a['order']) ? (int)$a['order'] : 100) - (isset($b['order']) ? (int)$b['order'] : 100));
                         foreach ($sidebarItems as $item) {
                             if (!is_array($item)) continue;
                             echo '<div class="sidebar-widget mb-4">';
                             if (!empty($item['content'])) {
                                 echo $item['content'];
                             } elseif (!empty($item['partial'])) {
-                                $params = isset($item['params']) && is_array($item['params']) ? $item['params'] : array();
+                                $params = isset($item['params']) && is_array($item['params']) ? $item['params'] : [];
                                 echo partial($item['partial'], $params);
                             }
                             echo '</div>';
@@ -105,7 +101,7 @@
             <?php else: ?>
                 <div class="row justify-content-center">
                     <div class="col-lg-8">
-                        <?php echo isset($content) ? $content : ''; ?>
+                        <?php echo $content ?? ''; ?>
                     </div>
                 </div>
             <?php endif; ?>
@@ -115,11 +111,9 @@
     <footer class="site-footer">
         <div class="container">
             <?php
-            $footerLinks = $app->hooks()->fire('theme.footer.links', array());
+            $footerLinks = $app->hooks()->fire('theme.footer.links', []);
             if (is_array($footerLinks) && !empty($footerLinks)) {
-                usort($footerLinks, function($a, $b) {
-                    return (isset($a['order']) ? (int)$a['order'] : 100) - (isset($b['order']) ? (int)$b['order'] : 100);
-                });
+                usort($footerLinks, fn($a, $b) => (isset($a['order']) ? (int)$a['order'] : 100) - (isset($b['order']) ? (int)$b['order'] : 100));
                 echo '<ul class="footer-links">';
                 foreach ($footerLinks as $link) {
                     if (!is_array($link) || empty($link['url']) || empty($link['title'])) continue;

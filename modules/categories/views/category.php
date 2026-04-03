@@ -30,7 +30,7 @@
 
     <?php if (isset($paginator)): ?>
         <div class="mt-4">
-            <?php echo partial('pagination', array('paginator' => $paginator)); ?>
+            <?php echo partial('pagination', ['paginator' => $paginator]); ?>
         </div>
     <?php endif; ?>
 <?php else: ?>

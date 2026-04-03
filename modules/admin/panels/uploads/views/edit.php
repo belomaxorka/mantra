@@ -1,5 +1,5 @@
 <?php
-    $isImage = \Admin\UploadsPanel::isImage(isset($file['mime_type']) ? $file['mime_type'] : '');
+    $isImage = \Admin\UploadsPanel::isImage($file['mime_type'] ?? '');
     $fileUrl = $uploadsUrl . '/' . $file['path'];
     $displayName = !empty($file['original_name']) ? $file['original_name'] : $file['filename'];
 ?>
@@ -22,11 +22,11 @@
                              style="max-height: 500px;">
                     <?php else: ?>
                         <?php
-                            $mime = isset($file['mime_type']) ? $file['mime_type'] : '';
+                            $mime = $file['mime_type'] ?? '';
                             $icon = 'bi-file-earmark';
-                            if (strpos($mime, 'pdf') !== false) $icon = 'bi-file-earmark-pdf';
-                            elseif (strpos($mime, 'zip') !== false) $icon = 'bi-file-earmark-zip';
-                            elseif (strpos($mime, 'text') !== false) $icon = 'bi-file-earmark-text';
+                            if (str_contains($mime, 'pdf')  ) $icon = 'bi-file-earmark-pdf';
+                            elseif (str_contains($mime, 'zip')  ) $icon = 'bi-file-earmark-zip';
+                            elseif (str_contains($mime, 'text')  ) $icon = 'bi-file-earmark-text';
                         ?>
                         <i class="<?php echo $icon; ?> text-muted" style="font-size: 6rem;"></i>
                         <p class="text-muted mt-2"><?php echo e($file['mime_type']); ?></p>

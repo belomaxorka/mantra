@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Auth - Authentication and authorization system
  */
@@ -6,22 +6,22 @@
 class Auth {
     private $db = null;
     private $currentUser = null;
-    
+
     public function __construct() {
         $this->db = new Database();
         $this->loadCurrentUser();
     }
-    
+
     /**
      * Login user
      */
     public function login($username, $password) {
-        logger()->info('Login attempt', array('username' => $username));
+        logger()->info('Login attempt', ['username' => $username]);
 
-        $users = $this->db->query('users', array('username' => $username));
+        $users = $this->db->query('users', ['username' => $username]);
 
         if (empty($users)) {
-            logger()->warning('Login failed: user not found', array('username' => $username));
+            logger()->warning('Login failed: user not found', ['username' => $username]);
             return false;
         }
 
@@ -29,16 +29,16 @@ class Auth {
 
         // Verify password
         if (!$this->verifyPassword($password, $user['password'])) {
-            logger()->warning('Login failed: invalid password', array('username' => $username));
+            logger()->warning('Login failed: invalid password', ['username' => $username]);
             return false;
         }
 
         // Check user status (block inactive/banned accounts)
         if ($user['status'] !== 'active') {
-            logger()->warning('Login failed: account not active', array(
+            logger()->warning('Login failed: account not active', [
                 'username' => $username,
-                'status' => $user['status']
-            ));
+                'status' => $user['status'],
+            ]);
             return false;
         }
 
@@ -52,10 +52,10 @@ class Auth {
             unset($userData['_id']);
 
             $this->db->write('users', $user['_id'], $userData);
-            logger()->info('Password rehashed with new algorithm', array(
+            logger()->info('Password rehashed with new algorithm', [
                 'username' => $username,
-                'user_id' => $user['_id']
-            ));
+                'user_id' => $user['_id'],
+            ]);
         }
 
         // Regenerate session ID to prevent session fixation
@@ -66,54 +66,54 @@ class Auth {
 
         $this->currentUser = $user;
 
-        logger()->info('Login successful', array(
+        logger()->info('Login successful', [
             'username' => $username,
             'user_id' => $user['_id'],
-            'role' => $user['role']
-        ));
+            'role' => $user['role'],
+        ]);
 
         return true;
     }
-    
+
     /**
      * Logout user
      */
-    public function logout() {
+    public function logout(): void {
         if ($this->currentUser) {
-            logger()->info('User logged out', array(
+            logger()->info('User logged out', [
                 'username' => $this->currentUser['username'],
-                'user_id' => $this->currentUser['_id']
-            ));
+                'user_id' => $this->currentUser['_id'],
+            ]);
         }
 
         app()->session()->delete('user_id');
         $this->currentUser = null;
         app()->session()->destroy();
     }
-    
+
     /**
      * Check if user is logged in
      */
     public function check() {
         return $this->currentUser !== null;
     }
-    
+
     /**
      * Get current user
      */
     public function user() {
         return $this->currentUser;
     }
-    
+
     /**
      * Load current user from session
      */
-    private function loadCurrentUser() {
+    private function loadCurrentUser(): void {
         if (app()->session()->has('user_id')) {
             $this->currentUser = $this->db->read('users', app()->session()->get('user_id'));
         }
     }
-    
+
     /**
      * Check if user has role
      */
@@ -121,10 +121,10 @@ class Auth {
         if (!$this->check()) {
             return false;
         }
-        
+
         return $this->currentUser['role'] === $role;
     }
-    
+
     /**
      * Hash password
      */

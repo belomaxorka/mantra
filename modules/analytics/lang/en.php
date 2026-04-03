@@ -1,6 +1,6 @@
-<?php
+<?php declare(strict_types=1);
 
-return array(
+return [
     // Module name
     'analytics.name' => 'Analytics',
 
@@ -17,4 +17,4 @@ return array(
     // Custom Code
     'analytics.settings.custom_code' => 'Custom Tracking Code',
     'analytics.settings.custom_code.help' => 'Add custom analytics or tracking scripts (will be inserted in footer)',
-);
+];

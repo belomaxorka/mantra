@@ -1,34 +1,34 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Http;
 
 class Cookie {
 
     public function get($name, $default = null) {
-        return isset($_COOKIE[$name]) ? $_COOKIE[$name] : $default;
+        return $_COOKIE[$name] ?? $default;
     }
 
     public function has($name) {
         return isset($_COOKIE[$name]);
     }
 
-    public function set($name, $value, $options = array()) {
+    public function set($name, $value, $options = []) {
         if (MANTRA_CLI) {
             return false;
         }
 
         if (headers_sent($file, $line)) {
-            logger()->warning('Cannot set cookie: headers already sent', array(
+            logger()->warning('Cannot set cookie: headers already sent', [
                 'cookie' => $name,
                 'file' => $file,
-                'line' => $line
-            ));
+                'line' => $line,
+            ]);
             return false;
         }
 
         $expires = isset($options['expires']) ? (int)$options['expires'] : 0;
-        $path = isset($options['path']) ? $options['path'] : config('session.cookie_path', '/');
-        $domain = isset($options['domain']) ? $options['domain'] : config('session.cookie_domain', '');
+        $path = $options['path'] ?? config('session.cookie_path', '/');
+        $domain = $options['domain'] ?? config('session.cookie_domain', '');
         $httponly = array_key_exists('httponly', $options) ? (bool)$options['httponly'] : (bool)config('session.cookie_httponly', true);
 
         // Determine SameSite
@@ -56,21 +56,21 @@ class Cookie {
 
         // PHP 7.3+ supports options array with SameSite
         if (PHP_VERSION_ID >= 70300) {
-            return setcookie($name, $value, array(
+            return setcookie($name, $value, [
                 'expires' => $expires,
                 'path' => $path,
                 'domain' => $domain,
                 'secure' => $secure,
                 'httponly' => $httponly,
-                'samesite' => $samesite
-            ));
+                'samesite' => $samesite,
+            ]);
         }
 
         // Legacy signature (no SameSite support)
         return setcookie($name, $value, $expires, $path, $domain, $secure, $httponly);
     }
 
-    public function delete($name, $options = array()) {
+    public function delete($name, $options = []) {
         $options['expires'] = time() - 3600;
         return $this->set($name, '', $options);
     }

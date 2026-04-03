@@ -1,6 +1,6 @@
-<?php
+<?php declare(strict_types=1);
 
-return array(
+return [
     // Module name
     'admin-pages.name' => 'Pages',
 
@@ -45,4 +45,4 @@ return array(
     'admin-pages.show_in_nav_help' => 'Display this page in the site navigation menu',
     'admin-pages.nav_order' => 'Navigation Order',
     'admin-pages.nav_order_help' => 'Lower numbers appear first (default: 50)',
-);
+];

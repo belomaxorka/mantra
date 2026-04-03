@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * JsonCodec Tests (PHPUnit)
  * Tests for simple JSON encoding/decoding wrapper
@@ -8,7 +8,7 @@ class JsonCodecTest extends MantraTestCase
 {
     public function testEncode(): void
     {
-        $data = array('key' => 'value', 'number' => 42);
+        $data = ['key' => 'value', 'number' => 42];
         $json = JsonCodec::encode($data);
 
         $this->assertIsString($json, 'encode() returns string');
@@ -68,11 +68,11 @@ class JsonCodecTest extends MantraTestCase
 
     public function testUnicodeHandling(): void
     {
-        $data = array(
+        $data = [
             'russian' => 'Привет мир',
             'japanese' => '日本語',
-            'emoji' => '🚀 🎉 ✨'
-        );
+            'emoji' => '🚀 🎉 ✨',
+        ];
 
         $json = JsonCodec::encode($data);
         $decoded = JsonCodec::decode($json);
@@ -84,12 +84,12 @@ class JsonCodecTest extends MantraTestCase
 
     public function testSpecialCharacters(): void
     {
-        $data = array(
+        $data = [
             'quotes' => 'Text with "quotes" and \'apostrophes\'',
             'slashes' => '/path/to/file',
             'backslashes' => 'C:\\Windows\\Path',
-            'newlines' => "Line 1\nLine 2\nLine 3"
-        );
+            'newlines' => "Line 1\nLine 2\nLine 3",
+        ];
 
         $json = JsonCodec::encode($data);
         $decoded = JsonCodec::decode($json);
@@ -102,16 +102,16 @@ class JsonCodecTest extends MantraTestCase
 
     public function testNestedData(): void
     {
-        $data = array(
-            'level1' => array(
-                'level2' => array(
-                    'level3' => array(
-                        'value' => 'deep'
-                    )
-                )
-            ),
-            'array' => array(1, 2, 3, 4, 5)
-        );
+        $data = [
+            'level1' => [
+                'level2' => [
+                    'level3' => [
+                        'value' => 'deep',
+                    ],
+                ],
+            ],
+            'array' => [1, 2, 3, 4, 5],
+        ];
 
         $json = JsonCodec::encode($data);
         $decoded = JsonCodec::decode($json);
@@ -123,7 +123,7 @@ class JsonCodecTest extends MantraTestCase
 
     public function testEmptyArray(): void
     {
-        $data = array();
+        $data = [];
 
         $json = JsonCodec::encode($data);
         $decoded = JsonCodec::decode($json);
@@ -134,10 +134,10 @@ class JsonCodecTest extends MantraTestCase
 
     public function testBooleanValues(): void
     {
-        $data = array(
+        $data = [
             'true_value' => true,
-            'false_value' => false
-        );
+            'false_value' => false,
+        ];
 
         $json = JsonCodec::encode($data);
         $decoded = JsonCodec::decode($json);
@@ -150,12 +150,12 @@ class JsonCodecTest extends MantraTestCase
 
     public function testNumericValues(): void
     {
-        $data = array(
+        $data = [
             'integer' => 42,
             'float' => 3.14159,
             'zero' => 0,
-            'negative' => -123
-        );
+            'negative' => -123,
+        ];
 
         $json = JsonCodec::encode($data);
         $decoded = JsonCodec::decode($json);
@@ -168,10 +168,10 @@ class JsonCodecTest extends MantraTestCase
 
     public function testNullValues(): void
     {
-        $data = array(
+        $data = [
             'null_value' => null,
-            'string' => 'not null'
-        );
+            'string' => 'not null',
+        ];
 
         $json = JsonCodec::encode($data);
         $decoded = JsonCodec::decode($json);
@@ -207,30 +207,30 @@ class JsonCodecTest extends MantraTestCase
 
         $this->assertIsArray($decoded, 'Empty object decoded as array');
         $this->assertCount(0, $decoded, 'Empty object has zero elements');
-        $this->assertSame(array(), $decoded, 'Empty object equals empty array');
+        $this->assertSame([], $decoded, 'Empty object equals empty array');
     }
 
     public function testSpecialNumericValuesInf(): void
     {
         $this->expectException(JsonCodecException::class);
-        JsonCodec::encode(array('value' => INF));
+        JsonCodec::encode(['value' => INF]);
     }
 
     public function testSpecialNumericValuesNegInf(): void
     {
         $this->expectException(JsonCodecException::class);
-        JsonCodec::encode(array('value' => -INF));
+        JsonCodec::encode(['value' => -INF]);
     }
 
     public function testSpecialNumericValuesNan(): void
     {
         $this->expectException(JsonCodecException::class);
-        JsonCodec::encode(array('value' => NAN));
+        JsonCodec::encode(['value' => NAN]);
     }
 
     public function testSpecialNumericValuesScientificNotation(): void
     {
-        $data = array('scientific' => 1.5e10, 'negative_exp' => 2.5e-3);
+        $data = ['scientific' => 1.5e10, 'negative_exp' => 2.5e-3];
         $json = JsonCodec::encode($data);
         $decoded = JsonCodec::decode($json);
 
@@ -240,18 +240,18 @@ class JsonCodecTest extends MantraTestCase
 
     public function testJsonFormatting(): void
     {
-        $data = array('key1' => 'value1', 'key2' => array('nested' => 'value'));
+        $data = ['key1' => 'value1', 'key2' => ['nested' => 'value']];
         $json = JsonCodec::encode($data);
 
         // Check for pretty print (should have newlines and indentation)
         $this->assertStringContainsString("\n", $json, 'JSON contains newlines (pretty print)');
         $this->assertTrue(
-            strpos($json, '    ') !== false || strpos($json, "\t") !== false,
-            'JSON contains indentation'
+            str_contains($json, '    ') || str_contains($json, "\t")  ,
+            'JSON contains indentation',
         );
 
         // Check for unescaped slashes
-        $dataWithSlashes = array('path' => '/path/to/file');
+        $dataWithSlashes = ['path' => '/path/to/file'];
         $jsonWithSlashes = JsonCodec::encode($dataWithSlashes);
         $this->assertStringNotContainsString('\\/', $jsonWithSlashes, 'Slashes are not escaped (JSON_UNESCAPED_SLASHES)');
         $this->assertStringContainsString('/path/to/file', $jsonWithSlashes, 'Slashes preserved as-is');
@@ -259,7 +259,7 @@ class JsonCodecTest extends MantraTestCase
 
     public function testVariousInvalidJson(): void
     {
-        $invalidCases = array(
+        $invalidCases = [
             '{"key": value}' => 'unquoted value',
             '{"key": "value",}' => 'trailing comma',
             '{"key": "value"' => 'unclosed brace',
@@ -269,10 +269,11 @@ class JsonCodecTest extends MantraTestCase
             'null' => 'JSON null (not array)',
             '123' => 'JSON number (not array)',
             'true' => 'JSON boolean (not array)',
-            '"string"' => 'JSON string (not array)'
-        );
+            '"string"' => 'JSON string (not array)',
+        ];
 
         foreach ($invalidCases as $json => $description) {
+            $json = (string) $json; // numeric keys auto-cast to int
             try {
                 JsonCodec::decode($json);
                 $this->fail("decode() should throw exception for $description");
@@ -285,11 +286,11 @@ class JsonCodecTest extends MantraTestCase
     public function testMixedArrayTypes(): void
     {
         // Mixed numeric and string keys
-        $data = array(
+        $data = [
             0 => 'first',
             'key' => 'second',
-            2 => 'third'
-        );
+            2 => 'third',
+        ];
 
         $json = JsonCodec::encode($data);
         $decoded = JsonCodec::decode($json);
@@ -299,7 +300,7 @@ class JsonCodecTest extends MantraTestCase
         $this->assertArrayHasKey(2, $decoded, 'Mixed array: numeric key 2 exists');
 
         // Non-sequential indices
-        $data2 = array(0 => 'a', 2 => 'b', 5 => 'c');
+        $data2 = [0 => 'a', 2 => 'b', 5 => 'c'];
         $json2 = JsonCodec::encode($data2);
         $decoded2 = JsonCodec::decode($json2);
 
@@ -311,7 +312,7 @@ class JsonCodecTest extends MantraTestCase
 
     public function testSpecialKeysInObjects(): void
     {
-        $data = array(
+        $data = [
             'key with spaces' => 'value1',
             'key.with.dots' => 'value2',
             'key/with/slashes' => 'value3',
@@ -321,8 +322,8 @@ class JsonCodecTest extends MantraTestCase
             'key_with_underscores' => 'value7',
             'кириллица' => 'value8',
             '123numeric' => 'value9',
-            '' => 'empty_key'
-        );
+            '' => 'empty_key',
+        ];
 
         $json = JsonCodec::encode($data);
         $decoded = JsonCodec::decode($json);
@@ -342,10 +343,10 @@ class JsonCodecTest extends MantraTestCase
     public function testDeepNesting(): void
     {
         // Create deeply nested structure (10 levels)
-        $deep = array();
+        $deep = [];
         $current = &$deep;
         for ($i = 0; $i < 10; $i++) {
-            $current['level' . $i] = array();
+            $current['level' . $i] = [];
             $current = &$current['level' . $i];
         }
         $current['final'] = 'deep_value';
@@ -362,7 +363,7 @@ class JsonCodecTest extends MantraTestCase
         $this->assertSame('deep_value', $current['final'], 'Deep nesting: final value preserved');
 
         // Test large array
-        $largeArray = array();
+        $largeArray = [];
         for ($i = 0; $i < 1000; $i++) {
             $largeArray[] = "item_$i";
         }
@@ -380,7 +381,7 @@ class JsonCodecTest extends MantraTestCase
     {
         // Test very long string (100KB)
         $longString = str_repeat('abcdefghij', 10000); // 100,000 characters
-        $data = array('long' => $longString);
+        $data = ['long' => $longString];
 
         $json = JsonCodec::encode($data);
         $decoded = JsonCodec::decode($json);
@@ -390,7 +391,7 @@ class JsonCodecTest extends MantraTestCase
 
         // Test string with repeated unicode
         $unicodeString = str_repeat('🚀日本語Привет', 1000);
-        $data2 = array('unicode_long' => $unicodeString);
+        $data2 = ['unicode_long' => $unicodeString];
 
         $json2 = JsonCodec::encode($data2);
         $decoded2 = JsonCodec::decode($json2);
@@ -398,11 +399,11 @@ class JsonCodecTest extends MantraTestCase
         $this->assertSame($unicodeString, $decoded2['unicode_long'], 'Long unicode string preserved');
 
         // Test multiple long strings in one document
-        $data3 = array(
+        $data3 = [
             'string1' => str_repeat('a', 10000),
             'string2' => str_repeat('b', 10000),
-            'string3' => str_repeat('c', 10000)
-        );
+            'string3' => str_repeat('c', 10000),
+        ];
 
         $json3 = JsonCodec::encode($data3);
         $decoded3 = JsonCodec::decode($json3);

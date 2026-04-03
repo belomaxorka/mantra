@@ -9,8 +9,8 @@ require_once __DIR__ . '/core/bootstrap.php';
 use Storage\FileIO;
 
 // Check required extensions
-$requiredExtensions = array('json', 'session', 'openssl');
-$missingExtensions = array();
+$requiredExtensions = ['json', 'session', 'openssl'];
+$missingExtensions = [];
 
 foreach ($requiredExtensions as $ext) {
     if (!extension_loaded($ext)) {
@@ -32,7 +32,7 @@ if (file_exists(MANTRA_CONTENT . '/users')) {
 }
 
 // Allowed languages whitelist
-$allowedLanguages = array('en', 'ru');
+$allowedLanguages = ['en', 'ru'];
 
 // CSRF: generate token for the form
 if (session_status() === PHP_SESSION_NONE) {
@@ -69,18 +69,18 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
 
     if (!isset($error)) {
         // Create directories
-        $dirs = array(
+        $dirs = [
             MANTRA_CONTENT . '/pages',
             MANTRA_CONTENT . '/posts',
             MANTRA_CONTENT . '/users',
             MANTRA_CONTENT . '/settings',
             MANTRA_STORAGE . '/logs',
-            MANTRA_UPLOADS
-        );
+            MANTRA_UPLOADS,
+        ];
 
         $dirFailed = false;
         foreach ($dirs as $dir) {
-            if (!is_dir($dir) && !mkdir($dir, 0755, true)) {
+            if (!is_dir($dir) && !mkdir($dir, 0o755, true)) {
                 $dirFailed = true;
             }
         }
@@ -112,7 +112,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
         $db = new Database();
 
         $now = date(Clock::STORAGE_FORMAT);
-        $userData = array(
+        $userData = [
             'username' => $username,
             'password' => Auth::hashPasswordStatic($password),
             'email' => '',
@@ -121,7 +121,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
             'author_id' => '',
             'created_at' => $now,
             'updated_at' => $now,
-        );
+        ];
 
         if ($db->write('users', $db->generateId(), $userData)) {
             // Regenerate CSRF token after success
