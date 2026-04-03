@@ -137,6 +137,55 @@ abstract class ContentPanel extends AdminPanel
     }
 
     /**
+     * Check whether the given slug is unique within the collection.
+     *
+     * @param string $slug      Slug to check
+     * @param string|null $excludeId  Document ID to exclude (for updates)
+     * @return bool
+     */
+    protected function isSlugUnique($slug, $excludeId = null)
+    {
+        $existing = app()->db()->query($this->getCollectionName(), ['slug' => $slug]);
+
+        foreach ($existing as $item) {
+            if ($excludeId !== null && ($item['_id'] ?? '') === $excludeId) {
+                continue;
+            }
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Re-render the edit form with an error message.
+     *
+     * @param array  $data  Form data to pre-fill
+     * @param string $error Error message
+     * @param bool   $isNew Whether this is a create (true) or edit (false) form
+     */
+    protected function renderFormWithError($data, $error, $isNew = true)
+    {
+        $templateData = [
+            strtolower($this->getContentType()) => $data,
+            'isNew' => $isNew,
+            'csrf_token' => app()->auth()->generateCsrfToken(),
+            'error' => $error,
+        ];
+        $templateData = $this->fireHook('admin.' . $this->getCollectionName() . '.edit.data', $templateData);
+
+        $content = $this->renderView($this->getEditTemplate(), $templateData);
+
+        $title = $isNew
+            ? t($this->getDomain() . '.new')
+            : t($this->getDomain() . '.edit_' . strtolower($this->getContentType()));
+
+        echo $this->renderAdmin($title, $content, [
+            'breadcrumbs' => $this->getItemBreadcrumbs($title),
+        ]);
+    }
+
+    /**
      * Translation domain for this panel (default: "admin-{id}")
      * @return string
      */
@@ -278,6 +327,12 @@ abstract class ContentPanel extends AdminPanel
         $data = $this->extractFormData();
         $data = $this->fireHook('admin.' . $this->getCollectionName() . '.form_data', $data);
         $data = $this->ensureSlug($data);
+
+        if (!empty($data['slug']) && !$this->isSlugUnique($data['slug'])) {
+            $this->renderFormWithError($data, t('admin.common.slug_exists'), true);
+            return;
+        }
+
         $user = $this->getUser();
         $data['author'] = $user['username'];
         $data['author_id'] = $user['_id'];
@@ -361,6 +416,16 @@ abstract class ContentPanel extends AdminPanel
         $data = $this->extractFormData();
         $data = $this->fireHook('admin.' . $this->getCollectionName() . '.form_data', $data);
         $data = $this->ensureSlug($data);
+
+        if (!empty($data['slug']) && !$this->isSlugUnique($data['slug'], $id)) {
+            $data['_id'] = $id;
+            $data['author'] = $item['author'];
+            $data['author_id'] = $item['author_id'];
+            $data['created_at'] = $item['created_at'];
+            $this->renderFormWithError($data, t('admin.common.slug_exists'), false);
+            return;
+        }
+
         $data['updated_at'] = clock()->timestamp();
 
         // Preserve original fields

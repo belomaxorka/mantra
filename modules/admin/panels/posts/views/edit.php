@@ -10,6 +10,13 @@
         </div>
     </div>
 
+    <?php if (!empty($error)): ?>
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i><?php echo e($error); ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    <?php endif; ?>
+
     <form method="POST" action="<?php echo $isNew ? base_url('/admin/posts/new') : base_url('/admin/posts/edit/' . $post['_id']); ?>">
         <input type="hidden" name="csrf_token" value="<?php echo e($csrf_token); ?>">
 

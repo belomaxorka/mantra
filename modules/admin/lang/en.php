@@ -41,6 +41,7 @@ return [
     'admin.common.delete_confirm_title' => 'Confirm Deletion',
     'admin.common.delete_confirm_body' => 'Are you sure you want to delete this item? This action cannot be undone.',
     'admin.common.access_denied' => 'Access denied. You do not have permission to perform this action.',
+    'admin.common.slug_exists' => 'This URL slug is already in use. Please choose a different one.',
 
     // Modules management (shared across admin modules)
     'admin.modules.author' => 'Author',
