@@ -260,9 +260,10 @@ if (!empty($revertedNormalized)) {
  * - "!" before ":" in subject (e.g. feat!:, feat(scope)!:)
  * - "BREAKING CHANGE:" or "BREAKING-CHANGE:" in commit body
  *
- * Returns the breaking change note from the body, or empty string.
+ * Returns the breaking change note, empty string if breaking but no note,
+ * or null if not a breaking change.
  */
-function detectBreaking(array $entry): string
+function detectBreaking(array $entry): ?string
 {
     // Check "!" in subject: type(scope)!: description
     if (preg_match('/^[a-z]+(\(.*?\))?!:/', $entry['text'])) {
@@ -278,7 +279,7 @@ function detectBreaking(array $entry): string
         return trim($m[1]);
     }
 
-    return false;
+    return null;
 }
 
 $breaking = array();
@@ -292,7 +293,7 @@ foreach ($entries as $entry) {
     $breakingNote = detectBreaking($entry);
 
     // Breaking changes go to their own section
-    if ($breakingNote !== false) {
+    if ($breakingNote !== null) {
         $line = $formatted;
         if ($breakingNote !== '') {
             $line .= " — {$breakingNote}";
