@@ -1,4 +1,5 @@
 <?php declare(strict_types=1);
+
 /**
  * MarkdownStorageDriver Tests (PHPUnit 10.x)
  * Tests for Markdown file storage driver implementation
@@ -192,7 +193,7 @@ class MarkdownStorageDriverTest extends MantraTestCase
 
         // Content should be converted to HTML
         $this->assertTrue(
-            str_contains($read['content'], '<h1>') || str_contains($read['content'], '<p>')  ,
+            str_contains($read['content'], '<h1>') || str_contains($read['content'], '<p>'),
             'Markdown converted to HTML',
         );
         $this->assertStringContainsString('bold', $read['content'], 'HTML content contains original text');
@@ -269,7 +270,7 @@ This is content without YAML frontmatter.';
 
         $this->assertSame('HR Test', $read['title'], 'Title preserved when content has ---');
         $this->assertTrue(
-            str_contains($read['_markdown'], 'First section') && str_contains($read['_markdown'], 'Second section')  ,
+            str_contains($read['_markdown'], 'First section') && str_contains($read['_markdown'], 'Second section'),
             'Both sections preserved when content contains ---',
         );
     }

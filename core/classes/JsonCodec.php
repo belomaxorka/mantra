@@ -1,11 +1,11 @@
 <?php declare(strict_types=1);
+
 /**
  * JsonCodec - Simple JSON encoding/decoding wrapper
  *
  * Provides clean separation between JSON format handling and file operations.
  * This is a lightweight wrapper around json_encode/json_decode with proper error handling.
  */
-
 class JsonCodecException extends Exception
 {
     public function __construct($message, $code = 0, Exception $previous = null)

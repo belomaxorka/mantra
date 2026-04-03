@@ -6,7 +6,8 @@
 
 namespace Module;
 
-interface ModuleInterface {
+interface ModuleInterface
+{
     /**
      * Initialize the module
      * Called after module is loaded and dependencies are resolved

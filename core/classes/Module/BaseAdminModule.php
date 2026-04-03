@@ -1,7 +1,7 @@
 <?php declare(strict_types=1);
 /**
  * BaseAdminModule - Base class for admin panel modules
- * 
+ *
  * Provides common functionality for modules that extend the admin panel:
  * - Easy route registration
  * - Sidebar item registration
@@ -12,7 +12,8 @@
 
 namespace Module;
 
-abstract class BaseAdminModule extends Module {
+abstract class BaseAdminModule extends Module
+{
 
     /**
      * Initialize admin module.
@@ -21,7 +22,8 @@ abstract class BaseAdminModule extends Module {
      * module manifest (module.json) and registers them automatically.
      * Subclasses should call parent::init() to keep this behaviour.
      */
-    public function init(): void {
+    public function init(): void
+    {
         $manifest = $this->getManifest();
         $admin = isset($manifest['admin']) && is_array($manifest['admin']) ? $manifest['admin'] : [];
 
@@ -67,7 +69,8 @@ abstract class BaseAdminModule extends Module {
      * @param string $pattern Route pattern (without /admin prefix)
      * @param callable $callback Route handler
      */
-    protected function registerAdminRoute($method, $pattern, $callback): void {
+    protected function registerAdminRoute($method, $pattern, $callback): void
+    {
         app()->hooks()->register('routes.register', function ($data) use ($method, $pattern, $callback) {
             $admin = app()->modules()->getModule('admin');
             if ($admin && method_exists($admin, 'adminRoute')) {
@@ -81,7 +84,8 @@ abstract class BaseAdminModule extends Module {
      * Register sidebar item
      * @param array $item Sidebar item configuration
      */
-    protected function registerSidebarItem($item): void {
+    protected function registerSidebarItem($item): void
+    {
         app()->hooks()->register('admin.sidebar', function ($items) use ($item) {
             if (!is_array($items)) {
                 $items = [];
@@ -95,7 +99,8 @@ abstract class BaseAdminModule extends Module {
      * Register quick action
      * @param array $action Quick action configuration
      */
-    protected function registerQuickAction($action): void {
+    protected function registerQuickAction($action): void
+    {
         app()->hooks()->register('admin.quick_actions', function ($actions) use ($action) {
             if (!is_array($actions)) {
                 $actions = [];
@@ -112,7 +117,8 @@ abstract class BaseAdminModule extends Module {
      * @param array $extra Extra data
      * @return string
      */
-    protected function renderAdmin($title, $content, $extra = []) {
+    protected function renderAdmin($title, $content, $extra = [])
+    {
         $admin = app()->modules()->getModule('admin');
         if ($admin && method_exists($admin, 'render')) {
             return $admin->render($title, $content, $extra);
@@ -125,7 +131,8 @@ abstract class BaseAdminModule extends Module {
      * Verify CSRF token (shorthand)
      * @return bool
      */
-    protected function verifyCsrf() {
+    protected function verifyCsrf()
+    {
         if (app()->request()->method() !== 'POST') {
             return true;
         }
@@ -142,7 +149,8 @@ abstract class BaseAdminModule extends Module {
      * Get current user
      * @return array|null
      */
-    protected function getUser() {
+    protected function getUser()
+    {
         return app()->auth()->user();
     }
 
@@ -150,7 +158,8 @@ abstract class BaseAdminModule extends Module {
      * Check if user is authenticated
      * @return bool
      */
-    protected function isAuthenticated() {
+    protected function isAuthenticated()
+    {
         return app()->auth()->check();
     }
 
@@ -158,7 +167,8 @@ abstract class BaseAdminModule extends Module {
      * Redirect to admin page
      * @param string $path Path relative to /admin
      */
-    protected function redirectAdmin($path = ''): void {
+    protected function redirectAdmin($path = ''): void
+    {
         app()->response()->redirect(base_url('/admin/' . ltrim($path, '/')));
     }
 
@@ -168,7 +178,8 @@ abstract class BaseAdminModule extends Module {
      * @param array $data Template data
      * @return string
      */
-    protected function renderView($template, $data = []) {
+    protected function renderView($template, $data = [])
+    {
         return app()->view()->fetch($template, $data);
     }
 }

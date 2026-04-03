@@ -1,4 +1,5 @@
 <?php declare(strict_types=1);
+
 /**
  * Paginator - Universal pagination value object
  *
@@ -13,18 +14,20 @@
  *   ));
  *   echo partial('pagination', array('paginator' => $paginator));
  */
-class Paginator {
+class Paginator
+{
     private $totalItems;
     private $perPage;
     private $currentPage;
     private $totalPages;
 
     /**
-     * @param int $totalItems  Total number of items in the result set
-     * @param int $perPage     Items per page (minimum 1)
+     * @param int $totalItems Total number of items in the result set
+     * @param int $perPage Items per page (minimum 1)
      * @param int $currentPage Requested page number (clamped to valid range)
      */
-    public function __construct($totalItems, $perPage, $currentPage = 1) {
+    public function __construct($totalItems, $perPage, $currentPage = 1)
+    {
         $this->totalItems = max(0, (int)$totalItems);
         $this->perPage = max(1, (int)$perPage);
         $this->totalPages = $this->totalItems > 0
@@ -36,70 +39,80 @@ class Paginator {
     /**
      * Current page number (1-based, clamped to valid range).
      */
-    public function currentPage() {
+    public function currentPage()
+    {
         return $this->currentPage;
     }
 
     /**
      * Total number of pages.
      */
-    public function totalPages() {
+    public function totalPages()
+    {
         return $this->totalPages;
     }
 
     /**
      * Total number of items.
      */
-    public function totalItems() {
+    public function totalItems()
+    {
         return $this->totalItems;
     }
 
     /**
      * Items per page.
      */
-    public function perPage() {
+    public function perPage()
+    {
         return $this->perPage;
     }
 
     /**
      * Offset for Database query (0-based).
      */
-    public function offset() {
+    public function offset()
+    {
         return ($this->currentPage - 1) * $this->perPage;
     }
 
     /**
      * Whether there is a previous page.
      */
-    public function hasPrevious() {
+    public function hasPrevious()
+    {
         return $this->currentPage > 1;
     }
 
     /**
      * Whether there is a next page.
      */
-    public function hasNext() {
+    public function hasNext()
+    {
         return $this->currentPage < $this->totalPages;
     }
 
     /**
      * Previous page number.
      */
-    public function previousPage() {
+    public function previousPage()
+    {
         return max(1, $this->currentPage - 1);
     }
 
     /**
      * Next page number.
      */
-    public function nextPage() {
+    public function nextPage()
+    {
         return min($this->totalPages, $this->currentPage + 1);
     }
 
     /**
      * Whether pagination is needed (more than one page).
      */
-    public function hasPages() {
+    public function hasPages()
+    {
         return $this->totalPages > 1;
     }
 
@@ -111,7 +124,8 @@ class Paginator {
      * @param int $window Number of pages to show around current page
      * @return array
      */
-    public function pages($window = 2) {
+    public function pages($window = 2)
+    {
         if ($this->totalPages <= 1) {
             return [1];
         }

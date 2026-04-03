@@ -130,7 +130,7 @@ class Language
 
         // Secondary: For parent namespaces (without hyphen), also check child modules
         // Example: "admin" key can load from "admin-dashboard", "admin-pages", etc.
-        if (!str_contains($module, '-')  ) {
+        if (!str_contains($module, '-')) {
             // This is a parent namespace (e.g., "admin")
             // Check all child modules (e.g., "admin-dashboard", "admin-pages")
             $childModules = $this->findChildModules($module);

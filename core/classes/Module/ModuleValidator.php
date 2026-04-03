@@ -9,14 +9,16 @@ use JsonCodec;
 use InvalidArgumentException;
 use Exception;
 
-class ModuleValidator {
+class ModuleValidator
+{
 
     /**
      * Check if module ID is valid
      * @param string $id
      * @return bool
      */
-    public static function isValidModuleId($id) {
+    public static function isValidModuleId($id)
+    {
         return is_string($id) && $id !== '' && preg_match('/^[a-z0-9_-]+$/', $id);
     }
 
@@ -26,7 +28,8 @@ class ModuleValidator {
      * @param string|null $context
      * @throws InvalidArgumentException
      */
-    public static function assertValidModuleId($id, $context = null): void {
+    public static function assertValidModuleId($id, $context = null): void
+    {
         if (!self::isValidModuleId($id)) {
             $message = "Invalid module ID: '{$id}'";
             if ($context) {
@@ -41,7 +44,8 @@ class ModuleValidator {
      * @param array $manifest
      * @return array Array of validation errors (empty if valid)
      */
-    public static function validateManifest($manifest) {
+    public static function validateManifest($manifest)
+    {
         $errors = [];
 
         // Required: id
@@ -104,7 +108,8 @@ class ModuleValidator {
      * @param string $moduleId
      * @return array Array of validation errors (empty if valid)
      */
-    public static function validateStructure($moduleId) {
+    public static function validateStructure($moduleId)
+    {
         $errors = [];
         $modulePath = MANTRA_MODULES . '/' . $moduleId;
 
@@ -144,7 +149,8 @@ class ModuleValidator {
      * Validate all modules
      * @return array Validation results keyed by module ID
      */
-    public static function validateAll() {
+    public static function validateAll()
+    {
         $results = [];
 
         if (!is_dir(MANTRA_MODULES)) {

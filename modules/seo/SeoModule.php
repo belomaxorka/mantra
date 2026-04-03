@@ -1,4 +1,5 @@
 <?php declare(strict_types=1);
+
 /**
  * SEO Module - Example of extensibility features
  *
@@ -45,7 +46,7 @@ class SeoModule extends Module
 
         // Open Graph
         $ogImage = $settings->get('og.default_image', '');
-        if (!str_starts_with($ogImage, 'http')  ) {
+        if (!str_starts_with($ogImage, 'http')) {
             $ogImage = base_url($ogImage);
         }
         $ogSiteName = $settings->get('og.site_name', '');

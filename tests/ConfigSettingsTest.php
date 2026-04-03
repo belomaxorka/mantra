@@ -1,4 +1,5 @@
 <?php declare(strict_types=1);
+
 /**
  * ConfigSettings Tests (PHPUnit 10.x)
  *
@@ -9,7 +10,6 @@
  * - get/set/has methods
  * - schema_version handling
  */
-
 class ConfigSettingsTest extends MantraTestCase
 {
     private $configPath;

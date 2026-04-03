@@ -29,11 +29,13 @@ $numPages = isset($opts['pages']) && $opts['pages'] !== false ? max(0, (int)$opt
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
-function seed_pick($arr) {
+function seed_pick($arr)
+{
     return $arr[array_rand($arr)];
 }
 
-function seed_sentence($minWords = 4, $maxWords = 10) {
+function seed_sentence($minWords = 4, $maxWords = 10)
+{
     $words = array(
         'lorem', 'ipsum', 'dolor', 'sit', 'amet', 'consectetur',
         'adipiscing', 'elit', 'sed', 'do', 'eiusmod', 'tempor',
@@ -56,7 +58,8 @@ function seed_sentence($minWords = 4, $maxWords = 10) {
     return implode(' ', $out);
 }
 
-function seed_paragraph($minSentences = 3, $maxSentences = 7) {
+function seed_paragraph($minSentences = 3, $maxSentences = 7)
+{
     $count = rand($minSentences, $maxSentences);
     $sentences = array();
     for ($i = 0; $i < $count; $i++) {
@@ -65,7 +68,8 @@ function seed_paragraph($minSentences = 3, $maxSentences = 7) {
     return implode(' ', $sentences);
 }
 
-function seed_html_content($paragraphs = null) {
+function seed_html_content($paragraphs = null)
+{
     $count = $paragraphs ?: rand(2, 5);
     $parts = array();
     for ($i = 0; $i < $count; $i++) {
@@ -74,7 +78,8 @@ function seed_html_content($paragraphs = null) {
     return implode("\n", $parts);
 }
 
-function seed_title() {
+function seed_title()
+{
     $templates = array(
         'How to {verb} {noun}',
         'The {adjective} guide to {noun}',
@@ -102,7 +107,8 @@ function seed_title() {
     return ucfirst($title);
 }
 
-function seed_page_title() {
+function seed_page_title()
+{
     $titles = array(
         'About us', 'Contact', 'Privacy policy', 'Terms of service',
         'FAQ', 'Services', 'Portfolio', 'Our team', 'Careers',
@@ -113,14 +119,16 @@ function seed_page_title() {
     return seed_pick($titles);
 }
 
-function seed_timestamp($daysAgo = 90) {
+function seed_timestamp($daysAgo = 90)
+{
     $ts = time() - rand(0, $daysAgo * 86400);
     return date(Clock::STORAGE_FORMAT, $ts);
 }
 
 // ── Clear seeded data ───────────────────────────────────────────────────────
 
-function clear_seeded($collection) {
+function clear_seeded($collection)
+{
     $dir = MANTRA_CONTENT . '/' . $collection;
     if (!is_dir($dir)) {
         return 0;
@@ -164,11 +172,11 @@ $statuses = array('published', 'published', 'published', 'draft'); // 75% publis
 // ── Generate categories ────────────────────────────────────────────────────
 
 $categoryDefs = array(
-    array('title' => 'News',      'slug' => 'news',      'description' => 'Latest news and announcements', 'order' => 0),
-    array('title' => 'Tutorials',  'slug' => 'tutorials',  'description' => 'Step-by-step guides and how-tos', 'order' => 1),
-    array('title' => 'Reviews',    'slug' => 'reviews',    'description' => 'In-depth reviews and comparisons', 'order' => 2),
-    array('title' => 'Opinion',    'slug' => 'opinion',    'description' => 'Opinions and editorials',         'order' => 3),
-    array('title' => 'Guides',     'slug' => 'guides',     'description' => 'Comprehensive reference guides',  'order' => 4),
+    array('title' => 'News', 'slug' => 'news', 'description' => 'Latest news and announcements', 'order' => 0),
+    array('title' => 'Tutorials', 'slug' => 'tutorials', 'description' => 'Step-by-step guides and how-tos', 'order' => 1),
+    array('title' => 'Reviews', 'slug' => 'reviews', 'description' => 'In-depth reviews and comparisons', 'order' => 2),
+    array('title' => 'Opinion', 'slug' => 'opinion', 'description' => 'Opinions and editorials', 'order' => 3),
+    array('title' => 'Guides', 'slug' => 'guides', 'description' => 'Comprehensive reference guides', 'order' => 4),
 );
 
 echo "Generating " . count($categoryDefs) . " categories...";
@@ -178,18 +186,20 @@ foreach ($categoryDefs as $catDef) {
     }
     $now = clock()->timestamp();
     $db->write('categories', $catDef['slug'], array(
-        'title'       => $catDef['title'],
-        'slug'        => $catDef['slug'],
+        'title' => $catDef['title'],
+        'slug' => $catDef['slug'],
         'description' => $catDef['description'],
-        'order'       => $catDef['order'],
-        'created_at'  => $now,
-        'updated_at'  => $now,
-        '_seed'       => true,
+        'order' => $catDef['order'],
+        'created_at' => $now,
+        'updated_at' => $now,
+        '_seed' => true,
     ));
 }
 echo " done.\n";
 
-$categorySlugs = array_map(function ($c) { return $c['slug']; }, $categoryDefs);
+$categorySlugs = array_map(function ($c) {
+    return $c['slug'];
+}, $categoryDefs);
 $categorySlugs[] = ''; // some posts without category
 
 // Get first user as author

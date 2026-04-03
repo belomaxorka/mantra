@@ -2,21 +2,26 @@
 
 namespace Admin;
 
-class PagesPanel extends ContentPanel {
+class PagesPanel extends ContentPanel
+{
 
-    public function id() {
+    public function id()
+    {
         return 'pages';
     }
 
-    protected function getContentType() {
+    protected function getContentType()
+    {
         return 'Page';
     }
 
-    protected function getCollectionName() {
+    protected function getCollectionName()
+    {
         return 'pages';
     }
 
-    protected function getDefaultItem() {
+    protected function getDefaultItem()
+    {
         return [
             'title' => '',
             'slug' => '',
@@ -31,7 +36,8 @@ class PagesPanel extends ContentPanel {
         ];
     }
 
-    protected function extractFormData() {
+    protected function extractFormData()
+    {
         return [
             'title' => app()->request()->postTrimmed('title'),
             'slug' => app()->request()->postTrimmed('slug'),
@@ -42,7 +48,8 @@ class PagesPanel extends ContentPanel {
         ];
     }
 
-    public function init($admin): void {
+    public function init($admin): void
+    {
         parent::init($admin);
 
         app()->db()->registerSchema('pages', $this->getPath() . '/schema.php');
@@ -52,7 +59,8 @@ class PagesPanel extends ContentPanel {
         $this->hook('theme.navigation', [$this, 'addPagesToNavigation']);
     }
 
-    private function registerContentHooks(): void {
+    private function registerContentHooks(): void
+    {
         $s = 'pages';
         \HookRegistry::define('page.single.query', 'Modify query parameters for a single page', 'array', 'array', ['source' => $s]);
         \HookRegistry::define('page.single.loaded', 'Filter the loaded page document before rendering', 'array', 'array', ['source' => $s]);
@@ -62,7 +70,8 @@ class PagesPanel extends ContentPanel {
     /**
      * Register page permissions with the central registry.
      */
-    public function registerPermissions($registry) {
+    public function registerPermissions($registry)
+    {
         $registry->registerPermissions([
             'pages.view' => 'View pages',
             'pages.create' => 'Create pages',
@@ -85,7 +94,8 @@ class PagesPanel extends ContentPanel {
     /**
      * Add published pages with show_in_navigation to the theme navigation menu.
      */
-    public function addPagesToNavigation($navItems) {
+    public function addPagesToNavigation($navItems)
+    {
         if (!is_array($navItems)) {
             $navItems = [];
         }

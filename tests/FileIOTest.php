@@ -1,4 +1,5 @@
 <?php declare(strict_types=1);
+
 /**
  * FileIO Tests (PHPUnit)
  * Tests for atomic file operations: locking, atomic writes, size validation

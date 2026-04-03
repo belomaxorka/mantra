@@ -334,7 +334,7 @@ class ModuleManager
 
         // Remove from enabled modules in config
         $enabledModules = Config::getNested($this->config, 'modules.enabled', []);
-        $enabledModules = array_values(array_filter($enabledModules, fn ($name) => $name !== $moduleName));
+        $enabledModules = array_values(array_filter($enabledModules, fn($name) => $name !== $moduleName));
 
         // Update config file
         $configPath = MANTRA_CONTENT . '/settings/config.json';
@@ -490,11 +490,12 @@ class ModuleManager
      *   "^1.2"       — caret: >=1.2.0 and <2.0.0
      *   "~1.2"       — tilde: >=1.2.0 and <1.3.0
      *
-     * @param string $version  Installed version (e.g. "1.4.2")
-     * @param string $constraint  Version constraint string
+     * @param string $version Installed version (e.g. "1.4.2")
+     * @param string $constraint Version constraint string
      * @return bool
      */
-    public static function satisfiesVersion($version, $constraint) {
+    public static function satisfiesVersion($version, $constraint)
+    {
         $constraint = trim($constraint);
 
         if ($constraint === '' || $constraint === '*') {

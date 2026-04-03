@@ -1,20 +1,20 @@
 {
-  "id": "posts",
-  "version": "1.0.0",
-  "sidebar": {
-    "title": "admin-posts.title",
-    "icon": "bi-file-earmark-text",
-    "group": "admin.sidebar.group.content",
-    "order": 15,
-    "url": "/admin/posts"
-  },
-  "quick_actions": [
-    {
-      "id": "new-post",
-      "title": "admin-posts.new_post",
-      "icon": "bi-file-earmark-plus",
-      "url": "/admin/posts/new",
-      "order": 25
-    }
-  ]
+    "id": "posts",
+    "version": "1.0.0",
+    "sidebar": {
+        "title": "admin-posts.title",
+        "icon": "bi-file-earmark-text",
+        "group": "admin.sidebar.group.content",
+        "order": 15,
+        "url": "/admin/posts"
+    },
+    "quick_actions": [
+        {
+            "id": "new-post",
+            "title": "admin-posts.new_post",
+            "icon": "bi-file-earmark-plus",
+            "url": "/admin/posts/new",
+            "order": 25
+        }
+    ]
 }

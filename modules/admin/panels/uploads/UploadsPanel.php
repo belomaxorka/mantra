@@ -9,7 +9,8 @@
 
 namespace Admin;
 
-class UploadsPanel extends AdminPanel {
+class UploadsPanel extends AdminPanel
+{
 
     /** @var int Maximum upload size in bytes (10 MB) */
     public const MAX_UPLOAD_SIZE = 10485760;
@@ -27,11 +28,13 @@ class UploadsPanel extends AdminPanel {
         'application/x-zip-compressed',
     ];
 
-    public function id() {
+    public function id()
+    {
         return 'uploads';
     }
 
-    public function init($admin): void {
+    public function init($admin): void
+    {
         parent::init($admin);
 
         app()->db()->registerSchema('uploads', $this->getPath() . '/schema.php');
@@ -41,7 +44,8 @@ class UploadsPanel extends AdminPanel {
     /**
      * Register upload permissions.
      */
-    public function registerPermissions($registry) {
+    public function registerPermissions($registry)
+    {
         $registry->registerPermissions([
             'uploads.view' => 'View uploads',
             'uploads.upload' => 'Upload files',
@@ -59,13 +63,14 @@ class UploadsPanel extends AdminPanel {
         return $registry;
     }
 
-    public function registerRoutes($admin): void {
-        $admin->adminRoute('GET',  'uploads',              [$this, 'listFiles']);
-        $admin->adminRoute('POST', 'uploads',              [$this, 'uploadFile']);
-        $admin->adminRoute('GET',  'uploads/edit/{id}',    [$this, 'editFile']);
-        $admin->adminRoute('POST', 'uploads/edit/{id}',    [$this, 'updateFile']);
-        $admin->adminRoute('POST', 'uploads/delete/{id}',  [$this, 'deleteFile']);
-        $admin->adminRoute('POST', 'uploads/api/upload',   [$this, 'apiUpload']);
+    public function registerRoutes($admin): void
+    {
+        $admin->adminRoute('GET', 'uploads', [$this, 'listFiles']);
+        $admin->adminRoute('POST', 'uploads', [$this, 'uploadFile']);
+        $admin->adminRoute('GET', 'uploads/edit/{id}', [$this, 'editFile']);
+        $admin->adminRoute('POST', 'uploads/edit/{id}', [$this, 'updateFile']);
+        $admin->adminRoute('POST', 'uploads/delete/{id}', [$this, 'deleteFile']);
+        $admin->adminRoute('POST', 'uploads/api/upload', [$this, 'apiUpload']);
     }
 
     // ========== Actions ==========
@@ -73,7 +78,8 @@ class UploadsPanel extends AdminPanel {
     /**
      * List uploaded files.
      */
-    public function listFiles() {
+    public function listFiles()
+    {
         if (!$this->requirePermission('uploads.view')) return;
 
         $files = app()->db()->query('uploads', [], [
@@ -103,7 +109,8 @@ class UploadsPanel extends AdminPanel {
     /**
      * Handle file upload from form.
      */
-    public function uploadFile() {
+    public function uploadFile()
+    {
         if (!$this->requirePermission('uploads.upload')) return;
         if (!$this->verifyCsrf()) return;
 
@@ -142,7 +149,8 @@ class UploadsPanel extends AdminPanel {
      * API endpoint for CKEditor / AJAX uploads.
      * Returns JSON response.
      */
-    public function apiUpload(): void {
+    public function apiUpload(): void
+    {
         header('Content-Type: application/json; charset=utf-8');
 
         $userManager = new \User();
@@ -179,7 +187,8 @@ class UploadsPanel extends AdminPanel {
     /**
      * Show file detail / edit form.
      */
-    public function editFile($params) {
+    public function editFile($params)
+    {
         if (!$this->requirePermission('uploads.view')) return;
 
         $id = $params['id'] ?? '';
@@ -214,7 +223,8 @@ class UploadsPanel extends AdminPanel {
     /**
      * Update file metadata (original_name only).
      */
-    public function updateFile($params) {
+    public function updateFile($params)
+    {
         if (!$this->requirePermission('uploads.upload')) return;
         if (!$this->verifyCsrf()) return;
 
@@ -238,7 +248,8 @@ class UploadsPanel extends AdminPanel {
     /**
      * Delete a file (physical + metadata).
      */
-    public function deleteFile($params): void {
+    public function deleteFile($params): void
+    {
         $access = $this->requirePermission('uploads.delete');
         if ($access === false) return;
         if (!$this->verifyCsrf()) return;
@@ -283,7 +294,8 @@ class UploadsPanel extends AdminPanel {
      *
      * @return string|null Error message, or null on success
      */
-    private function processUpload() {
+    private function processUpload()
+    {
         $fileData = app()->request()->file('file');
 
         if (!$fileData || !is_array($fileData) || $fileData['error'] !== UPLOAD_ERR_OK) {
@@ -347,7 +359,8 @@ class UploadsPanel extends AdminPanel {
     /**
      * Detect MIME type using finfo, with extension fallback.
      */
-    private function detectMimeType($tmpPath, $originalName) {
+    private function detectMimeType($tmpPath, $originalName)
+    {
         if (function_exists('finfo_open')) {
             $finfo = finfo_open(FILEINFO_MIME_TYPE);
             $mime = finfo_file($finfo, $tmpPath);
@@ -373,7 +386,8 @@ class UploadsPanel extends AdminPanel {
     /**
      * Sanitize a filename: ASCII-safe, no special chars.
      */
-    private function sanitizeFilename($name) {
+    private function sanitizeFilename($name)
+    {
         $info = pathinfo($name);
         $ext = isset($info['extension']) ? strtolower($info['extension']) : '';
         $base = $info['filename'] ?? '';
@@ -398,7 +412,8 @@ class UploadsPanel extends AdminPanel {
     /**
      * Ensure filename is unique in the target directory.
      */
-    private function ensureUniqueFilename($dir, $filename) {
+    private function ensureUniqueFilename($dir, $filename)
+    {
         if (!file_exists($dir . '/' . $filename)) {
             return $filename;
         }
@@ -418,7 +433,8 @@ class UploadsPanel extends AdminPanel {
     /**
      * Get human-readable upload error message.
      */
-    private function getUploadErrorMessage($code) {
+    private function getUploadErrorMessage($code)
+    {
         switch ($code) {
             case UPLOAD_ERR_INI_SIZE:
             case UPLOAD_ERR_FORM_SIZE:
@@ -437,21 +453,24 @@ class UploadsPanel extends AdminPanel {
     /**
      * Get the public base URL for uploaded files.
      */
-    private function getUploadsBaseUrl() {
+    private function getUploadsBaseUrl()
+    {
         return base_url('/uploads');
     }
 
     /**
      * Check if a MIME type is an image.
      */
-    public static function isImage($mime) {
-        return str_starts_with($mime, 'image/')  ;
+    public static function isImage($mime)
+    {
+        return str_starts_with($mime, 'image/');
     }
 
     /**
      * Format file size for display.
      */
-    public static function formatSize($bytes) {
+    public static function formatSize($bytes)
+    {
         $bytes = (int)$bytes;
         if ($bytes < 1024) return $bytes . ' B';
         if ($bytes < 1048576) return round($bytes / 1024, 1) . ' KB';

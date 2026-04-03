@@ -12,11 +12,20 @@
     "author": "Mantra CMS",
     "license": "MIT",
     "type": "feature",
-    "capabilities": ["routes", "admin_ui", "hooks", "templates"],
+    "capabilities": [
+        "routes",
+        "admin_ui",
+        "hooks",
+        "templates"
+    ],
     "dependencies": {
         "admin": ">=1.0"
     },
-    "tags": ["categories", "taxonomy", "content"],
+    "tags": [
+        "categories",
+        "taxonomy",
+        "content"
+    ],
     "admin": {
         "sidebar": {
             "id": "categories",

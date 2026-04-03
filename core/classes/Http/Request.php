@@ -2,26 +2,31 @@
 
 namespace Http;
 
-class Request {
+class Request
+{
     private $jsonBodyLoaded = false;
     private $jsonBody = null;
 
-    public function server($key = null, $default = null) {
+    public function server($key = null, $default = null)
+    {
         if ($key === null) {
             return $_SERVER;
         }
         return $_SERVER[$key] ?? $default;
     }
 
-    public function method() {
+    public function method()
+    {
         return isset($_SERVER['REQUEST_METHOD']) ? strtoupper($_SERVER['REQUEST_METHOD']) : 'GET';
     }
 
-    public function uri() {
+    public function uri()
+    {
         return $_SERVER['REQUEST_URI'] ?? '/';
     }
 
-    public function path() {
+    public function path()
+    {
         $uri = $this->uri();
         if (($pos = strpos($uri, '?')) !== false) {
             $uri = substr($uri, 0, $pos);
@@ -36,14 +41,16 @@ class Request {
         return '/' . trim($uri, '/');
     }
 
-    public function query($key = null, $default = null) {
+    public function query($key = null, $default = null)
+    {
         if ($key === null) {
             return $_GET;
         }
         return $_GET[$key] ?? $default;
     }
 
-    public function post($key = null, $default = null) {
+    public function post($key = null, $default = null)
+    {
         if ($key === null) {
             return $_POST;
         }
@@ -67,7 +74,8 @@ class Request {
         return $_POST[$key] ?? $default;
     }
 
-    public function header($name, $default = null) {
+    public function header($name, $default = null)
+    {
         $key = 'HTTP_' . strtoupper(str_replace('-', '_', $name));
 
         // Content-Type and Content-Length are not prefixed with HTTP_ in PHP.
@@ -80,20 +88,24 @@ class Request {
         return $_SERVER[$key] ?? $default;
     }
 
-    public function acceptsJson() {
+    public function acceptsJson()
+    {
         $accept = (string)$this->header('Accept', '');
         return stripos($accept, 'application/json') !== false;
     }
 
-    public function contentType() {
+    public function contentType()
+    {
         return (string)$this->header('Content-Type', '');
     }
 
-    public function isJson() {
+    public function isJson()
+    {
         return stripos($this->contentType(), 'application/json') !== false;
     }
 
-    public function json($key = null, $default = null) {
+    public function json($key = null, $default = null)
+    {
         $data = $this->jsonBody();
         if (!is_array($data)) {
             return $key === null ? [] : $default;
@@ -106,7 +118,8 @@ class Request {
         return $data[$key] ?? $default;
     }
 
-    public function jsonBody() {
+    public function jsonBody()
+    {
         if ($this->jsonBodyLoaded) {
             return $this->jsonBody;
         }
@@ -135,32 +148,37 @@ class Request {
      * - For JSON requests: returns JSON body fields.
      * - Otherwise: returns POST fields.
      */
-    public function input($key = null, $default = null) {
+    public function input($key = null, $default = null)
+    {
         if ($this->isJson()) {
             return $this->json($key, $default);
         }
         return $this->post($key, $default);
     }
 
-    public function file($key) {
+    public function file($key)
+    {
         return $_FILES[$key] ?? null;
     }
 
-    public function ip() {
+    public function ip()
+    {
         return $this->clientIp();
     }
 
     /**
      * Get trimmed POST value
      */
-    public function postTrimmed($key, $default = '') {
+    public function postTrimmed($key, $default = '')
+    {
         return trim((string)$this->post($key, $default));
     }
 
     /**
      * Determine whether the current request is HTTPS.
      */
-    public static function isHttps() {
+    public static function isHttps()
+    {
         if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
             return true;
         }
@@ -190,7 +208,8 @@ class Request {
     /**
      * Get client IP address, considering trusted proxy headers.
      */
-    public function clientIp() {
+    public function clientIp()
+    {
         $remoteAddr = $_SERVER['REMOTE_ADDR'] ?? null;
         if (!$remoteAddr || !filter_var($remoteAddr, FILTER_VALIDATE_IP)) {
             return null;
@@ -239,7 +258,8 @@ class Request {
     /**
      * Parse comma-separated string into array.
      */
-    public static function parseCsv($value) {
+    public static function parseCsv($value)
+    {
         if (is_array($value)) {
             return array_filter(array_map('trim', $value), 'strlen');
         }
@@ -252,7 +272,8 @@ class Request {
     /**
      * Check whether an IP matches any entry in a list of IPs/CIDRs.
      */
-    public static function ipMatchesAny($ip, $entries) {
+    public static function ipMatchesAny($ip, $entries)
+    {
         foreach ($entries as $entry) {
             if (self::ipMatches($ip, $entry)) {
                 return true;
@@ -264,13 +285,14 @@ class Request {
     /**
      * Check whether an IP matches a single entry (IP or CIDR).
      */
-    public static function ipMatches($ip, $entry) {
+    public static function ipMatches($ip, $entry)
+    {
         $entry = trim((string)$entry);
         if ($entry === '') {
             return false;
         }
 
-        if (!str_contains($entry, '/')  ) {
+        if (!str_contains($entry, '/')) {
             return $ip === $entry;
         }
 

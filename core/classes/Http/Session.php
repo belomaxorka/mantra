@@ -2,12 +2,15 @@
 
 namespace Http;
 
-class Session {
-    public function status() {
+class Session
+{
+    public function status()
+    {
         return session_status();
     }
 
-    public function start($options = []): void {
+    public function start($options = []): void
+    {
         if (MANTRA_CLI) {
             return;
         }
@@ -74,32 +77,38 @@ class Session {
         }
     }
 
-    public function get($key, $default = null) {
+    public function get($key, $default = null)
+    {
         return $_SESSION[$key] ?? $default;
     }
 
-    public function set($key, $value): void {
+    public function set($key, $value): void
+    {
         $_SESSION[$key] = $value;
     }
 
-    public function has($key) {
+    public function has($key)
+    {
         return isset($_SESSION[$key]);
     }
 
-    public function delete($key): void {
+    public function delete($key): void
+    {
         if (isset($_SESSION[$key])) {
             unset($_SESSION[$key]);
         }
     }
 
-    public function regenerate($deleteOldSession = true) {
+    public function regenerate($deleteOldSession = true)
+    {
         if (MANTRA_CLI) {
             return false;
         }
         return session_regenerate_id($deleteOldSession);
     }
 
-    public function destroy() {
+    public function destroy()
+    {
         if (MANTRA_CLI) {
             return false;
         }

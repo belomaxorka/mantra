@@ -1,26 +1,30 @@
 <?php declare(strict_types=1);
+
 /**
  * User - User management and permissions
  */
-
-class User {
+class User
+{
     private $db = null;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->db = new Database();
     }
 
     /**
      * Get user by ID
      */
-    public function find($id) {
+    public function find($id)
+    {
         return $this->db->read('users', $id);
     }
 
     /**
      * Get user by username
      */
-    public function findByUsername($username) {
+    public function findByUsername($username)
+    {
         $users = $this->db->query('users', ['username' => $username]);
         return !empty($users) ? $users[0] : null;
     }
@@ -28,7 +32,8 @@ class User {
     /**
      * Get user by email
      */
-    public function findByEmail($email) {
+    public function findByEmail($email)
+    {
         $users = $this->db->query('users', ['email' => $email]);
         return !empty($users) ? $users[0] : null;
     }
@@ -36,7 +41,8 @@ class User {
     /**
      * Get all users
      */
-    public function all($filters = []) {
+    public function all($filters = [])
+    {
         return $this->db->query('users', $filters, [
             'sort' => 'created_at',
             'order' => 'desc',
@@ -46,7 +52,8 @@ class User {
     /**
      * Create new user
      */
-    public function create($data) {
+    public function create($data)
+    {
         if (empty($data['username']) || empty($data['password'])) {
             return false;
         }
@@ -75,7 +82,8 @@ class User {
     /**
      * Update user
      */
-    public function update($id, $data) {
+    public function update($id, $data)
+    {
         $user = $this->find($id);
         if (!$user) {
             return false;
@@ -99,7 +107,8 @@ class User {
     /**
      * Delete user
      */
-    public function delete($id) {
+    public function delete($id)
+    {
         return $this->db->delete('users', $id);
     }
 
@@ -111,11 +120,12 @@ class User {
      *   'own'  - access only to own content (ownership check needed)
      *   false  - no access
      *
-     * @param array  $user
+     * @param array $user
      * @param string $permission
      * @return bool|string
      */
-    public function hasPermission($user, $permission) {
+    public function hasPermission($user, $permission)
+    {
         if (!is_array($user) || !isset($user['role'])) {
             return false;
         }
@@ -141,11 +151,12 @@ class User {
      * Compares by author_id (stable). Falls back to author (username)
      * for content created before the author_id migration.
      *
-     * @param array $user    User data with '_id' and 'username'
+     * @param array $user User data with '_id' and 'username'
      * @param array $content Content item with 'author_id' or 'author'
      * @return bool
      */
-    public function canEdit($user, $content) {
+    public function canEdit($user, $content)
+    {
         if (!is_array($user) || !is_array($content)) {
             return false;
         }
@@ -172,7 +183,8 @@ class User {
     /**
      * Get user display name
      */
-    public function getDisplayName($user) {
+    public function getDisplayName($user)
+    {
         if (!is_array($user)) {
             return 'Unknown';
         }

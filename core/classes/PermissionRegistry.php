@@ -1,4 +1,5 @@
 <?php declare(strict_types=1);
+
 /**
  * PermissionRegistry - Central authority for permission management
  *
@@ -6,8 +7,8 @@
  * Modules register their own permissions via the 'permissions.register' hook.
  * Custom role overrides are stored in config('permissions.roles').
  */
-
-class PermissionRegistry {
+class PermissionRegistry
+{
 
     /** @var array All registered permissions: array of permission strings */
     private $permissions = [];
@@ -28,7 +29,8 @@ class PermissionRegistry {
      * Constructor. The registry starts empty.
      * Panels and modules register their permissions via the 'permissions.register' hook.
      */
-    public function __construct() {
+    public function __construct()
+    {
         // No hardcoded permissions — everything is registered by panels/modules.
     }
 
@@ -37,10 +39,11 @@ class PermissionRegistry {
     /**
      * Register permissions with a group name.
      *
-     * @param array  $permissions Keyed array: permission => label, or numeric array of permission strings
-     * @param string $group       Group name for UI display
+     * @param array $permissions Keyed array: permission => label, or numeric array of permission strings
+     * @param string $group Group name for UI display
      */
-    public function registerPermissions($permissions, $group = ''): void {
+    public function registerPermissions($permissions, $group = ''): void
+    {
         if ($group === '') {
             $group = 'Other';
         }
@@ -76,10 +79,11 @@ class PermissionRegistry {
      * Set default permissions for a role.
      * Modules can call this to provide defaults for their permissions.
      *
-     * @param string $role        Role name
-     * @param array  $permissions Array of permission strings to add to defaults
+     * @param string $role Role name
+     * @param array $permissions Array of permission strings to add to defaults
      */
-    public function addRoleDefaults($role, $permissions): void {
+    public function addRoleDefaults($role, $permissions): void
+    {
         if (!isset($this->defaults[$role])) {
             $this->defaults[$role] = [];
         }
@@ -96,7 +100,8 @@ class PermissionRegistry {
      *
      * @return array
      */
-    public function getAll() {
+    public function getAll()
+    {
         return $this->permissions;
     }
 
@@ -105,7 +110,8 @@ class PermissionRegistry {
      *
      * @return array group => array of permission strings
      */
-    public function getGrouped() {
+    public function getGrouped()
+    {
         return $this->groups;
     }
 
@@ -115,7 +121,8 @@ class PermissionRegistry {
      * @param string $permission
      * @return string
      */
-    public function getLabel($permission) {
+    public function getLabel($permission)
+    {
         return $this->labels[$permission] ?? $permission;
     }
 
@@ -124,7 +131,8 @@ class PermissionRegistry {
      *
      * @return array permission => label
      */
-    public function getLabels() {
+    public function getLabels()
+    {
         return $this->labels;
     }
 
@@ -133,7 +141,8 @@ class PermissionRegistry {
      *
      * @return array
      */
-    public function getConfigurableRoles() {
+    public function getConfigurableRoles()
+    {
         return ['editor', 'viewer'];
     }
 
@@ -142,7 +151,8 @@ class PermissionRegistry {
      *
      * @return array
      */
-    public function getRoles() {
+    public function getRoles()
+    {
         return ['admin', 'editor', 'viewer'];
     }
 
@@ -152,7 +162,8 @@ class PermissionRegistry {
      * @param string $role
      * @return array
      */
-    public function getDefaultsForRole($role) {
+    public function getDefaultsForRole($role)
+    {
         return $this->defaults[$role] ?? [];
     }
 
@@ -162,7 +173,8 @@ class PermissionRegistry {
      * @param string $role
      * @return array
      */
-    public function getPermissionsForRole($role) {
+    public function getPermissionsForRole($role)
+    {
         if ($role === 'admin') {
             return $this->permissions;
         }
@@ -198,7 +210,8 @@ class PermissionRegistry {
      * @param string $permission
      * @return bool|string
      */
-    public function hasPermission($role, $permission) {
+    public function hasPermission($role, $permission)
+    {
         if ($role === 'admin') {
             return true;
         }
@@ -229,7 +242,8 @@ class PermissionRegistry {
      * @param string $role
      * @return bool
      */
-    public function hasOverride($role) {
+    public function hasOverride($role)
+    {
         $overrides = config('permissions.roles.' . $role);
         return is_array($overrides) && !empty($overrides);
     }
@@ -240,9 +254,10 @@ class PermissionRegistry {
      * Save custom permissions for a role to config.
      *
      * @param string $role
-     * @param array  $permissions
+     * @param array $permissions
      */
-    public function setRolePermissions($role, $permissions): void {
+    public function setRolePermissions($role, $permissions): void
+    {
         if ($role === 'admin') {
             return;
         }
@@ -262,7 +277,8 @@ class PermissionRegistry {
      *
      * @param string $role
      */
-    public function resetRole($role): void {
+    public function resetRole($role): void
+    {
         if ($role === 'admin') {
             return;
         }

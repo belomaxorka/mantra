@@ -16,5 +16,7 @@ final class LogLevel
     public const INFO = 'info';
     public const DEBUG = 'debug';
 
-    private function __construct() {}
+    private function __construct()
+    {
+    }
 }

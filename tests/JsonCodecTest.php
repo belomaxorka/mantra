@@ -1,9 +1,9 @@
 <?php declare(strict_types=1);
+
 /**
  * JsonCodec Tests (PHPUnit)
  * Tests for simple JSON encoding/decoding wrapper
  */
-
 class JsonCodecTest extends MantraTestCase
 {
     public function testEncode(): void
@@ -246,7 +246,7 @@ class JsonCodecTest extends MantraTestCase
         // Check for pretty print (should have newlines and indentation)
         $this->assertStringContainsString("\n", $json, 'JSON contains newlines (pretty print)');
         $this->assertTrue(
-            str_contains($json, '    ') || str_contains($json, "\t")  ,
+            str_contains($json, '    ') || str_contains($json, "\t"),
             'JSON contains indentation',
         );
 
@@ -273,7 +273,7 @@ class JsonCodecTest extends MantraTestCase
         ];
 
         foreach ($invalidCases as $json => $description) {
-            $json = (string) $json; // numeric keys auto-cast to int
+            $json = (string)$json; // numeric keys auto-cast to int
             try {
                 JsonCodec::decode($json);
                 $this->fail("decode() should throw exception for $description");

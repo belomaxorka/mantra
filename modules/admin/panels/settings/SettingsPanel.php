@@ -11,20 +11,24 @@ namespace Admin;
 use Module\ModuleValidator;
 use Module\ModuleType;
 
-class SettingsPanel extends AdminPanel {
+class SettingsPanel extends AdminPanel
+{
 
-    public function id() {
+    public function id()
+    {
         return 'settings';
     }
 
-    public function registerRoutes($admin): void {
-        $admin->adminRoute('GET',  'settings', [$this, 'settings']);
+    public function registerRoutes($admin): void
+    {
+        $admin->adminRoute('GET', 'settings', [$this, 'settings']);
         $admin->adminRoute('POST', 'settings', [$this, 'settings']);
     }
 
     // ========== Main Action ==========
 
-    public function settings() {
+    public function settings()
+    {
         if (!$this->requireAdmin()) return;
 
         $activeTab = (string)app()->request()->query('tab', 'general');
@@ -96,7 +100,8 @@ class SettingsPanel extends AdminPanel {
 
     // ========== Module discovery ==========
 
-    private function getModulesWithSettings() {
+    private function getModulesWithSettings()
+    {
         $modules = [];
         $moduleManager = app()->modules();
 
@@ -121,7 +126,8 @@ class SettingsPanel extends AdminPanel {
 
     // ========== Config settings ==========
 
-    private function buildConfigSettingsContent($actionUrl, &$notice, &$error) {
+    private function buildConfigSettingsContent($actionUrl, &$notice, &$error)
+    {
         $store = \ConfigSettings::instance();
         $schema = $this->applyConfigSchemaRuntimeOptions($store->schema());
         return $this->buildSchemaSettingsContent(
@@ -132,7 +138,8 @@ class SettingsPanel extends AdminPanel {
 
     // ========== Module settings ==========
 
-    private function buildModuleSettingsContent($moduleId, $actionUrl, &$notice, &$error) {
+    private function buildModuleSettingsContent($moduleId, $actionUrl, &$notice, &$error)
+    {
         if (!ModuleValidator::isValidModuleId($moduleId)) {
             $error = 'Invalid module name';
             return null;
@@ -150,7 +157,8 @@ class SettingsPanel extends AdminPanel {
 
     // ========== Generic schema-driven form builder ==========
 
-    private function buildSchemaSettingsContent($store, $schema, $actionUrl, &$notice, &$error, $context = []) {
+    private function buildSchemaSettingsContent($store, $schema, $actionUrl, &$notice, &$error, $context = [])
+    {
         if (!is_array($schema)) {
             $error = 'This module has no settings';
             return null;
@@ -360,7 +368,8 @@ class SettingsPanel extends AdminPanel {
 
     // ========== Runtime option injectors ==========
 
-    private function applyConfigSchemaRuntimeOptions($schema) {
+    private function applyConfigSchemaRuntimeOptions($schema)
+    {
         if (!is_array($schema) || empty($schema['tabs']) || !is_array($schema['tabs'])) {
             return $schema;
         }
@@ -436,7 +445,8 @@ class SettingsPanel extends AdminPanel {
 
     // ========== Option providers ==========
 
-    private function availableAccentColorOptions() {
+    private function availableAccentColorOptions()
+    {
         $presetsFile = dirname($this->panelPath, 2) . '/appearance-presets.php';
         if (!file_exists($presetsFile)) {
             return [];
@@ -452,7 +462,8 @@ class SettingsPanel extends AdminPanel {
         return $options;
     }
 
-    private function availableFontOptions() {
+    private function availableFontOptions()
+    {
         $presetsFile = dirname($this->panelPath, 2) . '/font-presets.php';
         if (!file_exists($presetsFile)) {
             return [];
@@ -468,7 +479,8 @@ class SettingsPanel extends AdminPanel {
         return $options;
     }
 
-    private function availableSidebarColorOptions() {
+    private function availableSidebarColorOptions()
+    {
         $presetsFile = dirname($this->panelPath, 2) . '/sidebar-presets.php';
         if (!file_exists($presetsFile)) {
             return [];
@@ -484,7 +496,8 @@ class SettingsPanel extends AdminPanel {
         return $options;
     }
 
-    private function availableThemeOptions() {
+    private function availableThemeOptions()
+    {
         $options = [];
         $base = MANTRA_THEMES;
         if (!is_dir($base)) {
@@ -507,7 +520,8 @@ class SettingsPanel extends AdminPanel {
         return $options;
     }
 
-    private function getAllThemesMetadata() {
+    private function getAllThemesMetadata()
+    {
         $themes = [];
         $base = MANTRA_THEMES;
         if (!is_dir($base)) {
@@ -532,7 +546,8 @@ class SettingsPanel extends AdminPanel {
         return $themes;
     }
 
-    private function availableLocaleOptions() {
+    private function availableLocaleOptions()
+    {
         $locales = [];
 
         if (is_dir(MANTRA_MODULES)) {
@@ -571,7 +586,8 @@ class SettingsPanel extends AdminPanel {
         return $locales;
     }
 
-    private function getAvailablePasswordAlgorithms() {
+    private function getAvailablePasswordAlgorithms()
+    {
         $algorithms = [
             'PASSWORD_DEFAULT' => 'PASSWORD_DEFAULT',
             'PASSWORD_BCRYPT' => 'PASSWORD_BCRYPT',
@@ -585,7 +601,8 @@ class SettingsPanel extends AdminPanel {
         return $algorithms;
     }
 
-    private function getAvailableSameSiteOptions() {
+    private function getAvailableSameSiteOptions()
+    {
         if (defined('PHP_VERSION_ID') && PHP_VERSION_ID >= 70300) {
             return [
                 'Lax' => 'Lax (recommended)',
@@ -603,7 +620,8 @@ class SettingsPanel extends AdminPanel {
      *
      * Returns a nested array: region => array(timezone_id => label).
      */
-    private function availableTimezoneOptions() {
+    private function availableTimezoneOptions()
+    {
         $grouped = [];
         $now = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
 
@@ -643,7 +661,8 @@ class SettingsPanel extends AdminPanel {
     /**
      * Build date format examples for the date_format select.
      */
-    private function dateFormatExamples() {
+    private function dateFormatExamples()
+    {
         $now = time();
         return [
             'j F Y' => date('j F Y', $now),
@@ -658,7 +677,8 @@ class SettingsPanel extends AdminPanel {
     /**
      * Build time format examples for the time_format select.
      */
-    private function timeFormatExamples() {
+    private function timeFormatExamples()
+    {
         $now = time();
         return [
             'H:i' => date('H:i', $now),
@@ -666,7 +686,8 @@ class SettingsPanel extends AdminPanel {
         ];
     }
 
-    private function availableModuleCards() {
+    private function availableModuleCards()
+    {
         $cards = [];
         $moduleManager = app()->modules();
         $allModules = $moduleManager->discoverModules();
@@ -742,9 +763,9 @@ class SettingsPanel extends AdminPanel {
             ];
         }
 
-        usort($cards, fn ($a, $b) => strcasecmp(
-                $a['title'] ?? '',
-                $b['title'] ?? '',
+        usort($cards, fn($a, $b) => strcasecmp(
+            $a['title'] ?? '',
+            $b['title'] ?? '',
             ));
 
         return $cards;
@@ -752,7 +773,8 @@ class SettingsPanel extends AdminPanel {
 
     // ========== Dependency management ==========
 
-    private function collectModuleDependencyGraph() {
+    private function collectModuleDependencyGraph()
+    {
         $graph = [];
         $base = MANTRA_MODULES;
         if (!is_dir($base)) {
@@ -790,7 +812,8 @@ class SettingsPanel extends AdminPanel {
         return $graph;
     }
 
-    private function dependsOnTransitive($start, $target, $graph) {
+    private function dependsOnTransitive($start, $target, $graph)
+    {
         $start = (string)$start;
         $target = (string)$target;
         if ($start === '' || $target === '' || $start === $target) {
@@ -821,7 +844,8 @@ class SettingsPanel extends AdminPanel {
         return false;
     }
 
-    private function validateModulesEnabledUpdate($newEnabled) {
+    private function validateModulesEnabledUpdate($newEnabled)
+    {
         if (!is_array($newEnabled)) {
             return 'Invalid modules list';
         }
@@ -907,7 +931,8 @@ class SettingsPanel extends AdminPanel {
         return null;
     }
 
-    private function handleConfigDeleteModuleAction(&$notice, &$error) {
+    private function handleConfigDeleteModuleAction(&$notice, &$error)
+    {
         $deleteId = (string)app()->request()->post('module_delete', '');
         if ($deleteId === '') {
             return false;
@@ -988,7 +1013,8 @@ class SettingsPanel extends AdminPanel {
         return true;
     }
 
-    private function rrmdirSafe($dirPath): void {
+    private function rrmdirSafe($dirPath): void
+    {
         $dirPath = (string)$dirPath;
         if ($dirPath === '' || !is_dir($dirPath)) {
             return;

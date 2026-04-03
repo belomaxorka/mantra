@@ -1,4 +1,5 @@
 <?php declare(strict_types=1);
+
 /**
  * Database Schema Tests
  *
@@ -11,7 +12,6 @@
  *
  * @requires PHPUnit 10.x
  */
-
 class DatabaseSchemaTest extends MantraTestCase
 {
     private $testDir;

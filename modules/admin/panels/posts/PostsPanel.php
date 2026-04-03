@@ -2,13 +2,16 @@
 
 namespace Admin;
 
-class PostsPanel extends ContentPanel {
+class PostsPanel extends ContentPanel
+{
 
-    public function id() {
+    public function id()
+    {
         return 'posts';
     }
 
-    public function init($admin): void {
+    public function init($admin): void
+    {
         parent::init($admin);
 
         app()->db()->registerSchema('posts', $this->getPath() . '/schema.php');
@@ -17,7 +20,8 @@ class PostsPanel extends ContentPanel {
         $this->hook('permissions.register', [$this, 'registerPermissions']);
     }
 
-    private function registerContentHooks(): void {
+    private function registerContentHooks(): void
+    {
         $s = 'posts';
         \HookRegistry::define('page.home.query', 'Modify query parameters for the home page post list', 'array', 'array', ['source' => $s]);
         \HookRegistry::define('page.home.posts', 'Filter the post list on the home page', 'array', 'array', ['source' => $s]);
@@ -33,7 +37,8 @@ class PostsPanel extends ContentPanel {
     /**
      * Register post permissions with the central registry.
      */
-    public function registerPermissions($registry) {
+    public function registerPermissions($registry)
+    {
         $registry->registerPermissions([
             'posts.view' => 'View posts',
             'posts.create' => 'Create posts',
@@ -53,15 +58,18 @@ class PostsPanel extends ContentPanel {
         return $registry;
     }
 
-    protected function getContentType() {
+    protected function getContentType()
+    {
         return 'Post';
     }
 
-    protected function getCollectionName() {
+    protected function getCollectionName()
+    {
         return 'posts';
     }
 
-    protected function getDefaultItem() {
+    protected function getDefaultItem()
+    {
         return [
             'title' => '',
             'slug' => '',
@@ -77,7 +85,8 @@ class PostsPanel extends ContentPanel {
         ];
     }
 
-    protected function extractFormData() {
+    protected function extractFormData()
+    {
         return [
             'title' => app()->request()->postTrimmed('title'),
             'slug' => app()->request()->postTrimmed('slug'),

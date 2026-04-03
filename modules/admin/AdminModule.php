@@ -1,4 +1,5 @@
 <?php declare(strict_types=1);
+
 /**
  * AdminModule - Admin panel functionality
  *
@@ -115,7 +116,7 @@ class AdminModule extends Module
      * Load CSS variable lines from a preset file.
      *
      * @param string $filename Preset file name relative to module path
-     * @param string $key      Preset key
+     * @param string $key Preset key
      * @return array            Lines like "  --mn-primary: #6366f1;"
      */
     private function loadPresetVars($filename, $key)
@@ -276,7 +277,9 @@ class AdminModule extends Module
         $router->get('/admin/login', [$this, 'loginForm']);
         $router->post('/admin/login', [$this, 'loginProcess']);
         $router->post('/admin/logout', [$this, 'logout']);
-        $router->get('/admin/logout', function(): void { app()->response()->redirect(base_url('/admin')); });
+        $router->get('/admin/logout', function (): void {
+            app()->response()->redirect(base_url('/admin'));
+        });
 
         // Panel routes (auth middleware applied by adminRoute())
         foreach ($this->panels as $panel) {

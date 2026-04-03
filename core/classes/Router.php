@@ -1,10 +1,11 @@
 <?php declare(strict_types=1);
+
 /**
  * Router - Simple but powerful routing system
  * Supports dynamic routes, parameters, and middleware
  */
-
-class Router {
+class Router
+{
     private $routes = [];
     private $globalMiddleware = [];
     private $currentRoute = null;
@@ -12,7 +13,8 @@ class Router {
     /**
      * Add GET route
      */
-    public function get($pattern, $callback) {
+    public function get($pattern, $callback)
+    {
         $this->addRoute('GET', $pattern, $callback);
         return $this;
     }
@@ -20,7 +22,8 @@ class Router {
     /**
      * Add POST route
      */
-    public function post($pattern, $callback) {
+    public function post($pattern, $callback)
+    {
         $this->addRoute('POST', $pattern, $callback);
         return $this;
     }
@@ -28,7 +31,8 @@ class Router {
     /**
      * Add route for any method
      */
-    public function any($pattern, $callback) {
+    public function any($pattern, $callback)
+    {
         $this->addRoute('ANY', $pattern, $callback);
         return $this;
     }
@@ -36,7 +40,8 @@ class Router {
     /**
      * Add route
      */
-    private function addRoute($method, $pattern, $callback): void {
+    private function addRoute($method, $pattern, $callback): void
+    {
         $this->routes[] = [
             'method' => $method,
             'pattern' => $pattern,
@@ -48,7 +53,8 @@ class Router {
     /**
      * Add middleware to last route
      */
-    public function middleware($middleware) {
+    public function middleware($middleware)
+    {
         if (!empty($this->routes)) {
             $lastIndex = count($this->routes) - 1;
             $this->routes[$lastIndex]['middleware'][] = $middleware;
@@ -65,24 +71,26 @@ class Router {
      *   '/api/*'     — URIs starting with /api/
      *   '/login'     — exact match
      *
-     * @param string   $pattern  URI pattern (* suffix for prefix match)
+     * @param string $pattern URI pattern (* suffix for prefix match)
      * @param callable $callback Middleware callable; return false to halt
-     * @param int      $priority Lower = runs first (default 10)
+     * @param int $priority Lower = runs first (default 10)
      */
-    public function addGlobalMiddleware($pattern, $callback, $priority = 10): void {
+    public function addGlobalMiddleware($pattern, $callback, $priority = 10): void
+    {
         $this->globalMiddleware[] = [
             'pattern' => $pattern,
             'callback' => $callback,
             'priority' => $priority,
         ];
 
-        usort($this->globalMiddleware, fn ($a, $b) => $a['priority'] - $b['priority']);
+        usort($this->globalMiddleware, fn($a, $b) => $a['priority'] - $b['priority']);
     }
 
     /**
      * Dispatch current request
      */
-    public function dispatch(): void {
+    public function dispatch(): void
+    {
         $method = app()->request()->method();
         $uri = $this->getUri();
 
@@ -144,7 +152,8 @@ class Router {
     /**
      * Get clean URI
      */
-    private function getUri() {
+    private function getUri()
+    {
         $uri = app()->request()->uri();
 
         // Remove query string
@@ -165,7 +174,8 @@ class Router {
     /**
      * Match pattern against URI
      */
-    private function matchPattern($pattern, $uri) {
+    private function matchPattern($pattern, $uri)
+    {
         // Convert pattern to regex
         $pattern = preg_replace('/\{([a-zA-Z0-9_]+)\}/', '(?P<$1>[a-zA-Z0-9_-]+)', $pattern);
         $pattern = '#^' . $pattern . '$#';
@@ -187,7 +197,8 @@ class Router {
     /**
      * Execute controller action
      */
-    private function executeControllerAction($action, $params): void {
+    private function executeControllerAction($action, $params): void
+    {
         $parts = explode(':', $action);
         if (count($parts) !== 2) {
             throw new Exception('Invalid controller action format');
@@ -212,7 +223,8 @@ class Router {
     /**
      * Check if a middleware pattern matches the given URI.
      */
-    private function middlewareMatches($pattern, $uri) {
+    private function middlewareMatches($pattern, $uri)
+    {
         if ($pattern === '*') {
             return true;
         }
@@ -220,7 +232,7 @@ class Router {
         // Prefix match: "/admin/*" matches "/admin" and "/admin/pages"
         if (substr($pattern, -2) === '/*') {
             $prefix = substr($pattern, 0, -2);
-            return $uri === $prefix || str_starts_with($uri, $prefix . '/')  ;
+            return $uri === $prefix || str_starts_with($uri, $prefix . '/');
         }
 
         // Exact match
@@ -230,14 +242,16 @@ class Router {
     /**
      * 404 handler
      */
-    private function notFound(): void {
+    private function notFound(): void
+    {
         abort(404);
     }
 
     /**
      * Redirect helper
      */
-    public function redirect($url, $code = 302): void {
+    public function redirect($url, $code = 302): void
+    {
         app()->response()->redirect($url, $code);
     }
 }

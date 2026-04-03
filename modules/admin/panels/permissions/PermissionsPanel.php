@@ -9,21 +9,25 @@
 
 namespace Admin;
 
-class PermissionsPanel extends AdminPanel {
+class PermissionsPanel extends AdminPanel
+{
 
-    public function id() {
+    public function id()
+    {
         return 'permissions';
     }
 
-    public function registerRoutes($admin): void {
-        $admin->adminRoute('GET',  'permissions', [$this, 'index']);
+    public function registerRoutes($admin): void
+    {
+        $admin->adminRoute('GET', 'permissions', [$this, 'index']);
         $admin->adminRoute('POST', 'permissions', [$this, 'save']);
     }
 
     /**
      * Display the permission matrix.
      */
-    public function index() {
+    public function index()
+    {
         if (!$this->requireAdmin()) return;
 
         $registry = app()->service('permissions');
@@ -40,7 +44,8 @@ class PermissionsPanel extends AdminPanel {
     /**
      * Save permission changes or reset a role.
      */
-    public function save() {
+    public function save()
+    {
         if (!$this->requireAdmin()) return;
         if (!$this->verifyCsrf()) return;
 
@@ -88,7 +93,8 @@ class PermissionsPanel extends AdminPanel {
     /**
      * Render the permissions page.
      */
-    private function renderPermissions($registry, $notice = null) {
+    private function renderPermissions($registry, $notice = null)
+    {
         $roles = $registry->getConfigurableRoles();
         $grouped = $registry->getGrouped();
         $labels = $registry->getLabels();

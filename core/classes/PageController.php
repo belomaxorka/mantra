@@ -1,15 +1,17 @@
 <?php declare(strict_types=1);
+
 /**
  * PageController - Handles public page rendering
  * Core controller for site pages (not admin)
  */
-
-class PageController {
+class PageController
+{
 
     /**
      * Render home page
      */
-    public function home(): void {
+    public function home(): void
+    {
         $app = Application::getInstance();
         $perPage = (int)config('content.posts_per_page', 10);
         $page = max(1, (int)app()->request()->query('page', 1));
@@ -57,7 +59,8 @@ class PageController {
     /**
      * Render blog listing page
      */
-    public function blog(): void {
+    public function blog(): void
+    {
         $app = Application::getInstance();
         $perPage = (int)config('content.posts_per_page', 10);
         $page = max(1, (int)app()->request()->query('page', 1));
@@ -105,7 +108,8 @@ class PageController {
     /**
      * Render single page
      */
-    public function page($params): void {
+    public function page($params): void
+    {
         $app = Application::getInstance();
         $slug = $params['slug'] ?? '';
 
@@ -146,7 +150,8 @@ class PageController {
     /**
      * Render single post
      */
-    public function post($params): void {
+    public function post($params): void
+    {
         $app = Application::getInstance();
         $slug = $params['slug'] ?? '';
 
@@ -197,7 +202,8 @@ class PageController {
     /**
      * Get template for page (supports hierarchy)
      */
-    private function getPageTemplate($page) {
+    private function getPageTemplate($page)
+    {
         $templates = [];
 
         // Custom template from page meta
@@ -218,7 +224,8 @@ class PageController {
     /**
      * Get template for post (supports hierarchy)
      */
-    private function getPostTemplate($post) {
+    private function getPostTemplate($post)
+    {
         $templates = [];
 
         // Custom template from post meta
@@ -246,7 +253,8 @@ class PageController {
      *
      * @return array ['prev' => array|null, 'next' => array|null]
      */
-    private function getAdjacentPosts($currentPost) {
+    private function getAdjacentPosts($currentPost)
+    {
         $allPosts = app()->db()->query('posts', ['status' => 'published'], [
             'sort' => 'created_at',
             'order' => 'desc',
@@ -268,7 +276,8 @@ class PageController {
     /**
      * Find first existing template from list
      */
-    private function findTemplate($templates) {
+    private function findTemplate($templates)
+    {
         $app = Application::getInstance();
         $theme = config('theme.active', 'default');
         $themePath = MANTRA_THEMES . '/' . $theme;
@@ -287,7 +296,8 @@ class PageController {
     /**
      * 404 Not Found
      */
-    private function notFound(): void {
+    private function notFound(): void
+    {
         abort(404);
     }
 }

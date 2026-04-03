@@ -1,4 +1,5 @@
 <?php declare(strict_types=1);
+
 /**
  * ModuleSettings Tests (PHPUnit 10.x)
  *
@@ -10,7 +11,6 @@
  * - get/set/has methods
  * - Module without schema file
  */
-
 class ModuleSettingsTest extends MantraTestCase
 {
     private $testModule = 'tmig_testmod';

@@ -1,4 +1,5 @@
 <?php declare(strict_types=1);
+
 /**
  * Schema Migration System Tests
  *
@@ -13,7 +14,6 @@
  *
  * @requires PHPUnit 10.x
  */
-
 class SchemaMigrationTest extends MantraTestCase
 {
     private $testDir;

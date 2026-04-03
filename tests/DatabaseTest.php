@@ -1,9 +1,9 @@
 <?php declare(strict_types=1);
+
 /**
  * Database Tests
  * Tests for Database class, schema validation, and defaults
  */
-
 class DatabaseTest extends MantraTestCase
 {
     private $testDir;
@@ -1051,7 +1051,7 @@ class DatabaseTest extends MantraTestCase
             if (file_exists($errorLogFile)) {
                 $logContent = file_get_contents($errorLogFile);
                 $errorLogged = str_contains($logContent, 'Schema validation failed')
-                    && str_contains($logContent, 'test_logging')  ;
+                    && str_contains($logContent, 'test_logging');
             }
         }
         $this->assertTrue($errorLogged, 'Validation errors are logged to error log');
@@ -1064,7 +1064,7 @@ class DatabaseTest extends MantraTestCase
             // Check if error was logged
             if (file_exists($errorLogFile)) {
                 $logContent = file_get_contents($errorLogFile);
-                $securityErrorLogged = str_contains($logContent, 'Invalid collection name')  ;
+                $securityErrorLogged = str_contains($logContent, 'Invalid collection name');
             }
         }
         $this->assertTrue($securityErrorLogged, 'Security errors are logged to error log');

@@ -1,19 +1,24 @@
 {
-  "id": "seo",
-  "name": "SEO",
-  "description": {
-    "en": "SEO optimization - meta tags, Open Graph, Twitter Cards, and breadcrumbs",
-    "ru": "SEO оптимизация - мета-теги, Open Graph, Twitter Cards и хлебные крошки"
-  },
-  "version": "1.0.0",
-  "author": "Mantra CMS",
-  "license": "MIT",
-  "type": "utility",
-  "capabilities": [
-    "hooks",
-    "settings",
-    "partials"
-  ],
-  "dependencies": [],
-  "tags": ["seo", "meta", "opengraph", "optimization"]
+    "id": "seo",
+    "name": "SEO",
+    "description": {
+        "en": "SEO optimization - meta tags, Open Graph, Twitter Cards, and breadcrumbs",
+        "ru": "SEO оптимизация - мета-теги, Open Graph, Twitter Cards и хлебные крошки"
+    },
+    "version": "1.0.0",
+    "author": "Mantra CMS",
+    "license": "MIT",
+    "type": "utility",
+    "capabilities": [
+        "hooks",
+        "settings",
+        "partials"
+    ],
+    "dependencies": [],
+    "tags": [
+        "seo",
+        "meta",
+        "opengraph",
+        "optimization"
+    ]
 }

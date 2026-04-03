@@ -1,11 +1,11 @@
 <?php declare(strict_types=1);
+
 /**
  * View Tests
  * Tests for View class template rendering, layout wrapping, and output buffering
  *
  * @covers View
  */
-
 class ViewTest extends MantraTestCase
 {
     private $testDir;

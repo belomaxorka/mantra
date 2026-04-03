@@ -1,31 +1,36 @@
 <?php declare(strict_types=1);
+
 /**
  * SchemaValidator - Validates data against collection schemas
  */
-
-class SchemaValidationException extends Exception {
+class SchemaValidationException extends Exception
+{
     private $errors = [];
 
-    public function __construct($message, $errors = []) {
+    public function __construct($message, $errors = [])
+    {
         parent::__construct($message);
         $this->errors = $errors;
     }
 
-    public function getErrors() {
+    public function getErrors()
+    {
         return $this->errors;
     }
 }
 
-class SchemaValidator {
+class SchemaValidator
+{
 
     /**
      * Validate data against schema
-     * 
+     *
      * @param array $data Data to validate
      * @param array $schema Schema definition
      * @return array Validation errors (empty if valid)
      */
-    public static function validate($data, $schema) {
+    public static function validate($data, $schema)
+    {
         $errors = [];
 
         if (!isset($schema['fields']) || !is_array($schema['fields'])) {
@@ -105,7 +110,8 @@ class SchemaValidator {
     /**
      * Validate field type
      */
-    private static function validateType($field, $value, $type) {
+    private static function validateType($field, $value, $type)
+    {
         switch ($type) {
             case 'string':
                 if (!is_string($value)) {
@@ -173,7 +179,8 @@ class SchemaValidator {
     /**
      * Sanitize data (remove XSS, trim strings)
      */
-    public static function sanitize($data) {
+    public static function sanitize($data)
+    {
         if (is_array($data)) {
             foreach ($data as $key => $value) {
                 $data[$key] = self::sanitize($value);
@@ -197,7 +204,8 @@ class SchemaValidator {
     /**
      * Validate and throw exception if invalid
      */
-    public static function validateOrThrow($data, $schema): void {
+    public static function validateOrThrow($data, $schema): void
+    {
         $errors = self::validate($data, $schema);
 
         if (!empty($errors)) {

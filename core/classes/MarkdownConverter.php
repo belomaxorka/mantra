@@ -1,9 +1,10 @@
 <?php declare(strict_types=1);
+
 /**
  * MarkdownConverter - Simple Markdown to HTML converter
  */
-
-class MarkdownConverter {
+class MarkdownConverter
+{
 
     /**
      * Convert Markdown to HTML
@@ -11,7 +12,8 @@ class MarkdownConverter {
      * @param string $markdown Markdown content
      * @return string HTML content
      */
-    public static function toHtml($markdown) {
+    public static function toHtml($markdown)
+    {
         $html = $markdown;
 
         // Headers
@@ -80,7 +82,8 @@ class MarkdownConverter {
      * @param string $html HTML content
      * @return string Markdown content
      */
-    public static function toMarkdown($html) {
+    public static function toMarkdown($html)
+    {
         $markdown = $html;
 
         // Headers

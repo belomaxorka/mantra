@@ -237,7 +237,7 @@ class MarkdownStorageDriver implements StorageDriverInterface
                 continue;
             }
 
-            if (str_contains($line, ':')  ) {
+            if (str_contains($line, ':')) {
                 [$key, $value] = explode(':', $line, 2);
                 $key = trim($key);
                 $value = trim($value);
@@ -284,7 +284,7 @@ class MarkdownStorageDriver implements StorageDriverInterface
                 $value = (string)$value;
             } elseif (is_string($value)) {
                 // Escape quotes and wrap in quotes if contains special chars
-                if (str_contains($value, ':') || str_contains($value, "\n")  ) {
+                if (str_contains($value, ':') || str_contains($value, "\n")) {
                     $value = '"' . str_replace('"', '\\"', $value) . '"';
                 }
             } else {

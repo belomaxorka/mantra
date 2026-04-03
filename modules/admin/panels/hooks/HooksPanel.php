@@ -2,21 +2,26 @@
 
 namespace Admin;
 
-class HooksPanel extends AdminPanel {
+class HooksPanel extends AdminPanel
+{
 
-    public function id() {
+    public function id()
+    {
         return 'hooks';
     }
 
-    public function init($admin): void {
+    public function init($admin): void
+    {
         parent::init($admin);
     }
 
-    public function registerRoutes($admin): void {
+    public function registerRoutes($admin): void
+    {
         $admin->adminRoute('GET', 'hooks', [$this, 'index']);
     }
 
-    public function index() {
+    public function index()
+    {
         if (!$this->requirePermission('admin')) return;
 
         $hookManager = app()->hooks();
@@ -60,7 +65,7 @@ class HooksPanel extends AdminPanel {
             'coreGroups' => $coreGroups,
             'moduleGroups' => $moduleGroups,
             'totalHooks' => count($allHookNames),
-            'totalListeners' => array_sum(array_map(fn ($name) => $hookManager->listenerCount($name), $allHookNames)),
+            'totalListeners' => array_sum(array_map(fn($name) => $hookManager->listenerCount($name), $allHookNames)),
         ]);
 
         return $this->renderAdmin(t('admin-hooks.title'), $content, [
@@ -71,11 +76,12 @@ class HooksPanel extends AdminPanel {
         ]);
     }
 
-    private function getCoreGroup($name) {
+    private function getCoreGroup($name)
+    {
         if (str_starts_with($name, 'system.') || $name === 'routes.register' || $name === 'view.render' || $name === 'permissions.register') return 'system';
-        if (str_starts_with($name, 'theme.')  ) return 'theme';
-        if (str_starts_with($name, 'admin.')  ) return 'admin';
-        if (str_starts_with($name, 'page.') || str_starts_with($name, 'post.')  ) return 'content';
+        if (str_starts_with($name, 'theme.')) return 'theme';
+        if (str_starts_with($name, 'admin.')) return 'admin';
+        if (str_starts_with($name, 'page.') || str_starts_with($name, 'post.')) return 'content';
         return 'other';
     }
 }

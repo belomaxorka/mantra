@@ -1,20 +1,20 @@
 {
-  "id": "pages",
-  "version": "1.1.0",
-  "sidebar": {
-    "title": "admin-pages.title",
-    "icon": "bi-file-earmark-text",
-    "group": "admin.sidebar.group.content",
-    "order": 10,
-    "url": "/admin/pages"
-  },
-  "quick_actions": [
-    {
-      "id": "new-page",
-      "title": "admin-pages.new",
-      "icon": "bi-file-earmark-plus",
-      "url": "/admin/pages/new",
-      "order": 20
-    }
-  ]
+    "id": "pages",
+    "version": "1.1.0",
+    "sidebar": {
+        "title": "admin-pages.title",
+        "icon": "bi-file-earmark-text",
+        "group": "admin.sidebar.group.content",
+        "order": 10,
+        "url": "/admin/pages"
+    },
+    "quick_actions": [
+        {
+            "id": "new-page",
+            "title": "admin-pages.new",
+            "icon": "bi-file-earmark-plus",
+            "url": "/admin/pages/new",
+            "order": 20
+        }
+    ]
 }

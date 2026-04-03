@@ -33,7 +33,8 @@ class ModuleSettings
     /**
      * Get cached ModuleSettings instance.
      */
-    public static function instance($module) {
+    public static function instance($module)
+    {
         $module = (string)$module;
         if (!isset(self::$instances[$module])) {
             self::$instances[$module] = new self($module);

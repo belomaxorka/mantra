@@ -2,17 +2,21 @@
 
 namespace Admin;
 
-class DashboardPanel extends AdminPanel {
+class DashboardPanel extends AdminPanel
+{
 
-    public function id() {
+    public function id()
+    {
         return 'dashboard';
     }
 
-    public function registerRoutes($admin): void {
+    public function registerRoutes($admin): void
+    {
         $admin->adminRoute('GET', '', [$this, 'dashboard']);
     }
 
-    public function dashboard() {
+    public function dashboard()
+    {
         $db = $this->db();
 
         // Stats
@@ -20,8 +24,8 @@ class DashboardPanel extends AdminPanel {
         $pages = $db->query('pages');
         $users = $db->query('users');
 
-        $publishedPosts = array_filter($posts, fn ($p) => isset($p['status']) && $p['status'] === 'published');
-        $publishedPages = array_filter($pages, fn ($p) => isset($p['status']) && $p['status'] === 'published');
+        $publishedPosts = array_filter($posts, fn($p) => isset($p['status']) && $p['status'] === 'published');
+        $publishedPages = array_filter($pages, fn($p) => isset($p['status']) && $p['status'] === 'published');
 
         $stats = [
             [
@@ -51,8 +55,14 @@ class DashboardPanel extends AdminPanel {
 
         // Recent content (last 5 by updated_at)
         $allContent = array_merge(
-            array_map(function ($p) { $p['_type'] = 'post'; return $p; }, $posts),
-            array_map(function ($p) { $p['_type'] = 'page'; return $p; }, $pages),
+            array_map(function ($p) {
+                $p['_type'] = 'post';
+                return $p;
+            }, $posts),
+            array_map(function ($p) {
+                $p['_type'] = 'page';
+                return $p;
+            }, $pages),
         );
         usort($allContent, function ($a, $b) {
             $ta = $a['updated_at'] ?? '';

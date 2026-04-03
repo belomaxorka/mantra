@@ -1,9 +1,9 @@
 <?php declare(strict_types=1);
+
 /**
  * Logger - Centralized logging system
  * Supports multiple log levels and channels
  */
-
 class Logger implements \Psr\Log\LoggerInterface
 {
     // Log levels (PSR-3 compatible)
@@ -35,7 +35,7 @@ class Logger implements \Psr\Log\LoggerInterface
 
     /**
      * @param string $channel
-     * @param array  $options Supported: logPath, minLevel, includeContext, dateFormat
+     * @param array $options Supported: logPath, minLevel, includeContext, dateFormat
      */
     public function __construct($channel = 'app', $options = [])
     {
@@ -49,7 +49,7 @@ class Logger implements \Psr\Log\LoggerInterface
         }
 
         if (isset($options['includeContext'])) {
-            $this->includeContext = (bool) $options['includeContext'];
+            $this->includeContext = (bool)$options['includeContext'];
         }
 
         if (!empty($options['dateFormat'])) {

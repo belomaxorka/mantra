@@ -1,24 +1,28 @@
 {
-  "id": "admin",
-  "name": "Admin Panel",
-  "description": {
-    "en": "Core admin panel functionality",
-    "ru": "Основной функционал панели администратора"
-  },
-  "version": "1.0.0",
-  "author": "Mantra CMS",
-  "license": "MIT",
-  "type": "core",
-  "capabilities": [
-    "routes",
-    "admin_ui",
-    "middleware",
-    "templates"
-  ],
-  "dependencies": [],
-  "tags": ["admin", "panel", "management"],
-  "admin": {
-    "disableable": false,
-    "deletable": false
-  }
+    "id": "admin",
+    "name": "Admin Panel",
+    "description": {
+        "en": "Core admin panel functionality",
+        "ru": "Основной функционал панели администратора"
+    },
+    "version": "1.0.0",
+    "author": "Mantra CMS",
+    "license": "MIT",
+    "type": "core",
+    "capabilities": [
+        "routes",
+        "admin_ui",
+        "middleware",
+        "templates"
+    ],
+    "dependencies": [],
+    "tags": [
+        "admin",
+        "panel",
+        "management"
+    ],
+    "admin": {
+        "disableable": false,
+        "deletable": false
+    }
 }

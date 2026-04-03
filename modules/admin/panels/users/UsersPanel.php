@@ -2,15 +2,18 @@
 
 namespace Admin;
 
-class UsersPanel extends ContentPanel {
+class UsersPanel extends ContentPanel
+{
 
     private $userManager = null;
 
-    public function id() {
+    public function id()
+    {
         return 'users';
     }
 
-    public function init($admin): void {
+    public function init($admin): void
+    {
         parent::init($admin);
 
         app()->db()->registerSchema('users', $this->getPath() . '/schema.php');
@@ -21,7 +24,8 @@ class UsersPanel extends ContentPanel {
     /**
      * Register user management permissions with the central registry.
      */
-    public function registerPermissions($registry) {
+    public function registerPermissions($registry)
+    {
         $registry->registerPermissions([
             'users.view' => 'View users',
             'users.create' => 'Create users',
@@ -32,15 +36,18 @@ class UsersPanel extends ContentPanel {
         return $registry;
     }
 
-    protected function getContentType() {
+    protected function getContentType()
+    {
         return 'User';
     }
 
-    protected function getCollectionName() {
+    protected function getCollectionName()
+    {
         return 'users';
     }
 
-    protected function getDefaultItem() {
+    protected function getDefaultItem()
+    {
         return [
             'username' => '',
             'email' => '',
@@ -50,7 +57,8 @@ class UsersPanel extends ContentPanel {
         ];
     }
 
-    protected function extractFormData() {
+    protected function extractFormData()
+    {
         $data = [
             'email' => app()->request()->postTrimmed('email'),
             'role' => app()->request()->post('role', 'editor'),
@@ -67,16 +75,19 @@ class UsersPanel extends ContentPanel {
     }
 
     // Users don't have slugs
-    protected function ensureSlug($data) {
+    protected function ensureSlug($data)
+    {
         return $data;
     }
 
     // Use generated ID instead of slug-based
-    protected function generateId($data) {
+    protected function generateId($data)
+    {
         return $this->db()->generateId();
     }
 
-    private function getUserManager() {
+    private function getUserManager()
+    {
         if ($this->userManager === null) {
             $this->userManager = new \User();
         }
@@ -85,7 +96,8 @@ class UsersPanel extends ContentPanel {
 
     // ========== Overrides ==========
 
-    public function listItems() {
+    public function listItems()
+    {
         if (!$this->requirePermission('users.view')) return;
 
         $allUsers = $this->getUserManager()->all();
@@ -110,7 +122,8 @@ class UsersPanel extends ContentPanel {
         ]);
     }
 
-    public function createItem() {
+    public function createItem()
+    {
         if (!$this->requirePermission('users.create')) return;
         if (!$this->verifyCsrf()) return;
 
@@ -143,7 +156,8 @@ class UsersPanel extends ContentPanel {
         $this->redirectAdmin($this->getAdminPath());
     }
 
-    public function updateItem($params) {
+    public function updateItem($params)
+    {
         if (!$this->requirePermission('users.edit')) return;
         if (!$this->verifyCsrf()) return;
 
@@ -180,7 +194,8 @@ class UsersPanel extends ContentPanel {
         $this->redirectAdmin($this->getAdminPath());
     }
 
-    public function deleteItem($params): void {
+    public function deleteItem($params): void
+    {
         if (!$this->requirePermission('users.delete')) return;
         if (!$this->verifyCsrf()) return;
 

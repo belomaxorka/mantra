@@ -6,7 +6,8 @@
 
 namespace Module;
 
-class ModuleCapability {
+class ModuleCapability
+{
     // Core capabilities
     public const ROUTES = 'routes';              // Registers routes
     public const HOOKS = 'hooks';                // Provides hooks for other modules
@@ -25,7 +26,8 @@ class ModuleCapability {
      * Get all available capabilities
      * @return array
      */
-    public static function all() {
+    public static function all()
+    {
         return [
             self::ROUTES,
             self::HOOKS,
@@ -47,7 +49,8 @@ class ModuleCapability {
      * @param string $capability
      * @return bool
      */
-    public static function isValid($capability) {
+    public static function isValid($capability)
+    {
         return in_array($capability, self::all(), true);
     }
 }

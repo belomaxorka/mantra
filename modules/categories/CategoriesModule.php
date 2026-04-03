@@ -15,12 +15,12 @@ class CategoriesModule extends BaseAdminModule
         app()->translator()->registerDomain('categories', $this->getPath() . '/lang');
 
         // Admin CRUD routes
-        $this->registerAdminRoute('GET',  'categories',              [$this, 'listCategories']);
-        $this->registerAdminRoute('GET',  'categories/new',          [$this, 'newCategory']);
-        $this->registerAdminRoute('POST', 'categories/new',          [$this, 'createCategory']);
-        $this->registerAdminRoute('GET',  'categories/edit/{id}',    [$this, 'editCategory']);
-        $this->registerAdminRoute('POST', 'categories/edit/{id}',    [$this, 'updateCategory']);
-        $this->registerAdminRoute('POST', 'categories/delete/{id}',  [$this, 'deleteCategory']);
+        $this->registerAdminRoute('GET', 'categories', [$this, 'listCategories']);
+        $this->registerAdminRoute('GET', 'categories/new', [$this, 'newCategory']);
+        $this->registerAdminRoute('POST', 'categories/new', [$this, 'createCategory']);
+        $this->registerAdminRoute('GET', 'categories/edit/{id}', [$this, 'editCategory']);
+        $this->registerAdminRoute('POST', 'categories/edit/{id}', [$this, 'updateCategory']);
+        $this->registerAdminRoute('POST', 'categories/delete/{id}', [$this, 'deleteCategory']);
 
         // Permissions
         $this->hook('permissions.register', [$this, 'registerPermissions']);
@@ -226,9 +226,9 @@ class CategoriesModule extends BaseAdminModule
         ]);
 
         return $html . partial('categories:category-selector', [
-            'categories' => $categories,
-            'currentCategory' => $currentCategory,
-        ]);
+                'categories' => $categories,
+                'currentCategory' => $currentCategory,
+            ]);
     }
 
     public function extractCategoryField($data)
