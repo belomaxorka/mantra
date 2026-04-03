@@ -354,6 +354,37 @@ This is content without YAML frontmatter.';
         $this->assertTrue($this->driver->exists($newCollection, 'first-doc'), 'Document exists after write');
     }
 
+    public function testCountFilesEmpty(): void
+    {
+        $this->assertSame(0, $this->driver->countFiles('nonexistent'));
+    }
+
+    public function testCountFiles(): void
+    {
+        $this->driver->write('counted', 'a', array('title' => 'A', 'content' => 'test'));
+        $this->driver->write('counted', 'b', array('title' => 'B', 'content' => 'test'));
+
+        $this->assertSame(2, $this->driver->countFiles('counted'));
+    }
+
+    public function testListIdsEmpty(): void
+    {
+        $this->assertSame(array(), $this->driver->listIds('nonexistent'));
+    }
+
+    public function testListIds(): void
+    {
+        $this->driver->write('listed', 'first', array('title' => 'First', 'content' => 'x'));
+        $this->driver->write('listed', 'second', array('title' => 'Second', 'content' => 'y'));
+
+        $ids = $this->driver->listIds('listed');
+        sort($ids);
+
+        $this->assertCount(2, $ids);
+        $this->assertSame('first', $ids[0]);
+        $this->assertSame('second', $ids[1]);
+    }
+
     public function testOverwriteExisting(): void
     {
         $this->driver->write('pages', 'overwrite-test', array('title' => 'Original', 'version' => 1, 'content' => 'Original content'));

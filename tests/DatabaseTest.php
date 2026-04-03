@@ -1371,4 +1371,149 @@ PHP;
 
         $this->assertLessThan(2, $readTime, 'Individual reads complete in reasonable time');
     }
+
+    public function testCountWithoutFilters(): void
+    {
+        $this->createTestSchema('test_count', array(
+            'version' => 1,
+            'defaults' => array('name' => ''),
+            'fields' => array(
+                'name' => array('type' => 'string', 'required' => true)
+            )
+        ));
+
+        $db = new Database($this->testDir);
+
+        $db->write('test_count', 'a', array('name' => 'Alpha'));
+        $db->write('test_count', 'b', array('name' => 'Beta'));
+        $db->write('test_count', 'c', array('name' => 'Gamma'));
+
+        $this->assertSame(3, $db->count('test_count'));
+    }
+
+    public function testCountWithFilters(): void
+    {
+        $this->createTestSchema('test_count_f', array(
+            'version' => 1,
+            'defaults' => array('name' => '', 'status' => 'draft'),
+            'fields' => array(
+                'name' => array('type' => 'string', 'required' => true),
+                'status' => array('type' => 'string', 'required' => true)
+            )
+        ));
+
+        $db = new Database($this->testDir);
+
+        $db->write('test_count_f', 'a', array('name' => 'A', 'status' => 'published'));
+        $db->write('test_count_f', 'b', array('name' => 'B', 'status' => 'draft'));
+        $db->write('test_count_f', 'c', array('name' => 'C', 'status' => 'published'));
+
+        $this->assertSame(2, $db->count('test_count_f', array('status' => 'published')));
+        $this->assertSame(1, $db->count('test_count_f', array('status' => 'draft')));
+    }
+
+    public function testCountEmptyCollection(): void
+    {
+        $db = new Database($this->testDir);
+        $this->assertSame(0, $db->count('nonexistent'));
+    }
+
+    public function testListIds(): void
+    {
+        $this->createTestSchema('test_list', array(
+            'version' => 1,
+            'defaults' => array('name' => ''),
+            'fields' => array(
+                'name' => array('type' => 'string', 'required' => true)
+            )
+        ));
+
+        $db = new Database($this->testDir);
+
+        $db->write('test_list', 'x1', array('name' => 'One'));
+        $db->write('test_list', 'x2', array('name' => 'Two'));
+
+        $ids = $db->listIds('test_list');
+        sort($ids);
+
+        $this->assertCount(2, $ids);
+        $this->assertSame('x1', $ids[0]);
+        $this->assertSame('x2', $ids[1]);
+    }
+
+    public function testCollectionCachePreventsDuplicateReads(): void
+    {
+        $this->createTestSchema('test_cache', array(
+            'version' => 1,
+            'defaults' => array('name' => ''),
+            'fields' => array(
+                'name' => array('type' => 'string', 'required' => true)
+            )
+        ));
+
+        $db = new Database($this->testDir);
+
+        for ($i = 1; $i <= 50; $i++) {
+            $db->write('test_cache', 'item' . $i, array('name' => 'Item ' . $i));
+        }
+
+        // First call reads from disk, second uses cache — should be faster
+        $start1 = microtime(true);
+        $result1 = $db->query('test_cache');
+        $time1 = microtime(true) - $start1;
+
+        $start2 = microtime(true);
+        $result2 = $db->query('test_cache');
+        $time2 = microtime(true) - $start2;
+
+        $this->assertCount(50, $result1);
+        $this->assertCount(50, $result2);
+        // Cached read should be significantly faster
+        $this->assertLessThan($time1, $time2, 'Cached collection read is faster');
+    }
+
+    public function testCacheInvalidatedOnWrite(): void
+    {
+        $this->createTestSchema('test_cache_inv', array(
+            'version' => 1,
+            'defaults' => array('name' => ''),
+            'fields' => array(
+                'name' => array('type' => 'string', 'required' => true)
+            )
+        ));
+
+        $db = new Database($this->testDir);
+
+        $db->write('test_cache_inv', 'a', array('name' => 'Alpha'));
+        $results1 = $db->query('test_cache_inv');
+        $this->assertCount(1, $results1);
+
+        // Write a new document — cache should be invalidated
+        $db->write('test_cache_inv', 'b', array('name' => 'Beta'));
+        $results2 = $db->query('test_cache_inv');
+        $this->assertCount(2, $results2);
+    }
+
+    public function testCacheInvalidatedOnDelete(): void
+    {
+        $this->createTestSchema('test_cache_del', array(
+            'version' => 1,
+            'defaults' => array('name' => ''),
+            'fields' => array(
+                'name' => array('type' => 'string', 'required' => true)
+            )
+        ));
+
+        $db = new Database($this->testDir);
+
+        $db->write('test_cache_del', 'a', array('name' => 'Alpha'));
+        $db->write('test_cache_del', 'b', array('name' => 'Beta'));
+        $results1 = $db->query('test_cache_del');
+        $this->assertCount(2, $results1);
+
+        // Delete — cache should be invalidated
+        $db->delete('test_cache_del', 'a');
+        $results2 = $db->query('test_cache_del');
+        $this->assertCount(1, $results2);
+    }
 }

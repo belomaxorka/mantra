@@ -111,6 +111,36 @@ class MarkdownStorageDriver implements StorageDriverInterface
         return $items;
     }
 
+    public function countFiles($collection)
+    {
+        $collectionPath = $this->basePath . '/' . $collection;
+
+        if (!is_dir($collectionPath)) {
+            return 0;
+        }
+
+        return count(glob($collectionPath . '/*' . $this->getExtension()));
+    }
+
+    public function listIds($collection)
+    {
+        $collectionPath = $this->basePath . '/' . $collection;
+
+        if (!is_dir($collectionPath)) {
+            return array();
+        }
+
+        $ext = $this->getExtension();
+        $files = glob($collectionPath . '/*' . $ext);
+        $ids = array();
+
+        foreach ($files as $file) {
+            $ids[] = basename($file, $ext);
+        }
+
+        return $ids;
+    }
+
     public function getExtension()
     {
         return '.md';

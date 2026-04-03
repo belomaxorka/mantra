@@ -19,6 +19,9 @@ class Database
     // Module-registered schemas: collection => file path
     private $registeredSchemas = array();
 
+    // In-request collection cache: collection => items array
+    private $collectionCache = array();
+
     public function __construct($basePath = null)
     {
         $this->basePath = $basePath ? $basePath : MANTRA_CONTENT;
@@ -88,6 +91,9 @@ class Database
      */
     public function write($collection, $id, $data)
     {
+        // Invalidate in-request cache for this collection
+        unset($this->collectionCache[$collection]);
+
         // Validate collection name (prevent directory traversal)
         if (!$this->isValidCollectionName($collection)) {
             logger()->error('Invalid collection name', array('collection' => $collection));
@@ -206,6 +212,7 @@ class Database
      */
     public function delete($collection, $id)
     {
+        unset($this->collectionCache[$collection]);
         $driver = $this->getDriver($collection);
         return $driver->delete($collection, $id);
     }
@@ -220,10 +227,14 @@ class Database
     }
 
     /**
-     * Read entire collection
+     * Read entire collection (cached per request)
      */
     private function readCollection($collection)
     {
+        if (isset($this->collectionCache[$collection])) {
+            return $this->collectionCache[$collection];
+        }
+
         $driver = $this->getDriver($collection);
         $items = array();
         $documents = $driver->readCollection($collection);
@@ -239,6 +250,7 @@ class Database
             $items[] = $data;
         }
 
+        $this->collectionCache[$collection] = $items;
         return $items;
     }
 
@@ -295,17 +307,23 @@ class Database
     /**
      * Count documents in a collection, optionally filtered.
      *
+     * Without filters, counts files on disk without reading contents (fast path).
+     * With filters, reads the collection and counts matching documents.
+     *
      * @param string $collection Collection name
      * @param array  $filters    Key-value equality filters (same as query())
      * @return int
      */
     public function count($collection, $filters = array())
     {
-        $items = $this->readCollection($collection);
-
+        // Fast path: no filters — count files without reading contents
         if (empty($filters)) {
-            return count($items);
+            $driver = $this->getDriver($collection);
+            return $driver->countFiles($collection);
         }
+
+        // Filtered count requires reading documents
+        $items = $this->readCollection($collection);
 
         $count = 0;
         foreach ($items as $item) {
@@ -322,6 +340,18 @@ class Database
         }
 
         return $count;
+    }
+
+    /**
+     * List document IDs in a collection without reading contents.
+     *
+     * @param string $collection Collection name
+     * @return array Array of document IDs
+     */
+    public function listIds($collection)
+    {
+        $driver = $this->getDriver($collection);
+        return $driver->listIds($collection);
     }
 
     /**

@@ -223,6 +223,47 @@ class JsonStorageDriverTest extends MantraTestCase
         $this->assertSame('Test "quotes" & \'apostrophes\'', $read['special'], 'Special characters preserved');
     }
 
+    public function testCountFilesEmpty(): void
+    {
+        $this->assertSame(0, $this->driver->countFiles('nonexistent'));
+    }
+
+    public function testCountFiles(): void
+    {
+        $this->driver->write('counted', 'a', array('x' => 1));
+        $this->driver->write('counted', 'b', array('x' => 2));
+        $this->driver->write('counted', 'c', array('x' => 3));
+
+        $this->assertSame(3, $this->driver->countFiles('counted'));
+    }
+
+    public function testCountFilesAfterDelete(): void
+    {
+        $this->driver->write('counted2', 'a', array('x' => 1));
+        $this->driver->write('counted2', 'b', array('x' => 2));
+        $this->driver->delete('counted2', 'a');
+
+        $this->assertSame(1, $this->driver->countFiles('counted2'));
+    }
+
+    public function testListIdsEmpty(): void
+    {
+        $this->assertSame(array(), $this->driver->listIds('nonexistent'));
+    }
+
+    public function testListIds(): void
+    {
+        $this->driver->write('listed', 'alpha', array('x' => 1));
+        $this->driver->write('listed', 'beta', array('x' => 2));
+
+        $ids = $this->driver->listIds('listed');
+        sort($ids);
+
+        $this->assertCount(2, $ids);
+        $this->assertSame('alpha', $ids[0]);
+        $this->assertSame('beta', $ids[1]);
+    }
+
     public function testRepeatedWrites(): void
     {
         $col = 'repeated-w-' . time();
