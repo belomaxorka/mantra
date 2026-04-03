@@ -179,7 +179,10 @@ abstract class ContentAdminModule extends BaseAdminModule
 
         if (!$item) {
             http_response_code(404);
-            return $this->renderAdmin('Not Found', '<div class="alert alert-danger alert-dismissible fade show alert-permanent" role="alert">' . $this->getContentType() . ' not found<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>');
+            return $this->renderAdmin(
+                t('admin.common.not_found'),
+                '<div class="alert alert-danger alert-permanent">' . e($this->getContentType()) . ' not found</div>',
+            );
         }
 
         $templateData = [
@@ -212,7 +215,10 @@ abstract class ContentAdminModule extends BaseAdminModule
 
         if (!$item) {
             http_response_code(404);
-            return $this->renderAdmin('Not Found', '<div class="alert alert-danger alert-dismissible fade show alert-permanent" role="alert">' . e($this->getContentType()) . ' not found<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>');
+            return $this->renderAdmin(
+                t('admin.common.not_found'),
+                '<div class="alert alert-danger alert-permanent">' . e($this->getContentType()) . ' not found</div>',
+            );
         }
 
         $data = $this->extractFormData();

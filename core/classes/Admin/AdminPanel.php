@@ -220,17 +220,6 @@ abstract class AdminPanel implements AdminPanelInterface
     }
 
     /**
-     * Add a flash message (shown as a toast after the next page load).
-     *
-     * @param string $type    success, danger, warning, info
-     * @param string $message The message text
-     */
-    protected function flash($type, $message): void
-    {
-        app()->session()->flash($type, $message);
-    }
-
-    /**
      * Register a hook listener.
      */
     protected function hook($hookName, $callback, $priority = 10)

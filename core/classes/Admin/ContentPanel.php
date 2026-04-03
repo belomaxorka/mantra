@@ -333,7 +333,7 @@ abstract class ContentPanel extends AdminPanel
             'action' => 'create',
         ]);
 
-        $this->flash('success', t('admin.common.created'));
+        app()->session()->flash('success', t('admin.common.created'));
         $this->redirectAdmin($this->getAdminPath());
     }
 
@@ -422,7 +422,7 @@ abstract class ContentPanel extends AdminPanel
             'action' => 'update',
         ]);
 
-        $this->flash('success', t('admin.common.updated'));
+        app()->session()->flash('success', t('admin.common.updated'));
         $this->redirectAdmin($this->getAdminPath());
     }
 
@@ -455,7 +455,7 @@ abstract class ContentPanel extends AdminPanel
             'id' => $id,
         ]);
 
-        $this->flash('success', t('admin.common.deleted'));
+        app()->session()->flash('success', t('admin.common.deleted'));
         $this->redirectAdmin($this->getAdminPath());
     }
 }
