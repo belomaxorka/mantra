@@ -1,0 +1,58 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract version from tag
+        id: version
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Extract changelog for this release
+        id: changelog
+        run: |
+          # Extract the section for this tag from CHANGELOG.md
+          # Matches from "## [vX.Y.Z]" until the next "## [" or end of file
+          TAG_PATTERN="## \\[${GITHUB_REF_NAME}\\]"
+          changelog=$(awk "
+            /^${TAG_PATTERN}/  { found=1; next }
+            found && /^## \\[/ { exit }
+            found              { print }
+          " CHANGELOG.md)
+
+          # Trim leading/trailing blank lines
+          changelog=$(echo "$changelog" | sed -e '/./,$!d' -e :a -e '/^$/N;/\n$/ba' -e 's/\n$//')
+
+          # Write to output using heredoc delimiter
+          {
+            echo "body<<CHANGELOG_EOF"
+            echo "$changelog"
+            echo "CHANGELOG_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Create source archive
+        run: |
+          # Create a clean archive without export-ignored files
+          git archive --format=zip --prefix="mantra-${{ steps.version.outputs.version }}/" HEAD \
+            -o "mantra-${{ steps.version.outputs.version }}.zip"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Mantra CMS ${{ steps.version.outputs.version }}
+          body: ${{ steps.changelog.outputs.body }}
+          files: mantra-${{ steps.version.outputs.version }}.zip

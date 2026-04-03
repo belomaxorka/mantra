@@ -559,6 +559,7 @@ $this->hook('permissions.register', function($registry) {
 | [docs/PAGINATION.md](docs/PAGINATION.md) | Paginator API and integration examples |
 | [docs/tools/SEED.md](docs/tools/SEED.md) | Test data generator (`tools/seed.php`) |
 | [docs/tools/BENCH.md](docs/tools/BENCH.md) | Performance benchmark (`tools/bench.php`) |
+| [docs/tools/RELEASE.md](docs/tools/RELEASE.md) | Release script and workflow (`tools/release.php`) |
 
 ## CI pipeline
 
