@@ -557,6 +557,8 @@ $this->hook('permissions.register', function($registry) {
 | [docs/ADMIN_PANELS.md](docs/ADMIN_PANELS.md) | Admin panel creation guide and ContentPanel API |
 | [docs/VIEWS.md](docs/VIEWS.md) | Template rendering, partials, and theme override system |
 | [docs/PAGINATION.md](docs/PAGINATION.md) | Paginator API and integration examples |
+| [docs/tools/SEED.md](docs/tools/SEED.md) | Test data generator (`tools/seed.php`) |
+| [docs/tools/BENCH.md](docs/tools/BENCH.md) | Performance benchmark (`tools/bench.php`) |
 
 ## CI pipeline
 
