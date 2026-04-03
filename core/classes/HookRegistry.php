@@ -32,6 +32,18 @@ class HookRegistry {
             'return_type' => 'array',
         ),
 
+        // ── Content lifecycle ──────────────────────────────
+        'content.saved' => array(
+            'description' => 'Fired after content is created or updated via admin panel',
+            'data_type'   => 'array {collection, id, action}',
+            'return_type' => 'null',
+        ),
+        'content.deleted' => array(
+            'description' => 'Fired after content is deleted via admin panel',
+            'data_type'   => 'array {collection, id}',
+            'return_type' => 'null',
+        ),
+
         // ── View ────────────────────────────────────────────
         'view.render' => array(
             'description' => 'Filter final rendered HTML before output',

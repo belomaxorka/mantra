@@ -271,6 +271,12 @@ abstract class ContentPanel extends AdminPanel {
 
         app()->db()->write($this->getCollectionName(), $id, $data);
 
+        app()->hooks()->fire('content.saved', array(
+            'collection' => $this->getCollectionName(),
+            'id' => $id,
+            'action' => 'create',
+        ));
+
         $this->redirectAdmin($this->getAdminPath());
     }
 
@@ -345,6 +351,12 @@ abstract class ContentPanel extends AdminPanel {
 
         app()->db()->write($this->getCollectionName(), $id, $data);
 
+        app()->hooks()->fire('content.saved', array(
+            'collection' => $this->getCollectionName(),
+            'id' => $id,
+            'action' => 'update',
+        ));
+
         $this->redirectAdmin($this->getAdminPath());
     }
 
@@ -370,6 +382,11 @@ abstract class ContentPanel extends AdminPanel {
         }
 
         app()->db()->delete($this->getCollectionName(), $id);
+
+        app()->hooks()->fire('content.deleted', array(
+            'collection' => $this->getCollectionName(),
+            'id' => $id,
+        ));
 
         $this->redirectAdmin($this->getAdminPath());
     }
