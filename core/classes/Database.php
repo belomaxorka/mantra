@@ -402,13 +402,13 @@ class Database
         }
 
 
-        $currentVersion = isset($schema['version']) ? (int)$schema['version'] : 0;
-        $docVersion = isset($data['schema_version']) ? (int)$data['schema_version'] : 0;
+        $currentVersion = (int)($schema['version'] ?? 0);
+        $docVersion = (int)($data['schema_version'] ?? 0);
 
         // Run migration BEFORE applying defaults so that migrate callbacks
         // operate on the raw document (defaults won't shadow old field names).
         if ($docVersion < $currentVersion && !empty($schema['migrate']) && is_callable($schema['migrate'])) {
-            $data = call_user_func($schema['migrate'], $data, $docVersion, $currentVersion);
+            $data = ($schema['migrate'])($data, $docVersion, $currentVersion);
             if (!is_array($data)) {
                 $data = [];
             }
@@ -435,18 +435,6 @@ class Database
      */
     public function generateId()
     {
-        if (function_exists('random_bytes')) {
-            return bin2hex(random_bytes(8)) . '-' . dechex(time());
-        }
-
-        if (function_exists('openssl_random_pseudo_bytes')) {
-            $bytes = openssl_random_pseudo_bytes(8, $strong);
-            if ($strong) {
-                return bin2hex($bytes) . '-' . dechex(time());
-            }
-        }
-
-        // Fallback (less secure)
-        return uniqid() . '-' . random_int(1000, 9999);
+        return bin2hex(random_bytes(8)) . '-' . dechex(time());
     }
 }

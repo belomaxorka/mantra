@@ -25,11 +25,11 @@ class JsonCodec
      */
     public static function encode($data)
     {
-        $json = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-        if ($json === false) {
-            throw new JsonCodecException('Failed to encode JSON: ' . json_last_error_msg());
+        try {
+            return json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+        } catch (\JsonException $e) {
+            throw new JsonCodecException('Failed to encode JSON: ' . $e->getMessage());
         }
-        return $json;
     }
 
     /**
@@ -41,16 +41,13 @@ class JsonCodec
      */
     public static function decode($json)
     {
-        // json_decode() exceptions require PHP 7.3+ (JSON_THROW_ON_ERROR).
-        // The project supports PHP 5.5+, so use json_last_error().
-        $data = json_decode($json, true);
+        try {
+            $data = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+        } catch (\JsonException $e) {
+            throw new JsonCodecException('Invalid JSON: ' . $e->getMessage());
+        }
 
         if (!is_array($data)) {
-            $err = json_last_error();
-            if ($err !== JSON_ERROR_NONE) {
-                throw new JsonCodecException('Invalid JSON: ' . json_last_error_msg());
-            }
-            // Valid JSON but not an object/array.
             throw new JsonCodecException('JSON root must be an object or array');
         }
 

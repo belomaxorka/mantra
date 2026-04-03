@@ -178,12 +178,12 @@ class ConfigSettings
     {
         $dirty = false;
 
-        $to = isset($schema['version']) ? (int)$schema['version'] : 0;
-        $from = isset($data['schema_version']) ? (int)$data['schema_version'] : 0;
+        $to = (int)($schema['version'] ?? 0);
+        $from = (int)($data['schema_version'] ?? 0);
 
         if ($to > 0 && $from < $to) {
             if (isset($schema['migrate']) && is_callable($schema['migrate'])) {
-                $data = call_user_func($schema['migrate'], $data, $from, $to);
+                $data = ($schema['migrate'])($data, $from, $to);
                 if (!is_array($data)) {
                     $data = [];
                 }

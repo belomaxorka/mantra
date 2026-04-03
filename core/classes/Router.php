@@ -112,7 +112,7 @@ class Router
             // Run global middleware that matches this URI
             foreach ($this->globalMiddleware as $mw) {
                 if ($this->middlewareMatches($mw['pattern'], $uri) && is_callable($mw['callback'])) {
-                    if (call_user_func($mw['callback']) === false) {
+                    if (($mw['callback'])() === false) {
                         return;
                     }
                 }
@@ -121,7 +121,7 @@ class Router
             // Run route-specific middleware
             foreach ($route['middleware'] as $mw) {
                 if (is_callable($mw)) {
-                    $result = call_user_func($mw);
+                    $result = $mw();
                     if ($result === false) {
                         return; // Middleware stopped execution
                     }
@@ -129,13 +129,11 @@ class Router
             }
 
             // Execute callback
-            // NOTE: $params is an associative array (named params). Passing it to call_user_func_array()
-            // would be treated as PHP 8 named arguments and can break handlers expecting a single $params array.
             if (is_callable($route['callback'])) {
                 if (empty($params)) {
-                    call_user_func($route['callback']);
+                    ($route['callback'])();
                 } else {
-                    call_user_func($route['callback'], $params);
+                    ($route['callback'])($params);
                 }
             } elseif (is_string($route['callback'])) {
                 // Format: "ModuleName:method"
@@ -211,9 +209,9 @@ class Router
 
         if ($module && method_exists($module, $method)) {
             if (empty($params)) {
-                call_user_func([$module, $method]);
+                $module->$method();
             } else {
-                call_user_func([$module, $method], $params);
+                $module->$method($params);
             }
         } else {
             throw new Exception('Controller action not found: ' . $action);
@@ -230,7 +228,7 @@ class Router
         }
 
         // Prefix match: "/admin/*" matches "/admin" and "/admin/pages"
-        if (substr($pattern, -2) === '/*') {
+        if (str_ends_with($pattern, '/*')) {
             $prefix = substr($pattern, 0, -2);
             return $uri === $prefix || str_starts_with($uri, $prefix . '/');
         }

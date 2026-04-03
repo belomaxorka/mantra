@@ -251,8 +251,8 @@ class MarkdownStorageDriver implements StorageDriverInterface
                     $value = (int)$value;
                 } else {
                     // Remove quotes if present and unescape content
-                    if ((substr($value, 0, 1) === '"' && substr($value, -1) === '"') ||
-                        (substr($value, 0, 1) === "'" && substr($value, -1) === "'")) {
+                    if ((str_starts_with($value, '"') && str_ends_with($value, '"')) ||
+                        (str_starts_with($value, "'") && str_ends_with($value, "'"))) {
                         $value = substr($value, 1, -1);
                         // Unescape escaped quotes
                         $value = str_replace('\\"', '"', $value);

@@ -163,11 +163,9 @@ function slugify($text)
     $text = strtr($text, $cyrillic);
     $text = preg_replace('~[^\pL\d]+~u', '-', $text);
 
-    if (function_exists('iconv')) {
-        $converted = @iconv('utf-8', 'us-ascii//TRANSLIT//IGNORE', $text);
-        if ($converted !== false) {
-            $text = $converted;
-        }
+    $converted = @iconv('utf-8', 'us-ascii//TRANSLIT//IGNORE', $text);
+    if ($converted !== false) {
+        $text = $converted;
     }
 
     $text = preg_replace('~[^-\w]+~', '', $text);

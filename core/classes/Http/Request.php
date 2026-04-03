@@ -17,7 +17,7 @@ class Request
 
     public function method()
     {
-        return isset($_SERVER['REQUEST_METHOD']) ? strtoupper($_SERVER['REQUEST_METHOD']) : 'GET';
+        return strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
     }
 
     public function uri()
@@ -91,7 +91,7 @@ class Request
     public function acceptsJson()
     {
         $accept = (string)$this->header('Accept', '');
-        return stripos($accept, 'application/json') !== false;
+        return str_contains(strtolower($accept), 'application/json');
     }
 
     public function contentType()
@@ -101,7 +101,7 @@ class Request
 
     public function isJson()
     {
-        return stripos($this->contentType(), 'application/json') !== false;
+        return str_contains(strtolower($this->contentType()), 'application/json');
     }
 
     public function json($key = null, $default = null)

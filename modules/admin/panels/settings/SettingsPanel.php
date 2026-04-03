@@ -165,7 +165,7 @@ class SettingsPanel extends AdminPanel
         }
 
         if (is_array($context) && !empty($context['schema_mutator']) && is_callable($context['schema_mutator'])) {
-            $schema = call_user_func($context['schema_mutator'], $schema);
+            $schema = ($context['schema_mutator'])($schema);
         }
 
         if (method_exists($store, 'load')) {
@@ -180,7 +180,7 @@ class SettingsPanel extends AdminPanel
                 $handledAction = false;
                 if (is_array($context) && !empty($context['on_post']) && is_callable($context['on_post'])) {
                     $args = [&$notice, &$error];
-                    $handledAction = (bool)call_user_func_array($context['on_post'], $args);
+                    $handledAction = (bool)($context['on_post'])(...$args);
                 }
 
                 if (empty($error) && !$handledAction) {
@@ -603,15 +603,10 @@ class SettingsPanel extends AdminPanel
 
     private function getAvailableSameSiteOptions()
     {
-        if (defined('PHP_VERSION_ID') && PHP_VERSION_ID >= 70300) {
-            return [
-                'Lax' => 'Lax (recommended)',
-                'Strict' => 'Strict',
-                'None' => 'None',
-            ];
-        }
         return [
-            'not_supported' => 'Not supported (PHP 7.3+ required)',
+            'Lax' => 'Lax (recommended)',
+            'Strict' => 'Strict',
+            'None' => 'None',
         ];
     }
 

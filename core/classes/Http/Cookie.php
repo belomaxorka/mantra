@@ -30,7 +30,7 @@ class Cookie
             return false;
         }
 
-        $expires = isset($options['expires']) ? (int)$options['expires'] : 0;
+        $expires = (int)($options['expires'] ?? 0);
         $path = $options['path'] ?? config('session.cookie_path', '/');
         $domain = $options['domain'] ?? config('session.cookie_domain', '');
         $httponly = array_key_exists('httponly', $options) ? (bool)$options['httponly'] : (bool)config('session.cookie_httponly', true);
@@ -58,20 +58,14 @@ class Cookie
             }
         }
 
-        // PHP 7.3+ supports options array with SameSite
-        if (PHP_VERSION_ID >= 70300) {
-            return setcookie($name, $value, [
-                'expires' => $expires,
-                'path' => $path,
-                'domain' => $domain,
-                'secure' => $secure,
-                'httponly' => $httponly,
-                'samesite' => $samesite,
-            ]);
-        }
-
-        // Legacy signature (no SameSite support)
-        return setcookie($name, $value, $expires, $path, $domain, $secure, $httponly);
+        return setcookie($name, $value, [
+            'expires' => $expires,
+            'path' => $path,
+            'domain' => $domain,
+            'secure' => $secure,
+            'httponly' => $httponly,
+            'samesite' => $samesite,
+        ]);
     }
 
     public function delete($name, $options = [])

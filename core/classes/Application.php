@@ -350,7 +350,7 @@ class Application
 
         if (!$entry['resolved']) {
             $entry['value'] = is_callable($entry['provider'])
-                ? call_user_func($entry['provider'])
+                ? ($entry['provider'])()
                 : $entry['provider'];
             $entry['resolved'] = true;
         }

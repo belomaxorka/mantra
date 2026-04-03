@@ -361,13 +361,11 @@ class UploadsPanel extends AdminPanel
      */
     private function detectMimeType($tmpPath, $originalName)
     {
-        if (function_exists('finfo_open')) {
-            $finfo = finfo_open(FILEINFO_MIME_TYPE);
-            $mime = finfo_file($finfo, $tmpPath);
-            finfo_close($finfo);
-            if ($mime && $mime !== 'application/octet-stream') {
-                return $mime;
-            }
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mime = finfo_file($finfo, $tmpPath);
+        finfo_close($finfo);
+        if ($mime && $mime !== 'application/octet-stream') {
+            return $mime;
         }
 
         // Fallback to extension-based detection

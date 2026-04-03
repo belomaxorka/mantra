@@ -76,7 +76,7 @@ class HookManager
 
         foreach ($this->hooks[$hookName] as $hook) {
             if (is_callable($hook['callback'])) {
-                $result = call_user_func($hook['callback'], $data, $context);
+                $result = ($hook['callback'])($data, $context);
                 // Allow hooks to modify data
                 if ($result !== null) {
                     $data = $result;
@@ -100,7 +100,7 @@ class HookManager
      */
     public function listenerCount($hookName)
     {
-        return isset($this->hooks[$hookName]) ? count($this->hooks[$hookName]) : 0;
+        return count($this->hooks[$hookName] ?? []);
     }
 
     /**

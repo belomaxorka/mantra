@@ -47,26 +47,22 @@ class Session
             $secure = \Http\Request::isHttps();
         }
 
-        if (PHP_VERSION_ID >= 70300) {
-            $samesite = config('session.cookie_samesite', 'Lax');
+        $samesite = config('session.cookie_samesite', 'Lax');
 
-            // Validate SameSite value
-            $validSameSite = ['Lax', 'Strict', 'None'];
-            if (!in_array($samesite, $validSameSite, true)) {
-                $samesite = 'Lax';
-            }
-
-            session_set_cookie_params([
-                'lifetime' => $lifetime,
-                'path' => $path,
-                'domain' => $domain,
-                'secure' => $secure,
-                'httponly' => $httponly,
-                'samesite' => $samesite,
-            ]);
-        } else {
-            session_set_cookie_params($lifetime, $path, $domain, $secure, $httponly);
+        // Validate SameSite value
+        $validSameSite = ['Lax', 'Strict', 'None'];
+        if (!in_array($samesite, $validSameSite, true)) {
+            $samesite = 'Lax';
         }
+
+        session_set_cookie_params([
+            'lifetime' => $lifetime,
+            'path' => $path,
+            'domain' => $domain,
+            'secure' => $secure,
+            'httponly' => $httponly,
+            'samesite' => $samesite,
+        ]);
 
         @ini_set('session.gc_maxlifetime', (string)$lifetime);
 
