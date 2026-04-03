@@ -138,34 +138,44 @@ if (preg_match('#github\.com[:/](.+?)(?:\.git)?$#', $remoteUrl, $m)) {
 /**
  * Strip the conventional commit prefix and format for changelog.
  *
- * "feat(seo): add Open Graph"  → "**seo:** add Open Graph"
- * "feat!: drop PHP 8.0"        → "drop PHP 8.0"
- * "chore: update deps"         → "update deps"
+ * "feat(seo): add Open Graph"  → "(seo) Add Open Graph"
+ * "feat!: drop PHP 8.0"        → "Drop PHP 8.0"
+ * "chore: update deps"         → "Update deps"
  */
 function formatEntry(string $text): string
 {
     if (preg_match('/^[a-z]+\((.+?)\)!?:\s*(.+)$/', $text, $m)) {
-        return "**{$m[1]}:** {$m[2]}";
+        return "({$m[1]}) " . ucfirst($m[2]);
     }
     if (preg_match('/^[a-z]+!?:\s*(.+)$/', $text, $m)) {
-        return $m[1];
+        return ucfirst($m[1]);
     }
-    return $text;
+    return ucfirst($text);
 }
 
 /**
- * Convert (#123) references to markdown links.
+ * Format the trailing reference: PR link + short hash, or just short hash.
+ *
+ * PR:     (#42) - (66b6dcf)
+ * Commit: (66b6dcf)
  */
-function linkifyPr(string $text, string $repoUrl): string
+function formatRef(array $entry, string $repoUrl): string
 {
-    if ($repoUrl === '') {
-        return $text;
+    $shortHash = substr($entry['hash'], 0, 7);
+
+    if ($repoUrl !== '') {
+        $hashLink = "[{$shortHash}]({$repoUrl}/commit/{$entry['hash']})";
+        if (!empty($entry['pr'])) {
+            $prLink = "[#{$entry['pr']}]({$repoUrl}/pull/{$entry['pr']})";
+            return "({$prLink}) - ({$hashLink})";
+        }
+        return "({$hashLink})";
     }
-    return preg_replace(
-        '/\(#(\d+)\)/',
-        "([#$1]({$repoUrl}/pull/$1))",
-        $text
-    );
+
+    if (!empty($entry['pr'])) {
+        return "(#{$entry['pr']}) - ({$shortHash})";
+    }
+    return "({$shortHash})";
 }
 
 // ── Generate changelog ──────────────────────────────────────
@@ -192,8 +202,10 @@ foreach ($hashes as $hash) {
 
         if ($title !== '' && $title !== false) {
             $entries[] = array(
-                'text' => "{$title} (#{$prNumber})",
+                'text' => $title,
                 'body' => $body,
+                'hash' => $hash,
+                'pr' => $prNumber,
             );
         }
         continue;
@@ -204,9 +216,19 @@ foreach ($hashes as $hash) {
         continue;
     }
 
+    // Squash-merged PR: subject ends with (#N)
+    $pr = '';
+    $text = $subject;
+    if (preg_match('/^(.+?)\s*\(#(\d+)\)$/', $subject, $m)) {
+        $text = $m[1];
+        $pr = $m[2];
+    }
+
     $entries[] = array(
-        'text' => $subject,
+        'text' => $text,
         'body' => $body,
+        'hash' => $hash,
+        'pr' => $pr,
     );
 }
 
@@ -216,15 +238,15 @@ foreach ($hashes as $hash) {
 // But if only the revert is present (original was in a previous release),
 // the revert MUST stay — it's a real change for this release.
 
-// Strip trailing (#N) for matching: squash-merged commits have (#42)
-// appended, while the revert quotes the bare subject.
-$stripPr = fn(string $s): string => trim(preg_replace('/\s*\(#\d+\)$/', '', $s));
+// Strip trailing (#N) for matching: revert subjects may quote the original
+// with or without the PR number suffix.
+$normalize = fn(string $s): string => trim(preg_replace('/\s*\(#\d+\)$/', '', $s));
 
-// Collect subjects that were reverted
+// Collect normalized subjects that were reverted
 $revertedNormalized = array();
 foreach ($entries as $entry) {
     if (preg_match('/^Revert "(.+)"/', $entry['text'], $m)) {
-        $revertedNormalized[] = $stripPr($m[1]);
+        $revertedNormalized[] = $normalize($m[1]);
     }
 }
 
@@ -233,22 +255,19 @@ if (!empty($revertedNormalized)) {
     $matchedOriginals = array();
     foreach ($entries as $entry) {
         if (!preg_match('/^Revert "/', $entry['text'])) {
-            $normalized = $stripPr($entry['text']);
-            if (in_array($normalized, $revertedNormalized, true)) {
-                $matchedOriginals[] = $normalized;
+            if (in_array($normalize($entry['text']), $revertedNormalized, true)) {
+                $matchedOriginals[] = $normalize($entry['text']);
             }
         }
     }
 
     // Only filter pairs where both original and revert are in this range
     if (!empty($matchedOriginals)) {
-        $entries = array_values(array_filter($entries, function ($entry) use ($matchedOriginals, $stripPr) {
-            // Remove revert commits whose original is in this range
+        $entries = array_values(array_filter($entries, function ($entry) use ($matchedOriginals, $normalize) {
             if (preg_match('/^Revert "(.+)"/', $entry['text'], $m)) {
-                return !in_array($stripPr($m[1]), $matchedOriginals, true);
+                return !in_array($normalize($m[1]), $matchedOriginals, true);
             }
-            // Remove original commits that were reverted in this range
-            return !in_array($stripPr($entry['text']), $matchedOriginals, true);
+            return !in_array($normalize($entry['text']), $matchedOriginals, true);
         }));
     }
 }
@@ -289,12 +308,11 @@ $refactors = array();
 $others = array();
 
 foreach ($entries as $entry) {
-    $formatted = linkifyPr(formatEntry($entry['text']), $repoUrl);
+    $line = formatEntry($entry['text']) . ' ' . formatRef($entry, $repoUrl);
     $breakingNote = detectBreaking($entry);
 
     // Breaking changes go to their own section
     if ($breakingNote !== null) {
-        $line = $formatted;
         if ($breakingNote !== '') {
             $line .= " — {$breakingNote}";
         }
@@ -303,13 +321,13 @@ foreach ($entries as $entry) {
     }
 
     if (preg_match('/^feat(\(.*?\))?!?:/', $entry['text'])) {
-        $feats[] = $formatted;
+        $feats[] = $line;
     } elseif (preg_match('/^fix(\(.*?\))?!?:/', $entry['text'])) {
-        $fixes[] = $formatted;
+        $fixes[] = $line;
     } elseif (preg_match('/^refactor(\(.*?\))?!?:/', $entry['text'])) {
-        $refactors[] = $formatted;
+        $refactors[] = $line;
     } else {
-        $others[] = $formatted;
+        $others[] = $line;
     }
 }
 

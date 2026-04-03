@@ -41,7 +41,9 @@ Steps performed:
    - `refactor(...)` → **♻️ Refactored**
    - Everything else → **📦 Other**
    
-   Conventional commit prefixes are stripped for readability: `feat(seo): add OG images` becomes `**seo:** add OG images`. PR references (`#123`) are automatically converted to clickable GitHub links.
+   Conventional commit prefixes are stripped — the type is already clear from the section heading. Each entry includes a linked short commit hash, and for PRs the PR number is also linked:
+   - Commit: `(scope) Description (hash)`
+   - PR: `(scope) Description (#PR) - (hash)`
 3. **Preview** — displays the release plan and generated changelog, asks for confirmation.
 4. **Version bump** — updates `version` and `release_date` in `core/bootstrap.php`.
 5. **CHANGELOG.md** — prepends the new entry (creates the file on first release).
@@ -76,16 +78,16 @@ Proceed with release? [y/N] y
 
 ### ✨ Added
 
-- **seo:** add Open Graph image support ([#42](https://github.com/belomaxorka/mantra/pull/42))
-- **categories:** add category description field ([#38](https://github.com/belomaxorka/mantra/pull/38))
+- (seo) Add Open Graph image support ([#42](https://github.com/belomaxorka/mantra/pull/42)) - ([a1b2c3d](https://github.com/belomaxorka/mantra/commit/a1b2c3d))
+- (categories) Add category description field ([3f4e5d6](https://github.com/belomaxorka/mantra/commit/3f4e5d6))
 
 ### 🐛 Fixed
 
-- **router:** normalize trailing slashes ([#41](https://github.com/belomaxorka/mantra/pull/41))
+- (router) Normalize trailing slashes ([#41](https://github.com/belomaxorka/mantra/pull/41)) - ([7g8h9i0](https://github.com/belomaxorka/mantra/commit/7g8h9i0))
 
 ### 📦 Other
 
-- update dependencies
+- Update dependencies ([b2c3d4e](https://github.com/belomaxorka/mantra/commit/b2c3d4e))
 ────────────────────────────────────────────────
 
 Changelog looks good? [y/N] y
@@ -141,23 +143,23 @@ The generated `CHANGELOG.md` follows [Keep a Changelog](https://keepachangelog.c
 
 ### ⚠️ Breaking Changes
 
-- **auth:** rewrite session storage — Existing sessions will be invalidated
+- (auth) Rewrite session storage (a1b2c3d) — Existing sessions will be invalidated
 
 ### ✨ Added
 
-- **seo:** add Open Graph image support ([#42](...))
+- (seo) Add Open Graph image support (#42) - (c3d4e5f)
 
 ### 🐛 Fixed
 
-- **router:** normalize trailing slashes ([#41](...))
+- (router) Normalize trailing slashes (d4e5f6g)
 
 ### ♻️ Refactored
 
-- **database:** extract query builder ([#40](...))
+- (database) Extract query builder (#40) - (e5f6g7h)
 
 ### 📦 Other
 
-- update dependencies
+- Update dependencies (f6g7h8i)
 
 ## [v1.1.0] - 2026-03-17
 ...
