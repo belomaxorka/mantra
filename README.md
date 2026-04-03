@@ -1,147 +1,305 @@
-# Mantra CMS
+<p align="center">
+  <strong>Mantra CMS</strong><br>
+  Lightweight flat-file Content Management System built with PHP
+</p>
 
-Flat-File Content Management System with modular architecture.
+<p align="center">
+  <a href="https://github.com/belomaxorka/mantra/actions"><img src="https://github.com/belomaxorka/mantra/workflows/CI/badge.svg" alt="CI"></a>
+  <a href="https://github.com/belomaxorka/mantra/blob/main/LICENSE"><img src="https://img.shields.io/github/license/belomaxorka/mantra" alt="License"></a>
+  <img src="https://img.shields.io/badge/php-%3E%3D8.1-8892BF" alt="PHP 8.1+">
+  <img src="https://img.shields.io/badge/dependencies-zero-success" alt="Zero Dependencies">
+</p>
+
+---
+
+Mantra is a modern flat-file CMS that requires no database, no Composer, and no external dependencies. All content is stored as JSON or Markdown files. Just upload the files to your server and you're ready to go.
 
 ## Features
 
-- **Flat-File Storage**: No database required, all content stored in JSON files
-- **Modular System**: Extensible architecture with plugin support
-- **PHP 5.6+ Compatible**: Works with PHP 5.6 through PHP 8.x
-- **Theme Support**: Easy theme customization
-- **Multi-language**: Built-in internationalization
-- **User Management**: Role-based access control
-- **Caching**: File-based caching for performance
-- **Hook System**: Event-driven architecture for extensibility
+- **Zero dependencies** -- no Composer, no database, no external libraries needed in production
+- **Flat-file storage** -- content stored as JSON/Markdown in `content/`, easy to backup and version control
+- **Modular architecture** -- extend functionality through self-contained modules with dependency resolution
+- **Hook/event system** -- priority-based pub/sub bus for decoupled module communication
+- **Admin panel** -- built-in CRUD scaffolding for pages, posts, users, uploads, and permissions
+- **Role-based access control** -- three roles (admin, editor, viewer) with granular per-permission overrides and ownership checks
+- **Theme engine** -- template hierarchy with smart fallback (theme > module > core), partials, and hook injection points
+- **Multi-language** -- built-in i18n with English and Russian, extensible via language files
+- **Atomic file I/O** -- exclusive locking and temp-file-then-rename writes prevent corruption under concurrency
+- **Schema migrations** -- lazy, automatic JSON document upgrades on read (no manual scripts needed)
+- **PSR-3 logging** -- daily-rotated log files with channel support
+- **CSRF protection** -- built-in token generation and verification
+- **Markdown support** -- write content in Markdown with frontmatter or JSON
 
 ## Requirements
 
-- PHP 5.6 or higher
-- Apache with mod_rewrite (or Nginx with proper configuration)
-- Write permissions for content, storage, and uploads directories
+| Requirement | Details |
+|---|---|
+| PHP | >= 8.1 |
+| Extensions | `json`, `session`, `openssl` |
+| Web server | Apache with `mod_rewrite` or Nginx |
+| File system | Write access to `content/`, `storage/`, `uploads/` |
 
-## Installation
+## Quick Start
 
-1. Clone or download this repository
-2. Set write permissions:
-   ```bash
-   chmod -R 755 content storage
-   ```
-3. Configure your web server to point to the project root
-4. Configure the CMS via `content/settings/config.json`
-5. Access `/admin` to set up your first user
+### 1. Download
 
-### Proxy / CDN (real client IP)
-
-If you run Mantra behind a reverse proxy or CDN (Nginx, Cloudflare, Fastly, etc.), the web server will often pass the *proxy IP* as `REMOTE_ADDR`.
-
-Mantra provides the `client_ip()` helper (see `core/helpers.php`) to obtain the real client IP. For security, Mantra only trusts proxy headers (like `X-Forwarded-For`) when the request comes from a **trusted proxy**.
-
-Configure trusted proxies in `content/settings/config.json`:
-
-```json
-{
-  "trusted_proxies": ["127.0.0.1", "::1", "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"]
-}
+```bash
+git clone https://github.com/belomaxorka/mantra.git
+cd mantra
 ```
 
-- Entries can be IPs or CIDRs (IPv4/IPv6).
-- If `trusted_proxies` is empty, `client_ip()` will fall back to `REMOTE_ADDR`.
-- For Cloudflare/Fastly, add their published IP ranges (see your provider documentation).
+### 2. Start a dev server
+
+```bash
+php -S 127.0.0.1:8000 index.php
+```
+
+### 3. Install
+
+Open `http://127.0.0.1:8000/` in your browser. The installer will guide you through creating an admin account and initial configuration.
+
+After installation:
+
+| URL | Description |
+|---|---|
+| `/` | Public site |
+| `/admin` | Admin panel |
+
+### Production deployment
+
+1. Point your web server document root at the project directory (where `index.php` lives).
+2. Ensure `content/`, `storage/`, and `uploads/` are writable by the web server.
+3. The included `.htaccess` handles URL rewriting and blocks access to sensitive files. For Nginx, configure equivalent rewrite rules.
 
 ## Directory Structure
 
 ```
-/mantra
-  /core           - Core system files
-  /modules        - Modules (plugins)
-  /themes         - Themes
-  /content        - Content storage (pages, posts, users)
-  /storage        - Cache, logs, and uploads
-  index.php       - Entry point
-  content/settings/config.json - Configuration
+mantra/
+├── core/                   # Core system classes and helpers
+│   ├── classes/            # Application, Database, Router, View, Auth, ...
+│   ├── helpers/            # Global helper functions
+│   ├── lang/               # Core language files (en, ru)
+│   └── schemas/            # Document schema definitions
+├── modules/                # Modules (plugins)
+│   ├── admin/              # Admin panel (core, always enabled)
+│   ├── categories/         # Category management for posts
+│   ├── seo/                # Meta tags, Open Graph, breadcrumbs
+│   └── analytics/          # Google Analytics, Yandex Metrika
+├── themes/                 # Themes
+│   └── default/            # Default Bootstrap 5 theme
+├── content/                # Flat-file content storage
+│   ├── pages/              # Page documents (*.json)
+│   ├── posts/              # Post documents (*.json / *.md)
+│   ├── users/              # User accounts (*.json)
+│   └── settings/           # config.json
+├── storage/                # Logs and cache (runtime)
+├── uploads/                # User-uploaded files
+├── docs/                   # Developer documentation
+├── index.php               # Main entry point
+└── install.php             # Installer
 ```
 
-## Creating a Module
+## Modules
 
-1. Create a folder in `/modules/your-module`
-2. Create `module.json`:
+Modules are self-contained extensions that live in `modules/<name>/` and are enabled via `config.json`.
+
+### Included modules
+
+| Module | Type | Description |
+|---|---|---|
+| `admin` | Core | Admin panel with pages, posts, users, uploads, permissions, and settings management |
+| `categories` | Feature | Category CRUD and post-to-category associations with public category pages |
+| `seo` | Utility | Meta tags, Open Graph, Twitter Cards, breadcrumbs |
+| `analytics` | Integration | Google Analytics (gtag) and Yandex Metrika integration |
+
+### Creating a module
+
+```
+modules/bookmarks/
+├── module.json
+├── BookmarksModule.php
+├── lang/
+│   └── en.php
+└── views/
+    └── index.php
+```
+
+**module.json:**
+
 ```json
 {
-    "name": "your-module",
+    "name": "bookmarks",
     "version": "1.0.0",
-    "description": "Your module description",
-    "dependencies": []
+    "description": "Bookmark manager",
+    "type": "feature",
+    "dependencies": { "admin": ">=1.0" }
 }
 ```
 
-3. Create `YourModuleModule.php`:
+**BookmarksModule.php:**
+
 ```php
 <?php
-class YourModuleModule extends Module {
-    public function init() {
-        // Register hooks
+
+class BookmarksModule extends Module
+{
+    public function init()
+    {
         $this->hook('routes.register', array($this, 'registerRoutes'));
     }
-    
-    public function registerRoutes($data) {
-        $router = $data['router'];
-        $router->get('/your-route', array($this, 'yourMethod'));
+
+    public function registerRoutes($data)
+    {
+        $data['router']->get('/bookmarks', array($this, 'index'));
         return $data;
     }
-    
-    public function yourMethod() {
-        echo 'Hello from your module!';
+
+    public function index()
+    {
+        return $this->view('index', array('title' => 'Bookmarks'));
     }
 }
 ```
 
-4. Enable the module in `content/settings/config.json` under `modules.enabled`
+Enable it by adding `"bookmarks"` to `modules.enabled` in `content/settings/config.json`, or toggle it from the admin Settings panel.
 
-## Available Hooks
+For CRUD admin panels, extend `ContentPanel` -- see [docs/ADMIN_PANELS.md](docs/ADMIN_PANELS.md).
 
-- `system.init` - Fired when system initializes
-- `system.shutdown` - Fired before shutdown
-- `routes.register` - Register custom routes
-- `view.render` - Modify rendered content
-- `content.save` - Before content is saved
-- `content.delete` - Before content is deleted
+## Hook System
+
+Mantra uses a priority-based event bus. Modules register callbacks; the system fires hooks at key lifecycle points.
+
+```php
+// Listen to a hook (in module init)
+$this->hook('theme.head', function ($html) {
+    return $html . '<link rel="stylesheet" href="/my-style.css">';
+});
+
+// Fire a hook (from core or modules)
+$result = app()->hooks()->fire('my.hook', $data, $context);
+```
+
+### Key hooks
+
+| Hook | Purpose |
+|---|---|
+| `system.init` | System initialized, modules loaded |
+| `routes.register` | Register routes on the router |
+| `view.render` | Post-process rendered HTML |
+| `theme.head` | Inject into `<head>` |
+| `theme.footer` | Add scripts before `</body>` |
+| `theme.navigation` | Add items to navigation menu |
+| `admin.sidebar` | Add items to admin sidebar |
+| `permissions.register` | Register module permissions |
+
+Full reference: [docs/HOOKS.md](docs/HOOKS.md)
+
+## Themes
+
+Themes live in `themes/<name>/` and provide templates, assets, and optional translations.
+
+```
+themes/my-theme/
+├── theme.json
+├── assets/
+│   └── css/style.css
+├── templates/
+│   ├── layout.php          # Main layout wrapper
+│   ├── home.php            # Homepage
+│   ├── page.php            # Single page
+│   ├── post.php            # Single post
+│   ├── blog.php            # Blog listing
+│   ├── 404.php             # Not found
+│   └── partials/
+│       ├── sidebar.php
+│       └── pagination.php
+└── lang/
+    └── en.php
+```
+
+**Template hierarchy** (resolved in order of specificity):
+
+- Pages: `page-{template}` > `page-{slug}` > `page`
+- Posts: `post-{template}` > `post-{category}` > `post-{slug}` > `post`
+
+Themes can override module templates by placing them at `themes/{theme}/templates/partials/{module}/{partial}.php`.
+
+## Configuration
+
+All settings are stored in `content/settings/config.json` and managed through the admin panel or edited directly.
+
+<details>
+<summary>Configuration reference</summary>
+
+| Section | Key | Default | Description |
+|---|---|---|---|
+| `site` | `name` | `Mantra CMS` | Site title |
+| `site` | `url` | *(auto-detected)* | Base URL |
+| `locale` | `timezone` | `UTC` | PHP timezone |
+| `locale` | `default_language` | `en` | UI language (`en`, `ru`) |
+| `theme` | `active` | `default` | Active theme directory name |
+| `content` | `format` | `json` | Storage format (`json` or `markdown`) |
+| `content` | `posts_per_page` | `10` | Posts per page on blog/home |
+| `modules` | `enabled` | `["admin"]` | List of enabled module IDs |
+| `logging` | `level` | `debug` | Minimum log level (PSR-3) |
+| `logging` | `retention_days` | `30` | Auto-delete logs older than N days |
+| `security` | `password_hash_algo` | `PASSWORD_DEFAULT` | PHP password hashing algorithm |
+| `session` | `lifetime` | `7200` | Session lifetime in seconds |
+| `debug` | `enabled` | `true` | Show detailed errors |
+
+</details>
+
+## Proxy / CDN
+
+If Mantra runs behind a reverse proxy (Nginx, Cloudflare, etc.), configure trusted proxies so `client_ip()` resolves the real client IP:
+
+```json
+{
+    "proxy": {
+        "trusted_proxies": ["127.0.0.1", "::1", "10.0.0.0/8", "172.16.0.0/12"]
+    }
+}
+```
 
 ## Logging
 
-The system includes a centralized logging system with PSR-3 compatible log levels:
-
 ```php
-// Using logger helper
-logger()->info('User action', array('user_id' => 123));
-logger()->error('Something went wrong', array('exception' => $e));
-logger()->debug('Debug information');
-
-// Using specific channel
-logger('security')->warning('Suspicious activity detected');
-
-// Log level is controlled by "logging.level" in config.json
-// Default level: "debug" (logs everything)
+logger()->info('User logged in', array('user_id' => 42));
+logger('security')->warning('Failed login attempt');
 ```
 
-Log levels (from highest to lowest priority):
-- `emergency` - System is unusable
-- `alert` - Action must be taken immediately
-- `critical` - Critical conditions
-- `error` - Runtime errors
-- `warning` - Warning messages
-- `notice` - Normal but significant events
-- `info` - Informational messages
-- `debug` - Detailed debug information (only in debug mode)
+Logs are written to `storage/logs/` with daily rotation (`{channel}-YYYY-MM-DD.log`). Log level is controlled by `logging.level` in config.
 
-Logs are stored in `storage/logs/` with daily rotation:
-- Error logs: `error-YYYY-MM-DD.log`
-- Channel logs: `{channel}-YYYY-MM-DD.log`
+## Development
 
-Clean old logs:
-```php
-logger()->clearOldLogs(30); // Delete logs older than 30 days
+Dev tools require Composer (end users don't need it):
+
+```bash
+composer install
+
+composer test          # Run PHPUnit tests
+composer lint          # Check code style (PHP CS Fixer, dry run)
+composer fix           # Auto-fix code style
 ```
+
+## Documentation
+
+| Document | Description |
+|---|---|
+| [HOOKS.md](docs/HOOKS.md) | Hook system architecture and API reference |
+| [ADMIN_PANELS.md](docs/ADMIN_PANELS.md) | Admin panel creation guide and ContentPanel API |
+| [VIEWS.md](docs/VIEWS.md) | Template rendering, partials, and theme override system |
+| [PAGINATION.md](docs/PAGINATION.md) | Paginator API and integration examples |
+
+## Contributing
+
+Contributions are welcome! Please make sure to:
+
+1. Follow [PSR-12](https://www.php-fig.org/psr/psr-12/) coding style
+2. Use [Conventional Commits](https://www.conventionalcommits.org/) for commit messages
+3. Add tests for new functionality where applicable
+4. Run `composer lint` before submitting a PR
 
 ## License
 
-MIT License
+[MIT](LICENSE)
