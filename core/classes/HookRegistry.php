@@ -1,4 +1,5 @@
 <?php declare(strict_types=1);
+
 /**
  * HookRegistry - Documents standard hook contracts
  *
@@ -6,8 +7,8 @@
  * developers know what data each hook receives and should return.
  * This is documentation-in-code, not runtime enforcement.
  */
-
-class HookRegistry {
+class HookRegistry
+{
 
     /**
      * Standard hook definitions.
@@ -99,7 +100,8 @@ class HookRegistry {
      * @param string $name Hook name
      * @return array|null array with description, data_type, return_type or null
      */
-    public static function describe($name) {
+    public static function describe($name)
+    {
         return self::$hooks[$name] ?? null;
     }
 
@@ -108,7 +110,8 @@ class HookRegistry {
      *
      * @return array
      */
-    public static function all() {
+    public static function all()
+    {
         return self::$hooks;
     }
 
@@ -118,7 +121,8 @@ class HookRegistry {
      * @param string $name
      * @return bool
      */
-    public static function isStandard($name) {
+    public static function isStandard($name)
+    {
         return isset(self::$hooks[$name]);
     }
 
@@ -129,9 +133,10 @@ class HookRegistry {
      * @param string $description Human-readable description
      * @param string $dataType Expected input type (e.g. 'array', 'string', 'null')
      * @param string $returnType Expected return type
-     * @param array  $extra Extra fields: 'source', 'context', etc.
+     * @param array $extra Extra fields: 'source', 'context', etc.
      */
-    public static function define($name, $description, $dataType = 'mixed', $returnType = 'mixed', $extra = []): void {
+    public static function define($name, $description, $dataType = 'mixed', $returnType = 'mixed', $extra = []): void
+    {
         $entry = [
             'description' => $description,
             'data_type' => $dataType,

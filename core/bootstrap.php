@@ -48,7 +48,7 @@ spl_autoload_register(function ($class): void {
     $relative = str_replace("\0", '', $class);
     $relative = str_replace('\\', '/', $relative);
 
-    if (str_contains($relative, '..')  ) {
+    if (str_contains($relative, '..')) {
         return;
     }
 

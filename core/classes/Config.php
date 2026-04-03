@@ -1,4 +1,5 @@
 <?php declare(strict_types=1);
+
 /**
  * Config - Configuration management
  *
@@ -11,7 +12,8 @@
 
 use Storage\FileIO;
 
-class Config {
+class Config
+{
     private $configPath = '';
     private $config = [];
 
@@ -19,7 +21,8 @@ class Config {
      * Build full configuration array (defaults + JSON overrides).
      * Intended for early bootstrap (index.php) before Application exists.
      */
-    public static function bootstrap($configPath = null) {
+    public static function bootstrap($configPath = null)
+    {
         $path = $configPath ? $configPath : (MANTRA_CONTENT . '/settings/config.json');
 
         $defaults = self::defaults();
@@ -42,7 +45,8 @@ class Config {
         return self::pruneToDefaults($merged, $defaults);
     }
 
-    private static function pruneToDefaults($data, $defaults) {
+    private static function pruneToDefaults($data, $defaults)
+    {
         if (!is_array($defaults)) {
             return $data;
         }
@@ -78,14 +82,16 @@ class Config {
      * @param string $path Script path from dirname($_SERVER['SCRIPT_NAME'])
      * @return string Normalized path with forward slashes
      */
-    public static function normalizeScriptPath($path) {
+    public static function normalizeScriptPath($path)
+    {
         return str_replace('\\', '/', $path);
     }
 
     /**
      * Default configuration (nested).
      */
-    public static function defaults() {
+    public static function defaults()
+    {
         $baseUrl = self::detectBaseUrl();
 
         return [
@@ -156,7 +162,8 @@ class Config {
     /**
      * Create install-time config (full defaults with specific overrides).
      */
-    public static function buildInstallConfig($siteName, $language, $siteUrl) {
+    public static function buildInstallConfig($siteName, $language, $siteUrl)
+    {
         $config = self::defaults();
         self::setNested($config, 'site.name', $siteName);
         self::setNested($config, 'locale.default_language', $language);
@@ -168,7 +175,8 @@ class Config {
     /**
      * Resolve localized value (string or array with locale keys).
      */
-    public static function resolveLocalized($value, $locale = null) {
+    public static function resolveLocalized($value, $locale = null)
+    {
         if (is_string($value)) {
             return $value;
         }
@@ -188,7 +196,8 @@ class Config {
         return is_string($first) ? $first : '';
     }
 
-    public static function detectBaseUrl() {
+    public static function detectBaseUrl()
+    {
         // Note: Config::bootstrap() is called from core/bootstrap.php before helpers.php is loaded,
         // so this method must not depend on global helpers like is_https() or request().
         $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
@@ -199,7 +208,8 @@ class Config {
         return $baseUrl;
     }
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->configPath = MANTRA_CONTENT . '/settings/config.json';
         $this->load();
     }
@@ -207,7 +217,8 @@ class Config {
     /**
      * Load configuration (merged: defaults + JSON overrides).
      */
-    private function load(): void {
+    private function load(): void
+    {
         $this->config = self::defaults();
 
         if (file_exists($this->configPath)) {
@@ -234,14 +245,16 @@ class Config {
     /**
      * Get configuration value by dot-path.
      */
-    public function get($path, $default = null) {
+    public function get($path, $default = null)
+    {
         return self::getNested($this->config, (string)$path, $default);
     }
 
     /**
      * Set configuration value by dot-path.
      */
-    public function set($path, $value) {
+    public function set($path, $value)
+    {
         self::setNested($this->config, (string)$path, $value);
         return $this->save();
     }
@@ -249,7 +262,8 @@ class Config {
     /**
      * Set multiple configuration values by dot-path.
      */
-    public function setMultiple($values) {
+    public function setMultiple($values)
+    {
         if (!is_array($values)) {
             return false;
         }
@@ -262,7 +276,8 @@ class Config {
     /**
      * Get all configuration.
      */
-    public function all() {
+    public function all()
+    {
         return $this->config;
     }
 
@@ -273,7 +288,8 @@ class Config {
      * This matches the admin Settings store (ConfigSettings) and prevents writing
      * a huge merged config back to disk.
      */
-    public function save() {
+    public function save()
+    {
         $dir = dirname($this->configPath);
 
         if (!is_dir($dir)) {
@@ -305,21 +321,22 @@ class Config {
     /**
      * Delete configuration key by dot-path.
      */
-    public function delete($path) {
+    public function delete($path)
+    {
         $path = trim((string)$path);
         if ($path === '') {
             return false;
         }
 
         $parts = explode('.', $path);
-        $cur = & $this->config;
+        $cur = &$this->config;
 
         $last = array_pop($parts);
         foreach ($parts as $part) {
             if ($part === '' || !is_array($cur) || !array_key_exists($part, $cur)) {
                 return false;
             }
-            $cur = & $cur[$part];
+            $cur = &$cur[$part];
         }
 
         if ($last === '' || !is_array($cur) || !array_key_exists($last, $cur)) {
@@ -333,14 +350,16 @@ class Config {
     /**
      * Check if dot-path exists.
      */
-    public function has($path) {
+    public function has($path)
+    {
         return self::hasNested($this->config, (string)$path);
     }
 
     /**
      * Deep merge two nested config arrays.
      */
-    public static function deepMerge($base, $override) {
+    public static function deepMerge($base, $override)
+    {
         if (!is_array($base)) {
             $base = [];
         }
@@ -362,7 +381,8 @@ class Config {
     /**
      * Flatten nested arrays into dot-path => value map.
      */
-    public static function flattenPaths($nested, $prefix = '') {
+    public static function flattenPaths($nested, $prefix = '')
+    {
         $out = [];
         if (!is_array($nested)) {
             return $out;
@@ -385,7 +405,8 @@ class Config {
         return $out;
     }
 
-    public static function isAssoc($arr) {
+    public static function isAssoc($arr)
+    {
         if (!is_array($arr)) {
             return false;
         }
@@ -393,7 +414,8 @@ class Config {
         return array_keys($keys) !== $keys;
     }
 
-    public static function getNested($arr, $path, $default = null) {
+    public static function getNested($arr, $path, $default = null)
+    {
         if (!is_array($arr)) {
             return $default;
         }
@@ -416,7 +438,8 @@ class Config {
         return $cur;
     }
 
-    public static function hasNested($arr, $path) {
+    public static function hasNested($arr, $path)
+    {
         if (!is_array($arr)) {
             return false;
         }
@@ -439,7 +462,8 @@ class Config {
         return true;
     }
 
-    public static function setNested(&$arr, $path, $value): void {
+    public static function setNested(&$arr, $path, $value): void
+    {
         if (!is_array($arr)) {
             $arr = [];
         }
@@ -450,7 +474,7 @@ class Config {
         }
 
         $parts = explode('.', $path);
-        $cur = & $arr;
+        $cur = &$arr;
 
         $last = array_pop($parts);
         foreach ($parts as $part) {
@@ -460,7 +484,7 @@ class Config {
             if (!isset($cur[$part]) || !is_array($cur[$part])) {
                 $cur[$part] = [];
             }
-            $cur = & $cur[$part];
+            $cur = &$cur[$part];
         }
 
         if ($last === '') {
@@ -476,7 +500,8 @@ class Config {
      * - For list arrays: treat as atomic.
      * - Only keys present in defaults are considered; unknown keys are ignored.
      */
-    public static function diffOverrides($defaults, $current) {
+    public static function diffOverrides($defaults, $current)
+    {
         if (!is_array($defaults) || !is_array($current)) {
             if ($defaults === $current) {
                 return null;

@@ -8,7 +8,8 @@
 
 namespace Admin;
 
-abstract class ContentPanel extends AdminPanel {
+abstract class ContentPanel extends AdminPanel
+{
 
     /**
      * Singular content type name (e.g. 'Page', 'Post')
@@ -39,7 +40,8 @@ abstract class ContentPanel extends AdminPanel {
      * Defaults to the collection name.
      * @return string
      */
-    protected function getAdminPath() {
+    protected function getAdminPath()
+    {
         return $this->getCollectionName();
     }
 
@@ -47,7 +49,8 @@ abstract class ContentPanel extends AdminPanel {
      * Template name for the list view (default: 'list')
      * @return string
      */
-    protected function getListTemplate() {
+    protected function getListTemplate()
+    {
         return 'list';
     }
 
@@ -55,7 +58,8 @@ abstract class ContentPanel extends AdminPanel {
      * Template name for the edit/new view (default: 'edit')
      * @return string
      */
-    protected function getEditTemplate() {
+    protected function getEditTemplate()
+    {
         return 'edit';
     }
 
@@ -65,7 +69,8 @@ abstract class ContentPanel extends AdminPanel {
      * Register standard content panel hooks in HookRegistry.
      * Call from init() so hooks appear on the /admin/hooks page.
      */
-    protected function registerPanelHooks(): void {
+    protected function registerPanelHooks(): void
+    {
         $c = $this->getCollectionName();
         $type = ucfirst($this->getContentType());
         $source = $this->id();
@@ -97,20 +102,22 @@ abstract class ContentPanel extends AdminPanel {
      * Register standard CRUD routes.
      * Override to add/remove routes.
      */
-    public function registerRoutes($admin): void {
+    public function registerRoutes($admin): void
+    {
         $path = $this->getAdminPath();
 
-        $admin->adminRoute('GET',  $path,                   [$this, 'listItems']);
-        $admin->adminRoute('GET',  $path . '/new',          [$this, 'newItem']);
-        $admin->adminRoute('POST', $path . '/new',          [$this, 'createItem']);
-        $admin->adminRoute('GET',  $path . '/edit/{id}',    [$this, 'editItem']);
-        $admin->adminRoute('POST', $path . '/edit/{id}',    [$this, 'updateItem']);
-        $admin->adminRoute('POST', $path . '/delete/{id}',  [$this, 'deleteItem']);
+        $admin->adminRoute('GET', $path, [$this, 'listItems']);
+        $admin->adminRoute('GET', $path . '/new', [$this, 'newItem']);
+        $admin->adminRoute('POST', $path . '/new', [$this, 'createItem']);
+        $admin->adminRoute('GET', $path . '/edit/{id}', [$this, 'editItem']);
+        $admin->adminRoute('POST', $path . '/edit/{id}', [$this, 'updateItem']);
+        $admin->adminRoute('POST', $path . '/delete/{id}', [$this, 'deleteItem']);
     }
 
     // ========== Helpers ==========
 
-    protected function generateId($data) {
+    protected function generateId($data)
+    {
         $slug = $data['slug'];
         $id = $slug;
         if (app()->db()->exists($this->getCollectionName(), $id)) {
@@ -119,7 +126,8 @@ abstract class ContentPanel extends AdminPanel {
         return $id;
     }
 
-    protected function ensureSlug($data) {
+    protected function ensureSlug($data)
+    {
         if (empty($data['slug']) && !empty($data['title'])) {
             $data['slug'] = slugify($data['title']);
         } elseif (!empty($data['slug'])) {
@@ -132,20 +140,23 @@ abstract class ContentPanel extends AdminPanel {
      * Translation domain for this panel (default: "admin-{id}")
      * @return string
      */
-    protected function getDomain() {
+    protected function getDomain()
+    {
         return 'admin-' . $this->id();
     }
 
     // ========== Breadcrumbs ==========
 
-    protected function getListBreadcrumbs() {
+    protected function getListBreadcrumbs()
+    {
         return [
             ['title' => t('admin-dashboard.title'), 'url' => base_url('/admin')],
             ['title' => t($this->getDomain() . '.title')],
         ];
     }
 
-    protected function getItemBreadcrumbs($itemTitle) {
+    protected function getItemBreadcrumbs($itemTitle)
+    {
         return [
             ['title' => t('admin-dashboard.title'), 'url' => base_url('/admin')],
             ['title' => t($this->getDomain() . '.title'), 'url' => base_url('/admin/' . $this->getAdminPath())],
@@ -162,7 +173,8 @@ abstract class ContentPanel extends AdminPanel {
      * @param array $item Content item with 'author' field
      * @return bool
      */
-    protected function checkOwnership($item) {
+    protected function checkOwnership($item)
+    {
         $userManager = new \User();
         if ($userManager->canEdit($this->getUser(), $item)) {
             return true;
@@ -180,14 +192,16 @@ abstract class ContentPanel extends AdminPanel {
     /**
      * Permission prefix for this panel (e.g. 'posts', 'pages').
      */
-    protected function getPermissionPrefix() {
+    protected function getPermissionPrefix()
+    {
         return $this->getCollectionName();
     }
 
     /**
      * Check permission flags for list views.
      */
-    protected function getPermissionFlags() {
+    protected function getPermissionFlags()
+    {
         $userManager = new \User();
         $user = $this->getUser();
         $prefix = $this->getPermissionPrefix();
@@ -200,7 +214,8 @@ abstract class ContentPanel extends AdminPanel {
 
     // ========== CRUD Actions ==========
 
-    public function listItems() {
+    public function listItems()
+    {
         $prefix = $this->getPermissionPrefix();
         if (!$this->requirePermission($prefix . '.view')) return;
 
@@ -231,7 +246,8 @@ abstract class ContentPanel extends AdminPanel {
         ]);
     }
 
-    public function newItem() {
+    public function newItem()
+    {
         $prefix = $this->getPermissionPrefix();
         if (!$this->requirePermission($prefix . '.create')) return;
 
@@ -251,7 +267,8 @@ abstract class ContentPanel extends AdminPanel {
         ]);
     }
 
-    public function createItem(): void {
+    public function createItem(): void
+    {
         $prefix = $this->getPermissionPrefix();
         if (!$this->requirePermission($prefix . '.create')) return;
         if (!$this->verifyCsrf()) {
@@ -280,7 +297,8 @@ abstract class ContentPanel extends AdminPanel {
         $this->redirectAdmin($this->getAdminPath());
     }
 
-    public function editItem($params) {
+    public function editItem($params)
+    {
         $prefix = $this->getPermissionPrefix();
         $access = $this->requirePermission($prefix . '.edit');
         if ($access === false) return;
@@ -316,7 +334,8 @@ abstract class ContentPanel extends AdminPanel {
         ]);
     }
 
-    public function updateItem($params) {
+    public function updateItem($params)
+    {
         $prefix = $this->getPermissionPrefix();
         $access = $this->requirePermission($prefix . '.edit');
         if ($access === false) return;
@@ -360,7 +379,8 @@ abstract class ContentPanel extends AdminPanel {
         $this->redirectAdmin($this->getAdminPath());
     }
 
-    public function deleteItem($params): void {
+    public function deleteItem($params): void
+    {
         $prefix = $this->getPermissionPrefix();
         $access = $this->requirePermission($prefix . '.delete');
         if ($access === false) return;

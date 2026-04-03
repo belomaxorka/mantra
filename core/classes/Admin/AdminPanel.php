@@ -10,7 +10,8 @@ namespace Admin;
 
 use Application;
 
-abstract class AdminPanel implements AdminPanelInterface {
+abstract class AdminPanel implements AdminPanelInterface
+{
 
     /** @var \AdminModule */
     protected $admin;
@@ -21,24 +22,28 @@ abstract class AdminPanel implements AdminPanelInterface {
     /** @var array Parsed panel.json contents */
     protected $metadata = [];
 
-    public function __construct($panelPath, $metadata) {
+    public function __construct($panelPath, $metadata)
+    {
         $this->panelPath = $panelPath;
         $this->metadata = is_array($metadata) ? $metadata : [];
     }
 
     // ========== Lifecycle ==========
 
-    public function init($admin): void {
+    public function init($admin): void
+    {
         $this->admin = $admin;
     }
 
-    public function registerRoutes($admin): void {
+    public function registerRoutes($admin): void
+    {
         // Override in subclasses
     }
 
     // ========== Sidebar / Quick Actions (declarative from panel.json) ==========
 
-    public function getSidebarItem() {
+    public function getSidebarItem()
+    {
         if (!isset($this->metadata['sidebar']) || !is_array($this->metadata['sidebar'])) {
             return null;
         }
@@ -70,7 +75,8 @@ abstract class AdminPanel implements AdminPanelInterface {
         ];
     }
 
-    public function getQuickActions() {
+    public function getQuickActions()
+    {
         if (!isset($this->metadata['quick_actions']) || !is_array($this->metadata['quick_actions'])) {
             return [];
         }
@@ -112,10 +118,11 @@ abstract class AdminPanel implements AdminPanelInterface {
      * Render a template from this panel's views/ directory.
      *
      * @param string $template Template name (without .php), e.g. 'list'
-     * @param array  $data     Variables to extract into template scope
+     * @param array $data Variables to extract into template scope
      * @return string Rendered HTML
      */
-    protected function renderView($template, $data = []) {
+    protected function renderView($template, $data = [])
+    {
         $path = $this->panelPath . '/views/' . $template . '.php';
         return app()->view()->fetchPath($path, $data);
     }
@@ -123,7 +130,8 @@ abstract class AdminPanel implements AdminPanelInterface {
     /**
      * Wrap content in the admin layout.
      */
-    protected function renderAdmin($title, $content, $extra = []) {
+    protected function renderAdmin($title, $content, $extra = [])
+    {
         return $this->admin->render($title, $content, $extra);
     }
 
@@ -136,7 +144,8 @@ abstract class AdminPanel implements AdminPanelInterface {
      * @param string $permission
      * @return bool|string  true for full access, 'own' for ownership-gated, false if denied
      */
-    protected function requirePermission($permission) {
+    protected function requirePermission($permission)
+    {
         $userManager = new \User();
         $result = $userManager->hasPermission($this->getUser(), $permission);
 
@@ -156,7 +165,8 @@ abstract class AdminPanel implements AdminPanelInterface {
      * Check if current user has admin role.
      * Returns false and renders a 403 page if denied.
      */
-    protected function requireAdmin() {
+    protected function requireAdmin()
+    {
         if ($this->auth()->hasRole('admin')) {
             return true;
         }
@@ -170,15 +180,18 @@ abstract class AdminPanel implements AdminPanelInterface {
 
     // ========== Convenience Helpers ==========
 
-    protected function db() {
+    protected function db()
+    {
         return app()->db();
     }
 
-    protected function auth() {
+    protected function auth()
+    {
         return app()->auth();
     }
 
-    protected function verifyCsrf() {
+    protected function verifyCsrf()
+    {
         if (app()->request()->method() !== 'POST') {
             return true;
         }
@@ -191,32 +204,37 @@ abstract class AdminPanel implements AdminPanelInterface {
         return true;
     }
 
-    protected function getUser() {
+    protected function getUser()
+    {
         return app()->auth()->user();
     }
 
-    protected function redirectAdmin($path = ''): void {
+    protected function redirectAdmin($path = ''): void
+    {
         app()->response()->redirect(base_url('/admin/' . ltrim($path, '/')));
     }
 
     /**
      * Register a hook listener.
      */
-    protected function hook($hookName, $callback, $priority = 10) {
+    protected function hook($hookName, $callback, $priority = 10)
+    {
         return Application::getInstance()->hooks()->register($hookName, $callback, $priority);
     }
 
     /**
      * Fire a hook.
      */
-    protected function fireHook($hookName, $data = null, $context = null) {
+    protected function fireHook($hookName, $data = null, $context = null)
+    {
         return Application::getInstance()->hooks()->fire($hookName, $data, $context);
     }
 
     /**
      * Get panel asset URL.
      */
-    public function asset($path) {
+    public function asset($path)
+    {
         $path = ltrim($path, '/');
         $version = $this->metadata['version'] ?? '';
         $url = '/modules/admin/panels/' . $this->id() . '/assets/' . $path;
@@ -226,14 +244,16 @@ abstract class AdminPanel implements AdminPanelInterface {
     /**
      * Get the panel filesystem path.
      */
-    public function getPath() {
+    public function getPath()
+    {
         return $this->panelPath;
     }
 
     /**
      * Get the panel metadata.
      */
-    public function getMetadata() {
+    public function getMetadata()
+    {
         return $this->metadata;
     }
 }

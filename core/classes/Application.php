@@ -1,4 +1,5 @@
 <?php declare(strict_types=1);
+
 /**
  * Application - Main application singleton
  * Orchestrates the entire CMS lifecycle
@@ -6,7 +7,8 @@
 
 use Module\ModuleManager;
 
-class Application {
+class Application
+{
     private static $instance = null;
     private $config = [];
     private $router = null;
@@ -14,7 +16,8 @@ class Application {
     private $hookManager = null;
     private $services = [];
 
-    private function __construct() {
+    private function __construct()
+    {
         $this->loadConfig();
         $this->registerCoreServices();
         $this->setupEnvironment();
@@ -23,7 +26,8 @@ class Application {
     /**
      * Get singleton instance
      */
-    public static function getInstance() {
+    public static function getInstance()
+    {
         if (self::$instance === null) {
             self::$instance = new self();
         }
@@ -33,14 +37,16 @@ class Application {
     /**
      * Load configuration
      */
-    private function loadConfig(): void {
+    private function loadConfig(): void
+    {
         $this->config = $GLOBALS['MANTRA_CONFIG'];
     }
 
     /**
      * Setup environment
      */
-    private function setupEnvironment(): void {
+    private function setupEnvironment(): void
+    {
         // Set timezone
         $tz = Config::getNested($this->config, 'locale.timezone', null);
         if (is_string($tz) && $tz !== '') {
@@ -62,7 +68,8 @@ class Application {
     /**
      * Register core lazy services
      */
-    private function registerCoreServices(): void {
+    private function registerCoreServices(): void
+    {
         $this->provide('request', fn() => new \Http\Request());
         $this->provide('session', fn() => new \Http\Session());
         $this->provide('response', fn() => new \Http\Response());
@@ -71,37 +78,59 @@ class Application {
         $this->provide('translator', fn() => new \TranslationManager());
         $this->provide('auth', fn() => new \Auth());
         $this->provide('clock', fn() => new \Clock(
-                config('locale.timezone', 'UTC'),
-                config('locale.date_format', 'j F Y'),
-                config('locale.time_format', 'H:i'),
+            config('locale.timezone', 'UTC'),
+            config('locale.date_format', 'j F Y'),
+            config('locale.time_format', 'H:i'),
             ));
     }
 
     /** @return \Http\Request */
-    public function request() { return $this->service('request'); }
+    public function request()
+    {
+        return $this->service('request');
+    }
 
     /** @return \Http\Session */
-    public function session() { return $this->service('session'); }
+    public function session()
+    {
+        return $this->service('session');
+    }
 
     /** @return \Http\Response */
-    public function response() { return $this->service('response'); }
+    public function response()
+    {
+        return $this->service('response');
+    }
 
     /** @return \Database */
-    public function db() { return $this->service('db'); }
+    public function db()
+    {
+        return $this->service('db');
+    }
 
     /** @return \View */
-    public function view() { return $this->service('view'); }
+    public function view()
+    {
+        return $this->service('view');
+    }
 
     /** @return \TranslationManager */
-    public function translator() { return $this->service('translator'); }
+    public function translator()
+    {
+        return $this->service('translator');
+    }
 
     /** @return \Auth */
-    public function auth() { return $this->service('auth'); }
+    public function auth()
+    {
+        return $this->service('auth');
+    }
 
     /**
      * Run application
      */
-    public function run(): void {
+    public function run(): void
+    {
         try {
             logger()->info('Application started');
 
@@ -149,7 +178,8 @@ class Application {
     /**
      * Register core public routes
      */
-    private function registerCoreRoutes(): void {
+    private function registerCoreRoutes(): void
+    {
         $controller = new PageController();
 
         // Home page
@@ -168,7 +198,8 @@ class Application {
     /**
      * Clean old logs if needed (once per day)
      */
-    private function cleanOldLogsIfNeeded(): void {
+    private function cleanOldLogsIfNeeded(): void
+    {
         $markerFile = MANTRA_STORAGE . '/logs/.last_cleanup';
         $now = time();
 
@@ -199,7 +230,8 @@ class Application {
      * so it does not interfere with the View output buffering stack and handles
      * error output correctly without manual buffer cleanup.
      */
-    private function startOutputCompression(): void {
+    private function startOutputCompression(): void
+    {
         // Check if compression is enabled in config
         if (!(bool)$this->config('performance.gzip_compression', false)) {
             return;
@@ -225,7 +257,8 @@ class Application {
     /**
      * Handle application errors
      */
-    private function handleError($exception): void {
+    private function handleError($exception): void
+    {
         // Log error (use $_SERVER directly — service container may be in bad state)
         logger()->error('Application error', [
             'exception' => $exception,
@@ -254,38 +287,43 @@ class Application {
     /**
      * Get configuration value
      */
-    public function config($path, $default = null) {
+    public function config($path, $default = null)
+    {
         return Config::getNested($this->config, (string)$path, $default);
     }
 
     /**
      * Get router instance
      */
-    public function router() {
+    public function router()
+    {
         return $this->router;
     }
 
     /**
      * Get module manager instance
      */
-    public function modules() {
+    public function modules()
+    {
         return $this->moduleManager;
     }
 
     /**
      * Get hook manager instance
      */
-    public function hooks() {
+    public function hooks()
+    {
         return $this->hookManager;
     }
 
     /**
      * Register a service that other modules can consume.
      *
-     * @param string   $name     Service name (e.g. 'pages', 'search')
-     * @param callable|mixed $provider  Callable (lazy) or a ready value
+     * @param string $name Service name (e.g. 'pages', 'search')
+     * @param callable|mixed $provider Callable (lazy) or a ready value
      */
-    public function provide($name, $provider): void {
+    public function provide($name, $provider): void
+    {
         $this->services[$name] = [
             'provider' => $provider,
             'resolved' => false,
@@ -298,11 +336,12 @@ class Application {
      *
      * Callable providers are invoked once; the result is cached.
      *
-     * @param string $name    Service name
-     * @param mixed  $default Returned when the service is not registered
+     * @param string $name Service name
+     * @param mixed $default Returned when the service is not registered
      * @return mixed
      */
-    public function service($name, $default = null) {
+    public function service($name, $default = null)
+    {
         if (!isset($this->services[$name])) {
             return $default;
         }
@@ -325,7 +364,8 @@ class Application {
      * @param string $name
      * @return bool
      */
-    public function hasService($name) {
+    public function hasService($name)
+    {
         return isset($this->services[$name]);
     }
 }

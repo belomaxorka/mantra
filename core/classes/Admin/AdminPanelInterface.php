@@ -8,7 +8,8 @@
 
 namespace Admin;
 
-interface AdminPanelInterface {
+interface AdminPanelInterface
+{
 
     /**
      * Unique panel identifier (e.g. 'pages', 'dashboard')

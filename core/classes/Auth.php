@@ -1,13 +1,15 @@
 <?php declare(strict_types=1);
+
 /**
  * Auth - Authentication and authorization system
  */
-
-class Auth {
+class Auth
+{
     private $db = null;
     private $currentUser = null;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->db = new Database();
         $this->loadCurrentUser();
     }
@@ -15,7 +17,8 @@ class Auth {
     /**
      * Login user
      */
-    public function login($username, $password) {
+    public function login($username, $password)
+    {
         logger()->info('Login attempt', ['username' => $username]);
 
         $users = $this->db->query('users', ['username' => $username]);
@@ -78,7 +81,8 @@ class Auth {
     /**
      * Logout user
      */
-    public function logout(): void {
+    public function logout(): void
+    {
         if ($this->currentUser) {
             logger()->info('User logged out', [
                 'username' => $this->currentUser['username'],
@@ -94,21 +98,24 @@ class Auth {
     /**
      * Check if user is logged in
      */
-    public function check() {
+    public function check()
+    {
         return $this->currentUser !== null;
     }
 
     /**
      * Get current user
      */
-    public function user() {
+    public function user()
+    {
         return $this->currentUser;
     }
 
     /**
      * Load current user from session
      */
-    private function loadCurrentUser(): void {
+    private function loadCurrentUser(): void
+    {
         if (app()->session()->has('user_id')) {
             $this->currentUser = $this->db->read('users', app()->session()->get('user_id'));
         }
@@ -117,7 +124,8 @@ class Auth {
     /**
      * Check if user has role
      */
-    public function hasRole($role) {
+    public function hasRole($role)
+    {
         if (!$this->check()) {
             return false;
         }
@@ -128,7 +136,8 @@ class Auth {
     /**
      * Hash password
      */
-    public function hashPassword($password) {
+    public function hashPassword($password)
+    {
         $algo = config('security.password_hash_algo', 'PASSWORD_DEFAULT');
 
         switch ($algo) {
@@ -147,7 +156,8 @@ class Auth {
     /**
      * Hash password without instantiating Auth (for install.php).
      */
-    public static function hashPasswordStatic($password) {
+    public static function hashPasswordStatic($password)
+    {
         $algo = config('security.password_hash_algo', 'PASSWORD_DEFAULT');
 
         switch ($algo) {
@@ -166,14 +176,16 @@ class Auth {
     /**
      * Verify password
      */
-    private function verifyPassword($password, $hash) {
+    private function verifyPassword($password, $hash)
+    {
         return password_verify($password, $hash);
     }
 
     /**
      * Check if password hash needs rehashing with current algorithm
      */
-    private function needsRehash($hash) {
+    private function needsRehash($hash)
+    {
         $algo = config('security.password_hash_algo', 'PASSWORD_DEFAULT');
 
         $phpAlgo = PASSWORD_DEFAULT;
@@ -199,7 +211,8 @@ class Auth {
     /**
      * Generate CSRF token
      */
-    public function generateCsrfToken() {
+    public function generateCsrfToken()
+    {
         // Reuse the existing token if present so that a browser refresh (POST resubmit)
         // doesn't immediately invalidate the previous request.
         if (app()->session()->has('csrf_token')) {
@@ -217,7 +230,8 @@ class Auth {
     /**
      * Verify CSRF token
      */
-    public function verifyCsrfToken($token) {
+    public function verifyCsrfToken($token)
+    {
         if (!app()->session()->has('csrf_token')) {
             return false;
         }

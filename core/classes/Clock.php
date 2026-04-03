@@ -1,4 +1,5 @@
 <?php declare(strict_types=1);
+
 /**
  * Clock - Centralized time management
  *
@@ -7,7 +8,8 @@
  *
  * Registered as a lazy service: app()->service('clock'), helper: clock().
  */
-class Clock {
+class Clock
+{
     /** Storage format for timestamps in JSON documents. */
     public const STORAGE_FORMAT = 'Y-m-d H:i:s';
 
@@ -16,11 +18,12 @@ class Clock {
     private $timeFormat;
 
     /**
-     * @param string $timezone   IANA timezone identifier (e.g. 'UTC', 'Europe/Moscow')
+     * @param string $timezone IANA timezone identifier (e.g. 'UTC', 'Europe/Moscow')
      * @param string $dateFormat PHP date format for display (e.g. 'j F Y')
      * @param string $timeFormat PHP date format for time display (e.g. 'H:i')
      */
-    public function __construct($timezone = 'UTC', $dateFormat = 'j F Y', $timeFormat = 'H:i') {
+    public function __construct($timezone = 'UTC', $dateFormat = 'j F Y', $timeFormat = 'H:i')
+    {
         $this->timezone = new \DateTimeZone($timezone);
         $this->dateFormat = $dateFormat;
         $this->timeFormat = $timeFormat;
@@ -31,7 +34,8 @@ class Clock {
      *
      * @return \DateTimeImmutable
      */
-    public function now() {
+    public function now()
+    {
         return new \DateTimeImmutable('now', $this->timezone);
     }
 
@@ -40,7 +44,8 @@ class Clock {
      *
      * @return string
      */
-    public function timestamp() {
+    public function timestamp()
+    {
         return $this->now()->format(self::STORAGE_FORMAT);
     }
 
@@ -55,7 +60,8 @@ class Clock {
      * @param string|\DateTimeInterface|int $datetime
      * @return \DateTimeImmutable
      */
-    public function parse($datetime) {
+    public function parse($datetime)
+    {
         if ($datetime instanceof \DateTimeImmutable) {
             return $datetime->setTimezone($this->timezone);
         }
@@ -86,7 +92,8 @@ class Clock {
      * @param string|\DateTimeInterface|int $datetime
      * @return string
      */
-    public function formatDate($datetime) {
+    public function formatDate($datetime)
+    {
         return $this->format($datetime, $this->dateFormat);
     }
 
@@ -96,7 +103,8 @@ class Clock {
      * @param string|\DateTimeInterface|int $datetime
      * @return string
      */
-    public function formatTime($datetime) {
+    public function formatTime($datetime)
+    {
         return $this->format($datetime, $this->timeFormat);
     }
 
@@ -106,7 +114,8 @@ class Clock {
      * @param string|\DateTimeInterface|int $datetime
      * @return string
      */
-    public function formatDatetime($datetime) {
+    public function formatDatetime($datetime)
+    {
         return $this->format($datetime, $this->dateFormat . ', ' . $this->timeFormat);
     }
 
@@ -117,7 +126,8 @@ class Clock {
      * @param string $format
      * @return string
      */
-    public function format($datetime, $format) {
+    public function format($datetime, $format)
+    {
         return $this->parse($datetime)->format($format);
     }
 
@@ -131,7 +141,8 @@ class Clock {
      * @param string|\DateTimeInterface|int $datetime
      * @return string
      */
-    public function ago($datetime) {
+    public function ago($datetime)
+    {
         $dt = $this->parse($datetime);
         $diff = $this->now()->getTimestamp() - $dt->getTimestamp();
 
@@ -179,7 +190,8 @@ class Clock {
      *
      * @return \DateTimeZone
      */
-    public function timezone() {
+    public function timezone()
+    {
         return $this->timezone;
     }
 
@@ -188,7 +200,8 @@ class Clock {
      *
      * @return string
      */
-    public function dateFormat() {
+    public function dateFormat()
+    {
         return $this->dateFormat;
     }
 
@@ -197,7 +210,8 @@ class Clock {
      *
      * @return string
      */
-    public function timeFormat() {
+    public function timeFormat()
+    {
         return $this->timeFormat;
     }
 }

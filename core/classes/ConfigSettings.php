@@ -1,4 +1,5 @@
 <?php declare(strict_types=1);
+
 /**
  * ConfigSettings - Schema-driven settings storage for global config.
  *
@@ -25,7 +26,8 @@ class ConfigSettings
     /**
      * Get cached ConfigSettings instance.
      */
-    public static function instance() {
+    public static function instance()
+    {
         if (self::$instance === null) {
             self::$instance = new self();
         }

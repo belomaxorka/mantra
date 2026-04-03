@@ -1,4 +1,5 @@
 <?php declare(strict_types=1);
+
 /**
  * Database - Flat-file database abstraction
  * Provides CRUD operations for JSON-based storage
@@ -311,7 +312,7 @@ class Database
      * With filters, reads the collection and counts matching documents.
      *
      * @param string $collection Collection name
-     * @param array  $filters    Key-value equality filters (same as query())
+     * @param array $filters Key-value equality filters (same as query())
      * @return int
      */
     public function count($collection, $filters = [])

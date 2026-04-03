@@ -1,10 +1,11 @@
 <?php declare(strict_types=1);
+
 /**
  * HookManager - Event/Hook system for extensibility
  * Allows modules to hook into system events
  */
-
-class HookManager {
+class HookManager
+{
     private $hooks = [];
     private $nextId = 1;
 
@@ -16,7 +17,8 @@ class HookManager {
      * @param int $priority Lower numbers run first (default: 10)
      * @return int Listener ID (can be passed to unregister())
      */
-    public function register($hookName, $callback, $priority = 10) {
+    public function register($hookName, $callback, $priority = 10)
+    {
         if (!isset($this->hooks[$hookName])) {
             $this->hooks[$hookName] = [];
         }
@@ -42,7 +44,8 @@ class HookManager {
      * @param int $id Listener ID returned by register()
      * @return bool True if the listener was found and removed
      */
-    public function unregister($hookName, $id) {
+    public function unregister($hookName, $id)
+    {
         if (!isset($this->hooks[$hookName])) {
             return false;
         }
@@ -59,13 +62,14 @@ class HookManager {
 
     /**
      * Fire a hook
-     * 
+     *
      * @param string $hookName Hook name
      * @param mixed $data Data to pass to callbacks (transformable)
      * @param mixed $context Optional read-only context passed as second argument to callbacks
      * @return mixed Modified data after all callbacks
      */
-    public function fire($hookName, $data = null, $context = null) {
+    public function fire($hookName, $data = null, $context = null)
+    {
         if (!isset($this->hooks[$hookName])) {
             return $data;
         }
@@ -86,28 +90,32 @@ class HookManager {
     /**
      * Check if hook has listeners
      */
-    public function hasListeners($hookName) {
+    public function hasListeners($hookName)
+    {
         return isset($this->hooks[$hookName]) && !empty($this->hooks[$hookName]);
     }
 
     /**
      * Get listener count for a hook
      */
-    public function listenerCount($hookName) {
+    public function listenerCount($hookName)
+    {
         return isset($this->hooks[$hookName]) ? count($this->hooks[$hookName]) : 0;
     }
 
     /**
      * Get all hook names that have registered listeners
      */
-    public function getActiveHooks() {
+    public function getActiveHooks()
+    {
         return array_keys($this->hooks);
     }
 
     /**
      * Remove all listeners for a hook
      */
-    public function clear($hookName): void {
+    public function clear($hookName): void
+    {
         if (isset($this->hooks[$hookName])) {
             unset($this->hooks[$hookName]);
         }

@@ -2,17 +2,21 @@
 
 namespace Http;
 
-class Cookie {
+class Cookie
+{
 
-    public function get($name, $default = null) {
+    public function get($name, $default = null)
+    {
         return $_COOKIE[$name] ?? $default;
     }
 
-    public function has($name) {
+    public function has($name)
+    {
         return isset($_COOKIE[$name]);
     }
 
-    public function set($name, $value, $options = []) {
+    public function set($name, $value, $options = [])
+    {
         if (MANTRA_CLI) {
             return false;
         }
@@ -70,7 +74,8 @@ class Cookie {
         return setcookie($name, $value, $expires, $path, $domain, $secure, $httponly);
     }
 
-    public function delete($name, $options = []) {
+    public function delete($name, $options = [])
+    {
         $options['expires'] = time() - 3600;
         return $this->set($name, '', $options);
     }
