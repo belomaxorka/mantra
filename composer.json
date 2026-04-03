@@ -1,0 +1,17 @@
+{
+    "name": "mantra/cms",
+    "description": "Lightweight flat-file PHP CMS",
+    "type": "project",
+    "license": "MIT",
+    "require-dev": {
+        "phpunit/phpunit": "^10.5"
+    },
+    "autoload-dev": {
+        "classmap": [
+            "tests/"
+        ]
+    },
+    "config": {
+        "sort-packages": true
+    }
+}

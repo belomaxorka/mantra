@@ -4,107 +4,30 @@
  * Tests for Database class, schema validation, and defaults
  */
 
-require_once __DIR__ . '/../core/bootstrap.php';
-
-class DatabaseTest {
+class DatabaseTest extends MantraTestCase
+{
     private $testDir;
     private $db;
-    private $results = array();
 
-    public function __construct() {
-        // Use temporary test directory
-        $this->testDir = MANTRA_STORAGE . '/test-db-' . time();
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->testDir = MANTRA_STORAGE . '/test-db-' . time() . '-' . mt_rand(1000, 9999);
         if (!is_dir($this->testDir)) {
             mkdir($this->testDir, 0755, true);
         }
         $this->db = new Database($this->testDir);
     }
 
-    public function __destruct() {
-        // Cleanup test schemas
-        $schemas = glob(MANTRA_CORE . '/schemas/test_*.php');
-        foreach ($schemas as $schema) {
-            @unlink($schema);
-        }
-
-        // Cleanup test directory
+    protected function tearDown(): void
+    {
+        $this->cleanupTestSchemas('test_*.php');
         $this->removeDirectory($this->testDir);
+        parent::tearDown();
     }
 
-    private function removeDirectory($dir) {
-        if (!is_dir($dir)) return;
-        $files = array_diff(scandir($dir), array('.', '..'));
-        foreach ($files as $file) {
-            $path = $dir . '/' . $file;
-            is_dir($path) ? $this->removeDirectory($path) : unlink($path);
-        }
-        rmdir($dir);
-    }
-
-    public function run() {
-        echo "Running Database Tests...\n\n";
-
-        $this->testWriteAndRead();
-        $this->testDefaultsApplied();
-        $this->testValidationRequired();
-        $this->testValidationEmail();
-        $this->testValidationEnum();
-        $this->testSchemaVersion();
-        $this->testOptionalEmail();
-        $this->testSchemaMigration();
-
-        // Extended validation tests
-        $this->testValidationTypes();
-        $this->testValidationStringLength();
-        $this->testValidationPattern();
-        $this->testValidationNumericRange();
-        $this->testValidationUrl();
-        $this->testValidationDate();
-        $this->testValidationBoolean();
-        $this->testValidationArray();
-        $this->testSanitization();
-        $this->testValidationMultipleErrors();
-
-        // Database operations tests
-        $this->testDelete();
-        $this->testExists();
-        $this->testQuery();
-        $this->testQueryWithFilters();
-        $this->testQueryWithSort();
-        $this->testQueryWithLimit();
-        $this->testMetadata();
-        $this->testSecurity();
-        $this->testSecurityExtended();
-        $this->testErrorHandling();
-        $this->testLogging();
-
-        // Advanced tests
-        $this->testSchemaMigrationWithCallback();
-        $this->testCollectionAutoCreation();
-        $this->testReadCollectionWithPartialErrors();
-        $this->testFileSizeLimit();
-        $this->testQueryNonExistentCollection();
-        $this->testEmptyStringRequiredField();
-        $this->testMetadataOverride();
-        $this->testLargeCollectionPerformance();
-
-        $this->printResults();
-    }
-
-    private function assert($condition, $message) {
-        if ($condition) {
-            $this->results[] = array('status' => 'PASS', 'message' => $message);
-            echo "✓ PASS: $message\n";
-        } else {
-            $this->results[] = array('status' => 'FAIL', 'message' => $message);
-            echo "✗ FAIL: $message\n";
-        }
-    }
-
-    private function testWriteAndRead() {
-        echo "\n--- Test: Write and Read ---\n";
-
-        // Create test schema
+    public function testWriteAndRead(): void
+    {
         $this->createTestSchema('test_items', array(
             'version' => 1,
             'defaults' => array(
@@ -117,24 +40,22 @@ class DatabaseTest {
             )
         ));
 
-        // Create new Database instance to clear schema cache
         $db = new Database($this->testDir);
 
         $id = $db->generateId();
         $data = array('name' => 'Test Item', 'count' => 5);
 
         $written = $db->write('test_items', $id, $data);
-        $this->assert($written === true, 'Write operation returns true');
+        $this->assertTrue($written, 'Write operation returns true');
 
         $read = $db->read('test_items', $id);
-        $this->assert($read !== null, 'Read returns data');
-        $this->assert($read['name'] === 'Test Item', 'Read data matches written data');
-        $this->assert($read['_id'] === $id, 'Read data includes _id');
+        $this->assertNotNull($read, 'Read returns data');
+        $this->assertSame('Test Item', $read['name'], 'Read data matches written data');
+        $this->assertSame($id, $read['_id'], 'Read data includes _id');
     }
 
-    private function testDefaultsApplied() {
-        echo "\n--- Test: Defaults Applied ---\n";
-
+    public function testDefaultsApplied(): void
+    {
         $this->createTestSchema('test_defaults', array(
             'version' => 1,
             'defaults' => array(
@@ -149,7 +70,6 @@ class DatabaseTest {
             )
         ));
 
-        // Create new Database instance to clear schema cache
         $db = new Database($this->testDir);
 
         $id = $db->generateId();
@@ -157,16 +77,15 @@ class DatabaseTest {
         $data = array('name' => 'Test');
 
         $written = $db->write('test_defaults', $id, $data);
-        $this->assert($written === true, 'Write with partial data succeeds');
+        $this->assertTrue($written, 'Write with partial data succeeds');
 
         $read = $db->read('test_defaults', $id);
-        $this->assert($read['status'] === 'active', 'Default status applied');
-        $this->assert($read['count'] === 0, 'Default count applied');
+        $this->assertSame('active', $read['status'], 'Default status applied');
+        $this->assertSame(0, $read['count'], 'Default count applied');
     }
 
-    private function testValidationRequired() {
-        echo "\n--- Test: Validation - Required Fields ---\n";
-
+    public function testValidationRequired(): void
+    {
         $this->createTestSchema('test_required', array(
             'version' => 1,
             'defaults' => array('name' => ''),
@@ -175,27 +94,21 @@ class DatabaseTest {
             )
         ));
 
-        // Create new Database instance to clear schema cache
         $db = new Database($this->testDir);
 
         $id = $db->generateId();
         $data = array(); // Missing required field
 
-        $exceptionThrown = false;
         try {
             $db->write('test_required', $id, $data);
+            $this->fail('Expected SchemaValidationException');
         } catch (SchemaValidationException $e) {
-            $exceptionThrown = true;
-            $errors = $e->getErrors();
-            $this->assert(isset($errors['name']), 'Validation error for missing required field');
+            $this->assertArrayHasKey('name', $e->getErrors(), 'Validation error for missing required field');
         }
-
-        $this->assert($exceptionThrown, 'Exception thrown for missing required field');
     }
 
-    private function testValidationEmail() {
-        echo "\n--- Test: Validation - Email Format ---\n";
-
+    public function testValidationEmail(): void
+    {
         $this->createTestSchema('test_email', array(
             'version' => 1,
             'defaults' => array('email' => ''),
@@ -204,38 +117,34 @@ class DatabaseTest {
             )
         ));
 
-        // Create new Database instance to clear schema cache
         $db = new Database($this->testDir);
 
         // Test valid email
         $id1 = $db->generateId();
         $data1 = array('email' => 'user@example.com');
         $written1 = $db->write('test_email', $id1, $data1);
-        $this->assert($written1 === true, 'Valid email passes validation');
+        $this->assertTrue($written1, 'Valid email passes validation');
 
         // Test invalid email
         $id2 = $db->generateId();
         $data2 = array('email' => 'invalid-email');
 
-        $exceptionThrown = false;
         try {
             $db->write('test_email', $id2, $data2);
+            $this->fail('Expected SchemaValidationException');
         } catch (SchemaValidationException $e) {
-            $exceptionThrown = true;
+            $this->assertTrue(true, 'Invalid email fails validation');
         }
-
-        $this->assert($exceptionThrown, 'Invalid email fails validation');
 
         // Test empty email (should pass since not required)
         $id3 = $db->generateId();
         $data3 = array('email' => '');
         $written3 = $db->write('test_email', $id3, $data3);
-        $this->assert($written3 === true, 'Empty email passes when not required');
+        $this->assertTrue($written3, 'Empty email passes when not required');
     }
 
-    private function testValidationEnum() {
-        echo "\n--- Test: Validation - Enum Values ---\n";
-
+    public function testValidationEnum(): void
+    {
         $this->createTestSchema('test_enum', array(
             'version' => 1,
             'defaults' => array('role' => 'viewer'),
@@ -248,32 +157,28 @@ class DatabaseTest {
             )
         ));
 
-        // Create new Database instance to clear schema cache
         $db = new Database($this->testDir);
 
         // Test valid enum
         $id1 = $db->generateId();
         $data1 = array('role' => 'admin');
         $written1 = $db->write('test_enum', $id1, $data1);
-        $this->assert($written1 === true, 'Valid enum value passes');
+        $this->assertTrue($written1, 'Valid enum value passes');
 
         // Test invalid enum
         $id2 = $db->generateId();
         $data2 = array('role' => 'superadmin');
 
-        $exceptionThrown = false;
         try {
             $db->write('test_enum', $id2, $data2);
+            $this->fail('Expected SchemaValidationException');
         } catch (SchemaValidationException $e) {
-            $exceptionThrown = true;
+            $this->assertTrue(true, 'Invalid enum value fails validation');
         }
-
-        $this->assert($exceptionThrown, 'Invalid enum value fails validation');
     }
 
-    private function testSchemaVersion() {
-        echo "\n--- Test: Schema Version ---\n";
-
+    public function testSchemaVersion(): void
+    {
         $this->createTestSchema('test_version', array(
             'version' => 2,
             'defaults' => array('name' => ''),
@@ -282,7 +187,6 @@ class DatabaseTest {
             )
         ));
 
-        // Create new Database instance to clear schema cache
         $db = new Database($this->testDir);
 
         $id = $db->generateId();
@@ -291,13 +195,12 @@ class DatabaseTest {
         $db->write('test_version', $id, $data);
         $read = $db->read('test_version', $id);
 
-        $this->assert(isset($read['schema_version']), 'Schema version is set');
-        $this->assert($read['schema_version'] === 2, 'Schema version matches schema');
+        $this->assertArrayHasKey('schema_version', $read, 'Schema version is set');
+        $this->assertSame(2, $read['schema_version'], 'Schema version matches schema');
     }
 
-    private function testOptionalEmail() {
-        echo "\n--- Test: Optional Email (User-like Schema) ---\n";
-
+    public function testOptionalEmail(): void
+    {
         // Create test schema mimicking users schema
         $this->createTestSchema('test_users', array(
             'version' => 1,
@@ -344,18 +247,17 @@ class DatabaseTest {
         );
 
         $written = $db->write('test_users', $id, $userData);
-        $this->assert($written === true, 'User created without email');
+        $this->assertTrue($written, 'User created without email');
 
         $read = $db->read('test_users', $id);
-        $this->assert($read !== null, 'User can be read back');
-        $this->assert($read['username'] === 'testuser', 'Username is correct');
-        $this->assert($read['email'] === '', 'Email defaults to empty string');
-        $this->assert($read['role'] === 'admin', 'Role is correct');
+        $this->assertNotNull($read, 'User can be read back');
+        $this->assertSame('testuser', $read['username'], 'Username is correct');
+        $this->assertSame('', $read['email'], 'Email defaults to empty string');
+        $this->assertSame('admin', $read['role'], 'Role is correct');
     }
 
-    private function testSchemaMigration() {
-        echo "\n--- Test: Schema Migration on Read ---\n";
-
+    public function testSchemaMigration(): void
+    {
         // Create initial schema v1
         $this->createTestSchema('test_migrate', array(
             'version' => 1,
@@ -388,18 +290,17 @@ class DatabaseTest {
         $db2 = new Database($this->testDir);
         $read = $db2->read('test_migrate', $id);
 
-        $this->assert($read['name'] === 'Old Document', 'Original data preserved');
-        $this->assert($read['status'] === 'migrated', 'New field added from defaults on read');
-        $this->assert($read['schema_version'] === 2, 'Schema version updated on read');
+        $this->assertSame('Old Document', $read['name'], 'Original data preserved');
+        $this->assertSame('migrated', $read['status'], 'New field added from defaults on read');
+        $this->assertSame(2, $read['schema_version'], 'Schema version updated on read');
 
         // Read again - should still have the migrated field
         $read2 = $db2->read('test_migrate', $id);
-        $this->assert($read2['status'] === 'migrated', 'Migrated field persisted');
+        $this->assertSame('migrated', $read2['status'], 'Migrated field persisted');
     }
 
-    private function testValidationTypes() {
-        echo "\n--- Test: Validation - Type Checking ---\n";
-
+    public function testValidationTypes(): void
+    {
         $this->createTestSchema('test_types', array(
             'version' => 1,
             'defaults' => array(
@@ -420,34 +321,31 @@ class DatabaseTest {
         $id1 = $db->generateId();
         $data1 = array('text' => 'hello', 'number' => 42, 'flag' => true);
         $written1 = $db->write('test_types', $id1, $data1);
-        $this->assert($written1 === true, 'Valid types pass validation');
+        $this->assertTrue($written1, 'Valid types pass validation');
 
         // Invalid string type
         $id2 = $db->generateId();
         $data2 = array('text' => 123);
-        $exceptionThrown = false;
         try {
             $db->write('test_types', $id2, $data2);
+            $this->fail('Expected SchemaValidationException');
         } catch (SchemaValidationException $e) {
-            $exceptionThrown = true;
+            $this->assertTrue(true, 'Invalid string type fails validation');
         }
-        $this->assert($exceptionThrown, 'Invalid string type fails validation');
 
         // Invalid integer type
         $id3 = $db->generateId();
         $data3 = array('number' => 'not a number');
-        $exceptionThrown = false;
         try {
             $db->write('test_types', $id3, $data3);
+            $this->fail('Expected SchemaValidationException');
         } catch (SchemaValidationException $e) {
-            $exceptionThrown = true;
+            $this->assertTrue(true, 'Invalid integer type fails validation');
         }
-        $this->assert($exceptionThrown, 'Invalid integer type fails validation');
     }
 
-    private function testValidationStringLength() {
-        echo "\n--- Test: Validation - String Length ---\n";
-
+    public function testValidationStringLength(): void
+    {
         $this->createTestSchema('test_length', array(
             'version' => 1,
             'defaults' => array('username' => ''),
@@ -467,34 +365,31 @@ class DatabaseTest {
         $id1 = $db->generateId();
         $data1 = array('username' => 'john');
         $written1 = $db->write('test_length', $id1, $data1);
-        $this->assert($written1 === true, 'Valid length passes validation');
+        $this->assertTrue($written1, 'Valid length passes validation');
 
         // Too short
         $id2 = $db->generateId();
         $data2 = array('username' => 'ab');
-        $exceptionThrown = false;
         try {
             $db->write('test_length', $id2, $data2);
+            $this->fail('Expected SchemaValidationException');
         } catch (SchemaValidationException $e) {
-            $exceptionThrown = true;
+            $this->assertTrue(true, 'String too short fails validation');
         }
-        $this->assert($exceptionThrown, 'String too short fails validation');
 
         // Too long
         $id3 = $db->generateId();
         $data3 = array('username' => 'verylongusername');
-        $exceptionThrown = false;
         try {
             $db->write('test_length', $id3, $data3);
+            $this->fail('Expected SchemaValidationException');
         } catch (SchemaValidationException $e) {
-            $exceptionThrown = true;
+            $this->assertTrue(true, 'String too long fails validation');
         }
-        $this->assert($exceptionThrown, 'String too long fails validation');
     }
 
-    private function testValidationPattern() {
-        echo "\n--- Test: Validation - Regex Pattern ---\n";
-
+    public function testValidationPattern(): void
+    {
         $this->createTestSchema('test_pattern', array(
             'version' => 1,
             'defaults' => array('username' => ''),
@@ -513,34 +408,31 @@ class DatabaseTest {
         $id1 = $db->generateId();
         $data1 = array('username' => 'user_name-123');
         $written1 = $db->write('test_pattern', $id1, $data1);
-        $this->assert($written1 === true, 'Valid pattern passes validation');
+        $this->assertTrue($written1, 'Valid pattern passes validation');
 
         // Invalid pattern (contains spaces)
         $id2 = $db->generateId();
         $data2 = array('username' => 'user name');
-        $exceptionThrown = false;
         try {
             $db->write('test_pattern', $id2, $data2);
+            $this->fail('Expected SchemaValidationException');
         } catch (SchemaValidationException $e) {
-            $exceptionThrown = true;
+            $this->assertTrue(true, 'Invalid pattern fails validation');
         }
-        $this->assert($exceptionThrown, 'Invalid pattern fails validation');
 
         // Invalid pattern (special chars)
         $id3 = $db->generateId();
         $data3 = array('username' => 'user@name!');
-        $exceptionThrown = false;
         try {
             $db->write('test_pattern', $id3, $data3);
+            $this->fail('Expected SchemaValidationException');
         } catch (SchemaValidationException $e) {
-            $exceptionThrown = true;
+            $this->assertTrue(true, 'Special characters fail pattern validation');
         }
-        $this->assert($exceptionThrown, 'Special characters fail pattern validation');
     }
 
-    private function testValidationNumericRange() {
-        echo "\n--- Test: Validation - Numeric Range ---\n";
-
+    public function testValidationNumericRange(): void
+    {
         $this->createTestSchema('test_range', array(
             'version' => 1,
             'defaults' => array('age' => 0, 'score' => 0.0),
@@ -566,34 +458,31 @@ class DatabaseTest {
         $id1 = $db->generateId();
         $data1 = array('age' => 25, 'score' => 7.5);
         $written1 = $db->write('test_range', $id1, $data1);
-        $this->assert($written1 === true, 'Valid range passes validation');
+        $this->assertTrue($written1, 'Valid range passes validation');
 
         // Below minimum
         $id2 = $db->generateId();
         $data2 = array('age' => 15);
-        $exceptionThrown = false;
         try {
             $db->write('test_range', $id2, $data2);
+            $this->fail('Expected SchemaValidationException');
         } catch (SchemaValidationException $e) {
-            $exceptionThrown = true;
+            $this->assertTrue(true, 'Value below minimum fails validation');
         }
-        $this->assert($exceptionThrown, 'Value below minimum fails validation');
 
         // Above maximum
         $id3 = $db->generateId();
         $data3 = array('score' => 15.5);
-        $exceptionThrown = false;
         try {
             $db->write('test_range', $id3, $data3);
+            $this->fail('Expected SchemaValidationException');
         } catch (SchemaValidationException $e) {
-            $exceptionThrown = true;
+            $this->assertTrue(true, 'Value above maximum fails validation');
         }
-        $this->assert($exceptionThrown, 'Value above maximum fails validation');
     }
 
-    private function testValidationUrl() {
-        echo "\n--- Test: Validation - URL Format ---\n";
-
+    public function testValidationUrl(): void
+    {
         $this->createTestSchema('test_url', array(
             'version' => 1,
             'defaults' => array('website' => ''),
@@ -608,23 +497,21 @@ class DatabaseTest {
         $id1 = $db->generateId();
         $data1 = array('website' => 'https://example.com');
         $written1 = $db->write('test_url', $id1, $data1);
-        $this->assert($written1 === true, 'Valid URL passes validation');
+        $this->assertTrue($written1, 'Valid URL passes validation');
 
         // Invalid URL
         $id2 = $db->generateId();
         $data2 = array('website' => 'not-a-url');
-        $exceptionThrown = false;
         try {
             $db->write('test_url', $id2, $data2);
+            $this->fail('Expected SchemaValidationException');
         } catch (SchemaValidationException $e) {
-            $exceptionThrown = true;
+            $this->assertTrue(true, 'Invalid URL fails validation');
         }
-        $this->assert($exceptionThrown, 'Invalid URL fails validation');
     }
 
-    private function testValidationDate() {
-        echo "\n--- Test: Validation - Date Format ---\n";
-
+    public function testValidationDate(): void
+    {
         $this->createTestSchema('test_date', array(
             'version' => 1,
             'defaults' => array('published' => ''),
@@ -639,28 +526,26 @@ class DatabaseTest {
         $id1 = $db->generateId();
         $data1 = array('published' => '2026-03-17');
         $written1 = $db->write('test_date', $id1, $data1);
-        $this->assert($written1 === true, 'Valid date (Y-m-d) passes validation');
+        $this->assertTrue($written1, 'Valid date (Y-m-d) passes validation');
 
         $id2 = $db->generateId();
         $data2 = array('published' => '2026-03-17 14:30:00');
         $written2 = $db->write('test_date', $id2, $data2);
-        $this->assert($written2 === true, 'Valid datetime passes validation');
+        $this->assertTrue($written2, 'Valid datetime passes validation');
 
         // Invalid date
         $id3 = $db->generateId();
         $data3 = array('published' => 'not-a-date');
-        $exceptionThrown = false;
         try {
             $db->write('test_date', $id3, $data3);
+            $this->fail('Expected SchemaValidationException');
         } catch (SchemaValidationException $e) {
-            $exceptionThrown = true;
+            $this->assertTrue(true, 'Invalid date fails validation');
         }
-        $this->assert($exceptionThrown, 'Invalid date fails validation');
     }
 
-    private function testValidationBoolean() {
-        echo "\n--- Test: Validation - Boolean Type ---\n";
-
+    public function testValidationBoolean(): void
+    {
         $this->createTestSchema('test_bool', array(
             'version' => 1,
             'defaults' => array('active' => false),
@@ -675,23 +560,21 @@ class DatabaseTest {
         $id1 = $db->generateId();
         $data1 = array('active' => true);
         $written1 = $db->write('test_bool', $id1, $data1);
-        $this->assert($written1 === true, 'Valid boolean passes validation');
+        $this->assertTrue($written1, 'Valid boolean passes validation');
 
         // Invalid boolean (string)
         $id2 = $db->generateId();
         $data2 = array('active' => 'yes');
-        $exceptionThrown = false;
         try {
             $db->write('test_bool', $id2, $data2);
+            $this->fail('Expected SchemaValidationException');
         } catch (SchemaValidationException $e) {
-            $exceptionThrown = true;
+            $this->assertTrue(true, 'String instead of boolean fails validation');
         }
-        $this->assert($exceptionThrown, 'String instead of boolean fails validation');
     }
 
-    private function testValidationArray() {
-        echo "\n--- Test: Validation - Array Type ---\n";
-
+    public function testValidationArray(): void
+    {
         $this->createTestSchema('test_array', array(
             'version' => 1,
             'defaults' => array('tags' => array()),
@@ -706,23 +589,21 @@ class DatabaseTest {
         $id1 = $db->generateId();
         $data1 = array('tags' => array('php', 'cms', 'web'));
         $written1 = $db->write('test_array', $id1, $data1);
-        $this->assert($written1 === true, 'Valid array passes validation');
+        $this->assertTrue($written1, 'Valid array passes validation');
 
         // Invalid array (string)
         $id2 = $db->generateId();
         $data2 = array('tags' => 'not-an-array');
-        $exceptionThrown = false;
         try {
             $db->write('test_array', $id2, $data2);
+            $this->fail('Expected SchemaValidationException');
         } catch (SchemaValidationException $e) {
-            $exceptionThrown = true;
+            $this->assertTrue(true, 'String instead of array fails validation');
         }
-        $this->assert($exceptionThrown, 'String instead of array fails validation');
     }
 
-    private function testSanitization() {
-        echo "\n--- Test: Sanitization ---\n";
-
+    public function testSanitization(): void
+    {
         $this->createTestSchema('test_sanitize', array(
             'version' => 1,
             'defaults' => array('name' => '', 'description' => ''),
@@ -739,15 +620,15 @@ class DatabaseTest {
         $data1 = array('name' => '  trimmed  ', 'description' => "\t\nspaces\n\t");
         $db->write('test_sanitize', $id1, $data1);
         $read1 = $db->read('test_sanitize', $id1);
-        $this->assert($read1['name'] === 'trimmed', 'Whitespace trimmed from strings');
-        $this->assert($read1['description'] === 'spaces', 'Tabs and newlines trimmed');
+        $this->assertSame('trimmed', $read1['name'], 'Whitespace trimmed from strings');
+        $this->assertSame('spaces', $read1['description'], 'Tabs and newlines trimmed');
 
         // Test null byte removal
         $id2 = $db->generateId();
         $data2 = array('name' => "test\0null");
         $db->write('test_sanitize', $id2, $data2);
         $read2 = $db->read('test_sanitize', $id2);
-        $this->assert(strpos($read2['name'], "\0") === false, 'Null bytes removed');
+        $this->assertStringNotContainsString("\0", $read2['name'], 'Null bytes removed');
 
         // Test nested array sanitization
         $this->createTestSchema('test_sanitize_nested', array(
@@ -763,12 +644,11 @@ class DatabaseTest {
         $data3 = array('data' => array('key' => '  value  '));
         $db3->write('test_sanitize_nested', $id3, $data3);
         $read3 = $db3->read('test_sanitize_nested', $id3);
-        $this->assert($read3['data']['key'] === 'value', 'Nested array values sanitized');
+        $this->assertSame('value', $read3['data']['key'], 'Nested array values sanitized');
     }
 
-    private function testDelete() {
-        echo "\n--- Test: Delete Operations ---\n";
-
+    public function testDelete(): void
+    {
         $this->createTestSchema('test_delete', array(
             'version' => 1,
             'defaults' => array('name' => ''),
@@ -784,21 +664,20 @@ class DatabaseTest {
         $db->write('test_delete', $id, array('name' => 'To Delete'));
 
         $exists = $db->exists('test_delete', $id);
-        $this->assert($exists === true, 'Document exists after creation');
+        $this->assertTrue($exists, 'Document exists after creation');
 
         $deleted = $db->delete('test_delete', $id);
-        $this->assert($deleted === true, 'Delete operation returns true');
+        $this->assertTrue($deleted, 'Delete operation returns true');
 
         $existsAfter = $db->exists('test_delete', $id);
-        $this->assert($existsAfter === false, 'Document does not exist after deletion');
+        $this->assertFalse($existsAfter, 'Document does not exist after deletion');
 
         $read = $db->read('test_delete', $id);
-        $this->assert($read === null, 'Read returns null for deleted document');
+        $this->assertNull($read, 'Read returns null for deleted document');
     }
 
-    private function testExists() {
-        echo "\n--- Test: Exists Check ---\n";
-
+    public function testExists(): void
+    {
         $this->createTestSchema('test_exists', array(
             'version' => 1,
             'defaults' => array('name' => ''),
@@ -812,17 +691,16 @@ class DatabaseTest {
         $id = $db->generateId();
 
         $existsBefore = $db->exists('test_exists', $id);
-        $this->assert($existsBefore === false, 'Non-existent document returns false');
+        $this->assertFalse($existsBefore, 'Non-existent document returns false');
 
         $db->write('test_exists', $id, array('name' => 'Test'));
 
         $existsAfter = $db->exists('test_exists', $id);
-        $this->assert($existsAfter === true, 'Existing document returns true');
+        $this->assertTrue($existsAfter, 'Existing document returns true');
     }
 
-    private function testQuery() {
-        echo "\n--- Test: Query - Basic Collection Read ---\n";
-
+    public function testQuery(): void
+    {
         $this->createTestSchema('test_query', array(
             'version' => 1,
             'defaults' => array('name' => ''),
@@ -840,13 +718,12 @@ class DatabaseTest {
 
         $results = $db->query('test_query');
 
-        $this->assert(count($results) === 3, 'Query returns all items');
-        $this->assert(isset($results[0]['_id']), 'Query results include _id');
+        $this->assertCount(3, $results, 'Query returns all items');
+        $this->assertArrayHasKey('_id', $results[0], 'Query results include _id');
     }
 
-    private function testQueryWithFilters() {
-        echo "\n--- Test: Query - With Filters ---\n";
-
+    public function testQueryWithFilters(): void
+    {
         $this->createTestSchema('test_filter', array(
             'version' => 1,
             'defaults' => array('name' => '', 'status' => 'active'),
@@ -864,14 +741,13 @@ class DatabaseTest {
 
         $results = $db->query('test_filter', array('status' => 'active'));
 
-        $this->assert(count($results) === 2, 'Filter returns correct count');
-        $this->assert($results[0]['status'] === 'active', 'Filtered results match criteria');
-        $this->assert($results[1]['status'] === 'active', 'All filtered results match');
+        $this->assertCount(2, $results, 'Filter returns correct count');
+        $this->assertSame('active', $results[0]['status'], 'Filtered results match criteria');
+        $this->assertSame('active', $results[1]['status'], 'All filtered results match');
     }
 
-    private function testQueryWithSort() {
-        echo "\n--- Test: Query - With Sorting ---\n";
-
+    public function testQueryWithSort(): void
+    {
         $this->createTestSchema('test_sort', array(
             'version' => 1,
             'defaults' => array('name' => '', 'order' => 0),
@@ -889,18 +765,17 @@ class DatabaseTest {
 
         // Sort ascending
         $resultsAsc = $db->query('test_sort', array(), array('sort' => 'name', 'order' => 'asc'));
-        $this->assert($resultsAsc[0]['name'] === 'Alice', 'Sort ascending works');
-        $this->assert($resultsAsc[2]['name'] === 'Charlie', 'Sort ascending order correct');
+        $this->assertSame('Alice', $resultsAsc[0]['name'], 'Sort ascending works');
+        $this->assertSame('Charlie', $resultsAsc[2]['name'], 'Sort ascending order correct');
 
         // Sort descending
         $resultsDesc = $db->query('test_sort', array(), array('sort' => 'name', 'order' => 'desc'));
-        $this->assert($resultsDesc[0]['name'] === 'Charlie', 'Sort descending works');
-        $this->assert($resultsDesc[2]['name'] === 'Alice', 'Sort descending order correct');
+        $this->assertSame('Charlie', $resultsDesc[0]['name'], 'Sort descending works');
+        $this->assertSame('Alice', $resultsDesc[2]['name'], 'Sort descending order correct');
     }
 
-    private function testQueryWithLimit() {
-        echo "\n--- Test: Query - With Limit and Offset ---\n";
-
+    public function testQueryWithLimit(): void
+    {
         $this->createTestSchema('test_limit', array(
             'version' => 1,
             'defaults' => array('name' => ''),
@@ -917,16 +792,15 @@ class DatabaseTest {
 
         // Test limit
         $limited = $db->query('test_limit', array(), array('limit' => 3));
-        $this->assert(count($limited) === 3, 'Limit restricts result count');
+        $this->assertCount(3, $limited, 'Limit restricts result count');
 
         // Test offset
         $offset = $db->query('test_limit', array(), array('limit' => 3, 'offset' => 5));
-        $this->assert(count($offset) === 3, 'Offset with limit returns correct count');
+        $this->assertCount(3, $offset, 'Offset with limit returns correct count');
     }
 
-    private function testMetadata() {
-        echo "\n--- Test: Metadata (created_at, updated_at) ---\n";
-
+    public function testMetadata(): void
+    {
         $this->createTestSchema('test_metadata', array(
             'version' => 1,
             'defaults' => array('name' => ''),
@@ -941,10 +815,10 @@ class DatabaseTest {
         $db->write('test_metadata', $id, array('name' => 'Test'));
         $read = $db->read('test_metadata', $id);
 
-        $this->assert(isset($read['created_at']), 'created_at is set');
-        $this->assert(isset($read['updated_at']), 'updated_at is set');
-        $this->assert(!empty($read['created_at']), 'created_at has value');
-        $this->assert(!empty($read['updated_at']), 'updated_at has value');
+        $this->assertArrayHasKey('created_at', $read, 'created_at is set');
+        $this->assertArrayHasKey('updated_at', $read, 'updated_at is set');
+        $this->assertNotEmpty($read['created_at'], 'created_at has value');
+        $this->assertNotEmpty($read['updated_at'], 'updated_at has value');
 
         $createdAt = $read['created_at'];
         $updatedAt = $read['updated_at'];
@@ -954,25 +828,22 @@ class DatabaseTest {
         $db->write('test_metadata', $id, array('name' => 'Updated'));
         $readUpdated = $db->read('test_metadata', $id);
 
-        $this->assert($readUpdated['created_at'] === $createdAt, 'created_at unchanged on update');
-        $this->assert($readUpdated['updated_at'] !== $updatedAt, 'updated_at changed on update');
-        $this->assert($readUpdated['updated_at'] > $createdAt, 'updated_at is after created_at');
+        $this->assertSame($createdAt, $readUpdated['created_at'], 'created_at unchanged on update');
+        $this->assertNotSame($updatedAt, $readUpdated['updated_at'], 'updated_at changed on update');
+        $this->assertGreaterThan($createdAt, $readUpdated['updated_at'], 'updated_at is after created_at');
     }
 
-    private function testSecurity() {
-        echo "\n--- Test: Security - Directory Traversal Prevention ---\n";
-
+    public function testSecurity(): void
+    {
         $db = new Database($this->testDir);
 
         // Test invalid collection name (directory traversal)
-        $exceptionThrown = false;
         try {
             $db->write('../evil', 'test', array('data' => 'hack'));
+            $this->fail('Expected Exception for directory traversal in collection name');
         } catch (Exception $e) {
-            $exceptionThrown = true;
-            $this->assert(strpos($e->getMessage(), 'Invalid collection name') !== false, 'Correct error message for invalid collection');
+            $this->assertStringContainsString('Invalid collection name', $e->getMessage(), 'Correct error message for invalid collection');
         }
-        $this->assert($exceptionThrown, 'Directory traversal in collection name blocked');
 
         // Test invalid ID (directory traversal)
         $this->createTestSchema('test_security', array(
@@ -981,23 +852,20 @@ class DatabaseTest {
             'fields' => array('name' => array('type' => 'string', 'required' => true))
         ));
 
-        $exceptionThrown = false;
         try {
             $db->write('test_security', '../evil-id', array('name' => 'hack'));
+            $this->fail('Expected Exception for directory traversal in ID');
         } catch (Exception $e) {
-            $exceptionThrown = true;
-            $this->assert(strpos($e->getMessage(), 'Invalid ID') !== false, 'Correct error message for invalid ID');
+            $this->assertStringContainsString('Invalid ID', $e->getMessage(), 'Correct error message for invalid ID');
         }
-        $this->assert($exceptionThrown, 'Directory traversal in ID blocked');
 
         // Test valid collection and ID
         $validWrite = $db->write('test_security', 'valid-id_123', array('name' => 'Safe'));
-        $this->assert($validWrite === true, 'Valid collection and ID names work');
+        $this->assertTrue($validWrite, 'Valid collection and ID names work');
     }
 
-    private function testValidationMultipleErrors() {
-        echo "\n--- Test: Validation - Multiple Errors ---\n";
-
+    public function testValidationMultipleErrors(): void
+    {
         $this->createTestSchema('test_multi_errors', array(
             'version' => 1,
             'defaults' => array(
@@ -1033,23 +901,20 @@ class DatabaseTest {
             'age' => 15  // Below minimum
         );
 
-        $exceptionThrown = false;
         $errorCount = 0;
         try {
             $db->write('test_multi_errors', $id, $data);
+            $this->fail('Expected SchemaValidationException');
         } catch (SchemaValidationException $e) {
-            $exceptionThrown = true;
             $errors = $e->getErrors();
             $errorCount = count($errors);
         }
 
-        $this->assert($exceptionThrown, 'Multiple validation errors throw exception');
-        $this->assert($errorCount === 3, 'All three validation errors reported');
+        $this->assertSame(3, $errorCount, 'All three validation errors reported');
     }
 
-    private function testSecurityExtended() {
-        echo "\n--- Test: Security - Extended Validation ---\n";
-
+    public function testSecurityExtended(): void
+    {
         $this->createTestSchema('test_security_ext', array(
             'version' => 1,
             'defaults' => array('name' => ''),
@@ -1059,63 +924,56 @@ class DatabaseTest {
         $db = new Database($this->testDir);
 
         // Test absolute path in collection
-        $exceptionThrown = false;
         try {
             $db->write('/etc/passwd', 'test', array('name' => 'hack'));
+            $this->fail('Expected Exception for absolute path in collection');
         } catch (Exception $e) {
-            $exceptionThrown = true;
+            $this->assertTrue(true, 'Absolute path in collection blocked');
         }
-        $this->assert($exceptionThrown, 'Absolute path in collection blocked');
 
         // Test null byte in collection name
-        $exceptionThrown = false;
         try {
             $db->write("test\0null", 'test', array('name' => 'hack'));
+            $this->fail('Expected Exception for null byte in collection name');
         } catch (Exception $e) {
-            $exceptionThrown = true;
+            $this->assertTrue(true, 'Null byte in collection name blocked');
         }
-        $this->assert($exceptionThrown, 'Null byte in collection name blocked');
 
         // Test null byte in ID
-        $exceptionThrown = false;
         try {
             $db->write('test_security_ext', "test\0null", array('name' => 'hack'));
+            $this->fail('Expected Exception for null byte in ID');
         } catch (Exception $e) {
-            $exceptionThrown = true;
+            $this->assertTrue(true, 'Null byte in ID blocked');
         }
-        $this->assert($exceptionThrown, 'Null byte in ID blocked');
 
         // Test special characters in collection
-        $exceptionThrown = false;
         try {
             $db->write('test@collection!', 'test', array('name' => 'hack'));
+            $this->fail('Expected Exception for special characters in collection');
         } catch (Exception $e) {
-            $exceptionThrown = true;
+            $this->assertTrue(true, 'Special characters in collection blocked');
         }
-        $this->assert($exceptionThrown, 'Special characters in collection blocked');
 
         // Test special characters in ID
-        $exceptionThrown = false;
         try {
             $db->write('test_security_ext', 'test@id!', array('name' => 'hack'));
+            $this->fail('Expected Exception for special characters in ID');
         } catch (Exception $e) {
-            $exceptionThrown = true;
+            $this->assertTrue(true, 'Special characters in ID blocked');
         }
-        $this->assert($exceptionThrown, 'Special characters in ID blocked');
 
         // Test backslash path traversal
-        $exceptionThrown = false;
         try {
             $db->write('..\\evil', 'test', array('name' => 'hack'));
+            $this->fail('Expected Exception for backslash path traversal');
         } catch (Exception $e) {
-            $exceptionThrown = true;
+            $this->assertTrue(true, 'Backslash path traversal blocked');
         }
-        $this->assert($exceptionThrown, 'Backslash path traversal blocked');
     }
 
-    private function testErrorHandling() {
-        echo "\n--- Test: Error Handling ---\n";
-
+    public function testErrorHandling(): void
+    {
         $this->createTestSchema('test_errors', array(
             'version' => 1,
             'defaults' => array('name' => ''),
@@ -1126,11 +984,11 @@ class DatabaseTest {
 
         // Test reading non-existent document
         $result = $db->read('test_errors', 'nonexistent');
-        $this->assert($result === null, 'Reading non-existent document returns null');
+        $this->assertNull($result, 'Reading non-existent document returns null');
 
         // Test deleting non-existent document (should not throw)
         $deleted = $db->delete('test_errors', 'nonexistent');
-        $this->assert($deleted === false, 'Deleting non-existent document returns false');
+        $this->assertFalse($deleted, 'Deleting non-existent document returns false');
 
         // Test corrupted JSON recovery
         $id = $db->generateId();
@@ -1143,14 +1001,12 @@ class DatabaseTest {
             file_put_contents($jsonFile, '{invalid json}');
 
             // Try to read corrupted file - should throw or return null
-            $exceptionThrown = false;
             try {
                 $result = $db->read('test_errors', $id);
                 // If no exception, result should be null
-                $this->assert($result === null, 'Corrupted JSON returns null or throws exception');
+                $this->assertNull($result, 'Corrupted JSON returns null or throws exception');
             } catch (Exception $e) {
-                $exceptionThrown = true;
-                $this->assert($exceptionThrown, 'Corrupted JSON throws exception');
+                $this->assertTrue(true, 'Corrupted JSON throws exception');
             }
         }
 
@@ -1162,20 +1018,17 @@ class DatabaseTest {
         // Should handle invalid schema gracefully
         $id2 = $db2->generateId();
         $written = $db2->write('test_invalid_schema', $id2, array('data' => 'test'));
-        $this->assert($written === true, 'Invalid schema handled gracefully');
+        $this->assertTrue($written, 'Invalid schema handled gracefully');
 
         @unlink($invalidSchemaPath);
     }
 
-    private function testLogging() {
-        echo "\n--- Test: Logging ---\n";
-
+    public function testLogging(): void
+    {
         // Check if logging is enabled and configured
         $logDir = MANTRA_STORAGE . '/logs';
         if (!is_dir($logDir)) {
-            echo "⚠ SKIP: Logging directory not configured\n";
-            $this->assert(true, 'Logging tests skipped (no log directory)');
-            return;
+            $this->markTestSkipped('Logging directory not configured');
         }
 
         $this->createTestSchema('test_logging', array(
@@ -1201,7 +1054,7 @@ class DatabaseTest {
                     && strpos($logContent, 'test_logging') !== false;
             }
         }
-        $this->assert($errorLogged, 'Validation errors are logged to error log');
+        $this->assertTrue($errorLogged, 'Validation errors are logged to error log');
 
         // Trigger an invalid collection error (should be logged to error log)
         $securityErrorLogged = false;
@@ -1214,17 +1067,16 @@ class DatabaseTest {
                 $securityErrorLogged = strpos($logContent, 'Invalid collection name') !== false;
             }
         }
-        $this->assert($securityErrorLogged, 'Security errors are logged to error log');
+        $this->assertTrue($securityErrorLogged, 'Security errors are logged to error log');
 
         // Test successful write
         $id2 = $db->generateId();
         $db->write('test_logging', $id2, array('name' => 'Test'));
-        $this->assert(true, 'Successful operations complete without errors');
+        $this->assertTrue(true, 'Successful operations complete without errors');
     }
 
-    private function testSchemaMigrationWithCallback() {
-        echo "\n--- Test: Schema Migration - With Migrate Callback ---\n";
-
+    public function testSchemaMigrationWithCallback(): void
+    {
         // Create initial schema v1 with old field name
         $this->createTestSchema('test_migrate_cb', array(
             'version' => 1,
@@ -1267,19 +1119,18 @@ PHP;
         $db2 = new Database($this->testDir);
         $read = $db2->read('test_migrate_cb', $id);
 
-        $this->assert(!isset($read['old_name']), 'Old field removed by migration');
-        $this->assert(isset($read['new_name']), 'New field added by migration');
-        $this->assert($read['new_name'] === 'Test Value', 'Data preserved during migration');
-        $this->assert($read['schema_version'] === 2, 'Schema version updated to 2');
+        $this->assertArrayNotHasKey('old_name', $read, 'Old field removed by migration');
+        $this->assertArrayHasKey('new_name', $read, 'New field added by migration');
+        $this->assertSame('Test Value', $read['new_name'], 'Data preserved during migration');
+        $this->assertSame(2, $read['schema_version'], 'Schema version updated to 2');
 
         // Read again - should not re-migrate
         $read2 = $db2->read('test_migrate_cb', $id);
-        $this->assert($read2['new_name'] === 'Test Value', 'Migration persisted correctly');
+        $this->assertSame('Test Value', $read2['new_name'], 'Migration persisted correctly');
     }
 
-    private function testCollectionAutoCreation() {
-        echo "\n--- Test: Collection Auto-Creation ---\n";
-
+    public function testCollectionAutoCreation(): void
+    {
         $this->createTestSchema('test_autocreate', array(
             'version' => 1,
             'defaults' => array('name' => ''),
@@ -1293,24 +1144,23 @@ PHP;
         if (is_dir($collectionPath)) {
             $this->removeDirectory($collectionPath);
         }
-        $this->assert(!is_dir($collectionPath), 'Collection directory does not exist initially');
+        $this->assertDirectoryDoesNotExist($collectionPath, 'Collection directory does not exist initially');
 
         // Write to non-existent collection
         $id = $db->generateId();
         $written = $db->write('test_autocreate', $id, array('name' => 'Auto Created'));
 
-        $this->assert($written === true, 'Write to non-existent collection succeeds');
-        $this->assert(is_dir($collectionPath), 'Collection directory created automatically');
+        $this->assertTrue($written, 'Write to non-existent collection succeeds');
+        $this->assertDirectoryExists($collectionPath, 'Collection directory created automatically');
 
         // Verify data was written
         $read = $db->read('test_autocreate', $id);
-        $this->assert($read !== null, 'Data readable from auto-created collection');
-        $this->assert($read['name'] === 'Auto Created', 'Data correct in auto-created collection');
+        $this->assertNotNull($read, 'Data readable from auto-created collection');
+        $this->assertSame('Auto Created', $read['name'], 'Data correct in auto-created collection');
     }
 
-    private function testReadCollectionWithPartialErrors() {
-        echo "\n--- Test: Read Collection - With Partial Errors ---\n";
-
+    public function testReadCollectionWithPartialErrors(): void
+    {
         $this->createTestSchema('test_partial', array(
             'version' => 1,
             'defaults' => array('name' => ''),
@@ -1332,20 +1182,19 @@ PHP;
         // Query collection - should skip corrupted file
         $results = $db->query('test_partial');
 
-        $this->assert(count($results) === 2, 'Query returns only valid documents');
+        $this->assertCount(2, $results, 'Query returns only valid documents');
 
         $names = array();
         foreach ($results as $item) {
             $names[] = $item['name'];
         }
-        $this->assert(in_array('Valid 1', $names), 'First valid document included');
-        $this->assert(in_array('Valid 3', $names), 'Third valid document included');
-        $this->assert(!in_array('Valid 2', $names), 'Corrupted document excluded');
+        $this->assertContains('Valid 1', $names, 'First valid document included');
+        $this->assertContains('Valid 3', $names, 'Third valid document included');
+        $this->assertNotContains('Valid 2', $names, 'Corrupted document excluded');
     }
 
-    private function testFileSizeLimit() {
-        echo "\n--- Test: File Size Limit ---\n";
-
+    public function testFileSizeLimit(): void
+    {
         $this->createTestSchema('test_filesize', array(
             'version' => 1,
             'defaults' => array('data' => ''),
@@ -1358,51 +1207,44 @@ PHP;
         $largeData = str_repeat('x', 11 * 1024 * 1024); // 11MB
 
         $id = $db->generateId();
-        $exceptionThrown = false;
-        $correctException = false;
 
         try {
             $db->write('test_filesize', $id, array('data' => $largeData));
+            $this->fail('Expected Exception for oversized data');
         } catch (Exception $e) {
-            $exceptionThrown = true;
-            $correctException = strpos($e->getMessage(), 'exceeds maximum limit') !== false;
+            $this->assertStringContainsString('exceeds maximum limit', $e->getMessage(), 'Correct exception message for size limit');
         }
-
-        $this->assert($exceptionThrown, 'Exception thrown for oversized data');
-        $this->assert($correctException, 'Correct exception message for size limit');
 
         // Verify file was not created
         $exists = $db->exists('test_filesize', $id);
-        $this->assert($exists === false, 'Oversized document not written to disk');
+        $this->assertFalse($exists, 'Oversized document not written to disk');
     }
 
-    private function testQueryNonExistentCollection() {
-        echo "\n--- Test: Query Non-Existent Collection ---\n";
-
+    public function testQueryNonExistentCollection(): void
+    {
         $db = new Database($this->testDir);
 
         // Query collection that doesn't exist
         $results = $db->query('nonexistent_collection');
 
-        $this->assert(is_array($results), 'Query returns array for non-existent collection');
-        $this->assert(count($results) === 0, 'Query returns empty array for non-existent collection');
+        $this->assertIsArray($results, 'Query returns array for non-existent collection');
+        $this->assertCount(0, $results, 'Query returns empty array for non-existent collection');
 
         // Query with filters on non-existent collection
         $resultsFiltered = $db->query('nonexistent_collection', array('status' => 'active'));
-        $this->assert(count($resultsFiltered) === 0, 'Filtered query returns empty array');
+        $this->assertCount(0, $resultsFiltered, 'Filtered query returns empty array');
 
         // Read from non-existent collection
         $read = $db->read('nonexistent_collection', 'some-id');
-        $this->assert($read === null, 'Read returns null for non-existent collection');
+        $this->assertNull($read, 'Read returns null for non-existent collection');
 
         // Exists check on non-existent collection
         $exists = $db->exists('nonexistent_collection', 'some-id');
-        $this->assert($exists === false, 'Exists returns false for non-existent collection');
+        $this->assertFalse($exists, 'Exists returns false for non-existent collection');
     }
 
-    private function testEmptyStringRequiredField() {
-        echo "\n--- Test: Empty String for Required Field ---\n";
-
+    public function testEmptyStringRequiredField(): void
+    {
         $this->createTestSchema('test_empty_required', array(
             'version' => 1,
             'defaults' => array('name' => '', 'description' => ''),
@@ -1416,30 +1258,25 @@ PHP;
 
         // Test empty string for required field - should fail
         $id = $db->generateId();
-        $exceptionThrown = false;
 
         try {
             $db->write('test_empty_required', $id, array('name' => ''));
+            $this->fail('Expected SchemaValidationException');
         } catch (SchemaValidationException $e) {
-            $exceptionThrown = true;
-            $errors = $e->getErrors();
-            $this->assert(isset($errors['name']), 'Validation error for empty required field');
+            $this->assertArrayHasKey('name', $e->getErrors(), 'Validation error for empty required field');
         }
-
-        $this->assert($exceptionThrown, 'Empty string fails validation for required field');
 
         // Test empty string for optional field - should pass
         $id2 = $db->generateId();
         $written = $db->write('test_empty_required', $id2, array('name' => 'Valid Name', 'description' => ''));
-        $this->assert($written === true, 'Empty string allowed for optional field');
+        $this->assertTrue($written, 'Empty string allowed for optional field');
 
         $read = $db->read('test_empty_required', $id2);
-        $this->assert($read['description'] === '', 'Empty string preserved for optional field');
+        $this->assertSame('', $read['description'], 'Empty string preserved for optional field');
     }
 
-    private function testMetadataOverride() {
-        echo "\n--- Test: Metadata Override Protection ---\n";
-
+    public function testMetadataOverride(): void
+    {
         $this->createTestSchema('test_metadata_override', array(
             'version' => 1,
             'defaults' => array('name' => ''),
@@ -1462,11 +1299,8 @@ PHP;
         $read = $db->read('test_metadata_override', $id);
 
         // Check if custom timestamps were preserved or overwritten
-        $createdAtPreserved = ($read['created_at'] === $customCreatedAt);
-        $updatedAtOverwritten = ($read['updated_at'] !== $customUpdatedAt);
-
-        $this->assert($createdAtPreserved, 'Manually provided created_at is preserved on create');
-        $this->assert($updatedAtOverwritten, 'updated_at is always set to current time');
+        $this->assertSame($customCreatedAt, $read['created_at'], 'Manually provided created_at is preserved on create');
+        $this->assertNotSame($customUpdatedAt, $read['updated_at'], 'updated_at is always set to current time');
 
         // Update document with custom created_at - should preserve original
         sleep(1);
@@ -1479,13 +1313,12 @@ PHP;
         $readUpdated = $db->read('test_metadata_override', $id);
 
         // On update, created_at is immutable - original value is preserved, ignoring provided value
-        $this->assert($readUpdated['created_at'] === $customCreatedAt, 'Original created_at preserved on update (provided value ignored)');
-        $this->assert($readUpdated['updated_at'] > $read['updated_at'], 'updated_at updated to current time');
+        $this->assertSame($customCreatedAt, $readUpdated['created_at'], 'Original created_at preserved on update (provided value ignored)');
+        $this->assertGreaterThan($read['updated_at'], $readUpdated['updated_at'], 'updated_at updated to current time');
     }
 
-    private function testLargeCollectionPerformance() {
-        echo "\n--- Test: Large Collection Performance ---\n";
-
+    public function testLargeCollectionPerformance(): void
+    {
         $this->createTestSchema('test_performance', array(
             'version' => 1,
             'defaults' => array('name' => '', 'value' => 0),
@@ -1509,25 +1342,25 @@ PHP;
         }
 
         $writeTime = microtime(true) - $startTime;
-        $this->assert($writeTime < 10, 'Writing ' . $itemCount . ' documents completes in reasonable time');
+        $this->assertLessThan(10, $writeTime, 'Writing ' . $itemCount . ' documents completes in reasonable time');
 
         // Query all documents
         $startTime = microtime(true);
         $results = $db->query('test_performance');
         $queryTime = microtime(true) - $startTime;
 
-        $this->assert(count($results) === $itemCount, 'Query returns all ' . $itemCount . ' documents');
-        $this->assert($queryTime < 5, 'Querying ' . $itemCount . ' documents completes in reasonable time');
+        $this->assertCount($itemCount, $results, 'Query returns all ' . $itemCount . ' documents');
+        $this->assertLessThan(5, $queryTime, 'Querying ' . $itemCount . ' documents completes in reasonable time');
 
         // Query with filter
         $startTime = microtime(true);
         $filtered = $db->query('test_performance', array(), array('sort' => 'value', 'order' => 'desc', 'limit' => 10));
         $filterTime = microtime(true) - $startTime;
 
-        $this->assert(count($filtered) === 10, 'Filtered query returns correct count');
-        $this->assert($filtered[0]['value'] === $itemCount, 'Numeric sorting works correctly (desc order)');
-        $this->assert($filtered[9]['value'] === ($itemCount - 9), 'Numeric sorting order is correct');
-        $this->assert($filterTime < 5, 'Filtered query completes in reasonable time');
+        $this->assertCount(10, $filtered, 'Filtered query returns correct count');
+        $this->assertSame($itemCount, $filtered[0]['value'], 'Numeric sorting works correctly (desc order)');
+        $this->assertSame($itemCount - 9, $filtered[9]['value'], 'Numeric sorting order is correct');
+        $this->assertLessThan(5, $filterTime, 'Filtered query completes in reasonable time');
 
         // Individual reads
         $startTime = microtime(true);
@@ -1536,42 +1369,6 @@ PHP;
         }
         $readTime = microtime(true) - $startTime;
 
-        $this->assert($readTime < 2, 'Individual reads complete in reasonable time');
-    }
-
-    private function createTestSchema($collection, $schema) {
-        $schemaPath = MANTRA_CORE . '/schemas/' . $collection . '.php';
-        $schemaContent = "<?php\nreturn " . var_export($schema, true) . ";\n";
-        file_put_contents($schemaPath, $schemaContent);
-    }
-
-    private function printResults() {
-        echo "\n" . str_repeat('=', 50) . "\n";
-        echo "Test Results Summary\n";
-        echo str_repeat('=', 50) . "\n";
-
-        $passed = 0;
-        $failed = 0;
-
-        foreach ($this->results as $result) {
-            if ($result['status'] === 'PASS') {
-                $passed++;
-            } else {
-                $failed++;
-            }
-        }
-
-        $total = $passed + $failed;
-        echo "Total: $total | Passed: $passed | Failed: $failed\n";
-
-        if ($failed === 0) {
-            echo "\n✓ All tests passed!\n";
-        } else {
-            echo "\n✗ Some tests failed!\n";
-        }
+        $this->assertLessThan(2, $readTime, 'Individual reads complete in reasonable time');
     }
 }
-
-// Run tests
-$test = new DatabaseTest();
-$test->run();

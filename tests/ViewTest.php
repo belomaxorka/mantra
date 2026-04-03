@@ -2,38 +2,45 @@
 /**
  * View Tests
  * Tests for View class template rendering, layout wrapping, and output buffering
+ *
+ * @covers View
  */
 
-require_once __DIR__ . '/../core/bootstrap.php';
-
-class ViewTest {
+class ViewTest extends MantraTestCase
+{
     private $testDir;
     private $themePath;
     private $modulePath;
-    private $results = array();
 
-    public function __construct() {
+    protected function setUp(): void
+    {
+        parent::setUp();
+
         // Use actual theme/module directories with unique test names
         $this->themePath = MANTRA_THEMES . '/test-theme-' . time();
         $this->modulePath = MANTRA_MODULES . '/test-module-' . time();
 
         // Initialize Application with minimal setup for View tests
-        $this->initializeApplication();
+        $this->resetHookManager();
 
         $this->setupTestEnvironment();
     }
 
-    private function initializeApplication() {
-        // View class depends on Application::getInstance()->hooks()
-        // We need to initialize HookManager
-        $this->resetHookManager();
+    protected function tearDown(): void
+    {
+        // Clean up test theme and module
+        $this->removeDirectory($this->themePath);
+        $this->removeDirectory($this->modulePath);
+
+        parent::tearDown();
     }
 
     /**
      * Reset HookManager to a clean state.
      * Call before any test that registers hooks to prevent leakage.
      */
-    private function resetHookManager() {
+    private function resetHookManager()
+    {
         $app = Application::getInstance();
 
         // Use reflection to set hookManager since it's private
@@ -43,13 +50,8 @@ class ViewTest {
         $hookManagerProperty->setValue($app, new HookManager());
     }
 
-    public function __destruct() {
-        // Clean up test theme and module
-        $this->removeDirectory($this->themePath);
-        $this->removeDirectory($this->modulePath);
-    }
-
-    private function setupTestEnvironment() {
+    private function setupTestEnvironment()
+    {
         // Create directory structure
         $dirs = array(
             $this->themePath . '/templates',
@@ -69,7 +71,8 @@ class ViewTest {
         $this->createTestTemplates();
     }
 
-    private function createTestTemplates() {
+    private function createTestTemplates()
+    {
         // Theme layout
         file_put_contents($this->themePath . '/templates/layout.php',
             '<!DOCTYPE html><html><body><?php echo $content; ?></body></html>');
@@ -91,69 +94,8 @@ class ViewTest {
             '<nav><?php echo isset($items) ? $items : "Menu"; ?></nav>');
     }
 
-    private function removeDirectory($dir) {
-        if (!is_dir($dir)) return;
-        $files = array_diff(scandir($dir), array('.', '..'));
-        foreach ($files as $file) {
-            $path = $dir . '/' . $file;
-            is_dir($path) ? $this->removeDirectory($path) : unlink($path);
-        }
-        rmdir($dir);
-    }
-
-    private function assert($condition, $message) {
-        if ($condition) {
-            $this->results[] = array('status' => 'PASS', 'message' => $message);
-            echo "✓ $message\n";
-        } else {
-            $this->results[] = array('status' => 'FAIL', 'message' => $message);
-            echo "✗ $message\n";
-        }
-    }
-
-    public function run() {
-        echo "Running View Tests...\n\n";
-
-        // Basic functionality
-        $this->testBasicTemplateRendering();
-        $this->testLayoutWrapping();
-        $this->testModuleTemplateNoLayout();
-        $this->testContentVariableProtection();
-        $this->testAssetUrlGeneration();
-        $this->testEscapeMethod();
-        $this->testPartialRendering();
-        $this->testOutputBufferingErrorHandling();
-        $this->testTemplateNotFound();
-
-        // Extended output buffering tests
-        $this->testNestedOutputBuffering();
-        $this->testOutputBufferingMultipleLevels();
-        $this->testPartialExceptionHandling();
-        $this->testLayoutExceptionHandling();
-
-        // Hook integration tests
-        $this->testViewRenderHook();
-        $this->testMultipleHooks();
-
-        // Edge cases
-        $this->testEmptyTemplate();
-        $this->testTemplateWithOnlyWhitespace();
-        $this->testRenderMethodEchoes();
-        $this->testEscapeEdgeCases();
-        $this->testAssetUrlEdgeCases();
-        $this->testTemplateWithUndefinedVariable();
-        $this->testNestedPartials();
-        $this->testThemeOverridesModulePartial();
-        $this->testModulePartialNonexistentModule();
-        $this->testAbortRendersThemeTemplate();
-        $this->testAbortFallbackWithoutTemplate();
-
-        $this->printSummary();
-    }
-
-    private function testBasicTemplateRendering() {
-        echo "Test: Basic template rendering\n";
-
+    public function testBasicTemplateRendering(): void
+    {
         // Override config to use our test theme
         $originalTheme = config('theme.active');
         $testThemeName = basename($this->themePath);
@@ -163,14 +105,16 @@ class ViewTest {
         $output = $view->fetch('page', array('title' => 'Test Page'));
 
         // Should contain the title
-        $this->assert(
-            str_contains($output, '<h1>Test Page</h1>'),
+        $this->assertStringContainsString(
+            '<h1>Test Page</h1>',
+            $output,
             'Template renders with data'
         );
 
         // Should be wrapped in layout
-        $this->assert(
-            str_contains($output, '<!DOCTYPE html>'),
+        $this->assertStringContainsString(
+            '<!DOCTYPE html>',
+            $output,
             'Template is wrapped in layout'
         );
 
@@ -178,9 +122,8 @@ class ViewTest {
         config()->set('theme.active', $originalTheme);
     }
 
-    private function testLayoutWrapping() {
-        echo "\nTest: Layout wrapping logic\n";
-
+    public function testLayoutWrapping(): void
+    {
         $originalTheme = config('theme.active');
         $testThemeName = basename($this->themePath);
         config()->set('theme.active', $testThemeName);
@@ -189,17 +132,17 @@ class ViewTest {
 
         // Theme template should be wrapped
         $output = $view->fetch('page', array('title' => 'Test'));
-        $this->assert(
-            str_contains($output, '<!DOCTYPE html>'),
+        $this->assertStringContainsString(
+            '<!DOCTYPE html>',
+            $output,
             'Theme template is wrapped in layout'
         );
 
         config()->set('theme.active', $originalTheme);
     }
 
-    private function testModuleTemplateNoLayout() {
-        echo "\nTest: Module template without layout\n";
-
+    public function testModuleTemplateNoLayout(): void
+    {
         $originalTheme = config('theme.active');
         $testThemeName = basename($this->themePath);
         $testModuleName = basename($this->modulePath);
@@ -209,32 +152,35 @@ class ViewTest {
 
         // Explicit module syntax
         $output = $view->fetch($testModuleName . ':admin', array('message' => 'Admin Panel'));
-        $this->assert(
-            str_contains($output, '<div class="admin">Admin Panel</div>'),
+        $this->assertStringContainsString(
+            '<div class="admin">Admin Panel</div>',
+            $output,
             'Module template renders with explicit syntax'
         );
-        $this->assert(
-            !str_contains($output, '<!DOCTYPE html>'),
+        $this->assertStringNotContainsString(
+            '<!DOCTYPE html>',
+            $output,
             'Module template (explicit) is NOT wrapped in layout'
         );
 
         // _module parameter syntax
         $output2 = $view->fetch('admin', array('_module' => $testModuleName, 'message' => 'Admin'));
-        $this->assert(
-            str_contains($output2, '<div class="admin">Admin</div>'),
+        $this->assertStringContainsString(
+            '<div class="admin">Admin</div>',
+            $output2,
             'Module template renders with _module parameter'
         );
-        $this->assert(
-            !str_contains($output2, '<!DOCTYPE html>'),
+        $this->assertStringNotContainsString(
+            '<!DOCTYPE html>',
+            $output2,
             'Module template (_module) is NOT wrapped in layout'
         );
 
         config()->set('theme.active', $originalTheme);
     }
 
-    private function testContentVariableProtection() {
-        echo "\nTest: Content variable protection in layout\n";
-
+    public function testContentVariableProtection(): void
+    {
         $originalTheme = config('theme.active');
         $testThemeName = basename($this->themePath);
 
@@ -257,16 +203,19 @@ class ViewTest {
         // Pass 'content' in data - should NOT override rendered content
         $output = $view->fetch('test', array('content' => 'USER DATA'));
 
-        $this->assert(
-            str_contains($output, '<p>Template content</p>'),
+        $this->assertStringContainsString(
+            '<p>Template content</p>',
+            $output,
             'Rendered template content is preserved'
         );
-        $this->assert(
-            str_contains($output, '<main>'),
+        $this->assertStringContainsString(
+            '<main>',
+            $output,
             'Layout renders correctly'
         );
-        $this->assert(
-            !str_contains($output, 'USER DATA'),
+        $this->assertStringNotContainsString(
+            'USER DATA',
+            $output,
             'User data "content" does not override rendered content'
         );
 
@@ -276,9 +225,8 @@ class ViewTest {
         config()->set('theme.active', $originalTheme);
     }
 
-    private function testAssetUrlGeneration() {
-        echo "\nTest: Asset URL generation\n";
-
+    public function testAssetUrlGeneration(): void
+    {
         $originalTheme = config('theme.active');
         $originalUrl = config('site.url');
         $testThemeName = basename($this->themePath);
@@ -290,12 +238,14 @@ class ViewTest {
         $view = new View();
         $url = $view->asset('css/style.css');
 
-        $this->assert(
-            !str_contains($url, '//themes'),
+        $this->assertStringNotContainsString(
+            '//themes',
+            $url,
             'No double slash in URL with trailing slash base'
         );
-        $this->assert(
-            str_contains($url, 'http://example.com/themes'),
+        $this->assertStringContainsString(
+            'http://example.com/themes',
+            $url,
             'Asset URL is correctly formed'
         );
 
@@ -304,8 +254,9 @@ class ViewTest {
         $view2 = new View();
         $url2 = $view2->asset('css/style.css');
 
-        $this->assert(
-            str_contains($url2, 'http://example.com/themes'),
+        $this->assertStringContainsString(
+            'http://example.com/themes',
+            $url2,
             'Asset URL works without trailing slash'
         );
 
@@ -313,34 +264,35 @@ class ViewTest {
         config()->set('site.url', $originalUrl);
     }
 
-    private function testEscapeMethod() {
-        echo "\nTest: Escape method\n";
-
+    public function testEscapeMethod(): void
+    {
         $view = new View();
 
         $escaped = $view->escape('<script>alert("xss")</script>');
-        $this->assert(
-            $escaped === '&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;',
+        $this->assertSame(
+            '&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;',
+            $escaped,
             'HTML is properly escaped'
         );
 
         $escapedArray = $view->escape(array('<b>test</b>', '<i>test</i>'));
-        $this->assert(
-            $escapedArray[0] === '&lt;b&gt;test&lt;/b&gt;',
+        $this->assertSame(
+            '&lt;b&gt;test&lt;/b&gt;',
+            $escapedArray[0],
             'Array values are escaped'
         );
 
         // Test alias
         $aliasEscaped = $view->e('<div>');
-        $this->assert(
-            $aliasEscaped === '&lt;div&gt;',
+        $this->assertSame(
+            '&lt;div&gt;',
+            $aliasEscaped,
             'e() alias works correctly'
         );
     }
 
-    private function testPartialRendering() {
-        echo "\nTest: Partial rendering\n";
-
+    public function testPartialRendering(): void
+    {
         $originalTheme = config('theme.active');
         $testThemeName = basename($this->themePath);
         $testModuleName = basename($this->modulePath);
@@ -350,38 +302,41 @@ class ViewTest {
 
         // Theme partial
         $partial = $view->partial('sidebar');
-        $this->assert(
-            str_contains($partial, '<aside>Sidebar</aside>'),
+        $this->assertStringContainsString(
+            '<aside>Sidebar</aside>',
+            $partial,
             'Theme partial renders'
         );
 
         // Theme partial with params
         $partial2 = $view->partial('sidebar', array('content' => 'Custom'));
-        $this->assert(
-            str_contains($partial2, '<aside>Custom</aside>'),
+        $this->assertStringContainsString(
+            '<aside>Custom</aside>',
+            $partial2,
             'Theme partial renders with parameters'
         );
 
         // Module partial
         $partial3 = $view->partial($testModuleName . ':menu');
-        $this->assert(
-            str_contains($partial3, '<nav>Menu</nav>'),
+        $this->assertStringContainsString(
+            '<nav>Menu</nav>',
+            $partial3,
             'Module partial renders'
         );
 
         // Non-existent partial
         $partial4 = $view->partial('nonexistent');
-        $this->assert(
-            str_contains($partial4, '<!-- Partial not found'),
+        $this->assertStringContainsString(
+            '<!-- Partial not found',
+            $partial4,
             'Non-existent partial returns comment'
         );
 
         config()->set('theme.active', $originalTheme);
     }
 
-    private function testOutputBufferingErrorHandling() {
-        echo "\nTest: Output buffering error handling\n";
-
+    public function testOutputBufferingErrorHandling(): void
+    {
         $originalTheme = config('theme.active');
         $testThemeName = basename($this->themePath);
 
@@ -400,14 +355,14 @@ class ViewTest {
             $exceptionThrown = true;
         }
 
-        $this->assert(
+        $this->assertTrue(
             $exceptionThrown,
             'Exception is properly thrown from template'
         );
 
         // Verify output buffer is clean
         $level = ob_get_level();
-        $this->assert(
+        $this->assertTrue(
             $level >= 0,
             'Output buffer level is valid after exception'
         );
@@ -415,9 +370,8 @@ class ViewTest {
         config()->set('theme.active', $originalTheme);
     }
 
-    private function testTemplateNotFound() {
-        echo "\nTest: Template not found\n";
-
+    public function testTemplateNotFound(): void
+    {
         $originalTheme = config('theme.active');
         $testThemeName = basename($this->themePath);
         config()->set('theme.active', $testThemeName);
@@ -433,21 +387,21 @@ class ViewTest {
             $exceptionMessage = $e->getMessage();
         }
 
-        $this->assert(
+        $this->assertTrue(
             $exceptionThrown,
             'Exception thrown for non-existent template'
         );
-        $this->assert(
-            str_contains($exceptionMessage, 'Template not found'),
+        $this->assertStringContainsString(
+            'Template not found',
+            $exceptionMessage,
             'Exception message is descriptive'
         );
 
         config()->set('theme.active', $originalTheme);
     }
 
-    private function testNestedOutputBuffering() {
-        echo "\nTest: Nested output buffering\n";
-
+    public function testNestedOutputBuffering(): void
+    {
         $originalTheme = config('theme.active');
         $testThemeName = basename($this->themePath);
 
@@ -462,17 +416,14 @@ class ViewTest {
         $view = new View();
         $output = $view->fetch('outer', array('view' => $view));
 
-        $this->assert(
-            str_contains($output, '<outer>') && str_contains($output, '<inner>nested</inner>'),
-            'Nested templates render correctly'
-        );
+        $this->assertStringContainsString('<outer>', $output, 'Nested templates render correctly (outer tag)');
+        $this->assertStringContainsString('<inner>nested</inner>', $output, 'Nested templates render correctly (inner tag)');
 
         config()->set('theme.active', $originalTheme);
     }
 
-    private function testOutputBufferingMultipleLevels() {
-        echo "\nTest: Multiple output buffering levels\n";
-
+    public function testOutputBufferingMultipleLevels(): void
+    {
         $originalTheme = config('theme.active');
         $testThemeName = basename($this->themePath);
         config()->set('theme.active', $testThemeName);
@@ -486,21 +437,19 @@ class ViewTest {
         $output = $view->fetch('with-partial', array('view' => $view));
         $levelAfter = ob_get_level();
 
-        $this->assert(
-            $levelBefore === $levelAfter,
+        $this->assertSame(
+            $levelBefore,
+            $levelAfter,
             'Output buffer level is restored after nested buffering'
         );
-        $this->assert(
-            str_contains($output, '<page>') && str_contains($output, '<aside>'),
-            'Nested buffering produces correct output'
-        );
+        $this->assertStringContainsString('<page>', $output, 'Nested buffering produces correct output (page tag)');
+        $this->assertStringContainsString('<aside>', $output, 'Nested buffering produces correct output (aside tag)');
 
         config()->set('theme.active', $originalTheme);
     }
 
-    private function testPartialExceptionHandling() {
-        echo "\nTest: Partial exception handling\n";
-
+    public function testPartialExceptionHandling(): void
+    {
         $originalTheme = config('theme.active');
         $testThemeName = basename($this->themePath);
 
@@ -515,21 +464,22 @@ class ViewTest {
         $output = $view->partial('broken');
         $levelAfter = ob_get_level();
 
-        $this->assert(
-            str_contains($output, '<!-- Partial error:'),
+        $this->assertStringContainsString(
+            '<!-- Partial error:',
+            $output,
             'Partial exception returns error comment'
         );
-        $this->assert(
-            $levelBefore === $levelAfter,
+        $this->assertSame(
+            $levelBefore,
+            $levelAfter,
             'Output buffer is cleaned after partial exception'
         );
 
         config()->set('theme.active', $originalTheme);
     }
 
-    private function testLayoutExceptionHandling() {
-        echo "\nTest: Layout exception handling\n";
-
+    public function testLayoutExceptionHandling(): void
+    {
         $originalTheme = config('theme.active');
         $testThemeName = basename($this->themePath);
 
@@ -557,12 +507,13 @@ class ViewTest {
 
         $levelAfter = ob_get_level();
 
-        $this->assert(
+        $this->assertTrue(
             $exceptionThrown,
             'Layout exception is thrown'
         );
-        $this->assert(
-            $levelBefore === $levelAfter,
+        $this->assertSame(
+            $levelBefore,
+            $levelAfter,
             'Output buffer is cleaned after layout exception'
         );
 
@@ -572,9 +523,8 @@ class ViewTest {
         config()->set('theme.active', $originalTheme);
     }
 
-    private function testViewRenderHook() {
-        echo "\nTest: view.render hook integration\n";
-
+    public function testViewRenderHook(): void
+    {
         // Reset hooks to prevent leakage from/to other tests
         $this->resetHookManager();
 
@@ -595,10 +545,8 @@ class ViewTest {
         $view = new View();
         $output = $view->fetch('hooktest', array());
 
-        $this->assert(
-            str_contains($output, 'Modified') && !str_contains($output, 'Original'),
-            'view.render hook modifies content'
-        );
+        $this->assertStringContainsString('Modified', $output, 'view.render hook modifies content');
+        $this->assertStringNotContainsString('Original', $output, 'view.render hook removes original content');
 
         config()->set('theme.active', $originalTheme);
 
@@ -606,9 +554,8 @@ class ViewTest {
         $this->resetHookManager();
     }
 
-    private function testMultipleHooks() {
-        echo "\nTest: Multiple hooks on same event\n";
-
+    public function testMultipleHooks(): void
+    {
         // Reset hooks to prevent leakage from/to other tests
         $this->resetHookManager();
 
@@ -632,8 +579,9 @@ class ViewTest {
         $view = new View();
         $output = $view->fetch('multihook', array());
 
-        $this->assert(
-            str_contains($output, 'Step2'),
+        $this->assertStringContainsString(
+            'Step2',
+            $output,
             'Multiple hooks execute in order'
         );
 
@@ -643,9 +591,8 @@ class ViewTest {
         $this->resetHookManager();
     }
 
-    private function testEmptyTemplate() {
-        echo "\nTest: Empty template file\n";
-
+    public function testEmptyTemplate(): void
+    {
         $originalTheme = config('theme.active');
         $testThemeName = basename($this->themePath);
 
@@ -657,21 +604,15 @@ class ViewTest {
         $output = $view->fetch('empty', array());
 
         // Just check that layout wrapper is present
-        $hasDoctype = str_contains($output, '<!DOCTYPE html>');
-        $hasHtmlTag = str_contains($output, '<html>');
-        $hasBodyTag = str_contains($output, '<body>');
-
-        $this->assert(
-            $hasDoctype && $hasHtmlTag && $hasBodyTag,
-            'Empty template renders with layout'
-        );
+        $this->assertStringContainsString('<!DOCTYPE html>', $output, 'Empty template renders with layout (doctype)');
+        $this->assertStringContainsString('<html>', $output, 'Empty template renders with layout (html tag)');
+        $this->assertStringContainsString('<body>', $output, 'Empty template renders with layout (body tag)');
 
         config()->set('theme.active', $originalTheme);
     }
 
-    private function testTemplateWithOnlyWhitespace() {
-        echo "\nTest: Template with only whitespace\n";
-
+    public function testTemplateWithOnlyWhitespace(): void
+    {
         $originalTheme = config('theme.active');
         $testThemeName = basename($this->themePath);
 
@@ -682,17 +623,16 @@ class ViewTest {
         $view = new View();
         $output = $view->fetch('whitespace', array());
 
-        $this->assert(
-            strlen($output) > 0,
+        $this->assertNotEmpty(
+            $output,
             'Whitespace template produces output'
         );
 
         config()->set('theme.active', $originalTheme);
     }
 
-    private function testRenderMethodEchoes() {
-        echo "\nTest: render() method echoes output\n";
-
+    public function testRenderMethodEchoes(): void
+    {
         $originalTheme = config('theme.active');
         $testThemeName = basename($this->themePath);
 
@@ -707,53 +647,56 @@ class ViewTest {
         $view->render('echo-test', array());
         $output = ob_get_clean();
 
-        $this->assert(
-            str_contains($output, '<p>Echo test</p>'),
+        $this->assertStringContainsString(
+            '<p>Echo test</p>',
+            $output,
             'render() method echoes output'
         );
 
         config()->set('theme.active', $originalTheme);
     }
 
-    private function testEscapeEdgeCases() {
-        echo "\nTest: Escape method edge cases\n";
-
+    public function testEscapeEdgeCases(): void
+    {
         $view = new View();
 
         // Null value
         $escaped = $view->escape(null);
-        $this->assert(
-            $escaped === '',
+        $this->assertSame(
+            '',
+            $escaped,
             'Null is escaped to empty string'
         );
 
         // Nested arrays
         $nested = array('a' => array('b' => '<script>'));
         $escapedNested = $view->escape($nested);
-        $this->assert(
-            $escapedNested['a']['b'] === '&lt;script&gt;',
+        $this->assertSame(
+            '&lt;script&gt;',
+            $escapedNested['a']['b'],
             'Nested arrays are escaped recursively'
         );
 
         // Already escaped string (double escaping)
         $alreadyEscaped = '&lt;div&gt;';
         $doubleEscaped = $view->escape($alreadyEscaped);
-        $this->assert(
-            $doubleEscaped === '&amp;lt;div&amp;gt;',
+        $this->assertSame(
+            '&amp;lt;div&amp;gt;',
+            $doubleEscaped,
             'Already escaped strings are double-escaped'
         );
 
         // Empty string
         $emptyEscaped = $view->escape('');
-        $this->assert(
-            $emptyEscaped === '',
+        $this->assertSame(
+            '',
+            $emptyEscaped,
             'Empty string remains empty'
         );
     }
 
-    private function testAssetUrlEdgeCases() {
-        echo "\nTest: Asset URL edge cases\n";
-
+    public function testAssetUrlEdgeCases(): void
+    {
         $originalTheme = config('theme.active');
         $originalUrl = config('site.url');
         $testThemeName = basename($this->themePath);
@@ -765,22 +708,25 @@ class ViewTest {
 
         // Empty path
         $url1 = $view->asset('');
-        $this->assert(
-            !str_contains($url1, '//assets'),
+        $this->assertStringNotContainsString(
+            '//assets',
+            $url1,
             'Empty path does not create double slash'
         );
 
         // Path with leading slash
         $url2 = $view->asset('/css/style.css');
-        $this->assert(
-            !str_contains($url2, '//css'),
+        $this->assertStringNotContainsString(
+            '//css',
+            $url2,
             'Leading slash is handled correctly'
         );
 
         // Path with multiple slashes
         $url3 = $view->asset('css//style.css');
-        $this->assert(
-            str_contains($url3, 'css//style.css'),
+        $this->assertStringContainsString(
+            'css//style.css',
+            $url3,
             'Multiple slashes in path are preserved'
         );
 
@@ -788,9 +734,8 @@ class ViewTest {
         config()->set('site.url', $originalUrl);
     }
 
-    private function testTemplateWithUndefinedVariable() {
-        echo "\nTest: Template with undefined variable\n";
-
+    public function testTemplateWithUndefinedVariable(): void
+    {
         $originalTheme = config('theme.active');
         $testThemeName = basename($this->themePath);
 
@@ -803,17 +748,17 @@ class ViewTest {
         $view = new View();
         $output = $view->fetch('undefined', array());
 
-        $this->assert(
-            str_contains($output, 'default'),
+        $this->assertStringContainsString(
+            'default',
+            $output,
             'Template handles undefined variables gracefully'
         );
 
         config()->set('theme.active', $originalTheme);
     }
 
-    private function testNestedPartials() {
-        echo "\nTest: Nested partials\n";
-
+    public function testNestedPartials(): void
+    {
         $originalTheme = config('theme.active');
         $testThemeName = basename($this->themePath);
 
@@ -826,17 +771,14 @@ class ViewTest {
         $view = new View();
         $output = $view->partial('outer', array('view' => $view));
 
-        $this->assert(
-            str_contains($output, '<div>') && str_contains($output, '<aside>'),
-            'Nested partials render correctly'
-        );
+        $this->assertStringContainsString('<div>', $output, 'Nested partials render correctly (div tag)');
+        $this->assertStringContainsString('<aside>', $output, 'Nested partials render correctly (aside tag)');
 
         config()->set('theme.active', $originalTheme);
     }
 
-    private function testThemeOverridesModulePartial() {
-        echo "\nTest: Theme overrides module partial\n";
-
+    public function testThemeOverridesModulePartial(): void
+    {
         $originalTheme = config('theme.active');
         $testThemeName = basename($this->themePath);
         $testModuleName = basename($this->modulePath);
@@ -854,12 +796,14 @@ class ViewTest {
 
         // Module partial should be overridden by theme
         $output = $view->partial($testModuleName . ':menu');
-        $this->assert(
-            str_contains($output, 'Theme Override Menu'),
+        $this->assertStringContainsString(
+            'Theme Override Menu',
+            $output,
             'Theme partial overrides module partial'
         );
-        $this->assert(
-            !str_contains($output, '<nav>Menu</nav>'),
+        $this->assertStringNotContainsString(
+            '<nav>Menu</nav>',
+            $output,
             'Original module partial is not used when theme override exists'
         );
 
@@ -869,17 +813,17 @@ class ViewTest {
 
         // Without override, module partial should render
         $output2 = $view->partial($testModuleName . ':menu');
-        $this->assert(
-            str_contains($output2, '<nav>Menu</nav>'),
+        $this->assertStringContainsString(
+            '<nav>Menu</nav>',
+            $output2,
             'Module partial renders when no theme override'
         );
 
         config()->set('theme.active', $originalTheme);
     }
 
-    private function testModulePartialNonexistentModule() {
-        echo "\nTest: Module partial with nonexistent module\n";
-
+    public function testModulePartialNonexistentModule(): void
+    {
         $originalTheme = config('theme.active');
         $testThemeName = basename($this->themePath);
         config()->set('theme.active', $testThemeName);
@@ -887,17 +831,17 @@ class ViewTest {
         $view = new View();
 
         $output = $view->partial('nonexistent-module:some-partial');
-        $this->assert(
-            str_contains($output, '<!-- Partial not found: nonexistent-module:some-partial'),
+        $this->assertStringContainsString(
+            '<!-- Partial not found: nonexistent-module:some-partial',
+            $output,
             'Nonexistent module partial returns not-found comment'
         );
 
         config()->set('theme.active', $originalTheme);
     }
 
-    private function testAbortRendersThemeTemplate() {
-        echo "\nTest: abort() renders theme error template\n";
-
+    public function testAbortRendersThemeTemplate(): void
+    {
         $originalTheme = config('theme.active');
         $testThemeName = basename($this->themePath);
 
@@ -912,88 +856,57 @@ class ViewTest {
         abort(404, 'test message');
         $output = ob_get_clean();
 
-        $this->assert(
-            str_contains($output, '<div class="error">'),
+        $this->assertStringContainsString(
+            '<div class="error">',
+            $output,
             'abort() renders theme 404 template'
         );
-        $this->assert(
-            str_contains($output, '<!DOCTYPE html>'),
+        $this->assertStringContainsString(
+            '<!DOCTYPE html>',
+            $output,
             'abort() output is wrapped in layout'
         );
-        $this->assert(
-            http_response_code() === 404,
+        $this->assertSame(
+            404,
+            http_response_code(),
             'abort() sets correct HTTP status code'
         );
 
         config()->set('theme.active', $originalTheme);
     }
 
-    private function testAbortFallbackWithoutTemplate() {
-        echo "\nTest: abort() fallback without theme template\n";
-
+    public function testAbortFallbackWithoutTemplate(): void
+    {
         $originalTheme = config('theme.active');
         $testThemeName = basename($this->themePath);
         config()->set('theme.active', $testThemeName);
 
-        // No 403 template exists — should fall back to plain HTML
+        // No 403 template exists -- should fall back to plain HTML
         ob_start();
         abort(403, 'Access denied');
         $output = ob_get_clean();
 
-        $this->assert(
-            str_contains($output, '403'),
+        $this->assertStringContainsString(
+            '403',
+            $output,
             'abort() fallback contains status code'
         );
-        $this->assert(
-            str_contains($output, 'Forbidden'),
+        $this->assertStringContainsString(
+            'Forbidden',
+            $output,
             'abort() fallback contains status title'
         );
-        $this->assert(
-            str_contains($output, 'Access denied'),
+        $this->assertStringContainsString(
+            'Access denied',
+            $output,
             'abort() fallback contains custom message'
         );
-        $this->assert(
-            http_response_code() === 403,
+        $this->assertSame(
+            403,
+            http_response_code(),
             'abort() sets correct HTTP status for fallback'
         );
 
         config()->set('theme.active', $originalTheme);
     }
-
-    private function printSummary() {
-        echo "\n" . str_repeat('=', 50) . "\n";
-        echo "Test Summary\n";
-        echo str_repeat('=', 50) . "\n";
-
-        $passed = 0;
-        $failed = 0;
-
-        foreach ($this->results as $result) {
-            if ($result['status'] === 'PASS') {
-                $passed++;
-            } else {
-                $failed++;
-            }
-        }
-
-        $total = $passed + $failed;
-        echo "Total: $total | Passed: $passed | Failed: $failed\n";
-
-        if ($failed > 0) {
-            echo "\nFailed tests:\n";
-            foreach ($this->results as $result) {
-                if ($result['status'] === 'FAIL') {
-                    echo "  - " . $result['message'] . "\n";
-                }
-            }
-        }
-
-        echo "\n";
-    }
-}
-
-// Run tests if executed directly
-if (basename(__FILE__) === basename($_SERVER['PHP_SELF'])) {
-    $test = new ViewTest();
-    $test->run();
 }

@@ -10,6 +10,10 @@
 /docs export-ignore
 /tools export-ignore
 /tests export-ignore
+/vendor export-ignore
+composer.json export-ignore
+composer.lock export-ignore
+phpunit.xml export-ignore
 .editorconfig export-ignore
 .gitattributes export-ignore
 .gitignore export-ignore

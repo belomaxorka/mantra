@@ -1,6 +1,6 @@
 <?php
 /**
- * ModuleSettings Tests
+ * ModuleSettings Tests (PHPUnit 10.x)
  *
  * Tests for schema-driven module settings:
  * - Schema loading from module directory
@@ -11,15 +11,14 @@
  * - Module without schema file
  */
 
-require_once __DIR__ . '/../core/bootstrap.php';
-
-class ModuleSettingsTest
+class ModuleSettingsTest extends MantraTestCase
 {
     private $testModule = 'tmig_testmod';
-    private $results = array();
 
-    public function __construct()
+    protected function setUp(): void
     {
+        parent::setUp();
+
         // Ensure directories exist
         $moduleDir = MANTRA_MODULES . '/' . $this->testModule;
         if (!is_dir($moduleDir)) {
@@ -32,7 +31,7 @@ class ModuleSettingsTest
         }
     }
 
-    public function __destruct()
+    protected function tearDown(): void
     {
         // Clean up test module directory
         $moduleDir = MANTRA_MODULES . '/' . $this->testModule;
@@ -54,56 +53,16 @@ class ModuleSettingsTest
                 @unlink($p);
             }
         }
-    }
 
-    public function run()
-    {
-        echo "Running ModuleSettings Tests...\n\n";
-
-        // Schema and defaults
-        $this->testSchemaLoading();
-        $this->testDefaultsFromTabs();
-        $this->testDefaultsForNestedPaths();
-
-        // Migration
-        $this->testMigrationWithCallback();
-        $this->testMigrationFromZero();
-        $this->testMigrationNotReapplied();
-
-        // get/set/has
-        $this->testGetSetHas();
-        $this->testSetMultiple();
-
-        // Saving
-        $this->testOverridesOnlySaving();
-        $this->testUnknownKeysPreserved();
-
-        // Edge cases
-        $this->testModuleWithoutSchema();
-        $this->testMissingSettingsFile();
-
-        $this->printResults();
-    }
-
-    private function assert($condition, $message)
-    {
-        if ($condition) {
-            $this->results[] = array('status' => 'PASS', 'message' => $message);
-            echo "  PASS: $message\n";
-        } else {
-            $this->results[] = array('status' => 'FAIL', 'message' => $message);
-            echo "  FAIL: $message\n";
-        }
+        parent::tearDown();
     }
 
     // ---------------------------------------------------------------
     // Schema and defaults
     // ---------------------------------------------------------------
 
-    private function testSchemaLoading()
+    public function testSchemaLoading(): void
     {
-        echo "\n--- Schema loaded from module directory ---\n";
-
         $this->writeModuleSchema(array(
             'version' => 1,
             'tabs' => array(
@@ -120,15 +79,13 @@ class ModuleSettingsTest
         $ms = new Module\ModuleSettings($this->testModule);
         $schema = $ms->schema();
 
-        $this->assert(is_array($schema), 'Schema loaded as array');
-        $this->assert($schema['version'] === 1, 'Schema version is 1');
-        $this->assert(!empty($schema['tabs']), 'Schema has tabs');
+        $this->assertIsArray($schema, 'Schema loaded as array');
+        $this->assertSame(1, $schema['version'], 'Schema version is 1');
+        $this->assertNotEmpty($schema['tabs'], 'Schema has tabs');
     }
 
-    private function testDefaultsFromTabs()
+    public function testDefaultsFromTabs(): void
     {
-        echo "\n--- Defaults applied from tab fields ---\n";
-
         $this->writeModuleSchema(array(
             'version' => 1,
             'tabs' => array(
@@ -150,15 +107,13 @@ class ModuleSettingsTest
         $ms = new Module\ModuleSettings($this->testModule);
         $ms->load();
 
-        $this->assert($ms->get('api_key') === '', 'Empty string default applied');
-        $this->assert($ms->get('enabled') === true, 'Boolean default applied');
-        $this->assert($ms->get('max_items') === 25, 'Numeric default applied');
+        $this->assertSame('', $ms->get('api_key'), 'Empty string default applied');
+        $this->assertTrue($ms->get('enabled'), 'Boolean default applied');
+        $this->assertSame(25, $ms->get('max_items'), 'Numeric default applied');
     }
 
-    private function testDefaultsForNestedPaths()
+    public function testDefaultsForNestedPaths(): void
     {
-        echo "\n--- Defaults for nested dot-paths ---\n";
-
         $this->writeModuleSchema(array(
             'version' => 1,
             'tabs' => array(
@@ -177,18 +132,16 @@ class ModuleSettingsTest
 
         $ms = new Module\ModuleSettings($this->testModule);
 
-        $this->assert($ms->get('cache.enabled') === false, 'Nested boolean default applied');
-        $this->assert($ms->get('cache.ttl') === 3600, 'Nested numeric default applied');
+        $this->assertFalse($ms->get('cache.enabled'), 'Nested boolean default applied');
+        $this->assertSame(3600, $ms->get('cache.ttl'), 'Nested numeric default applied');
     }
 
     // ---------------------------------------------------------------
     // Migration
     // ---------------------------------------------------------------
 
-    private function testMigrationWithCallback()
+    public function testMigrationWithCallback(): void
     {
-        echo "\n--- Migration with callback ---\n";
-
         $schemaPath = MANTRA_MODULES . '/' . $this->testModule . '/settings.schema.php';
         file_put_contents($schemaPath, <<<'PHP'
 <?php
@@ -224,21 +177,20 @@ PHP
         $ms = new Module\ModuleSettings($this->testModule);
         $ms->load();
 
-        $this->assert(!$ms->has('analytics_id'), 'Old field removed by migration');
-        $this->assert(
-            $ms->get('tracker_id') === 'UA-12345',
+        $this->assertFalse($ms->has('analytics_id'), 'Old field removed by migration');
+        $this->assertSame(
+            'UA-12345',
+            $ms->get('tracker_id'),
             'Value migrated to new field name'
         );
 
         // Verify on disk
         $raw = json_decode(file_get_contents(MANTRA_CONTENT . '/settings/' . $this->testModule . '.json'), true);
-        $this->assert($raw['schema_version'] === 2, 'schema_version bumped on disk');
+        $this->assertSame(2, $raw['schema_version'], 'schema_version bumped on disk');
     }
 
-    private function testMigrationFromZero()
+    public function testMigrationFromZero(): void
     {
-        echo "\n--- Migration from v0 (no schema_version in settings file) ---\n";
-
         $schemaPath = MANTRA_MODULES . '/' . $this->testModule . '/settings.schema.php';
         file_put_contents($schemaPath, <<<'PHP'
 <?php
@@ -268,15 +220,13 @@ PHP
         $ms = new Module\ModuleSettings($this->testModule);
         $ms->load();
 
-        $this->assert($ms->get('color') === 'red', 'Existing value preserved');
-        $this->assert($ms->get('_was_migrated') === true, 'Migration callback ran');
-        $this->assert($ms->get('_from') === 0, '$from was 0 for missing schema_version');
+        $this->assertSame('red', $ms->get('color'), 'Existing value preserved');
+        $this->assertTrue($ms->get('_was_migrated'), 'Migration callback ran');
+        $this->assertSame(0, $ms->get('_from'), '$from was 0 for missing schema_version');
     }
 
-    private function testMigrationNotReapplied()
+    public function testMigrationNotReapplied(): void
     {
-        echo "\n--- Migration not re-applied on second load ---\n";
-
         $this->writeModuleSchema(array(
             'version' => 1,
             'tabs' => array(
@@ -300,26 +250,23 @@ PHP
         $ms2 = new Module\ModuleSettings($this->testModule);
         $ms2->load();
 
-        $this->assert(
-            $ms2->get('value') === 'custom',
+        $this->assertSame(
+            'custom',
+            $ms2->get('value'),
             'Value stable across loads'
         );
 
         $raw = json_decode(file_get_contents(MANTRA_CONTENT . '/settings/' . $this->testModule . '.json'), true);
-        $this->assert(
-            isset($raw['schema_version']) && $raw['schema_version'] === 1,
-            'schema_version persisted after first load'
-        );
+        $this->assertArrayHasKey('schema_version', $raw, 'schema_version persisted after first load');
+        $this->assertSame(1, $raw['schema_version'], 'schema_version persisted after first load');
     }
 
     // ---------------------------------------------------------------
     // get/set/has
     // ---------------------------------------------------------------
 
-    private function testGetSetHas()
+    public function testGetSetHas(): void
     {
-        echo "\n--- get/set/has methods ---\n";
-
         $this->writeModuleSchema(array(
             'version' => 1,
             'tabs' => array(
@@ -338,19 +285,17 @@ PHP
 
         $ms = new Module\ModuleSettings($this->testModule);
 
-        $this->assert($ms->has('key1'), 'has() true for default key');
-        $this->assert(!$ms->has('nonexistent'), 'has() false for missing key');
-        $this->assert($ms->get('key1') === 'val1', 'get() returns default');
-        $this->assert($ms->get('missing', 'fb') === 'fb', 'get() returns fallback');
+        $this->assertTrue($ms->has('key1'), 'has() true for default key');
+        $this->assertFalse($ms->has('nonexistent'), 'has() false for missing key');
+        $this->assertSame('val1', $ms->get('key1'), 'get() returns default');
+        $this->assertSame('fb', $ms->get('missing', 'fb'), 'get() returns fallback');
 
         $ms->set('key1', 'updated');
-        $this->assert($ms->get('key1') === 'updated', 'set() updates value');
+        $this->assertSame('updated', $ms->get('key1'), 'set() updates value');
     }
 
-    private function testSetMultiple()
+    public function testSetMultiple(): void
     {
-        echo "\n--- setMultiple() method ---\n";
-
         $this->writeModuleSchema(array(
             'version' => 1,
             'tabs' => array(
@@ -371,18 +316,16 @@ PHP
         $ms->setMultiple(array('a' => 'x', 'b' => 'y'));
         $ms->save();
 
-        $this->assert($ms->get('a') === 'x', 'First value set');
-        $this->assert($ms->get('b') === 'y', 'Second value set');
+        $this->assertSame('x', $ms->get('a'), 'First value set');
+        $this->assertSame('y', $ms->get('b'), 'Second value set');
     }
 
     // ---------------------------------------------------------------
     // Saving
     // ---------------------------------------------------------------
 
-    private function testOverridesOnlySaving()
+    public function testOverridesOnlySaving(): void
     {
-        echo "\n--- Overrides-only saving (values at defaults not saved) ---\n";
-
         $this->writeModuleSchema(array(
             'version' => 1,
             'tabs' => array(
@@ -406,24 +349,14 @@ PHP
 
         $raw = json_decode(file_get_contents(MANTRA_CONTENT . '/settings/' . $this->testModule . '.json'), true);
 
-        $this->assert(
-            isset($raw['color']) && $raw['color'] === 'red',
-            'Override value saved'
-        );
-        $this->assert(
-            !isset($raw['size']),
-            'Default value NOT saved (overrides-only)'
-        );
-        $this->assert(
-            isset($raw['schema_version']),
-            'schema_version saved'
-        );
+        $this->assertArrayHasKey('color', $raw, 'Override value saved');
+        $this->assertSame('red', $raw['color'], 'Override value saved');
+        $this->assertArrayNotHasKey('size', $raw, 'Default value NOT saved (overrides-only)');
+        $this->assertArrayHasKey('schema_version', $raw, 'schema_version saved');
     }
 
-    private function testUnknownKeysPreserved()
+    public function testUnknownKeysPreserved(): void
     {
-        echo "\n--- Unknown keys preserved through save ---\n";
-
         $this->writeModuleSchema(array(
             'version' => 1,
             'tabs' => array(
@@ -450,28 +383,19 @@ PHP
 
         $raw = json_decode(file_get_contents(MANTRA_CONTENT . '/settings/' . $this->testModule . '.json'), true);
 
-        $this->assert(
-            $raw['name'] === 'Updated',
-            'Known field updated'
-        );
-        $this->assert(
-            isset($raw['custom_plugin_data']) && $raw['custom_plugin_data']['foo'] === 'bar',
-            'Unknown nested key preserved'
-        );
-        $this->assert(
-            isset($raw['legacy_flag']) && $raw['legacy_flag'] === true,
-            'Unknown scalar key preserved'
-        );
+        $this->assertSame('Updated', $raw['name'], 'Known field updated');
+        $this->assertArrayHasKey('custom_plugin_data', $raw, 'Unknown nested key preserved');
+        $this->assertSame('bar', $raw['custom_plugin_data']['foo'], 'Unknown nested key preserved');
+        $this->assertArrayHasKey('legacy_flag', $raw, 'Unknown scalar key preserved');
+        $this->assertTrue($raw['legacy_flag'], 'Unknown scalar key preserved');
     }
 
     // ---------------------------------------------------------------
     // Edge cases
     // ---------------------------------------------------------------
 
-    private function testModuleWithoutSchema()
+    public function testModuleWithoutSchema(): void
     {
-        echo "\n--- Module without settings schema file ---\n";
-
         $noSchemaModule = 'tmig_noschema';
 
         // Write settings file but no schema
@@ -481,14 +405,12 @@ PHP
         $ms = new Module\ModuleSettings($noSchemaModule);
         $schema = $ms->schema();
 
-        $this->assert($schema === null, 'Schema is null for module without schema file');
-        $this->assert($ms->get('key') === 'value', 'Raw settings still readable');
+        $this->assertNull($schema, 'Schema is null for module without schema file');
+        $this->assertSame('value', $ms->get('key'), 'Raw settings still readable');
     }
 
-    private function testMissingSettingsFile()
+    public function testMissingSettingsFile(): void
     {
-        echo "\n--- Load with no settings file uses defaults ---\n";
-
         $this->writeModuleSchema(array(
             'version' => 1,
             'tabs' => array(
@@ -507,8 +429,9 @@ PHP
         $ms = new Module\ModuleSettings($this->testModule);
         $ms->load();
 
-        $this->assert(
-            $ms->get('mode') === 'auto',
+        $this->assertSame(
+            'auto',
+            $ms->get('mode'),
             'Default value used when settings file missing'
         );
     }
@@ -537,35 +460,4 @@ PHP
             @unlink($path);
         }
     }
-
-    private function printResults()
-    {
-        echo "\n" . str_repeat('=', 50) . "\n";
-        echo "ModuleSettings Test Results\n";
-        echo str_repeat('=', 50) . "\n";
-
-        $passed = 0;
-        $failed = 0;
-
-        foreach ($this->results as $result) {
-            if ($result['status'] === 'PASS') {
-                $passed++;
-            } else {
-                $failed++;
-            }
-        }
-
-        $total = $passed + $failed;
-        echo "Total: $total | Passed: $passed | Failed: $failed\n";
-
-        if ($failed === 0) {
-            echo "\nAll tests passed!\n";
-        } else {
-            echo "\nSome tests failed!\n";
-        }
-    }
 }
-
-// Run tests
-$test = new ModuleSettingsTest();
-$test->run();

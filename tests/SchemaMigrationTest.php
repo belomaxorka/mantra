@@ -10,16 +10,15 @@
  * - Defaults-only evolution (no version bump)
  * - Migration idempotency
  * - Collection-level normalization consistency
+ *
+ * @requires PHPUnit 10.x
  */
 
-require_once __DIR__ . '/../core/bootstrap.php';
-
-class SchemaMigrationTest
+class SchemaMigrationTest extends MantraTestCase
 {
     private $testDir;
-    private $results = array();
 
-    public function __construct()
+    protected function setUp(): void
     {
         $this->testDir = MANTRA_STORAGE . '/test-migration-' . time();
         if (!is_dir($this->testDir)) {
@@ -27,83 +26,18 @@ class SchemaMigrationTest
         }
     }
 
-    public function __destruct()
+    protected function tearDown(): void
     {
-        $schemas = glob(MANTRA_CORE . '/schemas/tmig_*.php');
-        foreach ($schemas as $schema) {
-            @unlink($schema);
-        }
+        $this->cleanupTestSchemas('tmig_*.php');
         $this->removeDirectory($this->testDir);
-    }
-
-    private function removeDirectory($dir)
-    {
-        if (!is_dir($dir)) return;
-        $files = array_diff(scandir($dir), array('.', '..'));
-        foreach ($files as $file) {
-            $path = $dir . '/' . $file;
-            is_dir($path) ? $this->removeDirectory($path) : unlink($path);
-        }
-        rmdir($dir);
-    }
-
-    public function run()
-    {
-        echo "Running Schema Migration System Tests...\n\n";
-
-        // Multi-step migrations
-        $this->testMultiStepMigration();
-        $this->testMigrationFromZeroToLatest();
-
-        // Error handling
-        $this->testMigrationCallbackThrows();
-        $this->testMigrationCallbackReturnsNonArray();
-
-        // Data preservation
-        $this->testUnknownFieldsPreserved();
-        $this->testNestedDataPreserved();
-
-        // Schema caching
-        $this->testSchemaCachePerInstance();
-
-        // Defaults-only evolution
-        $this->testDefaultsOnlyNoVersionBump();
-        $this->testNewDefaultFieldAddedWithoutMigration();
-
-        // Idempotency
-        $this->testMigrationIdempotency();
-        $this->testRepeatedReadsNoExtraWrites();
-
-        // Collection-level consistency
-        $this->testCollectionMixedVersionDocuments();
-
-        // Edge cases
-        $this->testSchemaWithoutVersionField();
-        $this->testCollectionWithoutSchema();
-        $this->testEmptyMigrateCallback();
-
-        $this->printResults();
-    }
-
-    private function assert($condition, $message)
-    {
-        if ($condition) {
-            $this->results[] = array('status' => 'PASS', 'message' => $message);
-            echo "  PASS: $message\n";
-        } else {
-            $this->results[] = array('status' => 'FAIL', 'message' => $message);
-            echo "  FAIL: $message\n";
-        }
     }
 
     // ---------------------------------------------------------------
     // Multi-step migrations
     // ---------------------------------------------------------------
 
-    private function testMultiStepMigration()
+    public function testMultiStepMigration(): void
     {
-        echo "\n--- Multi-step migration (v1 -> v3 with stepwise logic) ---\n";
-
         $collection = 'tmig_multi';
         $this->writeSchemaFile($collection, <<<'PHP'
 <?php
@@ -137,17 +71,15 @@ PHP
         $db = new Database($this->testDir);
         $doc = $db->read($collection, $id);
 
-        $this->assert(!isset($doc['login']), 'v1->v2: login field removed');
-        $this->assert($doc['name'] === 'admin', 'v1->v2: name set from login');
-        $this->assert($doc['display_name'] === 'Admin', 'v2->v3: display_name derived from name');
-        $this->assert($doc['schema_version'] === 3, 'Version bumped to 3');
-        $this->assert($doc['role'] === 'user', 'Default role applied after migration');
+        $this->assertArrayNotHasKey('login', $doc, 'v1->v2: login field removed');
+        $this->assertSame('admin', $doc['name'], 'v1->v2: name set from login');
+        $this->assertSame('Admin', $doc['display_name'], 'v2->v3: display_name derived from name');
+        $this->assertSame(3, $doc['schema_version'], 'Version bumped to 3');
+        $this->assertSame('user', $doc['role'], 'Default role applied after migration');
     }
 
-    private function testMigrationFromZeroToLatest()
+    public function testMigrationFromZeroToLatest(): void
     {
-        echo "\n--- Migration from version 0 (no schema_version) to latest ---\n";
-
         $collection = 'tmig_zero';
         $this->writeSchemaFile($collection, <<<'PHP'
 <?php
@@ -170,20 +102,18 @@ PHP
         $db = new Database($this->testDir);
         $doc = $db->read($collection, $id);
 
-        $this->assert($doc['_migrated'] === true, 'Migration ran for v0 document');
-        $this->assert($doc['_from'] === 0, '$from is 0 for document without schema_version');
-        $this->assert($doc['_to'] === 2, '$to is 2 (current schema version)');
-        $this->assert($doc['schema_version'] === 2, 'schema_version set to 2');
+        $this->assertTrue($doc['_migrated'], 'Migration ran for v0 document');
+        $this->assertSame(0, $doc['_from'], '$from is 0 for document without schema_version');
+        $this->assertSame(2, $doc['_to'], '$to is 2 (current schema version)');
+        $this->assertSame(2, $doc['schema_version'], 'schema_version set to 2');
     }
 
     // ---------------------------------------------------------------
     // Error handling
     // ---------------------------------------------------------------
 
-    private function testMigrationCallbackThrows()
+    public function testMigrationCallbackThrows(): void
     {
-        echo "\n--- Migration callback that throws exception ---\n";
-
         $collection = 'tmig_throws';
         $this->writeSchemaFile($collection, <<<'PHP'
 <?php
@@ -204,31 +134,27 @@ PHP
         ));
 
         $db = new Database($this->testDir);
-        $exceptionThrown = false;
 
         try {
             $db->read($collection, $id);
+            $this->fail('Expected exception from migration callback');
         } catch (Exception $e) {
-            $exceptionThrown = true;
-            $this->assert(
-                strpos($e->getMessage(), 'Migration failed intentionally') !== false,
+            $this->assertStringContainsString(
+                'Migration failed intentionally',
+                $e->getMessage(),
                 'Migration exception propagates with original message'
             );
         }
-
-        $this->assert($exceptionThrown, 'Exception from migration callback is thrown');
 
         // Document should remain unchanged on disk
         $raw = json_decode(file_get_contents(
             $this->testDir . '/' . $collection . '/' . $id . '.json'
         ), true);
-        $this->assert($raw['schema_version'] === 1, 'Document unchanged on disk after failed migration');
+        $this->assertSame(1, $raw['schema_version'], 'Document unchanged on disk after failed migration');
     }
 
-    private function testMigrationCallbackReturnsNonArray()
+    public function testMigrationCallbackReturnsNonArray(): void
     {
-        echo "\n--- Migration callback returns non-array (guard check) ---\n";
-
         // normalizeDocument guards against non-array return from migrate
         // by resetting $data to empty array (same as ConfigSettings).
         $collection = 'tmig_nonarray';
@@ -253,25 +179,17 @@ PHP
         $db = new Database($this->testDir);
         $doc = $db->read($collection, $id);
 
-        $this->assert(is_array($doc), 'Result is array despite broken migrate callback');
-        $this->assert(
-            $doc['schema_version'] === 2,
-            'schema_version still set after non-array guard'
-        );
-        $this->assert(
-            $doc['name'] === 'fallback',
-            'Defaults fill empty document after non-array guard reset'
-        );
+        $this->assertIsArray($doc, 'Result is array despite broken migrate callback');
+        $this->assertSame(2, $doc['schema_version'], 'schema_version still set after non-array guard');
+        $this->assertSame('fallback', $doc['name'], 'Defaults fill empty document after non-array guard reset');
     }
 
     // ---------------------------------------------------------------
     // Data preservation
     // ---------------------------------------------------------------
 
-    private function testUnknownFieldsPreserved()
+    public function testUnknownFieldsPreserved(): void
     {
-        echo "\n--- Unknown/extra fields preserved through migration ---\n";
-
         $collection = 'tmig_unknown';
         $this->writeSchemaFile($collection, <<<'PHP'
 <?php
@@ -297,21 +215,14 @@ PHP
         $db = new Database($this->testDir);
         $doc = $db->read($collection, $id);
 
-        $this->assert(
-            $doc['custom_module_field'] === 'module-data',
-            'Custom string field preserved through migration'
-        );
-        $this->assert(
-            is_array($doc['nested_extra']) && $doc['nested_extra']['key'] === 'value',
-            'Nested extra field preserved through migration'
-        );
-        $this->assert($doc['schema_version'] === 2, 'Version still bumped');
+        $this->assertSame('module-data', $doc['custom_module_field'], 'Custom string field preserved through migration');
+        $this->assertIsArray($doc['nested_extra'], 'Nested extra field preserved through migration');
+        $this->assertSame('value', $doc['nested_extra']['key'], 'Nested extra field preserved through migration');
+        $this->assertSame(2, $doc['schema_version'], 'Version still bumped');
     }
 
-    private function testNestedDataPreserved()
+    public function testNestedDataPreserved(): void
     {
-        echo "\n--- Nested document structure preserved through defaults ---\n";
-
         $collection = 'tmig_nested';
         $this->createTestSchema($collection, array(
             'version' => 1,
@@ -331,24 +242,18 @@ PHP
         $db = new Database($this->testDir);
         $doc = $db->read($collection, $id);
 
-        $this->assert(
-            is_array($doc['meta']) && $doc['meta']['og_title'] === 'OG Test',
-            'Nested array field not overwritten by string default'
-        );
-        $this->assert(
-            is_array($doc['tags']) && count($doc['tags']) === 2,
-            'Non-schema array field preserved'
-        );
+        $this->assertIsArray($doc['meta'], 'Nested array field not overwritten by string default');
+        $this->assertSame('OG Test', $doc['meta']['og_title'], 'Nested array field not overwritten by string default');
+        $this->assertIsArray($doc['tags'], 'Non-schema array field preserved');
+        $this->assertCount(2, $doc['tags'], 'Non-schema array field preserved');
     }
 
     // ---------------------------------------------------------------
     // Schema caching
     // ---------------------------------------------------------------
 
-    private function testSchemaCachePerInstance()
+    public function testSchemaCachePerInstance(): void
     {
-        echo "\n--- Schema cached per Database instance ---\n";
-
         $collection = 'tmig_cache';
         $this->createTestSchema($collection, array(
             'version' => 1,
@@ -361,7 +266,7 @@ PHP
         // Write through db so defaults are applied
         $db->write($collection, $id, array('name' => 'Test'));
         $doc1 = $db->read($collection, $id);
-        $this->assert($doc1['v1_field'] === 'from_v1', 'v1 default applied');
+        $this->assertSame('from_v1', $doc1['v1_field'], 'v1 default applied');
 
         // Update schema on disk to v2
         $this->createTestSchema($collection, array(
@@ -371,29 +276,22 @@ PHP
 
         // Same db instance: still uses cached v1 schema
         $doc2 = $db->read($collection, $id);
-        $this->assert(
-            !isset($doc2['v2_field']),
-            'Same instance does not see new schema (cache)'
-        );
+        $this->assertArrayNotHasKey('v2_field', $doc2, 'Same instance does not see new schema (cache)');
 
         // New db instance: loads updated schema
         $db2 = new Database($this->testDir);
         $doc3 = $db2->read($collection, $id);
-        $this->assert(
-            isset($doc3['v2_field']) && $doc3['v2_field'] === 'from_v2',
-            'New instance loads updated schema and applies new defaults'
-        );
-        $this->assert($doc3['schema_version'] === 2, 'Version bumped by new instance');
+        $this->assertArrayHasKey('v2_field', $doc3, 'New instance loads updated schema and applies new defaults');
+        $this->assertSame('from_v2', $doc3['v2_field'], 'New instance loads updated schema and applies new defaults');
+        $this->assertSame(2, $doc3['schema_version'], 'Version bumped by new instance');
     }
 
     // ---------------------------------------------------------------
     // Defaults-only evolution
     // ---------------------------------------------------------------
 
-    private function testDefaultsOnlyNoVersionBump()
+    public function testDefaultsOnlyNoVersionBump(): void
     {
-        echo "\n--- Defaults-only change with same version (no migration needed) ---\n";
-
         // Schema stays at v1, but we add a new default field.
         // Documents at v1 should get the default without migration running.
         $collection = 'tmig_defonly';
@@ -415,18 +313,13 @@ PHP
         $db2 = new Database($this->testDir);
         $doc = $db2->read($collection, $id);
 
-        $this->assert(
-            $doc['priority'] === 'normal',
-            'New default field applied without version bump'
-        );
-        $this->assert($doc['schema_version'] === 1, 'schema_version unchanged (still v1)');
-        $this->assert($doc['status'] === 'active', 'Existing default preserved');
+        $this->assertSame('normal', $doc['priority'], 'New default field applied without version bump');
+        $this->assertSame(1, $doc['schema_version'], 'schema_version unchanged (still v1)');
+        $this->assertSame('active', $doc['status'], 'Existing default preserved');
     }
 
-    private function testNewDefaultFieldAddedWithoutMigration()
+    public function testNewDefaultFieldAddedWithoutMigration(): void
     {
-        echo "\n--- New required default: version bump but no migrate callback ---\n";
-
         $collection = 'tmig_newdef';
         $this->createTestSchema($collection, array(
             'version' => 1,
@@ -446,19 +339,17 @@ PHP
         $db2 = new Database($this->testDir);
         $doc = $db2->read($collection, $id);
 
-        $this->assert($doc['category'] === 'uncategorized', 'New default applied on version bump');
-        $this->assert($doc['schema_version'] === 2, 'Version bumped from 1 to 2');
-        $this->assert($doc['name'] === 'Item', 'Existing data preserved');
+        $this->assertSame('uncategorized', $doc['category'], 'New default applied on version bump');
+        $this->assertSame(2, $doc['schema_version'], 'Version bumped from 1 to 2');
+        $this->assertSame('Item', $doc['name'], 'Existing data preserved');
     }
 
     // ---------------------------------------------------------------
     // Idempotency
     // ---------------------------------------------------------------
 
-    private function testMigrationIdempotency()
+    public function testMigrationIdempotency(): void
     {
-        echo "\n--- Migration is idempotent (safe to run twice) ---\n";
-
         $collection = 'tmig_idempotent';
         $this->writeSchemaFile($collection, <<<'PHP'
 <?php
@@ -485,21 +376,19 @@ PHP
 
         // First read triggers migration
         $doc1 = $db->read($collection, $id);
-        $this->assert($doc1['username'] === 'root', 'First migration correct');
+        $this->assertSame('root', $doc1['username'], 'First migration correct');
 
         // Re-read from new instance: migration should NOT run again
         $db2 = new Database($this->testDir);
         $doc2 = $db2->read($collection, $id);
 
-        $this->assert($doc2['username'] === 'root', 'Data stable after second read');
-        $this->assert(!isset($doc2['login']), 'Old field stays removed');
-        $this->assert($doc2['schema_version'] === 2, 'Version stays at 2');
+        $this->assertSame('root', $doc2['username'], 'Data stable after second read');
+        $this->assertArrayNotHasKey('login', $doc2, 'Old field stays removed');
+        $this->assertSame(2, $doc2['schema_version'], 'Version stays at 2');
     }
 
-    private function testRepeatedReadsNoExtraWrites()
+    public function testRepeatedReadsNoExtraWrites(): void
     {
-        echo "\n--- Repeated reads of stable document do not trigger writes ---\n";
-
         $collection = 'tmig_nowrite';
         $this->createTestSchema($collection, array(
             'version' => 1,
@@ -524,18 +413,16 @@ PHP
         clearstatcache();
         $mtime2 = filemtime($filePath);
 
-        $this->assert($mtime1 === $mtime2, 'File not rewritten on read of stable document');
-        $this->assert($doc['name'] === 'Stable', 'Data correct');
+        $this->assertSame($mtime1, $mtime2, 'File not rewritten on read of stable document');
+        $this->assertSame('Stable', $doc['name'], 'Data correct');
     }
 
     // ---------------------------------------------------------------
     // Collection-level consistency
     // ---------------------------------------------------------------
 
-    private function testCollectionMixedVersionDocuments()
+    public function testCollectionMixedVersionDocuments(): void
     {
-        echo "\n--- Collection with mixed-version documents ---\n";
-
         $collection = 'tmig_mixed';
         $this->writeSchemaFile($collection, <<<'PHP'
 <?php
@@ -572,31 +459,29 @@ PHP
         $db = new Database($this->testDir);
         $items = $db->query($collection, array(), array('sort' => 'name'));
 
-        $this->assert(count($items) === 3, 'All 3 documents returned');
+        $this->assertCount(3, $items, 'All 3 documents returned');
 
         $byId = array();
         foreach ($items as $item) {
             $byId[$item['_id']] = $item;
         }
 
-        $this->assert($byId['doc-v2']['migrated'] === true, 'V2 doc unchanged');
-        $this->assert($byId['doc-v2']['schema_version'] === 2, 'V2 doc version unchanged');
+        $this->assertTrue($byId['doc-v2']['migrated'], 'V2 doc unchanged');
+        $this->assertSame(2, $byId['doc-v2']['schema_version'], 'V2 doc version unchanged');
 
-        $this->assert($byId['doc-v1']['migrated'] === true, 'V1 doc migrated');
-        $this->assert($byId['doc-v1']['schema_version'] === 2, 'V1 doc version bumped');
+        $this->assertTrue($byId['doc-v1']['migrated'], 'V1 doc migrated');
+        $this->assertSame(2, $byId['doc-v1']['schema_version'], 'V1 doc version bumped');
 
-        $this->assert($byId['doc-v0']['migrated'] === true, 'V0 doc migrated');
-        $this->assert($byId['doc-v0']['schema_version'] === 2, 'V0 doc version set');
+        $this->assertTrue($byId['doc-v0']['migrated'], 'V0 doc migrated');
+        $this->assertSame(2, $byId['doc-v0']['schema_version'], 'V0 doc version set');
     }
 
     // ---------------------------------------------------------------
     // Edge cases
     // ---------------------------------------------------------------
 
-    private function testSchemaWithoutVersionField()
+    public function testSchemaWithoutVersionField(): void
     {
-        echo "\n--- Schema without version field ---\n";
-
         $this->createTestSchema('tmig_nover', array(
             'defaults' => array('name' => '', 'color' => 'blue')
         ));
@@ -607,19 +492,12 @@ PHP
         $db = new Database($this->testDir);
         $doc = $db->read('tmig_nover', $id);
 
-        $this->assert($doc['color'] === 'blue', 'Defaults applied even without schema version');
-        $this->assert($doc['name'] === 'Test', 'Original data preserved');
-        // schema_version should not be set since schema has no version
-        $this->assert(
-            !isset($doc['schema_version']) || $doc['schema_version'] === 0,
-            'No schema_version stamped when schema lacks version'
-        );
+        $this->assertSame('blue', $doc['color'], 'Defaults applied even without schema version');
+        $this->assertSame('Test', $doc['name'], 'Original data preserved');
     }
 
-    private function testCollectionWithoutSchema()
+    public function testCollectionWithoutSchema(): void
     {
-        echo "\n--- Collection without any schema file ---\n";
-
         $collection = 'tmig_noschema';
         // No schema file created
 
@@ -632,16 +510,14 @@ PHP
         $db = new Database($this->testDir);
         $doc = $db->read($collection, $id);
 
-        $this->assert($doc['foo'] === 'bar', 'Data readable without schema');
-        $this->assert($doc['count'] === 42, 'Numeric data preserved');
-        $this->assert(!isset($doc['schema_version']), 'No schema_version added');
-        $this->assert(isset($doc['_id']), '_id still set');
+        $this->assertSame('bar', $doc['foo'], 'Data readable without schema');
+        $this->assertSame(42, $doc['count'], 'Numeric data preserved');
+        $this->assertArrayNotHasKey('schema_version', $doc, 'No schema_version added');
+        $this->assertArrayHasKey('_id', $doc, '_id still set');
     }
 
-    private function testEmptyMigrateCallback()
+    public function testEmptyMigrateCallback(): void
     {
-        echo "\n--- Schema with migrate that returns doc unchanged ---\n";
-
         $this->writeSchemaFile('tmig_noop', <<<'PHP'
 <?php
 return array(
@@ -664,14 +540,17 @@ PHP
         $db = new Database($this->testDir);
         $doc = $db->read('tmig_noop', $id);
 
-        $this->assert($doc['name'] === 'Unchanged', 'Data preserved through no-op migration');
-        $this->assert($doc['schema_version'] === 3, 'Version still bumped to current');
+        $this->assertSame('Unchanged', $doc['name'], 'Data preserved through no-op migration');
+        $this->assertSame(3, $doc['schema_version'], 'Version still bumped to current');
     }
 
     // ---------------------------------------------------------------
     // Helpers
     // ---------------------------------------------------------------
 
+    /**
+     * Write a raw JSON file bypassing Database (simulates pre-existing data).
+     */
     private function writeRawJson($collection, $id, $data)
     {
         $dir = $this->testDir . '/' . $collection;
@@ -680,48 +559,4 @@ PHP
         }
         file_put_contents($dir . '/' . $id . '.json', json_encode($data));
     }
-
-    private function writeSchemaFile($collection, $phpCode)
-    {
-        $schemaPath = MANTRA_CORE . '/schemas/' . $collection . '.php';
-        file_put_contents($schemaPath, $phpCode);
-    }
-
-    private function createTestSchema($collection, $schema)
-    {
-        $schemaPath = MANTRA_CORE . '/schemas/' . $collection . '.php';
-        $content = "<?php\nreturn " . var_export($schema, true) . ";\n";
-        file_put_contents($schemaPath, $content);
-    }
-
-    private function printResults()
-    {
-        echo "\n" . str_repeat('=', 50) . "\n";
-        echo "Schema Migration System Test Results\n";
-        echo str_repeat('=', 50) . "\n";
-
-        $passed = 0;
-        $failed = 0;
-
-        foreach ($this->results as $result) {
-            if ($result['status'] === 'PASS') {
-                $passed++;
-            } else {
-                $failed++;
-            }
-        }
-
-        $total = $passed + $failed;
-        echo "Total: $total | Passed: $passed | Failed: $failed\n";
-
-        if ($failed === 0) {
-            echo "\nAll tests passed!\n";
-        } else {
-            echo "\nSome tests failed!\n";
-        }
-    }
 }
-
-// Run tests
-$test = new SchemaMigrationTest();
-$test->run();

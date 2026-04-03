@@ -237,7 +237,7 @@ class View {
      * Get theme asset URL
      */
     public function asset($path) {
-        $baseUrl = config('site.url', '');
+        $baseUrl = rtrim(config('site.url', ''), '/');
         return $baseUrl . '/' . basename(MANTRA_THEMES) . '/' . basename($this->themePath) . '/assets/' . ltrim($path, '/');
     }
 
