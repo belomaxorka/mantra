@@ -31,6 +31,7 @@ Steps performed:
    Entries are grouped by [Conventional Commits](https://www.conventionalcommits.org/) type:
    - `feat(...)` → **Added**
    - `fix(...)` → **Fixed**
+   - `refactor(...)` → **Refactored**
    - Everything else → **Other**
    
    PR references (`#123`) are automatically converted to clickable GitHub links.

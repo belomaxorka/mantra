@@ -186,6 +186,7 @@ foreach ($hashes as $hash) {
 
 $feats = array();
 $fixes = array();
+$refactors = array();
 $others = array();
 
 foreach ($entries as $entry) {
@@ -195,6 +196,8 @@ foreach ($entries as $entry) {
         $feats[] = $linked;
     } elseif (preg_match('/^fix(\(.*?\))?!?:/', $entry)) {
         $fixes[] = $linked;
+    } elseif (preg_match('/^refactor(\(.*?\))?!?:/', $entry)) {
+        $refactors[] = $linked;
     } else {
         $others[] = $linked;
     }
@@ -212,6 +215,13 @@ if (!empty($feats)) {
 if (!empty($fixes)) {
     $changelog .= PHP_EOL . '### Fixed' . PHP_EOL . PHP_EOL;
     foreach ($fixes as $line) {
+        $changelog .= "- {$line}" . PHP_EOL;
+    }
+}
+
+if (!empty($refactors)) {
+    $changelog .= PHP_EOL . '### Refactored' . PHP_EOL . PHP_EOL;
+    foreach ($refactors as $line) {
         $changelog .= "- {$line}" . PHP_EOL;
     }
 }
