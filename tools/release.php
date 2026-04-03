@@ -210,6 +210,35 @@ foreach ($hashes as $hash) {
     );
 }
 
+// ── Filter out reverted commits ─────────────────────────────
+// If "Revert "X"" and the original "X" both appear in the range,
+// neither belongs in the changelog — the net effect is zero.
+
+$revertedSubjects = array();
+
+foreach ($entries as $entry) {
+    // Revert "original subject" or Revert "original subject" (#45)
+    if (preg_match('/^Revert "(.+)"/', $entry['text'], $m)) {
+        $revertedSubjects[] = $m[1];
+    }
+}
+
+if (!empty($revertedSubjects)) {
+    // Strip trailing (#N) for matching, because a squash-merged commit
+    // has (#42) appended while the revert quotes the bare subject.
+    $stripPr = fn(string $s): string => trim(preg_replace('/\s*\(#\d+\)$/', '', $s));
+    $revertedNormalized = array_map($stripPr, $revertedSubjects);
+
+    $entries = array_values(array_filter($entries, function ($entry) use ($revertedNormalized, $stripPr) {
+        // Remove revert commits themselves
+        if (preg_match('/^Revert "/', $entry['text'])) {
+            return false;
+        }
+        // Remove original commits that were reverted
+        return !in_array($stripPr($entry['text']), $revertedNormalized, true);
+    }));
+}
+
 /**
  * Check whether a commit is a breaking change.
  *
