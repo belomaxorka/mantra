@@ -11,7 +11,7 @@
     "quick_actions": [
         {
             "id": "new-post",
-            "title": "admin-posts.new_post",
+            "title": "admin-posts.new",
             "icon": "bi-file-earmark-plus",
             "url": "/admin/posts/new",
             "order": 25
