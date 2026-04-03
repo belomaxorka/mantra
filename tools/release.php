@@ -211,32 +211,46 @@ foreach ($hashes as $hash) {
 }
 
 // ── Filter out reverted commits ─────────────────────────────
-// If "Revert "X"" and the original "X" both appear in the range,
+// If "Revert "X"" and the original "X" both appear in the same range,
 // neither belongs in the changelog — the net effect is zero.
+// But if only the revert is present (original was in a previous release),
+// the revert MUST stay — it's a real change for this release.
 
-$revertedSubjects = array();
+// Strip trailing (#N) for matching: squash-merged commits have (#42)
+// appended, while the revert quotes the bare subject.
+$stripPr = fn(string $s): string => trim(preg_replace('/\s*\(#\d+\)$/', '', $s));
 
+// Collect subjects that were reverted
+$revertedNormalized = array();
 foreach ($entries as $entry) {
-    // Revert "original subject" or Revert "original subject" (#45)
     if (preg_match('/^Revert "(.+)"/', $entry['text'], $m)) {
-        $revertedSubjects[] = $m[1];
+        $revertedNormalized[] = $stripPr($m[1]);
     }
 }
 
-if (!empty($revertedSubjects)) {
-    // Strip trailing (#N) for matching, because a squash-merged commit
-    // has (#42) appended while the revert quotes the bare subject.
-    $stripPr = fn(string $s): string => trim(preg_replace('/\s*\(#\d+\)$/', '', $s));
-    $revertedNormalized = array_map($stripPr, $revertedSubjects);
-
-    $entries = array_values(array_filter($entries, function ($entry) use ($revertedNormalized, $stripPr) {
-        // Remove revert commits themselves
-        if (preg_match('/^Revert "/', $entry['text'])) {
-            return false;
+if (!empty($revertedNormalized)) {
+    // Find which reverted subjects have a matching original in this range
+    $matchedOriginals = array();
+    foreach ($entries as $entry) {
+        if (!preg_match('/^Revert "/', $entry['text'])) {
+            $normalized = $stripPr($entry['text']);
+            if (in_array($normalized, $revertedNormalized, true)) {
+                $matchedOriginals[] = $normalized;
+            }
         }
-        // Remove original commits that were reverted
-        return !in_array($stripPr($entry['text']), $revertedNormalized, true);
-    }));
+    }
+
+    // Only filter pairs where both original and revert are in this range
+    if (!empty($matchedOriginals)) {
+        $entries = array_values(array_filter($entries, function ($entry) use ($matchedOriginals, $stripPr) {
+            // Remove revert commits whose original is in this range
+            if (preg_match('/^Revert "(.+)"/', $entry['text'], $m)) {
+                return !in_array($stripPr($m[1]), $matchedOriginals, true);
+            }
+            // Remove original commits that were reverted in this range
+            return !in_array($stripPr($entry['text']), $matchedOriginals, true);
+        }));
+    }
 }
 
 /**
