@@ -1,11 +1,22 @@
 services:
-  app:
+  nginx:
     build:
       context: ..
-      dockerfile: docker/apache/Dockerfile
+      dockerfile: docker/nginx/Dockerfile
     restart: unless-stopped
     ports:
       - "8080:80"
+    volumes:
+      - ../modules:/var/www/html/modules:ro
+      - ../uploads:/var/www/html/uploads:ro
+    depends_on:
+      - php
+
+  php:
+    build:
+      context: ..
+      dockerfile: docker/php-fpm/Dockerfile
+    restart: unless-stopped
     volumes:
       - ../content:/var/www/html/content
       - ../modules:/var/www/html/modules
@@ -24,8 +35,9 @@ services:
       - caddy_data:/data
     environment:
       DOMAIN: ${DOMAIN:?Set DOMAIN in .env}
+      UPSTREAM: nginx:80
     depends_on:
-      - app
+      - nginx
 
 volumes:
   caddy_data:

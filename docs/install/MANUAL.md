@@ -3,7 +3,7 @@
 ## Requirements
 
 - PHP 8.1.0 or newer
-- Web server: Apache 2.4+ or Nginx
+- Web server: Apache 2.4+, Nginx, or Caddy 2.7+
 
 ### Required PHP extensions
 
@@ -55,6 +55,8 @@ Replace `www-data` with the user your web server runs as (e.g. `nginx`, `apache`
 
 ### 3. Configure the web server
 
+A ready-to-use configuration file is provided for each web server in the `config/` directory. Copy it and adjust the server name, paths, and PHP-FPM address for your environment.
+
 #### Apache
 
 The `.htaccess` file included in the project handles everything automatically. Make sure:
@@ -78,54 +80,32 @@ Example virtual host:
 
 #### Nginx
 
-Nginx does not use `.htaccess`. Add the following rules to the `server` block:
+Nginx does not use `.htaccess`. Copy `config/nginx.conf` to `/etc/nginx/sites-available/` and adjust `server_name`, `root`, and `fastcgi_pass`, then symlink to `sites-enabled/`.
 
-```nginx
-server {
-    listen 80;
-    server_name example.com;
-    root /var/www/example.com;
-    index index.php;
-
-    charset utf-8;
-
-    # Block hidden files and directories (.git, .env, etc.)
-    location ~ /\. {
-        return 404;
-    }
-
-    # Block sensitive directories
-    location ^~ /content/ { return 404; }
-    location ^~ /storage/ { return 404; }
-
-    # Block core except assets
-    location ^~ /core/ {
-        location ^~ /core/assets/ {
-            # allow
-        }
-        return 404;
-    }
-
-    # Block module language files
-    location ~ ^/modules/.*/lang/ { return 404; }
-
-    # Block sensitive file extensions
-    location ~ \.(json|md|lock|bak|sql|tmp|dist|log)$ { return 404; }
-
-    # Route all other requests through index.php
-    location / {
-        try_files $uri $uri/ /index.php?$query_string;
-    }
-
-    location ~ \.php$ {
-        fastcgi_pass unix:/run/php/php-fpm.sock;
-        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-        include fastcgi_params;
-    }
-}
-```
+The configuration includes all security rules (blocking hidden files, sensitive directories, and file extensions), upload protection, static file caching, and PHP-FPM routing.
 
 Adjust `fastcgi_pass` to match your PHP-FPM socket or TCP address (e.g. `127.0.0.1:9000`).
+
+```bash
+cp config/nginx.conf /etc/nginx/sites-available/mantra.conf
+# Edit server_name, root, and fastcgi_pass
+ln -s /etc/nginx/sites-available/mantra.conf /etc/nginx/sites-enabled/
+nginx -t && systemctl reload nginx
+```
+
+#### Caddy
+
+Copy `config/Caddyfile` and adjust the site address, `root` path, and `php_fastcgi` address.
+
+Caddy automatically provisions HTTPS certificates from Let's Encrypt when using a real domain name. Use `:80` or `localhost` for local development without HTTPS.
+
+```bash
+cp config/Caddyfile /etc/caddy/Caddyfile
+# Edit site address, root, and php_fastcgi
+systemctl reload caddy
+```
+
+The configuration includes all the same security rules as Apache and Nginx, plus gzip compression.
 
 ### 4. Run the installer
 
@@ -182,6 +162,7 @@ Check the PHP error log. Common causes:
 
 - **Apache:** ensure `mod_rewrite` is enabled and `AllowOverride All` is set
 - **Nginx:** ensure the `try_files` directive routes to `index.php`
+- **Caddy:** ensure `php_fastcgi` is configured (it handles `try_files` automatically)
 - **Built-in server:** make sure `index.php` is passed as the router argument
 
 ### Upload fails

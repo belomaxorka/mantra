@@ -1,0 +1,37 @@
+{$SITE_ADDRESS::80} {
+	root * /var/www/html
+
+	# Security: block hidden files and directories
+	@hidden path_regexp /\.
+	respond @hidden 404
+
+	# Security: block sensitive directories
+	@content path /content/*
+	respond @content 404
+
+	@storage path /storage/*
+	respond @storage 404
+
+	# Security: block core except assets
+	@core {
+		path /core/*
+		not path /core/assets/*
+	}
+	respond @core 404
+
+	# Security: block module language files
+	@moduleLang path_regexp ^/modules/.*/lang/
+	respond @moduleLang 404
+
+	# Security: block sensitive file extensions
+	@sensitive path_regexp \.(json|md|lock|bak|sql|tmp|dist|log)$
+	respond @sensitive 404
+
+	# Security: block PHP in uploads
+	@uploadPhp path_regexp ^/uploads/.*\.php
+	respond @uploadPhp 404
+
+	php_fastcgi php:9000
+	file_server
+	encode gzip
+}

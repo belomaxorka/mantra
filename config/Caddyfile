@@ -1,0 +1,59 @@
+# Mantra CMS — Caddy configuration
+#
+# Usage:
+#   1. Adjust the site address (first line inside the block)
+#   2. Adjust root path and php_fastcgi address
+#   3. Run: caddy run --config /path/to/Caddyfile
+#
+# Caddy automatically provisions HTTPS when using a domain name.
+# Use ":80" or "localhost" for local development without HTTPS.
+#
+# PHP-FPM must be running. Adjust php_fastcgi address:
+#   - Socket: unix//run/php/php-fpm.sock
+#   - TCP:    127.0.0.1:9000
+
+example.com {
+	root * /var/www/example.com
+
+	# --- Security ---
+
+	# Block hidden files and directories (.git, .env, .htaccess, etc.)
+	@hidden path_regexp /\.
+	respond @hidden 404
+
+	# Block sensitive directories
+	@content path /content/*
+	respond @content 404
+
+	@storage path /storage/*
+	respond @storage 404
+
+	# Block core directory except public assets
+	@core {
+		path /core/*
+		not path /core/assets/*
+	}
+	respond @core 404
+
+	# Block module language files
+	@moduleLang path_regexp ^/modules/.*/lang/
+	respond @moduleLang 404
+
+	# Block sensitive file extensions
+	@sensitive path_regexp \.(json|md|lock|bak|sql|tmp|dist|log)$
+	respond @sensitive 404
+
+	# Block PHP execution in uploads
+	@uploadPhp path_regexp ^/uploads/.*\.php
+	respond @uploadPhp 404
+
+	# --- PHP & static files ---
+
+	php_fastcgi unix//run/php/php-fpm.sock
+	# php_fastcgi 127.0.0.1:9000
+	file_server
+
+	# --- Compression ---
+
+	encode gzip
+}

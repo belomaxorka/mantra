@@ -1,0 +1,31 @@
+services:
+  caddy:
+    build:
+      context: ..
+      dockerfile: docker/caddy/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "${HTTP_PORT:-8080}:80"
+      - "443:443"
+    volumes:
+      - ../modules:/var/www/html/modules:ro
+      - ../uploads:/var/www/html/uploads:ro
+      - caddy_data:/data
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:-:80}
+    depends_on:
+      - php
+
+  php:
+    build:
+      context: ..
+      dockerfile: docker/php-fpm/Dockerfile
+    restart: unless-stopped
+    volumes:
+      - ../content:/var/www/html/content
+      - ../modules:/var/www/html/modules
+      - ../storage:/var/www/html/storage
+      - ../uploads:/var/www/html/uploads
+
+volumes:
+  caddy_data:
