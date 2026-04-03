@@ -2,7 +2,7 @@
     <div class="row mb-4">
         <div class="col">
             <div class="admin-page-header">
-                <h1 class="h3"><?php echo $isNew ? t('admin-posts.new_post') : t('admin-posts.edit_post'); ?></h1>
+                <h1 class="h3"><?php echo $isNew ? t('admin-posts.new') : t('admin-posts.edit_post'); ?></h1>
                 <a href="<?php echo base_url('/admin/posts'); ?>" class="btn btn-outline-secondary">
                     <i class="bi bi-arrow-left me-2"></i><?php echo t('admin.common.back'); ?>
                 </a>
@@ -14,8 +14,11 @@
     <script>document.addEventListener('DOMContentLoaded', function() { adminToast(<?php echo json_encode(e($error), JSON_HEX_TAG); ?>, 'danger'); });</script>
     <?php endif; ?>
 
-    <form method="POST" action="<?php echo $isNew ? base_url('/admin/posts/new') : base_url('/admin/posts/edit/' . $post['_id']); ?>">
+    <form method="POST" id="postForm" action="<?php echo $isNew ? base_url('/admin/posts/new') : base_url('/admin/posts/edit/' . $post['_id']); ?>">
         <input type="hidden" name="csrf_token" value="<?php echo e($csrf_token); ?>">
+        <?php if (!$isNew): ?>
+            <input type="hidden" name="_preview_id" value="<?php echo e($post['_id']); ?>">
+        <?php endif; ?>
 
         <div class="row">
         <div class="col-xl-8">
@@ -122,11 +125,15 @@
                             <i class="bi bi-check-circle"></i>
                             <?php echo $isNew ? t('admin-posts.create') : t('admin-posts.update'); ?>
                         </button>
+                        <button type="button" id="btnPreview" class="btn btn-outline-info">
+                            <i class="bi bi-eye"></i>
+                            <?php echo t('admin-posts.preview'); ?>
+                        </button>
                         <?php if (!$isNew && $post['status'] === 'published'): ?>
                             <a href="<?php echo base_url('/post/' . $post['slug']); ?>"
                                class="btn btn-outline-secondary"
                                target="_blank">
-                                <i class="bi bi-eye"></i>
+                                <i class="bi bi-box-arrow-up-right"></i>
                                 <?php echo t('admin-posts.view'); ?>
                             </a>
                         <?php endif; ?>
@@ -370,5 +377,35 @@
         .catch(function (error) {
             console.error('CKEditor initialization error:', error);
         });
+})();
+</script>
+<script>
+(function() {
+    var previewUrl = '<?php echo base_url("/admin/posts/preview"); ?>';
+    document.getElementById('btnPreview').addEventListener('click', function() {
+        if (window.editor) {
+            window.editor.updateSourceElement();
+        }
+        var form = document.getElementById('postForm');
+        var previewForm = document.createElement('form');
+        previewForm.method = 'POST';
+        previewForm.action = previewUrl;
+        previewForm.target = '_blank';
+        previewForm.style.display = 'none';
+        var elements = form.elements;
+        for (var i = 0; i < elements.length; i++) {
+            var el = elements[i];
+            if (!el.name) continue;
+            if ((el.type === 'radio' || el.type === 'checkbox') && !el.checked) continue;
+            var input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = el.name;
+            input.value = el.value;
+            previewForm.appendChild(input);
+        }
+        document.body.appendChild(previewForm);
+        previewForm.submit();
+        document.body.removeChild(previewForm);
+    });
 })();
 </script>

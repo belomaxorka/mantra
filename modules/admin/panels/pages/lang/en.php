@@ -30,6 +30,7 @@ return [
     'admin-pages.view' => 'View',
     'admin-pages.delete' => 'Delete',
     'admin-pages.delete_confirm' => 'Are you sure you want to delete this page?',
+    'admin-pages.preview' => 'Preview',
     'admin-pages.create' => 'Create Page',
     'admin-pages.update' => 'Update Page',
 

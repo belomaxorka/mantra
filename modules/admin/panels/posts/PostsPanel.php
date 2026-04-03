@@ -96,4 +96,37 @@ class PostsPanel extends ContentPanel
             'image' => app()->request()->postTrimmed('image'),
         ];
     }
+
+    protected function renderPreview($data): void
+    {
+        $post = $data;
+
+        $wordCount = str_word_count(strip_tags($post['content']));
+        $readingTime = max(1, (int)ceil($wordCount / 200));
+
+        $templates = [];
+        if (!empty($post['template'])) {
+            $templates[] = 'post-' . $post['template'];
+        }
+        if (!empty($post['category'])) {
+            $templates[] = 'post-' . $post['category'];
+        }
+        if (!empty($post['slug'])) {
+            $templates[] = 'post-' . $post['slug'];
+        }
+        $templates[] = 'post';
+
+        $template = $this->resolveThemeTemplate($templates);
+
+        $templateData = [
+            'post' => $post,
+            'readingTime' => $readingTime,
+            'prevPost' => null,
+            'nextPost' => null,
+            'title' => $post['title'] . ' - ' . config('site.name', 'Mantra CMS'),
+        ];
+
+        $html = app()->view()->fetch($template, $templateData);
+        echo $this->injectPreviewBanner($html);
+    }
 }

@@ -91,6 +91,30 @@ class PagesPanel extends ContentPanel
         return $registry;
     }
 
+    protected function renderPreview($data): void
+    {
+        $page = $data;
+
+        $templates = [];
+        if (!empty($page['template'])) {
+            $templates[] = 'page-' . $page['template'];
+        }
+        if (!empty($page['slug'])) {
+            $templates[] = 'page-' . $page['slug'];
+        }
+        $templates[] = 'page';
+
+        $template = $this->resolveThemeTemplate($templates);
+
+        $templateData = [
+            'page' => $page,
+            'title' => $page['title'] . ' - ' . config('site.name', 'Mantra CMS'),
+        ];
+
+        $html = app()->view()->fetch($template, $templateData);
+        echo $this->injectPreviewBanner($html);
+    }
+
     /**
      * Add published pages with show_in_navigation to the theme navigation menu.
      */

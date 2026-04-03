@@ -46,6 +46,8 @@ return [
     'admin.common.updated' => 'Updated successfully',
     'admin.common.deleted' => 'Deleted successfully',
     'admin.common.slug_exists' => 'This URL slug is already in use. Please choose a different one.',
+    'admin.common.preview_banner' => 'Preview mode — this content has not been saved',
+    'admin.common.close_preview' => 'Close preview',
 
     // Modules management (shared across admin modules)
     'admin.modules.author' => 'Author',

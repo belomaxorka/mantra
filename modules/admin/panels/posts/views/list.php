@@ -5,7 +5,7 @@
                 <h1 class="h3"><?php echo t('admin-posts.title'); ?></h1>
                 <?php if (!empty($canCreate)): ?>
                     <a href="<?php echo base_url('/admin/posts/new'); ?>" class="btn btn-primary">
-                        <i class="bi bi-plus-circle me-2"></i><?php echo t('admin-posts.new_post'); ?>
+                        <i class="bi bi-plus-circle me-2"></i><?php echo t('admin-posts.new'); ?>
                     </a>
                 <?php endif; ?>
             </div>
@@ -22,7 +22,7 @@
                             <p><?php echo t('admin-posts.no_posts'); ?></p>
                             <?php if (!empty($canCreate)): ?>
                                 <a href="<?php echo base_url('/admin/posts/new'); ?>" class="btn btn-primary">
-                                    <i class="bi bi-plus-circle me-2"></i><?php echo t('admin-posts.new_post'); ?>
+                                    <i class="bi bi-plus-circle me-2"></i><?php echo t('admin-posts.new'); ?>
                                 </a>
                             <?php endif; ?>
                         </div>

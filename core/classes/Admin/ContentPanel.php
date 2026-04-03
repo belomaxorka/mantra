@@ -112,6 +112,7 @@ abstract class ContentPanel extends AdminPanel
         $admin->adminRoute('GET', $path . '/edit/{id}', [$this, 'editItem']);
         $admin->adminRoute('POST', $path . '/edit/{id}', [$this, 'updateItem']);
         $admin->adminRoute('POST', $path . '/delete/{id}', [$this, 'deleteItem']);
+        $admin->adminRoute('POST', $path . '/preview', [$this, 'previewItem']);
     }
 
     // ========== Helpers ==========
@@ -457,5 +458,96 @@ abstract class ContentPanel extends AdminPanel
 
         app()->session()->flash('success', t('admin.common.deleted'));
         $this->redirectAdmin($this->getAdminPath());
+    }
+
+    // ========== Preview ==========
+
+    public function previewItem($params = []): void
+    {
+        $prefix = $this->getPermissionPrefix();
+        if (!$this->requirePermission($prefix . '.view')) return;
+        if (!$this->verifyCsrf()) return;
+
+        $data = $this->extractFormData();
+        $data = $this->fireHook('admin.' . $this->getCollectionName() . '.form_data', $data);
+        $data = $this->ensureSlug($data);
+
+        // Merge with existing item data when editing (for author, timestamps, etc.)
+        $previewId = app()->request()->post('_preview_id', '');
+        if ($previewId !== '') {
+            $existing = app()->db()->read($this->getCollectionName(), $previewId);
+            if ($existing) {
+                $data = array_merge($existing, $data);
+            }
+        }
+
+        // Fill defaults for missing fields
+        $defaults = $this->getDefaultItem();
+        foreach ($defaults as $key => $value) {
+            if (!isset($data[$key]) || $data[$key] === '') {
+                $data[$key] = $value;
+            }
+        }
+
+        // Ensure author info
+        if (empty($data['author'])) {
+            $user = $this->getUser();
+            $data['author'] = $user['username'];
+            $data['author_id'] = $user['_id'];
+        }
+        if (empty($data['created_at'])) {
+            $data['created_at'] = clock()->timestamp();
+        }
+
+        $this->renderPreview($data);
+    }
+
+    /**
+     * Render a public-facing preview of the content item.
+     * Override in subclass to provide actual rendering.
+     */
+    protected function renderPreview($data): void
+    {
+        abort(404);
+    }
+
+    /**
+     * Find the first existing theme template from a list of candidates.
+     */
+    protected function resolveThemeTemplate($candidates)
+    {
+        $theme = config('theme.active', 'default');
+        $themePath = MANTRA_THEMES . '/' . $theme;
+
+        foreach ($candidates as $template) {
+            if (file_exists($themePath . '/templates/' . $template . '.php')) {
+                return $template;
+            }
+        }
+
+        return end($candidates);
+    }
+
+    /**
+     * Inject a preview banner into the rendered HTML output.
+     */
+    protected function injectPreviewBanner($html)
+    {
+        $banner = '<div id="mantra-preview-banner" style="position:fixed;top:0;left:0;right:0;z-index:999999;'
+            . 'background:linear-gradient(135deg,#f0ad4e,#ec971f);color:#000;text-align:center;'
+            . 'padding:12px 20px;font-family:-apple-system,BlinkMacSystemFont,sans-serif;font-size:14px;'
+            . 'box-shadow:0 2px 8px rgba(0,0,0,.15);display:flex;align-items:center;justify-content:center;gap:12px;">'
+            . '<svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor">'
+            . '<path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13 13 0 011.66-2.043C4.12 4.668 5.88 3.5 8 3.5s3.879 1.168 5.168 2.457A13 13 0 0114.828 8a13 13 0 01-1.66 2.043C11.879 11.332 10.119 12.5 8 12.5s-3.879-1.168-5.168-2.457A13 13 0 011.172 8z"/>'
+            . '<path d="M8 5.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5zM4.5 8a3.5 3.5 0 117 0 3.5 3.5 0 01-7 0z"/>'
+            . '</svg>'
+            . '<span>' . e(t('admin.common.preview_banner')) . '</span>'
+            . '<button onclick="window.close()" style="background:#000;color:#fff;border:none;'
+            . 'padding:6px 16px;border-radius:4px;cursor:pointer;font-size:13px;font-weight:500;">'
+            . e(t('admin.common.close_preview')) . '</button>'
+            . '</div>';
+        $spacer = '<div style="height:48px;"></div>';
+
+        return preg_replace('/(<body[^>]*>)/i', '$1' . $banner . $spacer, $html, 1);
     }
 }

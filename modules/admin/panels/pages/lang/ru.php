@@ -30,6 +30,7 @@ return [
     'admin-pages.view' => 'Просмотр',
     'admin-pages.delete' => 'Удалить',
     'admin-pages.delete_confirm' => 'Вы уверены, что хотите удалить эту страницу?',
+    'admin-pages.preview' => 'Предпросмотр',
     'admin-pages.create' => 'Создать страницу',
     'admin-pages.update' => 'Обновить страницу',
 

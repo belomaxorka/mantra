@@ -6,7 +6,7 @@ return [
 
     // Posts list
     'admin-posts.title' => 'Posts',
-    'admin-posts.new_post' => 'New Post',
+    'admin-posts.new' => 'New Post',
     'admin-posts.no_posts' => 'No posts yet. Create your first post!',
     'admin-posts.edit_post' => 'Edit Post',
 
@@ -32,6 +32,7 @@ return [
     'admin-posts.delete_confirm' => 'Are you sure you want to delete this post?',
     'admin-posts.create' => 'Create Post',
     'admin-posts.update' => 'Update Post',
+    'admin-posts.preview' => 'Preview',
     'admin-posts.cancel' => 'Cancel',
 
     // Sections

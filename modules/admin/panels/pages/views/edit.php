@@ -16,6 +16,9 @@
 
     <form method="POST" id="pageForm">
         <input type="hidden" name="csrf_token" value="<?php echo $this->escape($csrf_token); ?>">
+        <?php if (!$isNew): ?>
+            <input type="hidden" name="_preview_id" value="<?php echo $this->escape($page['_id']); ?>">
+        <?php endif; ?>
 
         <div class="row">
             <div class="col-xl-8">
@@ -82,9 +85,12 @@
                             </div>
                         </div>
 
-                        <div class="d-grid">
+                        <div class="d-grid gap-2">
                             <button type="submit" class="btn btn-primary">
                                 <i class="bi bi-save me-2"></i><?php echo $isNew ? t('admin-pages.create') : t('admin-pages.update'); ?>
+                            </button>
+                            <button type="button" id="btnPreview" class="btn btn-outline-info">
+                                <i class="bi bi-eye me-2"></i><?php echo t('admin-pages.preview'); ?>
                             </button>
                         </div>
                     </div>
@@ -236,5 +242,35 @@
         .catch(function (error) {
             console.error('CKEditor initialization error:', error);
         });
+})();
+</script>
+<script>
+(function() {
+    var previewUrl = '<?php echo base_url("/admin/pages/preview"); ?>';
+    document.getElementById('btnPreview').addEventListener('click', function() {
+        if (window.editor) {
+            window.editor.updateSourceElement();
+        }
+        var form = document.getElementById('pageForm');
+        var previewForm = document.createElement('form');
+        previewForm.method = 'POST';
+        previewForm.action = previewUrl;
+        previewForm.target = '_blank';
+        previewForm.style.display = 'none';
+        var elements = form.elements;
+        for (var i = 0; i < elements.length; i++) {
+            var el = elements[i];
+            if (!el.name) continue;
+            if ((el.type === 'radio' || el.type === 'checkbox') && !el.checked) continue;
+            var input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = el.name;
+            input.value = el.value;
+            previewForm.appendChild(input);
+        }
+        document.body.appendChild(previewForm);
+        previewForm.submit();
+        document.body.removeChild(previewForm);
+    });
 })();
 </script>

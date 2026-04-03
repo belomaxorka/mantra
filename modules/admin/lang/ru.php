@@ -46,6 +46,8 @@ return [
     'admin.common.updated' => 'Успешно обновлено',
     'admin.common.deleted' => 'Успешно удалено',
     'admin.common.slug_exists' => 'Этот URL уже используется. Пожалуйста, выберите другой.',
+    'admin.common.preview_banner' => 'Предпросмотр — содержимое не сохранено',
+    'admin.common.close_preview' => 'Закрыть предпросмотр',
 
     // Modules management (shared across admin modules)
     'admin.modules.author' => 'Автор',

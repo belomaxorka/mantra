@@ -6,7 +6,7 @@ return [
 
     // Posts list
     'admin-posts.title' => 'Посты',
-    'admin-posts.new_post' => 'Новый пост',
+    'admin-posts.new' => 'Новый пост',
     'admin-posts.no_posts' => 'Пока нет постов. Создайте свой первый пост!',
     'admin-posts.edit_post' => 'Редактировать пост',
 
@@ -32,6 +32,7 @@ return [
     'admin-posts.delete_confirm' => 'Вы уверены, что хотите удалить этот пост?',
     'admin-posts.create' => 'Создать пост',
     'admin-posts.update' => 'Обновить пост',
+    'admin-posts.preview' => 'Предпросмотр',
     'admin-posts.cancel' => 'Отмена',
 
     // Sections
