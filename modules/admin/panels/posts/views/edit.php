@@ -137,9 +137,6 @@
                                 <?php echo t('admin-posts.view'); ?>
                             </a>
                         <?php endif; ?>
-                        <a href="<?php echo base_url('/admin/posts'); ?>" class="btn btn-outline-secondary">
-                            <?php echo t('admin-posts.cancel'); ?>
-                        </a>
                     </div>
                 </div>
             </div>

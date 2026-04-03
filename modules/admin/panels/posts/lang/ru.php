@@ -33,7 +33,6 @@ return [
     'admin-posts.create' => 'Создать пост',
     'admin-posts.update' => 'Обновить пост',
     'admin-posts.preview' => 'Предпросмотр',
-    'admin-posts.cancel' => 'Отмена',
 
     // Sections
     'admin-posts.publish' => 'Публикация',

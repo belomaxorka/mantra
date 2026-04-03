@@ -33,7 +33,6 @@ return [
     'admin-posts.create' => 'Create Post',
     'admin-posts.update' => 'Update Post',
     'admin-posts.preview' => 'Preview',
-    'admin-posts.cancel' => 'Cancel',
 
     // Sections
     'admin-posts.publish' => 'Publish',
