@@ -96,14 +96,25 @@ class MarkdownConverter
         $html = preg_replace('/~~(.+?)~~/', '<del>$1</del>', $html);
 
         // Images (must be before links)
-        $html = preg_replace('/!\[([^\]]*)\]\(([^\)]+)\)/', '<img src="$2" alt="$1">', $html);
+        $html = preg_replace_callback('/!\[([^\]]*)\]\(([^\)]+)\)/', function ($matches) {
+            $alt = htmlspecialchars($matches[1], ENT_QUOTES, 'UTF-8');
+            $url = self::sanitizeUrl($matches[2]);
+            if ($url === '') {
+                return $alt;
+            }
+            return '<img src="' . $url . '" alt="' . $alt . '">';
+        }, $html);
 
         // Links (with optional title)
         $html = preg_replace_callback('/\[([^\]]+)\]\(([^\s\)]+)(?:\s+"([^"]*)")?\)/', function ($matches) {
             $text = $matches[1];
-            $url = $matches[2];
+            $url = self::sanitizeUrl($matches[2]);
+            if ($url === '') {
+                return $text;
+            }
             $title = $matches[3] ?? '';
             if ($title !== '') {
+                $title = htmlspecialchars($title, ENT_QUOTES, 'UTF-8');
                 return '<a href="' . $url . '" title="' . $title . '">' . $text . '</a>';
             }
             return '<a href="' . $url . '">' . $text . '</a>';
@@ -136,6 +147,24 @@ class MarkdownConverter
         }
 
         return $html;
+    }
+
+    /**
+     * Sanitize a URL for safe use in HTML attributes
+     *
+     * Blocks dangerous schemes (javascript:, vbscript:, data:) and
+     * escapes special characters to prevent attribute injection.
+     *
+     * @param string $url Raw URL
+     * @return string Sanitized URL, or empty string if blocked
+     */
+    private static function sanitizeUrl(string $url): string
+    {
+        $trimmed = trim($url);
+        if (preg_match('/^(javascript|vbscript|data)\s*:/i', $trimmed)) {
+            return '';
+        }
+        return htmlspecialchars($trimmed, ENT_QUOTES, 'UTF-8');
     }
 
     /**

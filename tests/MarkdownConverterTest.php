@@ -388,6 +388,225 @@ class MarkdownConverterTest extends MantraTestCase
     }
 
     // ═══════════════════════════════════════════════
+    //  toHtml: Nested formatting
+    // ═══════════════════════════════════════════════
+
+    public function testToHtmlItalicInsideBold(): void
+    {
+        $result = $this->html('**text *italic* more**');
+        $this->assertStringContainsString('<strong>', $result);
+        $this->assertStringContainsString('<em>italic</em>', $result);
+    }
+
+    public function testToHtmlBoldInsideItalic(): void
+    {
+        $result = $this->html('*text **bold** more*');
+        $this->assertStringContainsString('<em>', $result);
+        $this->assertStringContainsString('<strong>bold</strong>', $result);
+    }
+
+    public function testToHtmlBoldInsideLink(): void
+    {
+        $result = $this->html('[**bold link**](https://example.com)');
+        $this->assertStringContainsString('<a href="https://example.com">', $result);
+        $this->assertStringContainsString('<strong>bold link</strong>', $result);
+    }
+
+    public function testToHtmlLinkInsideBold(): void
+    {
+        $result = $this->html('**[link](https://example.com) text**');
+        $this->assertStringContainsString('<strong>', $result);
+        $this->assertStringContainsString('<a href="https://example.com">link</a>', $result);
+    }
+
+    public function testToHtmlStrikethroughWithBold(): void
+    {
+        $result = $this->html('~~**bold deleted**~~');
+        $this->assertStringContainsString('<del>', $result);
+        $this->assertStringContainsString('<strong>bold deleted</strong>', $result);
+    }
+
+    public function testToHtmlBoldInsideBlockquote(): void
+    {
+        $result = $this->html('> **bold** in quote');
+        $this->assertStringContainsString('<blockquote>', $result);
+        $this->assertStringContainsString('<strong>bold</strong>', $result);
+    }
+
+    public function testToHtmlMultipleInlineFormats(): void
+    {
+        $result = $this->html('**bold** and *italic* and ~~deleted~~');
+        $this->assertStringContainsString('<strong>bold</strong>', $result);
+        $this->assertStringContainsString('<em>italic</em>', $result);
+        $this->assertStringContainsString('<del>deleted</del>', $result);
+    }
+
+    public function testToHtmlDeepNestingBoldItalicStrikethrough(): void
+    {
+        $result = $this->html('***~~nested~~***');
+        $this->assertStringContainsString('<strong><em><del>nested</del></em></strong>', $result);
+    }
+
+    // ═══════════════════════════════════════════════
+    //  toHtml: XSS prevention — dangerous URL schemes
+    // ═══════════════════════════════════════════════
+
+    public function testToHtmlLinkJavascriptUrlBlocked(): void
+    {
+        $result = $this->html('[click](javascript:alert(1))');
+        $this->assertStringNotContainsString('javascript:', $result);
+        $this->assertStringNotContainsString('<a ', $result, 'Dangerous link must not produce <a> tag');
+        $this->assertStringContainsString('click', $result, 'Link text preserved');
+    }
+
+    public function testToHtmlLinkJavascriptUrlCaseInsensitive(): void
+    {
+        $result = $this->html('[click](JavaScript:alert(1))');
+        $this->assertStringNotContainsString('<a ', $result, 'Case-insensitive javascript: check');
+
+        $result = $this->html('[click](JAVASCRIPT:alert(1))');
+        $this->assertStringNotContainsString('<a ', $result, 'Uppercase JAVASCRIPT: check');
+    }
+
+    public function testToHtmlLinkVbscriptUrlBlocked(): void
+    {
+        $result = $this->html('[click](vbscript:MsgBox(1))');
+        $this->assertStringNotContainsString('vbscript:', $result);
+        $this->assertStringNotContainsString('<a ', $result);
+    }
+
+    public function testToHtmlLinkDataUrlBlocked(): void
+    {
+        $result = $this->html('[click](data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==)');
+        $this->assertStringNotContainsString('data:', $result);
+        $this->assertStringNotContainsString('<a ', $result);
+    }
+
+    public function testToHtmlImageJavascriptSrcBlocked(): void
+    {
+        $result = $this->html('![x](javascript:alert(1))');
+        $this->assertStringNotContainsString('javascript:', $result);
+        $this->assertStringNotContainsString('<img ', $result, 'Dangerous src must not produce <img> tag');
+    }
+
+    public function testToHtmlImageDataSrcBlocked(): void
+    {
+        $result = $this->html('![x](data:image/svg+xml;base64,PHN2ZyBvbmxvYWQ9YWxlcnQoMSk+)');
+        $this->assertStringNotContainsString('data:', $result);
+        $this->assertStringNotContainsString('<img ', $result);
+    }
+
+    // ═══════════════════════════════════════════════
+    //  toHtml: XSS prevention — attribute injection
+    // ═══════════════════════════════════════════════
+
+    public function testToHtmlLinkUrlQuotesEscaped(): void
+    {
+        $result = $this->html('[text](http://x"onclick="alert(1))');
+        $this->assertStringContainsString('&quot;', $result, 'Quotes in URL must be HTML-escaped');
+    }
+
+    public function testToHtmlImageAltQuotesEscaped(): void
+    {
+        $result = $this->html('![" onload="alert(1)](img.jpg)');
+        $this->assertStringContainsString('&quot;', $result, 'Quotes in alt must be HTML-escaped');
+    }
+
+    public function testToHtmlImageSrcQuotesEscaped(): void
+    {
+        $result = $this->html('![alt](img.jpg"onerror="alert(1))');
+        $this->assertStringContainsString('&quot;', $result, 'Quotes in src must be HTML-escaped');
+    }
+
+    public function testToHtmlLinkTitleHtmlEscaped(): void
+    {
+        $result = $this->html('[text](http://ok "<script>alert(1)</script>")');
+        $this->assertStringNotContainsString('<script>', $result, 'HTML in title must be escaped');
+        $this->assertStringContainsString('&lt;script&gt;', $result);
+    }
+
+    // ═══════════════════════════════════════════════
+    //  toHtml: XSS prevention — safe URLs still work
+    // ═══════════════════════════════════════════════
+
+    public function testToHtmlLinkSafeProtocolsAllowed(): void
+    {
+        $result = $this->html('[a](https://example.com)');
+        $this->assertStringContainsString('href="https://example.com"', $result, 'HTTPS allowed');
+
+        $result = $this->html('[a](http://example.com)');
+        $this->assertStringContainsString('href="http://example.com"', $result, 'HTTP allowed');
+
+        $result = $this->html('[a](/path)');
+        $this->assertStringContainsString('href="/path"', $result, 'Relative URL allowed');
+
+        $result = $this->html('[a](mailto:user@example.com)');
+        $this->assertStringContainsString('href="mailto:user@example.com"', $result, 'Mailto allowed');
+
+        $result = $this->html('[a](#anchor)');
+        $this->assertStringContainsString('href="#anchor"', $result, 'Anchor allowed');
+    }
+
+    public function testToHtmlImageSafeUrlsAllowed(): void
+    {
+        $result = $this->html('![a](https://example.com/img.jpg)');
+        $this->assertStringContainsString('src="https://example.com/img.jpg"', $result, 'HTTPS image allowed');
+
+        $result = $this->html('![a](/local/img.jpg)');
+        $this->assertStringContainsString('src="/local/img.jpg"', $result, 'Relative image allowed');
+    }
+
+    // ═══════════════════════════════════════════════
+    //  toMarkdown: Nested HTML
+    // ═══════════════════════════════════════════════
+
+    public function testToMarkdownNestedBoldItalic(): void
+    {
+        $this->assertSame(
+            '***bold italic***',
+            $this->md('<strong><em>bold italic</em></strong>'),
+        );
+    }
+
+    public function testToMarkdownBoldInsideListItem(): void
+    {
+        $result = $this->md('<ul><li><strong>bold</strong> item</li></ul>');
+        $this->assertStringContainsString('- **bold** item', $result);
+    }
+
+    public function testToMarkdownBoldInsideBlockquote(): void
+    {
+        $result = $this->md('<blockquote><p><strong>bold</strong> text</p></blockquote>');
+        $this->assertStringContainsString('> **bold** text', $result);
+    }
+
+    // ═══════════════════════════════════════════════
+    //  toMarkdown: Malicious HTML
+    // ═══════════════════════════════════════════════
+
+    public function testToMarkdownStripsScriptTags(): void
+    {
+        $result = $this->md('<p>before</p><script>alert(1)</script><p>after</p>');
+        $this->assertStringNotContainsString('<script>', $result);
+        $this->assertStringNotContainsString('</script>', $result);
+        $this->assertStringContainsString('before', $result);
+        $this->assertStringContainsString('after', $result);
+    }
+
+    public function testToMarkdownStripsEventHandlerAttributes(): void
+    {
+        $result = $this->md('<p onclick="alert(1)">text</p>');
+        $this->assertStringNotContainsString('onclick', $result);
+        $this->assertStringContainsString('text', $result);
+    }
+
+    public function testToMarkdownStripsIframeTags(): void
+    {
+        $result = $this->md('<iframe src="http://evil.com"></iframe>');
+        $this->assertStringNotContainsString('<iframe', $result);
+    }
+
+    // ═══════════════════════════════════════════════
     //  toMarkdown: Headers
     // ═══════════════════════════════════════════════
 
