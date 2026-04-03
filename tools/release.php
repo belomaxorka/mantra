@@ -124,23 +124,79 @@ if (!confirm('Proceed with release?')) {
     exit(0);
 }
 
+// ── Detect GitHub repo URL (for PR links) ──────────────────
+
+$repoUrl = '';
+$remoteUrl = trim(git('remote get-url origin'));
+
+if (preg_match('#github\.com[:/](.+?)(?:\.git)?$#', $remoteUrl, $m)) {
+    $repoUrl = "https://github.com/{$m[1]}";
+}
+
+/**
+ * Convert (#123) references to markdown links.
+ */
+function linkifyPr(string $text, string $repoUrl): string
+{
+    if ($repoUrl === '') {
+        return $text;
+    }
+    return preg_replace(
+        '/\(#(\d+)\)/',
+        "([#$1]({$repoUrl}/pull/$1))",
+        $text
+    );
+}
+
 // ── Generate changelog ──────────────────────────────────────
 
 $range = $prevTag !== '' ? "{$prevTag}..HEAD" : 'HEAD';
-$logOutput = git("log {$range} --pretty=format:%s --no-merges");
-$commits = array_filter(explode("\n", $logOutput), 'strlen');
+
+// --first-parent: only commits on the main line (merge commits for PRs,
+// direct commits for squash merges and direct pushes — no individual
+// commits from inside merged branches).
+$hashOutput = git("log {$range} --first-parent --format=%H");
+$hashes = array_filter(explode("\n", $hashOutput), 'strlen');
+
+$entries = array();
+
+foreach ($hashes as $hash) {
+    $subject = trim(git("log -1 --format=%s {$hash}"));
+
+    // Merge commit: "Merge pull request #123 from user/branch"
+    // Use the PR title from the commit body instead of the merge message.
+    if (preg_match('/^Merge pull request #(\d+) from/', $subject, $m)) {
+        $prNumber = $m[1];
+        $body = trim(git("log -1 --format=%b {$hash}"));
+        $title = strtok($body, "\n");
+
+        if ($title !== '' && $title !== false) {
+            $entries[] = "{$title} (#{$prNumber})";
+        }
+        continue;
+    }
+
+    // Skip other merge commits (e.g. "Merge branch 'x' into y")
+    if (str_starts_with($subject, 'Merge ')) {
+        continue;
+    }
+
+    $entries[] = $subject;
+}
 
 $feats = array();
 $fixes = array();
 $others = array();
 
-foreach ($commits as $subject) {
-    if (preg_match('/^feat(\(.*?\))?!?:/', $subject)) {
-        $feats[] = $subject;
-    } elseif (preg_match('/^fix(\(.*?\))?!?:/', $subject)) {
-        $fixes[] = $subject;
+foreach ($entries as $entry) {
+    $linked = linkifyPr($entry, $repoUrl);
+
+    if (preg_match('/^feat(\(.*?\))?!?:/', $entry)) {
+        $feats[] = $linked;
+    } elseif (preg_match('/^fix(\(.*?\))?!?:/', $entry)) {
+        $fixes[] = $linked;
     } else {
-        $others[] = $subject;
+        $others[] = $linked;
     }
 }
 

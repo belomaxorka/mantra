@@ -23,10 +23,17 @@ The version argument accepts semver with an optional `v` prefix (`1.2.0` or `v1.
 Steps performed:
 
 1. **Pre-flight checks** — verifies you are on `main`, working tree is clean, and the tag doesn't already exist.
-2. **Changelog generation** — collects commits since the last tag and groups them by [Conventional Commits](https://www.conventionalcommits.org/) type:
+2. **Changelog generation** — collects entries since the last tag using `--first-parent` traversal, which correctly handles all GitHub merge strategies:
+   - **Squash merge** — the squashed commit appears directly (e.g. `feat(seo): add OG images (#42)`)
+   - **Merge commit** — the PR title is extracted from the merge commit body, with the PR number appended
+   - **Rebase merge / direct push** — individual commits appear as-is
+   
+   Entries are grouped by [Conventional Commits](https://www.conventionalcommits.org/) type:
    - `feat(...)` → **Added**
    - `fix(...)` → **Fixed**
    - Everything else → **Other**
+   
+   PR references (`#123`) are automatically converted to clickable GitHub links.
 3. **Preview** — displays the release plan and generated changelog, asks for confirmation.
 4. **Version bump** — updates `version` and `release_date` in `core/bootstrap.php`.
 5. **CHANGELOG.md** — prepends the new entry (creates the file on first release).
@@ -60,12 +67,12 @@ Proceed with release? [y/N] y
 
 ### Added
 
-- feat(seo): add Open Graph image support
-- feat(categories): add category description field
+- feat(seo): add Open Graph image support ([#42](https://github.com/belomaxorka/mantra/pull/42))
+- feat(categories): add category description field ([#38](https://github.com/belomaxorka/mantra/pull/38))
 
 ### Fixed
 
-- fix(router): normalize trailing slashes
+- fix(router): normalize trailing slashes ([#41](https://github.com/belomaxorka/mantra/pull/41))
 
 ### Other
 
