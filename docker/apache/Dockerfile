@@ -21,4 +21,10 @@ RUN mkdir -p \
         uploads \
     && chown -R www-data:www-data content storage uploads
 
+COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+ENTRYPOINT ["entrypoint.sh"]
+CMD ["apache2-foreground"]
+
 EXPOSE 80
