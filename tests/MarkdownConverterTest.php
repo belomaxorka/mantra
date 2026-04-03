@@ -828,4 +828,263 @@ class MarkdownConverterTest extends MantraTestCase
         $original = '---';
         $this->assertSame($original, $this->md($this->html($original)), 'Horizontal rule round-trip');
     }
+
+    // ═══════════════════════════════════════════════
+    //  toHtml: Code block language identifiers
+    // ═══════════════════════════════════════════════
+
+    public function testToHtmlFencedCodeBlockUppercaseLanguage(): void
+    {
+        $result = $this->html("```PHP\necho 1;\n```");
+        $this->assertStringContainsString('<pre><code', $result, 'Recognized as code block');
+        $this->assertStringContainsString('class="language-PHP"', $result, 'Uppercase language preserved');
+    }
+
+    public function testToHtmlFencedCodeBlockLanguageWithDigits(): void
+    {
+        $result = $this->html("```python3\nprint(1)\n```");
+        $this->assertStringContainsString('class="language-python3"', $result);
+    }
+
+    public function testToHtmlFencedCodeBlockLanguageWithHyphen(): void
+    {
+        $result = $this->html("```objective-c\nNSLog();\n```");
+        $this->assertStringContainsString('class="language-objective-c"', $result);
+    }
+
+    public function testToHtmlFencedCodeBlockLanguageWithPlus(): void
+    {
+        $result = $this->html("```c++\ncout;\n```");
+        $this->assertStringContainsString('class="language-c++"', $result);
+    }
+
+    public function testToHtmlFencedCodeBlockLanguageCSharp(): void
+    {
+        $result = $this->html("```c#\nConsole.Write();\n```");
+        $this->assertStringContainsString('class="language-c#"', $result);
+    }
+
+    // ═══════════════════════════════════════════════
+    //  toHtml: Underscore emphasis — word boundary
+    // ═══════════════════════════════════════════════
+
+    public function testToHtmlUnderscoreInVariableName(): void
+    {
+        $this->assertSame('<p>some_variable_name</p>', $this->html('some_variable_name'));
+    }
+
+    public function testToHtmlDoubleUnderscoreMidWord(): void
+    {
+        $this->assertSame('<p>my__var__name</p>', $this->html('my__var__name'));
+    }
+
+    public function testToHtmlUnderscoreMultipleInIdentifier(): void
+    {
+        $this->assertSame('<p>a_b_c_d</p>', $this->html('a_b_c_d'));
+    }
+
+    public function testToHtmlUnderscoreStandaloneStillWorks(): void
+    {
+        $this->assertSame('<p><em>italic</em></p>', $this->html('_italic_'));
+        $this->assertSame('<p><strong>bold</strong></p>', $this->html('__bold__'));
+    }
+
+    // ═══════════════════════════════════════════════
+    //  toHtml: URLs with parentheses
+    // ═══════════════════════════════════════════════
+
+    public function testToHtmlLinkUrlWithParentheses(): void
+    {
+        $result = $this->html('[Wiki](https://en.wikipedia.org/wiki/Foo_(bar))');
+        $this->assertStringContainsString('href="https://en.wikipedia.org/wiki/Foo_(bar)"', $result);
+    }
+
+    public function testToHtmlImageUrlWithParentheses(): void
+    {
+        $result = $this->html('![alt](https://example.com/img_(1).jpg)');
+        $this->assertStringContainsString('src="https://example.com/img_(1).jpg"', $result);
+    }
+
+    // ═══════════════════════════════════════════════
+    //  toHtml: Trailing # in headers
+    // ═══════════════════════════════════════════════
+
+    public function testToHtmlHeaderTrailingHashStripped(): void
+    {
+        $this->assertSame('<h2>Title</h2>', $this->html('## Title ##'));
+        $this->assertSame('<h1>Title</h1>', $this->html('# Title #'));
+        $this->assertSame('<h3>Title</h3>', $this->html('### Title ###'));
+    }
+
+    public function testToHtmlHeaderTrailingHashMidTitlePreserved(): void
+    {
+        $this->assertSame('<h2>Title # more</h2>', $this->html('## Title # more'));
+    }
+
+    // ═══════════════════════════════════════════════
+    //  toHtml: Spaced horizontal rules
+    // ═══════════════════════════════════════════════
+
+    public function testToHtmlHorizontalRuleSpacedHyphens(): void
+    {
+        $this->assertSame('<hr>', $this->html('- - -'));
+    }
+
+    public function testToHtmlHorizontalRuleSpacedAsterisks(): void
+    {
+        $this->assertSame('<hr>', $this->html('* * *'));
+    }
+
+    public function testToHtmlHorizontalRuleSpacedUnderscores(): void
+    {
+        $this->assertSame('<hr>', $this->html('_ _ _'));
+    }
+
+    public function testToHtmlHorizontalRuleWithLeadingSpaces(): void
+    {
+        $this->assertSame('<hr>', $this->html('  ---'));
+    }
+
+    // ═══════════════════════════════════════════════
+    //  toHtml: Blockquote multi-paragraph
+    // ═══════════════════════════════════════════════
+
+    public function testToHtmlBlockquoteWithEmptyQuoteLine(): void
+    {
+        $result = $this->html("> para 1\n>\n> para 2");
+        $this->assertSame(
+            1,
+            substr_count($result, '<blockquote>'),
+            'Single blockquote for continuous quote block',
+        );
+        $this->assertStringContainsString('para 1', $result);
+        $this->assertStringContainsString('para 2', $result);
+        $this->assertStringNotContainsString('> para', $result, 'No literal > prefix leaked into text');
+    }
+
+    // ═══════════════════════════════════════════════
+    //  toHtml: Asterisk false-positive emphasis
+    // ═══════════════════════════════════════════════
+
+    public function testToHtmlAsteriskInMathExpression(): void
+    {
+        $result = $this->html('5 * 3 * 15');
+        $this->assertStringNotContainsString('<em>', $result, 'Spaced asterisks are not emphasis');
+        $this->assertSame('<p>5 * 3 * 15</p>', $result);
+    }
+
+    // ═══════════════════════════════════════════════
+    //  toHtml: CRLF line endings
+    // ═══════════════════════════════════════════════
+
+    public function testToHtmlCrlfLineEndings(): void
+    {
+        $result = $this->html("line 1\r\nline 2");
+        $this->assertSame('<p>line 1<br>line 2</p>', $result);
+        $this->assertStringNotContainsString("\r", $result, 'No CR in output');
+    }
+
+    public function testToHtmlCrlfParagraphSeparation(): void
+    {
+        $result = $this->html("first\r\n\r\nsecond");
+        $this->assertStringContainsString('<p>first</p>', $result);
+        $this->assertStringContainsString('<p>second</p>', $result);
+    }
+
+    // ═══════════════════════════════════════════════
+    //  toHtml: Unclosed / malformed elements
+    // ═══════════════════════════════════════════════
+
+    public function testToHtmlUnclosedFencedCodeBlock(): void
+    {
+        $result = $this->html("```\nsome code without closing");
+        $this->assertStringNotContainsString('<pre>', $result, 'Unclosed code block not rendered as code');
+    }
+
+    public function testToHtmlUnclosedInlineCode(): void
+    {
+        $result = $this->html('start `unclosed code');
+        $this->assertStringNotContainsString('<code>', $result, 'Unclosed backtick not rendered as code');
+    }
+
+    // ═══════════════════════════════════════════════
+    //  toHtml: Image inside link
+    // ═══════════════════════════════════════════════
+
+    public function testToHtmlImageInsideLink(): void
+    {
+        $result = $this->html('[![alt](img.jpg)](https://example.com)');
+        $this->assertStringContainsString('<a href="https://example.com">', $result);
+        $this->assertStringContainsString('<img src="img.jpg" alt="alt">', $result);
+    }
+
+    // ═══════════════════════════════════════════════
+    //  toHtml: Mixed list markers
+    // ═══════════════════════════════════════════════
+
+    public function testToHtmlMixedListMarkersAreMerged(): void
+    {
+        $result = $this->html("- item 1\n* item 2\n+ item 3");
+        $this->assertSame(1, substr_count($result, '<ul>'), 'Mixed markers produce single list');
+        $this->assertStringContainsString('<li>item 1</li>', $result);
+        $this->assertStringContainsString('<li>item 2</li>', $result);
+        $this->assertStringContainsString('<li>item 3</li>', $result);
+    }
+
+    // ═══════════════════════════════════════════════
+    //  toHtml: Back-to-back code blocks
+    // ═══════════════════════════════════════════════
+
+    public function testToHtmlBackToBackCodeBlocks(): void
+    {
+        $result = $this->html("```\nblock1\n```\n\n```\nblock2\n```");
+        $this->assertSame(2, substr_count($result, '<pre><code>'), 'Two separate code blocks');
+    }
+
+    // ═══════════════════════════════════════════════
+    //  Round-trip: additional coverage
+    // ═══════════════════════════════════════════════
+
+    public function testRoundTripUnorderedList(): void
+    {
+        $original = "- item 1\n- item 2";
+        $back = $this->md($this->html($original));
+        $this->assertStringContainsString('- item 1', $back);
+        $this->assertStringContainsString('- item 2', $back);
+    }
+
+    public function testRoundTripOrderedList(): void
+    {
+        $original = "1. first\n2. second";
+        $back = $this->md($this->html($original));
+        $this->assertStringContainsString('1. first', $back);
+        $this->assertStringContainsString('2. second', $back);
+    }
+
+    public function testRoundTripBlockquote(): void
+    {
+        $original = '> quoted text';
+        $back = $this->md($this->html($original));
+        $this->assertStringContainsString('> quoted text', $back);
+    }
+
+    public function testRoundTripImage(): void
+    {
+        $original = '![alt text](photo.jpg)';
+        $this->assertSame($original, $this->md($this->html($original)), 'Image round-trip');
+    }
+
+    public function testRoundTripInlineCode(): void
+    {
+        $original = 'Use `printf()` for output.';
+        $this->assertSame($original, $this->md($this->html($original)), 'Inline code round-trip');
+    }
+
+    public function testRoundTripFencedCodeBlock(): void
+    {
+        $original = "```\nsome code\n```";
+        $back = $this->md($this->html($original));
+        $this->assertStringContainsString('```', $back);
+        $this->assertStringContainsString('some code', $back);
+    }
 }

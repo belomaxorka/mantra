@@ -18,8 +18,12 @@ class MarkdownConverter
         $codeIndex = 0;
         $html = $markdown;
 
+        // Normalize line endings (CRLF → LF)
+        $html = str_replace("\r\n", "\n", $html);
+        $html = str_replace("\r", "\n", $html);
+
         // Step 1: Extract fenced code blocks (protect from parsing)
-        $html = preg_replace_callback('/```([a-z]*)\n(.*?)```/s', function ($matches) use (&$codeBlocks, &$codeIndex) {
+        $html = preg_replace_callback('/```([a-zA-Z0-9_+#.-]*)\n(.*?)```/s', function ($matches) use (&$codeBlocks, &$codeIndex) {
             $placeholder = '<!--CODEBLOCK:' . $codeIndex . '-->';
             $lang = $matches[1];
             $code = htmlspecialchars($matches[2], ENT_QUOTES, 'UTF-8');
@@ -43,26 +47,28 @@ class MarkdownConverter
         // Step 3: Block-level elements
 
         // Headers
-        $html = preg_replace('/^######\s+(.*)$/m', '<h6>$1</h6>', $html);
-        $html = preg_replace('/^#####\s+(.*)$/m', '<h5>$1</h5>', $html);
-        $html = preg_replace('/^####\s+(.*)$/m', '<h4>$1</h4>', $html);
-        $html = preg_replace('/^###\s+(.*)$/m', '<h3>$1</h3>', $html);
-        $html = preg_replace('/^##\s+(.*)$/m', '<h2>$1</h2>', $html);
-        $html = preg_replace('/^#\s+(.*)$/m', '<h1>$1</h1>', $html);
+        $html = preg_replace('/^######\s+(.*?)(?:\s+#+\s*)?$/m', '<h6>$1</h6>', $html);
+        $html = preg_replace('/^#####\s+(.*?)(?:\s+#+\s*)?$/m', '<h5>$1</h5>', $html);
+        $html = preg_replace('/^####\s+(.*?)(?:\s+#+\s*)?$/m', '<h4>$1</h4>', $html);
+        $html = preg_replace('/^###\s+(.*?)(?:\s+#+\s*)?$/m', '<h3>$1</h3>', $html);
+        $html = preg_replace('/^##\s+(.*?)(?:\s+#+\s*)?$/m', '<h2>$1</h2>', $html);
+        $html = preg_replace('/^#\s+(.*?)(?:\s+#+\s*)?$/m', '<h1>$1</h1>', $html);
 
         // Horizontal rules
-        $html = preg_replace('/^(?:---+|\*\*\*+|___+)\s*$/m', '<hr>', $html);
+        $html = preg_replace('/^[ \t]*(?:(?:-[ \t]*){3,}|(?:\*[ \t]*){3,}|(?:_[ \t]*){3,})$/m', '<hr>', $html);
 
         // Blockquotes (merge consecutive lines into single block)
-        $html = preg_replace_callback('/(?:^>\s?(.*)$\n?)+/m', function ($matches) {
-            preg_match_all('/^>\s?(.*)$/m', $matches[0], $lines);
+        $html = preg_replace_callback('/(?:^>[ \t]?(.*)$\n?)+/m', function ($matches) {
+            preg_match_all('/^>[ \t]?(.*)$/m', $matches[0], $lines);
             $content = implode("\n", $lines[1]);
-            return '<blockquote><p>' . trim($content) . '</p></blockquote>';
+            $paragraphs = preg_split('/\n{2,}/', trim($content));
+            $innerHtml = implode('</p><p>', array_map('trim', $paragraphs));
+            return '<blockquote><p>' . $innerHtml . '</p></blockquote>';
         }, $html);
 
         // Ordered lists (merge consecutive lines)
-        $html = preg_replace_callback('/(?:^\d+\.\s+(.*)$\n?)+/m', function ($matches) {
-            preg_match_all('/^\d+\.\s+(.*)$/m', $matches[0], $items);
+        $html = preg_replace_callback('/(?:^\d+\.[ \t]+(.*)$\n?)+/m', function ($matches) {
+            preg_match_all('/^\d+\.[ \t]+(.*)$/m', $matches[0], $items);
             $listHtml = '<ol>';
             foreach ($items[1] as $item) {
                 $listHtml .= '<li>' . $item . '</li>';
@@ -72,8 +78,8 @@ class MarkdownConverter
         }, $html);
 
         // Unordered lists (merge consecutive lines)
-        $html = preg_replace_callback('/(?:^[ \t]*[-*+]\s+(.*)$\n?)+/m', function ($matches) {
-            preg_match_all('/^[ \t]*[-*+]\s+(.*)$/m', $matches[0], $items);
+        $html = preg_replace_callback('/(?:^[ \t]*[-*+][ \t]+(.*)$\n?)+/m', function ($matches) {
+            preg_match_all('/^[ \t]*[-*+][ \t]+(.*)$/m', $matches[0], $items);
             $listHtml = '<ul>';
             foreach ($items[1] as $item) {
                 $listHtml .= '<li>' . $item . '</li>';
@@ -85,18 +91,18 @@ class MarkdownConverter
         // Step 4: Inline elements (no /s flag — single-line only)
 
         // Bold and italic
-        $html = preg_replace('/\*\*\*(.+?)\*\*\*/', '<strong><em>$1</em></strong>', $html);
-        $html = preg_replace('/\*\*(.+?)\*\*/', '<strong>$1</strong>', $html);
-        $html = preg_replace('/\*(.+?)\*/', '<em>$1</em>', $html);
-        $html = preg_replace('/___(.+?)___/', '<strong><em>$1</em></strong>', $html);
-        $html = preg_replace('/__(.+?)__/', '<strong>$1</strong>', $html);
-        $html = preg_replace('/_(.+?)_/', '<em>$1</em>', $html);
+        $html = preg_replace('/\*\*\*(?!\s)(.+?)(?<!\s)\*\*\*/', '<strong><em>$1</em></strong>', $html);
+        $html = preg_replace('/\*\*(?!\s)(.+?)(?<!\s)\*\*/', '<strong>$1</strong>', $html);
+        $html = preg_replace('/\*(?!\s)(.+?)(?<!\s)\*/', '<em>$1</em>', $html);
+        $html = preg_replace('/(?<!\w)___(?!\s)(.+?)(?<!\s)___(?!\w)/', '<strong><em>$1</em></strong>', $html);
+        $html = preg_replace('/(?<!\w)__(?!\s)(.+?)(?<!\s)__(?!\w)/', '<strong>$1</strong>', $html);
+        $html = preg_replace('/(?<!\w)_(?!\s)(.+?)(?<!\s)_(?!\w)/', '<em>$1</em>', $html);
 
         // Strikethrough
         $html = preg_replace('/~~(.+?)~~/', '<del>$1</del>', $html);
 
         // Images (must be before links)
-        $html = preg_replace_callback('/!\[([^\]]*)\]\(([^\)]+)\)/', function ($matches) {
+        $html = preg_replace_callback('/!\[([^\]]*)\]\(([^()]*(?:\([^()]*\)[^()]*)*)\)/', function ($matches) {
             $alt = htmlspecialchars($matches[1], ENT_QUOTES, 'UTF-8');
             $url = self::sanitizeUrl($matches[2]);
             if ($url === '') {
@@ -106,7 +112,7 @@ class MarkdownConverter
         }, $html);
 
         // Links (with optional title)
-        $html = preg_replace_callback('/\[([^\]]+)\]\(([^\s\)]+)(?:\s+"([^"]*)")?\)/', function ($matches) {
+        $html = preg_replace_callback('/\[([^\]]+)\]\(([^\s()]*(?:\([^\s()]*\)[^\s()]*)*)(?:\s+"([^"]*)")?\)/', function ($matches) {
             $text = $matches[1];
             $url = self::sanitizeUrl($matches[2]);
             if ($url === '') {
