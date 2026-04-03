@@ -57,7 +57,6 @@ class ViewTest extends MantraTestCase
         // Use reflection to set hookManager since it's private
         $reflection = new ReflectionClass($app);
         $hookManagerProperty = $reflection->getProperty('hookManager');
-        $hookManagerProperty->setAccessible(true);
         $hookManagerProperty->setValue($app, new HookManager());
     }
 

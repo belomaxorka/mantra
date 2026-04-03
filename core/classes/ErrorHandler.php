@@ -187,7 +187,6 @@ class ErrorHandler
 
             case E_NOTICE:
             case E_USER_NOTICE:
-            case E_STRICT:
                 return Logger::NOTICE;
 
             case E_DEPRECATED:
