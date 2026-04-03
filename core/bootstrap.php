@@ -15,7 +15,7 @@ define('MANTRA_PROJECT_INFO', [
     'name' => 'Mantra CMS',
     'version' => '1.1.0',
     'github' => 'https://github.com/belomaxorka/mantra',
-    'release_date' => '2026-03-17',
+    'release_date' => '2026-04-03',
 ]);
 
 // Detect CLI mode
