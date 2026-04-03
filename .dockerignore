@@ -21,7 +21,6 @@ phpunit.xml
 tests/
 tools/
 docs/
-config/
 
 CLAUDE.md
 CHANGELOG.md

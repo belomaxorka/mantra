@@ -80,14 +80,14 @@ Example virtual host:
 
 #### Nginx
 
-Nginx does not use `.htaccess`. Copy `config/nginx.conf` to `/etc/nginx/sites-available/` and adjust `server_name`, `root`, and `fastcgi_pass`, then symlink to `sites-enabled/`.
+Nginx does not use `.htaccess`. Copy `docs/server-configs/nginx.conf` to `/etc/nginx/sites-available/` and adjust `server_name`, `root`, and `fastcgi_pass`, then symlink to `sites-enabled/`.
 
 The configuration includes all security rules (blocking hidden files, sensitive directories, and file extensions), upload protection, static file caching, and PHP-FPM routing.
 
 Adjust `fastcgi_pass` to match your PHP-FPM socket or TCP address (e.g. `127.0.0.1:9000`).
 
 ```bash
-cp config/nginx.conf /etc/nginx/sites-available/mantra.conf
+cp docs/server-configs/nginx.conf /etc/nginx/sites-available/mantra.conf
 # Edit server_name, root, and fastcgi_pass
 ln -s /etc/nginx/sites-available/mantra.conf /etc/nginx/sites-enabled/
 nginx -t && systemctl reload nginx
@@ -95,12 +95,12 @@ nginx -t && systemctl reload nginx
 
 #### Caddy
 
-Copy `config/Caddyfile` and adjust the site address, `root` path, and `php_fastcgi` address.
+Copy `docs/server-configs/Caddyfile` and adjust the site address, `root` path, and `php_fastcgi` address.
 
 Caddy automatically provisions HTTPS certificates from Let's Encrypt when using a real domain name. Use `:80` or `localhost` for local development without HTTPS.
 
 ```bash
-cp config/Caddyfile /etc/caddy/Caddyfile
+cp docs/server-configs/Caddyfile /etc/caddy/Caddyfile
 # Edit site address, root, and php_fastcgi
 systemctl reload caddy
 ```
