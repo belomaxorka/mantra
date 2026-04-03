@@ -444,11 +444,31 @@ body {
   border-color: var(--mn-primary);
 }
 
-/* ---------- 12. Alerts ---------- */
-.alert {
+/* ---------- 12. Toasts & Inline Alerts ---------- */
+.toast {
+  border-radius: var(--mn-card-radius);
+  font-size: .875rem;
+  min-width: 280px;
+  box-shadow: 0 .25rem .75rem rgba(0,0,0,.15);
+}
+.toast-success { background-color: #d1e7dd; color: #0a3622; }
+.toast-danger  { background-color: #f8d7da; color: #58151c; }
+.toast-warning { background-color: #fff3cd; color: #664d03; }
+.toast-info    { background-color: #cff4fc; color: #055160; }
+
+.alert-permanent {
   border-radius: var(--mn-card-radius);
   border: none;
   font-size: .875rem;
+}
+
+.login-error {
+  background-color: #f8d7da;
+  color: #58151c;
+  border-radius: var(--mn-card-radius);
+  padding: .75rem 1rem;
+  font-size: .875rem;
+  margin-bottom: 1rem;
 }
 
 /* ---------- 13. Nav Tabs (settings) ---------- */

@@ -65,11 +65,8 @@ class SettingsPanel extends AdminPanel
         }
 
         if ($contentHtml === null) {
-            http_response_code(404);
-            return $this->renderAdmin(
-                t('admin-settings.title'),
-                '<div class="alert alert-danger alert-permanent">Settings not found</div>',
-            );
+            $this->renderErrorPage('Settings not found', 404);
+            return;
         }
 
         $settingsPrefix = t('admin-settings.title');

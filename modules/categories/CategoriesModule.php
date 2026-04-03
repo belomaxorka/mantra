@@ -152,8 +152,10 @@ class CategoriesModule extends BaseAdminModule
 
         if (!$category) {
             http_response_code(404);
-            return $this->renderAdmin('Not Found',
-                '<div class="alert alert-danger alert-permanent">Category not found</div>');
+            return $this->renderAdmin(
+                t('admin.common.not_found'),
+                '<div class="alert alert-danger alert-permanent">' . e('Category not found') . '</div>',
+            );
         }
 
         $content = $this->renderView('categories:admin-edit', [

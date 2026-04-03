@@ -41,6 +41,10 @@ return [
     'admin.common.delete_confirm_title' => 'Подтверждение удаления',
     'admin.common.delete_confirm_body' => 'Вы уверены, что хотите удалить этот элемент? Это действие нельзя отменить.',
     'admin.common.access_denied' => 'Доступ запрещён. У вас нет прав для выполнения этого действия.',
+    'admin.common.not_found' => 'Не найдено',
+    'admin.common.created' => 'Успешно создано',
+    'admin.common.updated' => 'Успешно обновлено',
+    'admin.common.deleted' => 'Успешно удалено',
     'admin.common.slug_exists' => 'Этот URL уже используется. Пожалуйста, выберите другой.',
 
     // Modules management (shared across admin modules)

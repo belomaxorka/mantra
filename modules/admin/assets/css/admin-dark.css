@@ -84,26 +84,42 @@
   color: #94a3b8 !important;
 }
 
-/* ---------- Alerts ---------- */
-.alert-success {
+/* ---------- Toasts & Inline Alerts ---------- */
+.toast-success {
   background-color: rgba(16,185,129,.15);
   color: #6ee7b7;
   border: 1px solid rgba(16,185,129,.2);
 }
-.alert-danger {
+.toast-success .btn-close { filter: invert(1) grayscale(100%) brightness(200%); }
+.toast-danger {
   background-color: rgba(239,68,68,.15);
   color: #fca5a5;
   border: 1px solid rgba(239,68,68,.2);
 }
-.alert-warning {
+.toast-danger .btn-close { filter: invert(1) grayscale(100%) brightness(200%); }
+.toast-warning {
   background-color: rgba(245,158,11,.15);
   color: #fcd34d;
   border: 1px solid rgba(245,158,11,.2);
 }
-.alert-info {
+.toast-warning .btn-close { filter: invert(1) grayscale(100%) brightness(200%); }
+.toast-info {
   background-color: rgba(56,189,248,.15);
   color: #7dd3fc;
   border: 1px solid rgba(56,189,248,.2);
+}
+.toast-info .btn-close { filter: invert(1) grayscale(100%) brightness(200%); }
+
+.alert-permanent.alert-danger {
+  background-color: rgba(239,68,68,.15);
+  color: #fca5a5;
+  border: 1px solid rgba(239,68,68,.2);
+}
+
+.login-error {
+  background-color: rgba(239,68,68,.15);
+  color: #fca5a5;
+  border: 1px solid rgba(239,68,68,.2);
 }
 
 /* ---------- Dropdowns ---------- */

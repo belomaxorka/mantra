@@ -32,10 +32,8 @@ class PermissionsPanel extends AdminPanel
 
         $registry = app()->service('permissions');
         if (!$registry) {
-            return $this->renderAdmin(
-                t('admin-permissions.title'),
-                '<div class="alert alert-danger alert-permanent">Permission registry not available</div>',
-            );
+            $this->renderErrorPage('Permission registry not available');
+            return;
         }
 
         return $this->renderPermissions($registry);
@@ -51,10 +49,8 @@ class PermissionsPanel extends AdminPanel
 
         $registry = app()->service('permissions');
         if (!$registry) {
-            return $this->renderAdmin(
-                t('admin-permissions.title'),
-                '<div class="alert alert-danger alert-permanent">Permission registry not available</div>',
-            );
+            $this->renderErrorPage('Permission registry not available');
+            return;
         }
 
         $notice = null;

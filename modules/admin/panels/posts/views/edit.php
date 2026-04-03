@@ -11,10 +11,7 @@
     </div>
 
     <?php if (!empty($error)): ?>
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="bi bi-exclamation-triangle-fill me-2"></i><?php echo e($error); ?>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
+    <script>document.addEventListener('DOMContentLoaded', function() { adminToast(<?php echo json_encode(e($error), JSON_HEX_TAG); ?>, 'danger'); });</script>
     <?php endif; ?>
 
     <form method="POST" action="<?php echo $isNew ? base_url('/admin/posts/new') : base_url('/admin/posts/edit/' . $post['_id']); ?>">
@@ -176,7 +173,6 @@
                             <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
                             <span class="ms-2 text-muted"><?php echo t('admin-posts.image_uploading'); ?></span>
                         </div>
-                        <div id="imageError" class="alert alert-danger mt-2 d-none small"></div>
                     </div>
                 </div>
             </div>
@@ -187,7 +183,6 @@
                 var elDropZone  = document.getElementById('imageDropZone');
                 var elFileInput = document.getElementById('imageFile');
                 var elUploading = document.getElementById('imageUploading');
-                var elError     = document.getElementById('imageError');
                 var elPreview   = document.getElementById('imagePreview');
                 var elPreviewImg = document.getElementById('imagePreviewImg');
                 var elUpload    = document.getElementById('imageUpload');
@@ -201,7 +196,6 @@
 
                     elDropZone.classList.add('d-none');
                     elUploading.classList.remove('d-none');
-                    elError.classList.add('d-none');
 
                     var xhr = new XMLHttpRequest();
                     xhr.open('POST', uploadUrl, true);
@@ -216,15 +210,13 @@
                         }
                         var errMsg = 'Upload failed';
                         try { errMsg = JSON.parse(xhr.responseText).error.message; } catch(e) {}
-                        elError.textContent = errMsg;
-                        elError.classList.remove('d-none');
+                        adminToast(errMsg, 'danger');
                         elDropZone.classList.remove('d-none');
                     };
                     xhr.onerror = function() {
                         elUploading.classList.add('d-none');
                         elDropZone.classList.remove('d-none');
-                        elError.textContent = 'Network error';
-                        elError.classList.remove('d-none');
+                        adminToast('Network error', 'danger');
                     };
                     xhr.send(form);
                 }

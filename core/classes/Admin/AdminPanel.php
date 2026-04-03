@@ -150,11 +150,7 @@ abstract class AdminPanel implements AdminPanelInterface
         $result = $userManager->hasPermission($this->getUser(), $permission);
 
         if ($result === false) {
-            http_response_code(403);
-            echo $this->renderAdmin(
-                t('admin.common.access_denied'),
-                '<div class="alert alert-danger alert-permanent">' . e(t('admin.common.access_denied')) . '</div>',
-            );
+            $this->renderErrorPage(t('admin.common.access_denied'));
             return false;
         }
 
@@ -170,12 +166,21 @@ abstract class AdminPanel implements AdminPanelInterface
         if ($this->auth()->hasRole('admin')) {
             return true;
         }
-        http_response_code(403);
-        echo $this->renderAdmin(
-            t('admin.common.access_denied'),
-            '<div class="alert alert-danger alert-permanent">' . e(t('admin.common.access_denied')) . '</div>',
-        );
+        $this->renderErrorPage(t('admin.common.access_denied'));
         return false;
+    }
+
+    /**
+     * Render a full-page error (403/404) with inline alert.
+     */
+    protected function renderErrorPage($message, $code = 403): void
+    {
+        http_response_code($code);
+        $title = ($code === 404) ? t('admin.common.not_found') : t('admin.common.access_denied');
+        echo $this->renderAdmin(
+            $title,
+            '<div class="alert alert-danger alert-permanent">' . e($message) . '</div>',
+        );
     }
 
     // ========== Convenience Helpers ==========
@@ -212,6 +217,17 @@ abstract class AdminPanel implements AdminPanelInterface
     protected function redirectAdmin($path = ''): void
     {
         app()->response()->redirect(base_url('/admin/' . ltrim($path, '/')));
+    }
+
+    /**
+     * Add a flash message (shown as a toast after the next page load).
+     *
+     * @param string $type    success, danger, warning, info
+     * @param string $message The message text
+     */
+    protected function flash($type, $message): void
+    {
+        app()->session()->flash($type, $message);
     }
 
     /**

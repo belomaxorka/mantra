@@ -151,7 +151,7 @@ class UsersPanel extends ContentPanel
         $this->redirectAdmin($this->getAdminPath());
     }
 
-    public function updateItem($params)
+    public function updateItem($params): void
     {
         if (!$this->requirePermission('users.edit')) return;
         if (!$this->verifyCsrf()) return;
@@ -160,9 +160,8 @@ class UsersPanel extends ContentPanel
         $user = $this->getUserManager()->find($id);
 
         if (!$user) {
-            http_response_code(404);
-            return $this->renderAdmin('Not Found',
-                '<div class="alert alert-danger alert-permanent">' . e(t('admin-users.not_found')) . '</div>');
+            $this->renderErrorPage(t('admin-users.not_found'), 404);
+            return;
         }
 
         $data = $this->extractFormData();
@@ -177,11 +176,7 @@ class UsersPanel extends ContentPanel
         // Prevent non-admins from editing admin accounts
         $targetRole = $user['role'] ?? '';
         if ($currentRole !== 'admin' && $targetRole === 'admin') {
-            http_response_code(403);
-            echo $this->renderAdmin(
-                t('admin.common.access_denied'),
-                '<div class="alert alert-danger alert-permanent">' . e(t('admin.common.access_denied')) . '</div>',
-            );
+            $this->renderErrorPage(t('admin.common.access_denied'));
             return;
         }
 

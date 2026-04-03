@@ -195,9 +195,8 @@ class UploadsPanel extends AdminPanel
         $file = app()->db()->read('uploads', $id);
 
         if (!$file) {
-            http_response_code(404);
-            return $this->renderAdmin('Not Found',
-                '<div class="alert alert-danger alert-permanent">' . e(t('admin-uploads.not_found')) . '</div>');
+            $this->renderErrorPage(t('admin-uploads.not_found'), 404);
+            return;
         }
 
         $userManager = new \User();
@@ -223,7 +222,7 @@ class UploadsPanel extends AdminPanel
     /**
      * Update file metadata (original_name only).
      */
-    public function updateFile($params)
+    public function updateFile($params): void
     {
         if (!$this->requirePermission('uploads.upload')) return;
         if (!$this->verifyCsrf()) return;
@@ -232,9 +231,8 @@ class UploadsPanel extends AdminPanel
         $file = app()->db()->read('uploads', $id);
 
         if (!$file) {
-            http_response_code(404);
-            return $this->renderAdmin('Not Found',
-                '<div class="alert alert-danger alert-permanent">' . e(t('admin-uploads.not_found')) . '</div>');
+            $this->renderErrorPage(t('admin-uploads.not_found'), 404);
+            return;
         }
 
         $file['original_name'] = app()->request()->postTrimmed('original_name');
@@ -266,11 +264,7 @@ class UploadsPanel extends AdminPanel
         if ($access === 'own') {
             $userManager = new \User();
             if (!$userManager->canEdit($this->getUser(), $file)) {
-                http_response_code(403);
-                echo $this->renderAdmin(
-                    t('admin.common.access_denied'),
-                    '<div class="alert alert-danger alert-permanent">' . e(t('admin.common.access_denied')) . '</div>',
-                );
+                $this->renderErrorPage(t('admin.common.access_denied'));
                 return;
             }
         }

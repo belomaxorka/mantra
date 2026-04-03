@@ -111,4 +111,29 @@ class Session
         $_SESSION = [];
         return session_destroy();
     }
+
+    /**
+     * Add a flash message (survives one redirect).
+     *
+     * @param string $type    Message type: success, danger, warning, info
+     * @param string $message The message text
+     */
+    public function flash($type, $message): void
+    {
+        $flashes = $this->get('_flashes', []);
+        $flashes[] = ['type' => $type, 'message' => $message];
+        $this->set('_flashes', $flashes);
+    }
+
+    /**
+     * Retrieve and clear all flash messages.
+     *
+     * @return array<array{type: string, message: string}>
+     */
+    public function getFlashes(): array
+    {
+        $flashes = $this->get('_flashes', []);
+        $this->delete('_flashes');
+        return $flashes;
+    }
 }

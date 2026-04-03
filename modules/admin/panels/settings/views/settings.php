@@ -6,17 +6,10 @@
   <div class="row">
     <div class="col">
       <?php if (!empty($error)): ?>
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-          <?php echo e($error); ?>
-          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
+      <script>document.addEventListener('DOMContentLoaded', function() { adminToast(<?php echo json_encode(e($error), JSON_HEX_TAG); ?>, 'danger'); });</script>
       <?php endif; ?>
-
       <?php if (!empty($notice)): ?>
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-          <?php echo e($notice); ?>
-          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
+      <script>document.addEventListener('DOMContentLoaded', function() { adminToast(<?php echo json_encode(e($notice), JSON_HEX_TAG); ?>, 'success'); });</script>
       <?php endif; ?>
 
       <ul class="nav nav-tabs mb-3" role="tablist">

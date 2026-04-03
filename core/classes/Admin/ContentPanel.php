@@ -218,11 +218,7 @@ abstract class ContentPanel extends AdminPanel
         if ($userManager->canEdit($this->getUser(), $item)) {
             return true;
         }
-        http_response_code(403);
-        echo $this->renderAdmin(
-            t('admin.common.access_denied'),
-            '<div class="alert alert-danger alert-permanent">' . e(t('admin.common.access_denied')) . '</div>',
-        );
+        $this->renderErrorPage(t('admin.common.access_denied'));
         return false;
     }
 
@@ -337,6 +333,7 @@ abstract class ContentPanel extends AdminPanel
             'action' => 'create',
         ]);
 
+        $this->flash('success', t('admin.common.created'));
         $this->redirectAdmin($this->getAdminPath());
     }
 
@@ -350,10 +347,8 @@ abstract class ContentPanel extends AdminPanel
         $item = app()->db()->read($this->getCollectionName(), $id);
 
         if (!$item) {
-            http_response_code(404);
-            return $this->renderAdmin('Not Found',
-                '<div class="alert alert-danger alert-permanent">'
-                . e($this->getContentType()) . ' not found</div>');
+            $this->renderErrorPage(e($this->getContentType()) . ' not found', 404);
+            return;
         }
 
         // Ownership check when access is 'own'
@@ -377,7 +372,7 @@ abstract class ContentPanel extends AdminPanel
         ]);
     }
 
-    public function updateItem($params)
+    public function updateItem($params): void
     {
         $prefix = $this->getPermissionPrefix();
         $access = $this->requirePermission($prefix . '.edit');
@@ -390,10 +385,8 @@ abstract class ContentPanel extends AdminPanel
         $item = app()->db()->read($this->getCollectionName(), $id);
 
         if (!$item) {
-            http_response_code(404);
-            return $this->renderAdmin('Not Found',
-                '<div class="alert alert-danger alert-permanent">'
-                . e($this->getContentType()) . ' not found</div>');
+            $this->renderErrorPage(e($this->getContentType()) . ' not found', 404);
+            return;
         }
 
         // Ownership check when access is 'own'
@@ -429,6 +422,7 @@ abstract class ContentPanel extends AdminPanel
             'action' => 'update',
         ]);
 
+        $this->flash('success', t('admin.common.updated'));
         $this->redirectAdmin($this->getAdminPath());
     }
 
@@ -461,6 +455,7 @@ abstract class ContentPanel extends AdminPanel
             'id' => $id,
         ]);
 
+        $this->flash('success', t('admin.common.deleted'));
         $this->redirectAdmin($this->getAdminPath());
     }
 }

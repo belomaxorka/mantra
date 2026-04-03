@@ -206,18 +206,15 @@
   <input type="hidden" name="csrf_token" value="<?php echo e(app()->auth()->generateCsrfToken()); ?>">
 </form>
 
+<div class="toast-container position-fixed top-0 end-0 p-3" id="adminToastContainer" style="z-index: 1090;"></div>
+
 <script src="<?php echo $this->moduleAsset('bootstrap/bootstrap.min.js'); ?>"></script>
+<?php $flashes = app()->session()->getFlashes(); ?>
+<?php if (!empty($flashes)): ?>
+<script type="application/json" id="adminFlashData"><?php echo json_encode($flashes, JSON_HEX_TAG | JSON_UNESCAPED_UNICODE); ?></script>
+<?php endif; ?>
+<script src="<?php echo $this->moduleAsset('js/admin-toast.js'); ?>"></script>
 <script>
-  // Auto-dismiss alerts after 3 seconds
-  (function () {
-    var alerts = document.querySelectorAll('.alert:not(.alert-permanent)');
-    alerts.forEach(function (alert) {
-      setTimeout(function () {
-        var bsAlert = new bootstrap.Alert(alert);
-        bsAlert.close();
-      }, 3000);
-    });
-  })();
 
   // Sidebar collapse toggle
   (function () {
