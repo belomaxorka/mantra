@@ -23,7 +23,7 @@ services:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
     environment:
-      DOMAIN: ${DOMAIN:?Set DOMAIN in .env}
+      DOMAIN: ${DOMAIN:-localhost}
     depends_on:
       - app
 
