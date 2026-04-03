@@ -206,28 +206,28 @@ foreach ($entries as $entry) {
 $changelog = "## [{$tag}] - {$releaseDate}" . PHP_EOL;
 
 if (!empty($feats)) {
-    $changelog .= PHP_EOL . '### Added' . PHP_EOL . PHP_EOL;
+    $changelog .= PHP_EOL . '### ✨ Added' . PHP_EOL . PHP_EOL;
     foreach ($feats as $line) {
         $changelog .= "- {$line}" . PHP_EOL;
     }
 }
 
 if (!empty($fixes)) {
-    $changelog .= PHP_EOL . '### Fixed' . PHP_EOL . PHP_EOL;
+    $changelog .= PHP_EOL . '### 🐛 Fixed' . PHP_EOL . PHP_EOL;
     foreach ($fixes as $line) {
         $changelog .= "- {$line}" . PHP_EOL;
     }
 }
 
 if (!empty($refactors)) {
-    $changelog .= PHP_EOL . '### Refactored' . PHP_EOL . PHP_EOL;
+    $changelog .= PHP_EOL . '### ♻️ Refactored' . PHP_EOL . PHP_EOL;
     foreach ($refactors as $line) {
         $changelog .= "- {$line}" . PHP_EOL;
     }
 }
 
 if (!empty($others)) {
-    $changelog .= PHP_EOL . '### Other' . PHP_EOL . PHP_EOL;
+    $changelog .= PHP_EOL . '### 📦 Other' . PHP_EOL . PHP_EOL;
     foreach ($others as $line) {
         $changelog .= "- {$line}" . PHP_EOL;
     }

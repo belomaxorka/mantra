@@ -29,10 +29,10 @@ Steps performed:
    - **Rebase merge / direct push** — individual commits appear as-is
    
    Entries are grouped by [Conventional Commits](https://www.conventionalcommits.org/) type:
-   - `feat(...)` → **Added**
-   - `fix(...)` → **Fixed**
-   - `refactor(...)` → **Refactored**
-   - Everything else → **Other**
+   - `feat(...)` → **✨ Added**
+   - `fix(...)` → **🐛 Fixed**
+   - `refactor(...)` → **♻️ Refactored**
+   - Everything else → **📦 Other**
    
    PR references (`#123`) are automatically converted to clickable GitHub links.
 3. **Preview** — displays the release plan and generated changelog, asks for confirmation.
@@ -66,16 +66,16 @@ Proceed with release? [y/N] y
 ── Changelog ──────────────────────────────────
 ## [v1.2.0] - 2026-04-03
 
-### Added
+### ✨ Added
 
 - feat(seo): add Open Graph image support ([#42](https://github.com/belomaxorka/mantra/pull/42))
 - feat(categories): add category description field ([#38](https://github.com/belomaxorka/mantra/pull/38))
 
-### Fixed
+### 🐛 Fixed
 
 - fix(router): normalize trailing slashes ([#41](https://github.com/belomaxorka/mantra/pull/41))
 
-### Other
+### 📦 Other
 
 - chore: update dependencies
 ────────────────────────────────────────────────
