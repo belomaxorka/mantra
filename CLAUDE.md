@@ -310,7 +310,7 @@ abstract public function getDefaultItem();      // array of defaults for new ite
 abstract public function extractFormData($request); // Request → data array
 ```
 
-**ContentPanel optional overrides:** `getAdminPath()`, `getListTemplate()`, `getEditTemplate()`, `getDomain()`, `getPermissionPrefix()`, `getPermissionFlags()`, `generateId()`, `ensureSlug()`, `checkOwnership()`.
+**ContentPanel optional overrides:** `getAdminPath()`, `getListTemplate()`, `getEditTemplate()`, `getDomain()`, `getPermissionPrefix()`, `getPermissionFlags()`, `ensureSlug()`, `checkOwnership()`.
 
 ### Routing
 

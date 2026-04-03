@@ -185,9 +185,6 @@ protected function getDomain(): string
 // Permission prefix (default: collection name)
 protected function getPermissionPrefix(): string
 
-// ID generation (default: slug-based)
-protected function generateId($data): string
-
 // Slug processing (default: slugify from title)
 protected function ensureSlug($data): array
 ```

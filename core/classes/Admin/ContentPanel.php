@@ -116,11 +116,6 @@ abstract class ContentPanel extends AdminPanel
 
     // ========== Helpers ==========
 
-    protected function generateId($data)
-    {
-        return $data['slug'];
-    }
-
     protected function ensureSlug($data)
     {
         if (empty($data['slug']) && !empty($data['title'])) {
@@ -334,13 +329,11 @@ abstract class ContentPanel extends AdminPanel
         $data['created_at'] = clock()->timestamp();
         $data['updated_at'] = clock()->timestamp();
 
-        $id = $this->generateId($data);
-
-        app()->db()->write($this->getCollectionName(), $id, $data);
+        app()->db()->write($this->getCollectionName(), $data['slug'], $data);
 
         app()->hooks()->fire('content.saved', [
             'collection' => $this->getCollectionName(),
-            'id' => $id,
+            'id' => $data['slug'],
             'action' => 'create',
         ]);
 

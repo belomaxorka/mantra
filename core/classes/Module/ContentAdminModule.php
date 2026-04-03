@@ -92,23 +92,6 @@ abstract class ContentAdminModule extends BaseAdminModule
     }
 
     /**
-     * Generate ID for new item
-     * @param array $data Item data (must have slug already set via ensureSlug)
-     * @return string
-     */
-    protected function generateId($data)
-    {
-        $slug = $data['slug'];
-
-        $id = $slug;
-        if (app()->db()->exists($this->getCollectionName(), $id)) {
-            $id = $slug . '-' . uniqid();
-        }
-
-        return $id;
-    }
-
-    /**
      * Ensure slug is set, generate from title if empty
      * @param array $data Item data
      * @return array Modified data with slug
@@ -181,9 +164,7 @@ abstract class ContentAdminModule extends BaseAdminModule
         $data['created_at'] = clock()->timestamp();
         $data['updated_at'] = clock()->timestamp();
 
-        $id = $this->generateId($data);
-
-        app()->db()->write($this->getCollectionName(), $id, $data);
+        app()->db()->write($this->getCollectionName(), $data['slug'], $data);
 
         $this->redirectAdmin($this->getAdminPath());
     }

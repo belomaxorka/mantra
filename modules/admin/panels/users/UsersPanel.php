@@ -80,12 +80,6 @@ class UsersPanel extends ContentPanel
         return $data;
     }
 
-    // Use generated ID instead of slug-based
-    protected function generateId($data)
-    {
-        return $this->db()->generateId();
-    }
-
     private function getUserManager()
     {
         if ($this->userManager === null) {
