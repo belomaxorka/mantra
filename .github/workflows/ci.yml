@@ -6,12 +6,17 @@ on:
     pull_request:
         branches: [ main ]
 
+permissions:
+    contents: write
+
 jobs:
-    lint:
+    style:
         name: Code Style
         runs-on: ubuntu-latest
         steps:
             -   uses: actions/checkout@v4
+                with:
+                    ref: ${{ github.head_ref || github.ref_name }}
 
             -   name: Setup PHP
                 uses: shivammathur/setup-php@v2
@@ -19,12 +24,23 @@ jobs:
                     php-version: '8.4'
                     tools: php-cs-fixer
 
-            -   name: Check code style
-                run: php-cs-fixer fix --dry-run --diff --config=.php-cs-fixer.php
+            -   name: Fix code style
+                run: php-cs-fixer fix --config=.php-cs-fixer.php
+
+            -   name: Commit and push fixes
+                run: |
+                    git config user.name "github-actions[bot]"
+                    git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+                    git add -A
+                    if ! git diff --cached --quiet; then
+                      git commit -m "style: auto-fix code formatting
+
+                    Applied by php-cs-fixer in CI."
+                      git push
+                    fi
 
     tests:
         name: PHP ${{ matrix.php }}
-        needs: lint
         runs-on: ubuntu-latest
 
         strategy:

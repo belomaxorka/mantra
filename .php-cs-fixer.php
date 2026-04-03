@@ -27,6 +27,7 @@ return (new PhpCsFixer\Config())
         'modernize_strpos' => true,
 
         // Casting
+        'cast_spaces' => ['space' => 'none'],
         'modernize_types_casting' => true,
         'short_scalar_cast' => true,
 
