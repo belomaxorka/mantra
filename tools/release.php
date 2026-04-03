@@ -61,10 +61,12 @@ function gitOk(string $args): bool
 
 // ── Validate inputs ─────────────────────────────────────────
 
-$version = $argv[1] ?? '';
+$dryRun = in_array('--dry-run', $argv, true);
+$args = array_filter($argv, fn($a) => $a !== '--dry-run');
+$version = $args[1] ?? '';
 
 if ($version === '') {
-    error("Usage: php tools/release.php <version>  (e.g. 1.2.0)");
+    error("Usage: php tools/release.php <version> [--dry-run]  (e.g. 1.2.0)");
 }
 
 // Strip leading 'v' if provided
@@ -111,7 +113,7 @@ $releaseDate = date('Y-m-d');
 // ── Show plan ───────────────────────────────────────────────
 
 out('');
-out('  Mantra CMS Release');
+out('  Mantra CMS Release' . ($dryRun ? '  [DRY RUN]' : ''));
 out('  ─────────────────────');
 out("  Version:      {$version}");
 out("  Tag:          {$tag}");
@@ -119,7 +121,7 @@ out('  Previous tag: ' . ($prevTag ?: '(none, first release)'));
 out("  Date:         {$releaseDate}");
 out('');
 
-if (!confirm('Proceed with release?')) {
+if (!$dryRun && !confirm('Proceed with release?')) {
     out('Aborted.');
     exit(0);
 }
@@ -131,6 +133,24 @@ $remoteUrl = trim(git('remote get-url origin'));
 
 if (preg_match('#github\.com[:/](.+?)(?:\.git)?$#', $remoteUrl, $m)) {
     $repoUrl = "https://github.com/{$m[1]}";
+}
+
+/**
+ * Strip the conventional commit prefix and format for changelog.
+ *
+ * "feat(seo): add Open Graph"  → "**seo:** add Open Graph"
+ * "feat!: drop PHP 8.0"        → "drop PHP 8.0"
+ * "chore: update deps"         → "update deps"
+ */
+function formatEntry(string $text): string
+{
+    if (preg_match('/^[a-z]+\((.+?)\)!?:\s*(.+)$/', $text, $m)) {
+        return "**{$m[1]}:** {$m[2]}";
+    }
+    if (preg_match('/^[a-z]+!?:\s*(.+)$/', $text, $m)) {
+        return $m[1];
+    }
+    return $text;
 }
 
 /**
@@ -162,16 +182,19 @@ $entries = array();
 
 foreach ($hashes as $hash) {
     $subject = trim(git("log -1 --format=%s {$hash}"));
+    $body = trim(git("log -1 --format=%b {$hash}"));
 
     // Merge commit: "Merge pull request #123 from user/branch"
     // Use the PR title from the commit body instead of the merge message.
     if (preg_match('/^Merge pull request #(\d+) from/', $subject, $m)) {
         $prNumber = $m[1];
-        $body = trim(git("log -1 --format=%b {$hash}"));
         $title = strtok($body, "\n");
 
         if ($title !== '' && $title !== false) {
-            $entries[] = "{$title} (#{$prNumber})";
+            $entries[] = array(
+                'text' => "{$title} (#{$prNumber})",
+                'body' => $body,
+            );
         }
         continue;
     }
@@ -181,29 +204,79 @@ foreach ($hashes as $hash) {
         continue;
     }
 
-    $entries[] = $subject;
+    $entries[] = array(
+        'text' => $subject,
+        'body' => $body,
+    );
 }
 
+/**
+ * Check whether a commit is a breaking change.
+ *
+ * Detected via:
+ * - "!" before ":" in subject (e.g. feat!:, feat(scope)!:)
+ * - "BREAKING CHANGE:" or "BREAKING-CHANGE:" in commit body
+ *
+ * Returns the breaking change note from the body, or empty string.
+ */
+function detectBreaking(array $entry): string
+{
+    // Check "!" in subject: type(scope)!: description
+    if (preg_match('/^[a-z]+(\(.*?\))?!:/', $entry['text'])) {
+        // Try to extract note from body, fall back to empty
+        if (preg_match('/^BREAKING[ -]CHANGE:\s*(.+)/m', $entry['body'], $m)) {
+            return trim($m[1]);
+        }
+        return '';
+    }
+
+    // Check BREAKING CHANGE footer in body
+    if (preg_match('/^BREAKING[ -]CHANGE:\s*(.+)/m', $entry['body'], $m)) {
+        return trim($m[1]);
+    }
+
+    return false;
+}
+
+$breaking = array();
 $feats = array();
 $fixes = array();
 $refactors = array();
 $others = array();
 
 foreach ($entries as $entry) {
-    $linked = linkifyPr($entry, $repoUrl);
+    $formatted = linkifyPr(formatEntry($entry['text']), $repoUrl);
+    $breakingNote = detectBreaking($entry);
 
-    if (preg_match('/^feat(\(.*?\))?!?:/', $entry)) {
-        $feats[] = $linked;
-    } elseif (preg_match('/^fix(\(.*?\))?!?:/', $entry)) {
-        $fixes[] = $linked;
-    } elseif (preg_match('/^refactor(\(.*?\))?!?:/', $entry)) {
-        $refactors[] = $linked;
+    // Breaking changes go to their own section
+    if ($breakingNote !== false) {
+        $line = $formatted;
+        if ($breakingNote !== '') {
+            $line .= " — {$breakingNote}";
+        }
+        $breaking[] = $line;
+        continue;
+    }
+
+    if (preg_match('/^feat(\(.*?\))?!?:/', $entry['text'])) {
+        $feats[] = $formatted;
+    } elseif (preg_match('/^fix(\(.*?\))?!?:/', $entry['text'])) {
+        $fixes[] = $formatted;
+    } elseif (preg_match('/^refactor(\(.*?\))?!?:/', $entry['text'])) {
+        $refactors[] = $formatted;
     } else {
-        $others[] = $linked;
+        $others[] = $formatted;
     }
 }
 
 $changelog = "## [{$tag}] - {$releaseDate}" . PHP_EOL;
+
+if (!empty($breaking)) {
+    $changelog .= PHP_EOL . '### ⚠️ Breaking Changes' . PHP_EOL . PHP_EOL;
+    foreach ($breaking as $line) {
+        $changelog .= "- {$line}" . PHP_EOL;
+    }
+}
 
 if (!empty($feats)) {
     $changelog .= PHP_EOL . '### ✨ Added' . PHP_EOL . PHP_EOL;
@@ -238,6 +311,11 @@ out('── Changelog ───────────────────�
 out($changelog);
 out('────────────────────────────────────────────────');
 out('');
+
+if ($dryRun) {
+    out('Dry run complete. No changes were made.');
+    exit(0);
+}
 
 if (!confirm('Changelog looks good?')) {
     out('Aborted.');

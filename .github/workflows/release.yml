@@ -9,8 +9,28 @@ permissions:
   contents: write
 
 jobs:
+  tests:
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          extensions: json, session, openssl, mbstring
+          coverage: none
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Run tests
+        run: vendor/bin/phpunit
+
   release:
     name: Create GitHub Release
+    needs: tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -20,7 +40,15 @@ jobs:
 
       - name: Extract version from tag
         id: version
-        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          # Pre-release if version contains a hyphen (e.g. 2.0.0-beta.1)
+          if [[ "$version" == *-* ]]; then
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Extract changelog for this release
         id: changelog
@@ -55,4 +83,5 @@ jobs:
         with:
           name: Mantra CMS ${{ steps.version.outputs.version }}
           body: ${{ steps.changelog.outputs.body }}
+          prerelease: ${{ steps.version.outputs.prerelease }}
           files: mantra-${{ steps.version.outputs.version }}.zip

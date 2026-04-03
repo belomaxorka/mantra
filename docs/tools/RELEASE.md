@@ -6,6 +6,12 @@ Automate version bumps, changelog generation, and GitHub Releases. The flow cons
 
 ```bash
 php tools/release.php 1.2.0
+
+# Preview changelog without making changes
+php tools/release.php 1.2.0 --dry-run
+
+# Pre-release (marked as pre-release on GitHub)
+php tools/release.php 2.0.0-beta.1
 ```
 
 The script is interactive — it asks for confirmation at each step and can be aborted at any point.
@@ -29,12 +35,13 @@ Steps performed:
    - **Rebase merge / direct push** — individual commits appear as-is
    
    Entries are grouped by [Conventional Commits](https://www.conventionalcommits.org/) type:
+   - Breaking changes (`!` or `BREAKING CHANGE` footer) → **⚠️ Breaking Changes**
    - `feat(...)` → **✨ Added**
    - `fix(...)` → **🐛 Fixed**
    - `refactor(...)` → **♻️ Refactored**
    - Everything else → **📦 Other**
    
-   PR references (`#123`) are automatically converted to clickable GitHub links.
+   Conventional commit prefixes are stripped for readability: `feat(seo): add OG images` becomes `**seo:** add OG images`. PR references (`#123`) are automatically converted to clickable GitHub links.
 3. **Preview** — displays the release plan and generated changelog, asks for confirmation.
 4. **Version bump** — updates `version` and `release_date` in `core/bootstrap.php`.
 5. **CHANGELOG.md** — prepends the new entry (creates the file on first release).
@@ -45,9 +52,10 @@ Steps performed:
 
 When a `v*` tag is pushed, `.github/workflows/release.yml` runs:
 
-1. Extracts the changelog section for the pushed tag from `CHANGELOG.md`.
-2. Creates a clean source archive via `git archive` (dev files excluded by `.gitattributes`).
-3. Creates a **GitHub Release** with the changelog body and the zip archive attached.
+1. **Tests** — runs PHPUnit on PHP 8.1 to verify the tagged code passes.
+2. **Changelog extraction** — extracts the section for the pushed tag from `CHANGELOG.md`.
+3. **Archive** — creates a clean source zip via `git archive` (dev files excluded by `.gitattributes`).
+4. **GitHub Release** — creates the release with changelog and archive. Versions with a hyphen (e.g. `2.0.0-beta.1`) are automatically marked as pre-release.
 
 ## Example Session
 
@@ -68,16 +76,16 @@ Proceed with release? [y/N] y
 
 ### ✨ Added
 
-- feat(seo): add Open Graph image support ([#42](https://github.com/belomaxorka/mantra/pull/42))
-- feat(categories): add category description field ([#38](https://github.com/belomaxorka/mantra/pull/38))
+- **seo:** add Open Graph image support ([#42](https://github.com/belomaxorka/mantra/pull/42))
+- **categories:** add category description field ([#38](https://github.com/belomaxorka/mantra/pull/38))
 
 ### 🐛 Fixed
 
-- fix(router): normalize trailing slashes ([#41](https://github.com/belomaxorka/mantra/pull/41))
+- **router:** normalize trailing slashes ([#41](https://github.com/belomaxorka/mantra/pull/41))
 
 ### 📦 Other
 
-- chore: update dependencies
+- update dependencies
 ────────────────────────────────────────────────
 
 Changelog looks good? [y/N] y
@@ -90,6 +98,13 @@ Push commit and tag to origin? [y/N] y
 
 Done! Tag v1.2.0 pushed. GitHub Actions will create the release.
 ```
+
+## CLI Options
+
+| Option | Description |
+|--------|-------------|
+| `<version>` | Version to release (semver, e.g. `1.2.0`, `2.0.0-beta.1`) |
+| `--dry-run` | Show plan and changelog preview without making any changes |
 
 ## Files Modified by the Script
 
@@ -124,11 +139,25 @@ The generated `CHANGELOG.md` follows [Keep a Changelog](https://keepachangelog.c
 
 ## [v1.2.0] - 2026-04-03
 
-### Added
-- feat(seo): add Open Graph image support
+### ⚠️ Breaking Changes
 
-### Fixed
-- fix(router): normalize trailing slashes
+- **auth:** rewrite session storage — Existing sessions will be invalidated
+
+### ✨ Added
+
+- **seo:** add Open Graph image support ([#42](...))
+
+### 🐛 Fixed
+
+- **router:** normalize trailing slashes ([#41](...))
+
+### ♻️ Refactored
+
+- **database:** extract query builder ([#40](...))
+
+### 📦 Other
+
+- update dependencies
 
 ## [v1.1.0] - 2026-03-17
 ...
