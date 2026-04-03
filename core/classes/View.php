@@ -250,8 +250,7 @@ class View
      */
     public function asset($path)
     {
-        $baseUrl = rtrim(config('site.url', ''), '/');
-        return $baseUrl . '/' . basename(MANTRA_THEMES) . '/' . basename($this->themePath) . '/assets/' . ltrim($path, '/');
+        return base_url(basename(MANTRA_THEMES) . '/' . basename($this->themePath) . '/assets/' . ltrim($path, '/'));
     }
 
     /**
@@ -280,7 +279,7 @@ class View
         }
 
         $path = ltrim($path, '/');
-        $url = '/' . basename(MANTRA_MODULES) . '/' . $module . '/assets/' . $path;
+        $url = base_url(basename(MANTRA_MODULES) . '/' . $module . '/assets/' . $path);
 
         // Append module version for cache-busting
         $instance = \Application::getInstance()->modules()->getModule($module);
