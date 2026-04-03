@@ -118,12 +118,7 @@ abstract class ContentPanel extends AdminPanel
 
     protected function generateId($data)
     {
-        $slug = $data['slug'];
-        $id = $slug;
-        if (app()->db()->exists($this->getCollectionName(), $id)) {
-            $id = $slug . '-' . uniqid();
-        }
-        return $id;
+        return $data['slug'];
     }
 
     protected function ensureSlug($data)
