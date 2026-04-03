@@ -21,6 +21,9 @@
     "scripts": {
         "test": "phpunit",
         "lint": "php-cs-fixer fix --dry-run --diff",
-        "fix": "php-cs-fixer fix"
+        "fix": "php-cs-fixer fix",
+        "seed": "php tools/seed.php",
+        "clean": "php tools/clean.php",
+        "bench": "php tools/bench.php"
     }
 }
