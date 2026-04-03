@@ -128,9 +128,7 @@ class MarkdownConverter
         $html = implode("\n", $paragraphs);
 
         // Step 6: Line breaks (only inside <p> tags, not in block elements)
-        $html = preg_replace_callback('/<p>(.*?)<\/p>/s', function ($matches) {
-            return '<p>' . str_replace("\n", '<br>', $matches[1]) . '</p>';
-        }, $html);
+        $html = preg_replace_callback('/<p>(.*?)<\/p>/s', fn ($matches) => '<p>' . str_replace("\n", '<br>', $matches[1]) . '</p>', $html);
 
         // Step 7: Restore code placeholders
         foreach ($codeBlocks as $placeholder => $code) {
@@ -166,9 +164,7 @@ class MarkdownConverter
             $code = html_entity_decode($matches[1], ENT_QUOTES, 'UTF-8');
             return "\n\n```\n" . $code . "```\n\n";
         }, $markdown);
-        $markdown = preg_replace_callback('/<code[^>]*>(.*?)<\/code>/is', function ($matches) {
-            return '`' . html_entity_decode($matches[1], ENT_QUOTES, 'UTF-8') . '`';
-        }, $markdown);
+        $markdown = preg_replace_callback('/<code[^>]*>(.*?)<\/code>/is', fn ($matches) => '`' . html_entity_decode($matches[1], ENT_QUOTES, 'UTF-8') . '`', $markdown);
 
         // Bold and italic
         $markdown = preg_replace('/<strong[^>]*>(.*?)<\/strong>/is', '**$1**', $markdown);

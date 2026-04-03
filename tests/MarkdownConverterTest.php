@@ -81,7 +81,7 @@ class MarkdownConverterTest extends MantraTestCase
     {
         $this->assertSame(
             '<p><strong><em>text</em></strong></p>',
-            $this->html('***text***')
+            $this->html('***text***'),
         );
     }
 
@@ -89,7 +89,7 @@ class MarkdownConverterTest extends MantraTestCase
     {
         $this->assertSame(
             '<p><strong><em>text</em></strong></p>',
-            $this->html('___text___')
+            $this->html('___text___'),
         );
     }
 
@@ -120,7 +120,7 @@ class MarkdownConverterTest extends MantraTestCase
     {
         $this->assertSame(
             '<p><a href="https://example.com">text</a></p>',
-            $this->html('[text](https://example.com)')
+            $this->html('[text](https://example.com)'),
         );
     }
 
@@ -128,7 +128,7 @@ class MarkdownConverterTest extends MantraTestCase
     {
         $this->assertSame(
             '<p><a href="https://example.com" title="My Title">text</a></p>',
-            $this->html('[text](https://example.com "My Title")')
+            $this->html('[text](https://example.com "My Title")'),
         );
     }
 
@@ -136,7 +136,7 @@ class MarkdownConverterTest extends MantraTestCase
     {
         $this->assertSame(
             '<p>Visit <a href="https://example.com">us</a> today.</p>',
-            $this->html('Visit [us](https://example.com) today.')
+            $this->html('Visit [us](https://example.com) today.'),
         );
     }
 
@@ -148,7 +148,7 @@ class MarkdownConverterTest extends MantraTestCase
     {
         $this->assertSame(
             '<p><img src="photo.jpg" alt="alt text"></p>',
-            $this->html('![alt text](photo.jpg)')
+            $this->html('![alt text](photo.jpg)'),
         );
     }
 
@@ -156,7 +156,7 @@ class MarkdownConverterTest extends MantraTestCase
     {
         $this->assertSame(
             '<p><img src="photo.jpg" alt=""></p>',
-            $this->html('![](photo.jpg)')
+            $this->html('![](photo.jpg)'),
         );
     }
 
@@ -275,7 +275,7 @@ class MarkdownConverterTest extends MantraTestCase
         $this->assertSame(
             1,
             substr_count($result, '<blockquote>'),
-            'Consecutive quote lines produce single blockquote'
+            'Consecutive quote lines produce single blockquote',
         );
         $this->assertStringContainsString('line 1', $result);
         $this->assertStringContainsString('line 2', $result);
@@ -436,7 +436,7 @@ class MarkdownConverterTest extends MantraTestCase
     {
         $this->assertSame(
             '[text](https://example.com)',
-            $this->md('<a href="https://example.com">text</a>')
+            $this->md('<a href="https://example.com">text</a>'),
         );
     }
 
@@ -444,7 +444,7 @@ class MarkdownConverterTest extends MantraTestCase
     {
         $this->assertSame(
             '![alt](photo.jpg)',
-            $this->md('<img src="photo.jpg" alt="alt">')
+            $this->md('<img src="photo.jpg" alt="alt">'),
         );
     }
 
@@ -452,7 +452,7 @@ class MarkdownConverterTest extends MantraTestCase
     {
         $this->assertSame(
             '![alt](photo.jpg)',
-            $this->md('<img alt="alt" src="photo.jpg">')
+            $this->md('<img alt="alt" src="photo.jpg">'),
         );
     }
 
@@ -460,7 +460,7 @@ class MarkdownConverterTest extends MantraTestCase
     {
         $this->assertSame(
             '![](photo.jpg)',
-            $this->md('<img src="photo.jpg">')
+            $this->md('<img src="photo.jpg">'),
         );
     }
 
