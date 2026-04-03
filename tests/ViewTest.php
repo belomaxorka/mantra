@@ -11,6 +11,8 @@ class ViewTest extends MantraTestCase
     private $testDir;
     private $themePath;
     private $modulePath;
+    private $originalTheme;
+    private $originalUrl;
 
     protected function setUp(): void
     {
@@ -24,10 +26,19 @@ class ViewTest extends MantraTestCase
         $this->resetHookManager();
 
         $this->setupTestEnvironment();
+
+        // Save originals and switch to test theme
+        $this->originalTheme = config('theme.active');
+        $this->originalUrl = config('site.url');
+        config()->set('theme.active', basename($this->themePath));
     }
 
     protected function tearDown(): void
     {
+        // Restore config before cleanup (always runs, even on test failure)
+        config()->set('theme.active', $this->originalTheme);
+        config()->set('site.url', $this->originalUrl);
+
         // Clean up test theme and module
         $this->removeDirectory($this->themePath);
         $this->removeDirectory($this->modulePath);
@@ -96,11 +107,6 @@ class ViewTest extends MantraTestCase
 
     public function testBasicTemplateRendering(): void
     {
-        // Override config to use our test theme
-        $originalTheme = config('theme.active');
-        $testThemeName = basename($this->themePath);
-        config()->set('theme.active', $testThemeName);
-
         $view = new View();
         $output = $view->fetch('page', ['title' => 'Test Page']);
 
@@ -117,17 +123,10 @@ class ViewTest extends MantraTestCase
             $output,
             'Template is wrapped in layout',
         );
-
-        // Restore config
-        config()->set('theme.active', $originalTheme);
     }
 
     public function testLayoutWrapping(): void
     {
-        $originalTheme = config('theme.active');
-        $testThemeName = basename($this->themePath);
-        config()->set('theme.active', $testThemeName);
-
         $view = new View();
 
         // Theme template should be wrapped
@@ -137,16 +136,11 @@ class ViewTest extends MantraTestCase
             $output,
             'Theme template is wrapped in layout',
         );
-
-        config()->set('theme.active', $originalTheme);
     }
 
     public function testModuleTemplateNoLayout(): void
     {
-        $originalTheme = config('theme.active');
-        $testThemeName = basename($this->themePath);
         $testModuleName = basename($this->modulePath);
-        config()->set('theme.active', $testThemeName);
 
         $view = new View();
 
@@ -175,15 +169,10 @@ class ViewTest extends MantraTestCase
             $output2,
             'Module template (_module) is NOT wrapped in layout',
         );
-
-        config()->set('theme.active', $originalTheme);
     }
 
     public function testContentVariableProtection(): void
     {
-        $originalTheme = config('theme.active');
-        $testThemeName = basename($this->themePath);
-
         // Backup original layout
         $layoutPath = $this->themePath . '/templates/layout.php';
         $originalLayout = file_get_contents($layoutPath);
@@ -195,8 +184,6 @@ class ViewTest extends MantraTestCase
         // Create a template
         file_put_contents($this->themePath . '/templates/test.php',
             '<p>Template content</p>');
-
-        config()->set('theme.active', $testThemeName);
 
         $view = new View();
 
@@ -221,18 +208,10 @@ class ViewTest extends MantraTestCase
 
         // Restore original layout
         file_put_contents($layoutPath, $originalLayout);
-
-        config()->set('theme.active', $originalTheme);
     }
 
     public function testAssetUrlGeneration(): void
     {
-        $originalTheme = config('theme.active');
-        $originalUrl = config('site.url');
-        $testThemeName = basename($this->themePath);
-
-        config()->set('theme.active', $testThemeName);
-
         // Test with trailing slash
         config()->set('site.url', 'http://example.com/');
         $view = new View();
@@ -259,9 +238,6 @@ class ViewTest extends MantraTestCase
             $url2,
             'Asset URL works without trailing slash',
         );
-
-        config()->set('theme.active', $originalTheme);
-        config()->set('site.url', $originalUrl);
     }
 
     public function testEscapeMethod(): void
@@ -293,10 +269,7 @@ class ViewTest extends MantraTestCase
 
     public function testPartialRendering(): void
     {
-        $originalTheme = config('theme.active');
-        $testThemeName = basename($this->themePath);
         $testModuleName = basename($this->modulePath);
-        config()->set('theme.active', $testThemeName);
 
         $view = new View();
 
@@ -331,20 +304,13 @@ class ViewTest extends MantraTestCase
             $partial4,
             'Non-existent partial returns comment',
         );
-
-        config()->set('theme.active', $originalTheme);
     }
 
     public function testOutputBufferingErrorHandling(): void
     {
-        $originalTheme = config('theme.active');
-        $testThemeName = basename($this->themePath);
-
         // Create a template that throws an exception
         file_put_contents($this->themePath . '/templates/error.php',
             '<?php throw new Exception("Template error"); ?>');
-
-        config()->set('theme.active', $testThemeName);
 
         $view = new View();
 
@@ -366,16 +332,10 @@ class ViewTest extends MantraTestCase
             $level >= 0,
             'Output buffer level is valid after exception',
         );
-
-        config()->set('theme.active', $originalTheme);
     }
 
     public function testTemplateNotFound(): void
     {
-        $originalTheme = config('theme.active');
-        $testThemeName = basename($this->themePath);
-        config()->set('theme.active', $testThemeName);
-
         $view = new View();
 
         $exceptionThrown = false;
@@ -396,38 +356,25 @@ class ViewTest extends MantraTestCase
             $exceptionMessage,
             'Exception message is descriptive',
         );
-
-        config()->set('theme.active', $originalTheme);
     }
 
     public function testNestedOutputBuffering(): void
     {
-        $originalTheme = config('theme.active');
-        $testThemeName = basename($this->themePath);
-
         // Create nested template structure
         file_put_contents($this->themePath . '/templates/outer.php',
             '<outer><?php echo $view->fetch("inner", array("text" => "nested")); ?></outer>');
         file_put_contents($this->themePath . '/templates/inner.php',
             '<inner><?php echo $text; ?></inner>');
 
-        config()->set('theme.active', $testThemeName);
-
         $view = new View();
         $output = $view->fetch('outer', ['view' => $view]);
 
         $this->assertStringContainsString('<outer>', $output, 'Nested templates render correctly (outer tag)');
         $this->assertStringContainsString('<inner>nested</inner>', $output, 'Nested templates render correctly (inner tag)');
-
-        config()->set('theme.active', $originalTheme);
     }
 
     public function testOutputBufferingMultipleLevels(): void
     {
-        $originalTheme = config('theme.active');
-        $testThemeName = basename($this->themePath);
-        config()->set('theme.active', $testThemeName);
-
         // Create template that uses partials (which also use output buffering)
         file_put_contents($this->themePath . '/templates/with-partial.php',
             '<page><?php echo $view->partial("sidebar"); ?></page>');
@@ -444,20 +391,13 @@ class ViewTest extends MantraTestCase
         );
         $this->assertStringContainsString('<page>', $output, 'Nested buffering produces correct output (page tag)');
         $this->assertStringContainsString('<aside>', $output, 'Nested buffering produces correct output (aside tag)');
-
-        config()->set('theme.active', $originalTheme);
     }
 
     public function testPartialExceptionHandling(): void
     {
-        $originalTheme = config('theme.active');
-        $testThemeName = basename($this->themePath);
-
         // Create partial that throws exception
         file_put_contents($this->themePath . '/templates/partials/broken.php',
             '<?php throw new Exception("Partial error"); ?>');
-
-        config()->set('theme.active', $testThemeName);
 
         $view = new View();
         $levelBefore = ob_get_level();
@@ -474,15 +414,10 @@ class ViewTest extends MantraTestCase
             $levelAfter,
             'Output buffer is cleaned after partial exception',
         );
-
-        config()->set('theme.active', $originalTheme);
     }
 
     public function testLayoutExceptionHandling(): void
     {
-        $originalTheme = config('theme.active');
-        $testThemeName = basename($this->themePath);
-
         // Backup original layout
         $layoutPath = $this->themePath . '/templates/layout.php';
         $originalLayout = file_get_contents($layoutPath);
@@ -492,8 +427,6 @@ class ViewTest extends MantraTestCase
             '<?php throw new Exception("Layout error"); ?>');
         file_put_contents($this->themePath . '/templates/simple.php',
             '<p>Content</p>');
-
-        config()->set('theme.active', $testThemeName);
 
         $view = new View();
         $exceptionThrown = false;
@@ -519,8 +452,6 @@ class ViewTest extends MantraTestCase
 
         // Restore original layout
         file_put_contents($layoutPath, $originalLayout);
-
-        config()->set('theme.active', $originalTheme);
     }
 
     public function testViewRenderHook(): void
@@ -528,13 +459,8 @@ class ViewTest extends MantraTestCase
         // Reset hooks to prevent leakage from/to other tests
         $this->resetHookManager();
 
-        $originalTheme = config('theme.active');
-        $testThemeName = basename($this->themePath);
-
         file_put_contents($this->themePath . '/templates/hooktest.php',
             '<p>Original</p>');
-
-        config()->set('theme.active', $testThemeName);
 
         // Register hook to modify content
         $app = Application::getInstance();
@@ -546,8 +472,6 @@ class ViewTest extends MantraTestCase
         $this->assertStringContainsString('Modified', $output, 'view.render hook modifies content');
         $this->assertStringNotContainsString('Original', $output, 'view.render hook removes original content');
 
-        config()->set('theme.active', $originalTheme);
-
         // Clean up hooks so they don't leak to subsequent tests
         $this->resetHookManager();
     }
@@ -557,13 +481,8 @@ class ViewTest extends MantraTestCase
         // Reset hooks to prevent leakage from/to other tests
         $this->resetHookManager();
 
-        $originalTheme = config('theme.active');
-        $testThemeName = basename($this->themePath);
-
         file_put_contents($this->themePath . '/templates/multihook.php',
             '<p>Text</p>');
-
-        config()->set('theme.active', $testThemeName);
 
         // Register multiple hooks with different priorities
         $app = Application::getInstance();
@@ -579,20 +498,13 @@ class ViewTest extends MantraTestCase
             'Multiple hooks execute in order',
         );
 
-        config()->set('theme.active', $originalTheme);
-
         // Clean up hooks so they don't leak to subsequent tests
         $this->resetHookManager();
     }
 
     public function testEmptyTemplate(): void
     {
-        $originalTheme = config('theme.active');
-        $testThemeName = basename($this->themePath);
-
         file_put_contents($this->themePath . '/templates/empty.php', '');
-
-        config()->set('theme.active', $testThemeName);
 
         $view = new View();
         $output = $view->fetch('empty', []);
@@ -601,18 +513,11 @@ class ViewTest extends MantraTestCase
         $this->assertStringContainsString('<!DOCTYPE html>', $output, 'Empty template renders with layout (doctype)');
         $this->assertStringContainsString('<html>', $output, 'Empty template renders with layout (html tag)');
         $this->assertStringContainsString('<body>', $output, 'Empty template renders with layout (body tag)');
-
-        config()->set('theme.active', $originalTheme);
     }
 
     public function testTemplateWithOnlyWhitespace(): void
     {
-        $originalTheme = config('theme.active');
-        $testThemeName = basename($this->themePath);
-
         file_put_contents($this->themePath . '/templates/whitespace.php', "   \n\n   \t  ");
-
-        config()->set('theme.active', $testThemeName);
 
         $view = new View();
         $output = $view->fetch('whitespace', []);
@@ -621,19 +526,12 @@ class ViewTest extends MantraTestCase
             $output,
             'Whitespace template produces output',
         );
-
-        config()->set('theme.active', $originalTheme);
     }
 
     public function testRenderMethodEchoes(): void
     {
-        $originalTheme = config('theme.active');
-        $testThemeName = basename($this->themePath);
-
         file_put_contents($this->themePath . '/templates/echo-test.php',
             '<p>Echo test</p>');
-
-        config()->set('theme.active', $testThemeName);
 
         $view = new View();
 
@@ -646,8 +544,6 @@ class ViewTest extends MantraTestCase
             $output,
             'render() method echoes output',
         );
-
-        config()->set('theme.active', $originalTheme);
     }
 
     public function testEscapeEdgeCases(): void
@@ -691,11 +587,6 @@ class ViewTest extends MantraTestCase
 
     public function testAssetUrlEdgeCases(): void
     {
-        $originalTheme = config('theme.active');
-        $originalUrl = config('site.url');
-        $testThemeName = basename($this->themePath);
-
-        config()->set('theme.active', $testThemeName);
         config()->set('site.url', 'http://example.com');
 
         $view = new View();
@@ -723,21 +614,13 @@ class ViewTest extends MantraTestCase
             $url3,
             'Multiple slashes in path are preserved',
         );
-
-        config()->set('theme.active', $originalTheme);
-        config()->set('site.url', $originalUrl);
     }
 
     public function testTemplateWithUndefinedVariable(): void
     {
-        $originalTheme = config('theme.active');
-        $testThemeName = basename($this->themePath);
-
         // Template references undefined variable
         file_put_contents($this->themePath . '/templates/undefined.php',
             '<p><?php echo isset($undefined) ? $undefined : "default"; ?></p>');
-
-        config()->set('theme.active', $testThemeName);
 
         $view = new View();
         $output = $view->fetch('undefined', []);
@@ -747,36 +630,24 @@ class ViewTest extends MantraTestCase
             $output,
             'Template handles undefined variables gracefully',
         );
-
-        config()->set('theme.active', $originalTheme);
     }
 
     public function testNestedPartials(): void
     {
-        $originalTheme = config('theme.active');
-        $testThemeName = basename($this->themePath);
-
         // Partial that includes another partial
         file_put_contents($this->themePath . '/templates/partials/outer.php',
             '<div><?php echo $view->partial("sidebar"); ?></div>');
-
-        config()->set('theme.active', $testThemeName);
 
         $view = new View();
         $output = $view->partial('outer', ['view' => $view]);
 
         $this->assertStringContainsString('<div>', $output, 'Nested partials render correctly (div tag)');
         $this->assertStringContainsString('<aside>', $output, 'Nested partials render correctly (aside tag)');
-
-        config()->set('theme.active', $originalTheme);
     }
 
     public function testThemeOverridesModulePartial(): void
     {
-        $originalTheme = config('theme.active');
-        $testThemeName = basename($this->themePath);
         $testModuleName = basename($this->modulePath);
-        config()->set('theme.active', $testThemeName);
 
         // Create theme override for module partial
         $overrideDir = $this->themePath . '/templates/partials/' . $testModuleName;
@@ -812,16 +683,10 @@ class ViewTest extends MantraTestCase
             $output2,
             'Module partial renders when no theme override',
         );
-
-        config()->set('theme.active', $originalTheme);
     }
 
     public function testModulePartialNonexistentModule(): void
     {
-        $originalTheme = config('theme.active');
-        $testThemeName = basename($this->themePath);
-        config()->set('theme.active', $testThemeName);
-
         $view = new View();
 
         $output = $view->partial('nonexistent-module:some-partial');
@@ -830,20 +695,13 @@ class ViewTest extends MantraTestCase
             $output,
             'Nonexistent module partial returns not-found comment',
         );
-
-        config()->set('theme.active', $originalTheme);
     }
 
     public function testAbortRendersThemeTemplate(): void
     {
-        $originalTheme = config('theme.active');
-        $testThemeName = basename($this->themePath);
-
         // Create a 404 template
         file_put_contents($this->themePath . '/templates/404.php',
             '<div class="error"><?php echo $code; ?> - <?php echo e($title); ?></div>');
-
-        config()->set('theme.active', $testThemeName);
 
         // Capture abort() output
         ob_start();
@@ -865,16 +723,10 @@ class ViewTest extends MantraTestCase
             http_response_code(),
             'abort() sets correct HTTP status code',
         );
-
-        config()->set('theme.active', $originalTheme);
     }
 
     public function testAbortFallbackWithoutTemplate(): void
     {
-        $originalTheme = config('theme.active');
-        $testThemeName = basename($this->themePath);
-        config()->set('theme.active', $testThemeName);
-
         // No 403 template exists -- should fall back to plain HTML
         ob_start();
         abort(403, 'Access denied');
@@ -900,7 +752,5 @@ class ViewTest extends MantraTestCase
             http_response_code(),
             'abort() sets correct HTTP status for fallback',
         );
-
-        config()->set('theme.active', $originalTheme);
     }
 }

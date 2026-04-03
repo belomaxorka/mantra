@@ -122,7 +122,7 @@ class UsersPanel extends ContentPanel
         ]);
     }
 
-    public function createItem()
+    public function createItem(): void
     {
         if (!$this->requirePermission('users.create')) return;
         if (!$this->verifyCsrf()) return;
@@ -148,9 +148,10 @@ class UsersPanel extends ContentPanel
                 'csrf_token' => $this->auth()->generateCsrfToken(),
                 'error' => t('admin-users.create_error'),
             ]);
-            return $this->renderAdmin($title, $content, [
+            $this->renderAdmin($title, $content, [
                 'breadcrumbs' => $this->getItemBreadcrumbs($title),
             ]);
+            return;
         }
 
         $this->redirectAdmin($this->getAdminPath());
