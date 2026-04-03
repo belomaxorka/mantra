@@ -10,7 +10,14 @@ services:
       - ../modules:/var/www/html/modules:ro
       - ../uploads:/var/www/html/uploads:ro
     depends_on:
-      - php
+      php:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO /dev/null http://localhost/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   php:
     build:
@@ -22,6 +29,12 @@ services:
       - ../modules:/var/www/html/modules
       - ../storage:/var/www/html/storage
       - ../uploads:/var/www/html/uploads
+    healthcheck:
+      test: ["CMD", "php", "-r", "exit(@fsockopen('127.0.0.1', 9000, $e, $m, 3) ? 0 : 1);"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   caddy:
     image: caddy:2-alpine
@@ -37,7 +50,8 @@ services:
       DOMAIN: ${DOMAIN:-localhost}
       UPSTREAM: nginx:80
     depends_on:
-      - nginx
+      nginx:
+        condition: service_healthy
 
 volumes:
   caddy_data:

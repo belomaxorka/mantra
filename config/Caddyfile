@@ -15,35 +15,40 @@
 example.com {
 	root * /var/www/example.com
 
-	# --- Security ---
+	# --- Security: blocked directories ---
 
-	# Block hidden files and directories (.git, .env, .htaccess, etc.)
+	# Hidden files and directories (.git, .env, .htaccess, etc.)
 	@hidden path_regexp /\.
 	respond @hidden 404
 
-	# Block sensitive directories
+	# Data, logs, and internal code
 	@content path /content/*
 	respond @content 404
 
 	@storage path /storage/*
 	respond @storage 404
 
-	# Block core directory except public assets
-	@core {
-		path /core/*
-		not path /core/assets/*
-	}
+	@core path /core/*
 	respond @core 404
 
-	# Block module language files
-	@moduleLang path_regexp ^/modules/.*/lang/
-	respond @moduleLang 404
+	# Module internals — block everything except assets
+	@moduleInternal {
+		path /modules/*
+		not path_regexp ^/modules/[^/]+/assets/
+		not path_regexp ^/modules/admin/panels/[^/]+/assets/
+	}
+	respond @moduleInternal 404
 
-	# Block sensitive file extensions
+	# Theme internals — block templates and config
+	@themeInternal path_regexp ^/themes/.*\.(php|json)$
+	respond @themeInternal 404
+
+	# --- Security: blocked file types ---
+
 	@sensitive path_regexp \.(json|md|lock|bak|sql|tmp|dist|log)$
 	respond @sensitive 404
 
-	# Block PHP execution in uploads
+	# Block PHP in uploads
 	@uploadPhp path_regexp ^/uploads/.*\.php
 	respond @uploadPhp 404
 
@@ -52,8 +57,5 @@ example.com {
 	php_fastcgi unix//run/php/php-fpm.sock
 	# php_fastcgi 127.0.0.1:9000
 	file_server
-
-	# --- Compression ---
-
 	encode gzip
 }

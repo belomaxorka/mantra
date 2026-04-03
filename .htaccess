@@ -4,22 +4,29 @@ AddDefaultCharset UTF-8
     RewriteEngine on
     RewriteBase /
 
-    # Block access to hidden files and directories (.git, .env, etc.)
+    # Block hidden files and directories (.git, .env, etc.)
     RewriteRule (^\.|/\.) - [R=404,L]
 
-    # Deny direct access to sensitive directories
+    # Block sensitive directories entirely
     RewriteRule ^content/ - [R=404,L]
     RewriteRule ^storage/ - [R=404,L]
+    RewriteRule ^core/ - [R=404,L]
 
-    # Allow access to core assets (CSS, JS, images)
-    RewriteCond %{REQUEST_URI} !^/core/assets/
-    RewriteRule ^core/.*$ - [R=404,L]
+    # Block module internals — allow only assets subdirectories
+    RewriteCond %{REQUEST_URI} !^/modules/[^/]+/assets/
+    RewriteCond %{REQUEST_URI} !^/modules/admin/panels/[^/]+/assets/
+    RewriteRule ^modules/ - [R=404,L]
 
-    RewriteRule ^modules/.*/lang/.*$ - [R=404,L]
+    # Block theme templates and config
+    RewriteRule ^themes/.*\.(php|json)$ - [R=404,L]
 
-    # Block access to sensitive file extensions
+    # Block sensitive file extensions
     RewriteRule \.(json|md|lock|bak|sql|tmp|dist|log)$ - [R=404,L]
 
+    # Block PHP execution in uploads
+    RewriteRule ^uploads/.*\.php$ - [R=404,L]
+
+    # Front controller
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteRule ^(.*) index.php [PT,L]
