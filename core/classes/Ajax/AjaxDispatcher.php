@@ -80,11 +80,11 @@ class AjaxDispatcher
         }
 
         $this->actions[$name] = [
-            'handler'    => $handler,
-            'method'     => $method,
-            'auth'       => (bool)($options['auth'] ?? true),
+            'handler' => $handler,
+            'method' => $method,
+            'auth' => (bool)($options['auth'] ?? true),
             'permission' => $options['permission'] ?? null,
-            'csrf'       => (bool)$csrf,
+            'csrf' => (bool)$csrf,
         ];
     }
 
@@ -135,15 +135,15 @@ class AjaxDispatcher
 
         // Hook: allow modules to intercept before dispatch
         $context = [
-            'action'     => $actionName,
-            'access'     => $access,
+            'action' => $actionName,
+            'access' => $access,
             'definition' => $def,
         ];
         if (app()->hooks()) {
             $context = app()->hooks()->fire('ajax.before', $context);
             if (!empty($context['halt'])) {
                 $response->json([
-                    'ok'    => false,
+                    'ok' => false,
                     'error' => $context['error'] ?? 'Blocked',
                 ], (int)($context['code'] ?? 403));
             }
@@ -166,11 +166,11 @@ class AjaxDispatcher
             $response->json(['ok' => false, 'error' => $e->getMessage()], $code);
         } catch (\Exception $e) {
             logger()->error('AJAX action failed', [
-                'action'    => $actionName,
+                'action' => $actionName,
                 'exception' => $e->getMessage(),
             ]);
             $response->json([
-                'ok'    => false,
+                'ok' => false,
                 'error' => MANTRA_DEBUG ? $e->getMessage() : 'Internal error',
             ], 500);
         }
