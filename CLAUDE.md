@@ -553,6 +553,7 @@ $this->hook('permissions.register', function($registry) {
 
 | Document | Description |
 |---|---|
+| [docs/AJAX.md](docs/AJAX.md) | Unified AJAX dispatcher, JS helper, and module integration |
 | [docs/HOOKS.md](docs/HOOKS.md) | Hook system architecture and API reference |
 | [docs/ADMIN_PANELS.md](docs/ADMIN_PANELS.md) | Admin panel creation guide and ContentPanel API |
 | [docs/VIEWS.md](docs/VIEWS.md) | Template rendering, partials, and theme override system |
