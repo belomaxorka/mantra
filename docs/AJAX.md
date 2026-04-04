@@ -556,8 +556,9 @@ fetch('/ajax?action=search.suggest&q=' + encodeURIComponent(query))
 4. Check authentication (if auth: true)
    → 401 "Authentication required" if not logged in
 
-5. Verify CSRF token (if csrf: true)
+5. Verify CSRF token (auto: true for POST, false for GET; overridable via csrf option)
    → 403 "Invalid CSRF token" if missing or wrong
+   Token read from X-CSRF-Token header
 
 6. Check permission (if permission is set)
    → 403 "Permission denied" if denied

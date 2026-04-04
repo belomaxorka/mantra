@@ -32,6 +32,10 @@ class AjaxDispatcherTest extends MantraTestCase
         $_GET = [];
         $_POST = [];
 
+        // Set up valid CSRF token so POST tests pass CSRF check by default
+        app()->session()->set('csrf_token', 'test-csrf-token-valid');
+        $_SERVER['HTTP_X_CSRF_TOKEN'] = 'test-csrf-token-valid';
+
         // Reset HookManager to clean state (prevents leakage between tests)
         $app = Application::getInstance();
         $ref = new ReflectionClass($app);
@@ -214,6 +218,90 @@ class AjaxDispatcherTest extends MantraTestCase
         $this->assertSame(200, $response->getCode());
         $this->assertTrue($response->data['ok']);
         $this->assertSame('public_data', $response->data['data']);
+    }
+
+    // ========== Dispatch: CSRF Check ==========
+
+    public function testCsrfRequiredByDefaultForPost(): void
+    {
+        $this->dispatcher->register('test.csrf_post', fn() => 'ok', [
+            'auth' => false,
+        ]);
+
+        $this->setRequest('POST', 'test.csrf_post', null);
+        $response = $this->captureDispatch();
+
+        $this->assertSame(403, $response->getCode());
+        $this->assertSame('Invalid CSRF token', $response->data['error']);
+    }
+
+    public function testCsrfInvalidTokenReturns403(): void
+    {
+        $this->dispatcher->register('test.csrf_bad', fn() => 'ok', [
+            'auth' => false,
+        ]);
+
+        $this->setRequest('POST', 'test.csrf_bad', 'wrong-token');
+        $response = $this->captureDispatch();
+
+        $this->assertSame(403, $response->getCode());
+        $this->assertSame('Invalid CSRF token', $response->data['error']);
+    }
+
+    public function testCsrfValidTokenPasses(): void
+    {
+        $this->dispatcher->register('test.csrf_ok', fn() => 'passed', [
+            'auth' => false,
+        ]);
+
+        $this->setRequest('POST', 'test.csrf_ok');
+        $response = $this->captureDispatch();
+
+        $this->assertSame(200, $response->getCode());
+        $this->assertSame('passed', $response->data['data']);
+    }
+
+    public function testCsrfNotRequiredForGet(): void
+    {
+        $this->dispatcher->register('test.csrf_get', fn() => 'ok', [
+            'method' => 'GET',
+            'auth' => false,
+        ]);
+
+        $this->setRequest('GET', 'test.csrf_get', null);
+        $response = $this->captureDispatch();
+
+        $this->assertSame(200, $response->getCode());
+        $this->assertSame('ok', $response->data['data']);
+    }
+
+    public function testCsrfExplicitFalseSkipsCheckOnPost(): void
+    {
+        $this->dispatcher->register('test.csrf_skip', fn() => 'ok', [
+            'auth' => false,
+            'csrf' => false,
+        ]);
+
+        $this->setRequest('POST', 'test.csrf_skip', null);
+        $response = $this->captureDispatch();
+
+        $this->assertSame(200, $response->getCode());
+        $this->assertSame('ok', $response->data['data']);
+    }
+
+    public function testCsrfExplicitTrueEnforcesCheckOnGet(): void
+    {
+        $this->dispatcher->register('test.csrf_get_enforce', fn() => 'ok', [
+            'method' => 'GET',
+            'auth' => false,
+            'csrf' => true,
+        ]);
+
+        $this->setRequest('GET', 'test.csrf_get_enforce', null);
+        $response = $this->captureDispatch();
+
+        $this->assertSame(403, $response->getCode());
+        $this->assertSame('Invalid CSRF token', $response->data['error']);
     }
 
     // ========== Dispatch: Handler Execution ==========
@@ -415,14 +503,14 @@ class AjaxDispatcherTest extends MantraTestCase
         $this->assertSame(405, $response->getCode());
     }
 
-    public function testCheckOrderAuthBeforePermission(): void
+    public function testCheckOrderAuthBeforeCsrf(): void
     {
         $this->dispatcher->register('test.order2', fn() => null, [
             'auth' => true,
         ]);
 
-        // Not logged in → should be 401 (auth checked before permission)
-        $this->setRequest('POST', 'test.order2');
+        // Not logged in + no CSRF → should be 401 (auth checked before CSRF)
+        $this->setRequest('POST', 'test.order2', null);
         $response = $this->captureDispatch();
 
         $this->assertSame(401, $response->getCode());
@@ -678,11 +766,21 @@ class AjaxDispatcherTest extends MantraTestCase
 
     /**
      * Set up superglobals to simulate an AJAX request.
+     *
+     * @param string      $method    HTTP method
+     * @param string      $action    Action name for ?action= query
+     * @param string|null $csrfToken CSRF token header value (null = omit header)
      */
-    private function setRequest(string $method, string $action): void
+    private function setRequest(string $method, string $action, ?string $csrfToken = 'test-csrf-token-valid'): void
     {
         $_SERVER['REQUEST_METHOD'] = $method;
         $_GET['action'] = $action;
+
+        if ($csrfToken !== null) {
+            $_SERVER['HTTP_X_CSRF_TOKEN'] = $csrfToken;
+        } else {
+            unset($_SERVER['HTTP_X_CSRF_TOKEN']);
+        }
 
         // Force fresh Request instance so it reads updated superglobals
         app()->provide('request', fn() => new \Http\Request());

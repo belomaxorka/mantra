@@ -18,7 +18,7 @@ namespace Ajax;
  */
 class AjaxDispatcher
 {
-    /** @var array<string, array{handler: callable, method: string, auth: bool, permission: ?string}> */
+    /** @var array<string, array{handler: callable, method: string, auth: bool, permission: ?string, csrf: ?bool}> */
     private array $actions = [];
 
     public function __construct()
@@ -67,17 +67,24 @@ class AjaxDispatcher
      *     method:     'POST'|'GET'|'ANY'  (default 'POST'),
      *     auth:       bool                (default true),
      *     permission: string|null         (default null — auth only, no permission check),
+     *     csrf:       bool|null           (default null — auto: true for POST, false for GET),
      * }
      */
     public function register(string $name, callable $handler, array $options = []): void
     {
         $method = strtoupper($options['method'] ?? 'POST');
 
+        $csrf = $options['csrf'] ?? null;
+        if ($csrf !== null) {
+            $csrf = (bool)$csrf;
+        }
+
         $this->actions[$name] = [
             'handler' => $handler,
             'method' => $method,
             'auth' => (bool)($options['auth'] ?? true),
             'permission' => $options['permission'] ?? null,
+            'csrf' => $csrf,
         ];
     }
 
@@ -105,6 +112,15 @@ class AjaxDispatcher
         // Auth check
         if ($def['auth'] && !app()->auth()->check()) {
             $response->json(['ok' => false, 'error' => 'Authentication required'], 401);
+        }
+
+        // CSRF check (auto: true for POST, false for GET; explicit override via option)
+        $needsCsrf = $def['csrf'] ?? ($request->method() === 'POST');
+        if ($needsCsrf) {
+            $token = $request->header('X-CSRF-Token', '');
+            if (!app()->auth()->verifyCsrfToken($token)) {
+                $response->json(['ok' => false, 'error' => 'Invalid CSRF token'], 403);
+            }
         }
 
         // Permission check
