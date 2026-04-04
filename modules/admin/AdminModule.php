@@ -275,6 +275,10 @@ class AdminModule extends Module
             app()->response()->redirect(base_url('/admin'));
         });
 
+        // AJAX dispatcher (auth via adminRoute middleware)
+        $this->adminRoute('POST', 'ajax', fn() => app()->ajax()->dispatch());
+        $this->adminRoute('GET', 'ajax', fn() => app()->ajax()->dispatch());
+
         // Panel routes (auth middleware applied by adminRoute())
         foreach ($this->panels as $panel) {
             $panel->registerRoutes($this);

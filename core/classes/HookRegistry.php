@@ -89,6 +89,18 @@ class HookRegistry
             'return_type' => 'string',
         ],
 
+        // ── AJAX ────────────────────────────────────────────
+        'ajax.before' => [
+            'description' => 'Fired before an AJAX action handler runs. Set halt=true in returned array to block.',
+            'data_type' => 'array {action, access, definition}',
+            'return_type' => 'array',
+        ],
+        'ajax.after' => [
+            'description' => 'Filter the AJAX response array before it is sent to the client',
+            'data_type' => 'array {ok, data}',
+            'return_type' => 'array',
+        ],
+
         // Admin and content hooks are registered dynamically by their
         // owning modules/panels via HookRegistry::define() in init().
         // See: AdminModule, PostsPanel, PagesPanel, UsersPanel.

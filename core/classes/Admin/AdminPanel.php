@@ -200,8 +200,14 @@ abstract class AdminPanel implements AdminPanelInterface
         if (app()->request()->method() !== 'POST') {
             return true;
         }
-        $token = app()->request()->post('csrf_token', '');
+
+        $token = app()->request()->post('csrf_token', '')
+              ?: app()->request()->header('X-CSRF-Token', '');
+
         if (!app()->auth()->verifyCsrfToken($token)) {
+            if (app()->request()->acceptsJson()) {
+                app()->response()->json(['ok' => false, 'error' => 'Invalid CSRF token'], 403);
+            }
             http_response_code(403);
             echo 'Invalid CSRF token';
             return false;
@@ -217,6 +223,18 @@ abstract class AdminPanel implements AdminPanelInterface
     protected function redirectAdmin($path = ''): void
     {
         app()->response()->redirect(base_url('/admin/' . ltrim($path, '/')));
+    }
+
+    /**
+     * Register an AJAX action on the dispatcher.
+     *
+     * @param string   $name    Action name (e.g. 'uploads.upload')
+     * @param callable $handler function(\Http\Request $request, bool|string $access): mixed
+     * @param array    $options See \Ajax\AjaxDispatcher::register()
+     */
+    protected function ajaxAction(string $name, callable $handler, array $options = []): void
+    {
+        app()->ajax()->register($name, $handler, $options);
     }
 
     /**

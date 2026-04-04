@@ -82,6 +82,7 @@ class Application
             config('locale.date_format', 'j F Y'),
             config('locale.time_format', 'H:i'),
             ));
+        $this->provide('ajax', fn() => new \Ajax\AjaxDispatcher());
     }
 
     /** @return \Http\Request */
@@ -124,6 +125,12 @@ class Application
     public function auth()
     {
         return $this->service('auth');
+    }
+
+    /** @return \Ajax\AjaxDispatcher */
+    public function ajax()
+    {
+        return $this->service('ajax');
     }
 
     /**
@@ -180,6 +187,10 @@ class Application
      */
     private function registerCoreRoutes(): void
     {
+        // Public AJAX endpoint (auth is per-action, not per-route)
+        $this->router->post('/ajax', fn() => $this->ajax()->dispatch());
+        $this->router->get('/ajax', fn() => $this->ajax()->dispatch());
+
         $controller = new PageController();
 
         // Home page

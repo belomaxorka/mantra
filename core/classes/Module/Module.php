@@ -238,6 +238,18 @@ abstract class Module implements ModuleInterface
         }
     }
 
+    /**
+     * Register an AJAX action on the dispatcher.
+     *
+     * @param string   $name    Action name (e.g. 'mymodule.dosomething')
+     * @param callable $handler function(\Http\Request $request, bool|string $access): mixed
+     * @param array    $options See \Ajax\AjaxDispatcher::register()
+     */
+    protected function ajaxAction(string $name, callable $handler, array $options = []): void
+    {
+        app()->ajax()->register($name, $handler, $options);
+    }
+
     protected function config($key, $default = null)
     {
         return $this->app->config($key, $default);

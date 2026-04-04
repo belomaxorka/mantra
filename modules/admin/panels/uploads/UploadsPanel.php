@@ -39,6 +39,10 @@ class UploadsPanel extends AdminPanel
 
         app()->db()->registerSchema('uploads', $this->getPath() . '/schema.php');
         $this->hook('permissions.register', [$this, 'registerPermissions']);
+
+        $this->ajaxAction('uploads.upload', [$this, 'handleAjaxUpload'], [
+            'permission' => 'uploads.upload',
+        ]);
     }
 
     /**
@@ -182,6 +186,30 @@ class UploadsPanel extends AdminPanel
             http_response_code(500);
             echo json_encode(['error' => ['message' => 'Upload failed']]);
         }
+    }
+
+    /**
+     * AJAX action handler for uploads (new unified endpoint).
+     * Used via: Mantra.ajax('uploads.upload', formData)
+     */
+    public function handleAjaxUpload($request, $access)
+    {
+        $error = $this->processUpload();
+        if ($error !== null) {
+            throw new \Ajax\AjaxException($error, 400);
+        }
+
+        $files = app()->db()->query('uploads', [], [
+            'sort' => 'created_at',
+            'order' => 'desc',
+            'limit' => 1,
+        ]);
+
+        if (empty($files)) {
+            throw new \Ajax\AjaxException('Upload failed', 500);
+        }
+
+        return ['url' => $this->getUploadsBaseUrl() . '/' . $files[0]['path']];
     }
 
     /**
