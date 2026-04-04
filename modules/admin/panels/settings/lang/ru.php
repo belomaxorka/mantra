@@ -63,7 +63,6 @@ return [
 
     // Security settings
     'admin-settings.security.password_hash_algo' => 'Алгоритм хеширования паролей',
-    'admin-settings.security.csrf_token_name' => 'Имя CSRF токена',
 
     // Session settings
     'admin-settings.session.name' => 'Имя сессии',

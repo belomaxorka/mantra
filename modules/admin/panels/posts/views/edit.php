@@ -204,6 +204,7 @@
                     var xhr = new XMLHttpRequest();
                     xhr.open('POST', uploadUrl, true);
                     xhr.withCredentials = true;
+                    xhr.setRequestHeader('X-CSRF-Token', Mantra.csrfToken());
                     xhr.onload = function() {
                         elUploading.classList.add('d-none');
                         if (xhr.status === 200) {
@@ -284,6 +285,7 @@
                 loader._xhr = xhr;
                 xhr.open('POST', UPLOAD_URL, true);
                 xhr.withCredentials = true;
+                xhr.setRequestHeader('X-CSRF-Token', Mantra.csrfToken());
                 xhr.onload = function() {
                     if (xhr.status < 200 || xhr.status >= 300) {
                         var msg = 'Upload failed';

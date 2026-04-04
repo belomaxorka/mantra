@@ -120,7 +120,6 @@ class Config
             'security' => [
                 // Stored as string identifier; interpreted by Auth when hashing.
                 'password_hash_algo' => 'PASSWORD_DEFAULT',
-                'csrf_token_name' => 'mantra_csrf',
             ],
             'session' => [
                 'name' => 'mantra_session',

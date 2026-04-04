@@ -63,7 +63,6 @@ return [
 
     // Security settings
     'admin-settings.security.password_hash_algo' => 'Password hash algorithm',
-    'admin-settings.security.csrf_token_name' => 'CSRF token name',
 
     // Session settings
     'admin-settings.session.name' => 'Session name',

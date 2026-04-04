@@ -189,12 +189,6 @@ return [
                     'default' => 'PASSWORD_DEFAULT',
                     'options' => [],
                 ],
-                [
-                    'path' => 'security.csrf_token_name',
-                    'type' => 'text',
-                    'title' => 'admin-settings.security.csrf_token_name',
-                    'default' => 'mantra_csrf',
-                ],
             ],
         ],
         [

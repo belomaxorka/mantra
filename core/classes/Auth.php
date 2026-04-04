@@ -64,6 +64,9 @@ class Auth
         // Regenerate session ID to prevent session fixation
         app()->session()->regenerate(true);
 
+        // Rotate CSRF token for the new authenticated session
+        app()->session()->delete('csrf_token');
+
         // Set session
         app()->session()->set('user_id', $user['_id']);
 
@@ -222,7 +225,7 @@ class Auth
             }
         }
 
-        $token = bin2hex(openssl_random_pseudo_bytes(32));
+        $token = bin2hex(random_bytes(32));
         app()->session()->set('csrf_token', $token);
         return $token;
     }
