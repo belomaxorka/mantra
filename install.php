@@ -18,41 +18,41 @@ if (file_exists(MANTRA_CONTENT . '/users')) {
 }
 
 // System requirements checks
-$requirements = [];
+$requirements = array();
 
 // PHP version
-$requirements[] = [
+$requirements[] = array(
     'name' => 'PHP >= 8.1.0',
     'name_ru' => 'PHP >= 8.1.0',
     'ok' => version_compare(PHP_VERSION, '8.1.0', '>='),
     'detail' => PHP_VERSION,
-];
+);
 
 // Required extensions
-$requiredExtensions = ['json', 'session', 'openssl'];
+$requiredExtensions = array('json', 'session', 'openssl');
 foreach ($requiredExtensions as $ext) {
-    $requirements[] = [
+    $requirements[] = array(
         'name' => $ext . ' extension',
         'name_ru' => 'Расширение ' . $ext,
         'ok' => extension_loaded($ext),
         'detail' => extension_loaded($ext) ? '' : 'missing',
-    ];
+    );
 }
 
 // Writable directories
-$writableDirs = [
+$writableDirs = array(
     MANTRA_CONTENT => 'content/',
     MANTRA_STORAGE => 'storage/',
     MANTRA_UPLOADS => 'uploads/',
-];
+);
 foreach ($writableDirs as $path => $label) {
     $writable = is_dir($path) ? is_writable($path) : is_writable(dirname($path));
-    $requirements[] = [
+    $requirements[] = array(
         'name' => $label . ' writable',
         'name_ru' => $label . ' доступен для записи',
         'ok' => $writable,
         'detail' => $writable ? '' : 'not writable',
-    ];
+    );
 }
 
 $allRequirementsMet = true;
@@ -64,7 +64,7 @@ foreach ($requirements as $req) {
 }
 
 // Allowed languages whitelist
-$allowedLanguages = ['en', 'ru'];
+$allowedLanguages = array('en', 'ru');
 
 // CSRF: generate token for the form
 if (session_status() === PHP_SESSION_NONE) {
@@ -101,14 +101,14 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
 
     if (!isset($error)) {
         // Create directories
-        $dirs = [
+        $dirs = array(
             MANTRA_CONTENT . '/pages',
             MANTRA_CONTENT . '/posts',
             MANTRA_CONTENT . '/users',
             MANTRA_CONTENT . '/settings',
             MANTRA_STORAGE . '/logs',
             MANTRA_UPLOADS,
-        ];
+        );
 
         $dirFailed = false;
         foreach ($dirs as $dir) {
@@ -144,7 +144,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
         $db = new Database();
 
         $now = date(Clock::STORAGE_FORMAT);
-        $userData = [
+        $userData = array(
             'username' => $username,
             'password' => Auth::hashPasswordStatic($password),
             'email' => '',
@@ -153,7 +153,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
             'author_id' => '',
             'created_at' => $now,
             'updated_at' => $now,
-        ];
+        );
 
         if ($db->write('users', $db->generateId(), $userData)) {
             // Regenerate CSRF token after success
@@ -442,6 +442,16 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
             flex-direction: column;
             gap: .625rem;
         }
+        .success-warning {
+            background: var(--mn-danger-soft);
+            color: var(--mn-danger);
+            border-radius: .5rem;
+            padding: .625rem .875rem;
+            font-size: .8125rem;
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+        .success-warning strong { font-weight: 600; }
 
         /* Footer */
         .install-footer {
@@ -490,6 +500,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
                     </div>
                     <h1 class="success-title" data-i18n="success_heading">Installation successful!</h1>
                     <p class="success-message" data-i18n="success_message">Your CMS is ready to use.</p>
+                    <div class="success-warning"><span data-i18n="success_warning">For security, delete the</span> <strong>install.php</strong> <span data-i18n="success_warning_suffix">file from your server.</span></div>
                     <div class="success-actions">
                         <a href="<?php echo e($adminUrl); ?>" class="btn btn-primary btn-block btn-lg" data-i18n="success_button_admin">Go to admin panel</a>
                         <a href="<?php echo e($siteUrl); ?>" class="btn btn-outline btn-block" data-i18n="success_button_site">Go to site</a>
@@ -588,6 +599,8 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
                 subtitle: 'Installation',
                 success_heading: 'Installation successful!',
                 success_message: 'Your CMS is ready to use.',
+                success_warning: 'For security, delete the',
+                success_warning_suffix: 'file from your server.',
                 success_button_admin: 'Go to admin panel',
                 success_button_site: 'Go to site',
                 label_site_name: 'Site Name',
@@ -609,6 +622,8 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
                 subtitle: 'Установка',
                 success_heading: 'Установка завершена!',
                 success_message: 'Ваша CMS готова к использованию.',
+                success_warning: 'В целях безопасности удалите файл',
+                success_warning_suffix: 'с вашего сервера.',
                 success_button_admin: 'Перейти в админ-панель',
                 success_button_site: 'Перейти на сайт',
                 label_site_name: 'Название сайта',
