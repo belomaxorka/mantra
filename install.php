@@ -18,41 +18,41 @@ if (file_exists(MANTRA_CONTENT . '/users')) {
 }
 
 // System requirements checks
-$requirements = array();
+$requirements = [];
 
 // PHP version
-$requirements[] = array(
+$requirements[] = [
     'name' => 'PHP >= 8.1.0',
     'name_ru' => 'PHP >= 8.1.0',
     'ok' => version_compare(PHP_VERSION, '8.1.0', '>='),
     'detail' => PHP_VERSION,
-);
+];
 
 // Required extensions
-$requiredExtensions = array('json', 'session', 'openssl');
+$requiredExtensions = ['json', 'session', 'openssl'];
 foreach ($requiredExtensions as $ext) {
-    $requirements[] = array(
+    $requirements[] = [
         'name' => $ext . ' extension',
         'name_ru' => 'Расширение ' . $ext,
         'ok' => extension_loaded($ext),
         'detail' => extension_loaded($ext) ? '' : 'missing',
-    );
+    ];
 }
 
 // Writable directories
-$writableDirs = array(
+$writableDirs = [
     MANTRA_CONTENT => 'content/',
     MANTRA_STORAGE => 'storage/',
     MANTRA_UPLOADS => 'uploads/',
-);
+];
 foreach ($writableDirs as $path => $label) {
     $writable = is_dir($path) ? is_writable($path) : is_writable(dirname($path));
-    $requirements[] = array(
+    $requirements[] = [
         'name' => $label . ' writable',
         'name_ru' => $label . ' доступен для записи',
         'ok' => $writable,
         'detail' => $writable ? '' : 'not writable',
-    );
+    ];
 }
 
 $allRequirementsMet = true;
@@ -64,7 +64,7 @@ foreach ($requirements as $req) {
 }
 
 // Allowed languages whitelist
-$allowedLanguages = array('en', 'ru');
+$allowedLanguages = ['en', 'ru'];
 
 // CSRF: generate token for the form
 if (session_status() === PHP_SESSION_NONE) {
@@ -101,14 +101,14 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
 
     if (!isset($error)) {
         // Create directories
-        $dirs = array(
+        $dirs = [
             MANTRA_CONTENT . '/pages',
             MANTRA_CONTENT . '/posts',
             MANTRA_CONTENT . '/users',
             MANTRA_CONTENT . '/settings',
             MANTRA_STORAGE . '/logs',
             MANTRA_UPLOADS,
-        );
+        ];
 
         $dirFailed = false;
         foreach ($dirs as $dir) {
@@ -144,7 +144,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
         $db = new Database();
 
         $now = date(Clock::STORAGE_FORMAT);
-        $userData = array(
+        $userData = [
             'username' => $username,
             'password' => Auth::hashPasswordStatic($password),
             'email' => '',
@@ -153,7 +153,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
             'author_id' => '',
             'created_at' => $now,
             'updated_at' => $now,
-        );
+        ];
 
         if ($db->write('users', $db->generateId(), $userData)) {
             // Regenerate CSRF token after success
