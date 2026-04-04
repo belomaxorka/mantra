@@ -27,6 +27,10 @@ CHANGELOG.md
 README.md
 LICENSE
 
+content/
+storage/
+uploads/
+
 *.tmp.*
 *.bak*
 *.swp
