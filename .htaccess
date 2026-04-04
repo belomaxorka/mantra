@@ -26,6 +26,13 @@ AddDefaultCharset UTF-8
     # Block PHP execution in uploads
     RewriteRule ^uploads/.*\.php$ - [R=404,L]
 
+    # Block docker configuration
+    RewriteRule ^docker/ - [R=404,L]
+
+    # Allow only index.php and install.php as entry points
+    RewriteCond %{THE_REQUEST} \.php
+    RewriteRule !^(index|install)\.php$ - [R=404,L]
+
     # Front controller
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
