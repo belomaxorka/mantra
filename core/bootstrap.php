@@ -13,9 +13,9 @@ if (version_compare(PHP_VERSION, '8.1.0', '<')) {
 // Project information
 define('MANTRA_PROJECT_INFO', [
     'name' => 'Mantra CMS',
-    'version' => '1.1.1',
+    'version' => '1.2.0',
     'github' => 'https://github.com/belomaxorka/mantra',
-    'release_date' => '2026-04-03',
+    'release_date' => '2026-04-04',
 ]);
 
 // Detect CLI mode

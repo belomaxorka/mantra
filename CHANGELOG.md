@@ -1,5 +1,52 @@
 # Changelog
 
+## [v1.2.0] - 2026-04-04
+
+### ✨ Added
+
+- (install) Add security reminder to delete install.php after setup ([f4339ba](https://github.com/belomaxorka/mantra/commit/f4339bacd864f1d619a7d8b5e16c4ee417f4e764))
+- (ajax) Add unified AJAX dispatcher for admin and public ([8b30823](https://github.com/belomaxorka/mantra/commit/8b3082301585ab4041f9d3f9ab29f144c3c937e4))
+- (content) Add compact JSON storage setting ([6bd5a94](https://github.com/belomaxorka/mantra/commit/6bd5a94af986575f33cdd502fec39a99ccbacb15))
+
+### 🐛 Fixed
+
+- (phpstan) Use real paths in bootstrap constants ([a098e43](https://github.com/belomaxorka/mantra/commit/a098e43720b98bdd8fd1e1c7b1d2c4ce6768e03e))
+- (tools) Fix changelog spacing in release script ([2801b45](https://github.com/belomaxorka/mantra/commit/2801b452f13a9b5f6cce5467afcf7a984125f70c))
+- (core) Harden MarkdownConverter regex handling and add 32 tests ([cbaaf7d](https://github.com/belomaxorka/mantra/commit/cbaaf7dd2d892ce44dab1a399e921bb77d755a57))
+- (core) Resolve PHP 8.5 deprecation warnings ([2ebbb85](https://github.com/belomaxorka/mantra/commit/2ebbb85f6455f778e22737deb78af47ab6f1c21e))
+- (core) Add XSS sanitization to MarkdownConverter, add nesting and security tests ([f30e5d3](https://github.com/belomaxorka/mantra/commit/f30e5d33b58630e7783a37ede7e1e36426c9e204))
+- (core) Improve MarkdownConverter and add comprehensive tests ([75b89b2](https://github.com/belomaxorka/mantra/commit/75b89b2ebc3636d469215df5989df63c63c9531d))
+
+### ♻️ Refactored
+
+- (install) Redesign installer to match admin design system ([c93ea79](https://github.com/belomaxorka/mantra/commit/c93ea79fd1e8871d3264f7a08bfc5956ce50f28a))
+- (docker) Simplify to single Apache variant ([54f2f9d](https://github.com/belomaxorka/mantra/commit/54f2f9dbcdb2e144596c876a887b0d2d00cfab9a))
+- (phpstan) Use empty stub values in bootstrap ([b393eb2](https://github.com/belomaxorka/mantra/commit/b393eb2e669a6bbb85468c2a879543d8050a2e27))
+- (middleware) Remove CsrfTrait and legacy requireAuth method ([a7121ce](https://github.com/belomaxorka/mantra/commit/a7121ceac26c807909797dd3a58ac43d52ff6510))
+- (middleware) Add class-based middleware pipeline system ([502fc05](https://github.com/belomaxorka/mantra/commit/502fc05aa94cbcd6680bcafabd4db9ea02a15191))
+- (csrf) Centralize CSRF verification in global admin middleware ([199c6c1](https://github.com/belomaxorka/mantra/commit/199c6c1eec9a052aeb05d3654571c4489bc906dd))
+- (admin) Reorganize vendor libs and add jQuery ([094f315](https://github.com/belomaxorka/mantra/commit/094f3155962e4bc47eaa5a9c8cc5e41a0e9f8340))
+- (admin) Extract shared head/scripts into partials ([b44f0e1](https://github.com/belomaxorka/mantra/commit/b44f0e16cf13674009ce0bae7d9f844a92dbe8a0))
+
+### 📦 Other
+
+- Auto-fix code formatting ([dec98a6](https://github.com/belomaxorka/mantra/commit/dec98a6e7dafa30efd991990e426e13e719ae5a2))
+- Auto-fix code formatting ([f9e4add](https://github.com/belomaxorka/mantra/commit/f9e4add2f941eb05ceb52a3f2c87b26941276073))
+- Harden web server configs ([2c0a46e](https://github.com/belomaxorka/mantra/commit/2c0a46e3ac0696b96c624e5aa2bf62d1f89c3c8e))
+- (release) Gate release on PHPStan analysis ([ada5c2d](https://github.com/belomaxorka/mantra/commit/ada5c2dd38eb89338d15e2ba13c61389ceb7822b))
+- (phpstan) Integrate PHPStan static analysis (level 0) ([4d10cd1](https://github.com/belomaxorka/mantra/commit/4d10cd1baf157f5e85c3d6445039f80d73e64112))
+- Expand php-cs-fixer ruleset and auto-fix code ([a99c9c2](https://github.com/belomaxorka/mantra/commit/a99c9c243289a6a7e11e526eb7dc798d6473cc36))
+- (middleware) Add MiddlewarePipeline and MiddlewareRegistry test suite (38 tests) ([5443042](https://github.com/belomaxorka/mantra/commit/5443042feb487e04e14b462188906123b5414e00))
+- (middleware) Add middleware system developer guide ([34c732f](https://github.com/belomaxorka/mantra/commit/34c732fdcfb6a8ea76243bb8fb0ec79ca00c99ef))
+- Auto-fix code formatting ([7c30d19](https://github.com/belomaxorka/mantra/commit/7c30d19e1ce38f57e1bdd6c9931ab2776a732b8e))
+- (ajax) Expand test suite with edge cases (47 tests) ([104617f](https://github.com/belomaxorka/mantra/commit/104617f0d5848804024a5dc61b287e7e78fcb993))
+- Auto-fix code formatting ([7701cd0](https://github.com/belomaxorka/mantra/commit/7701cd0092d567e45575267a39675186e5666fe2))
+- (ajax) Add AjaxDispatcher test suite (27 tests) ([69e816c](https://github.com/belomaxorka/mantra/commit/69e816c8d0340159bea2b00b48654ed8754fb200))
+- (ajax) Add AJAX system developer guide ([44c2fdc](https://github.com/belomaxorka/mantra/commit/44c2fdc5ae8d70aa38c4db3a7c3de20996d04d16))
+- (admin) Drop dark theme support ([31d0305](https://github.com/belomaxorka/mantra/commit/31d0305d243e7561b2831643e9dc92753bf41afd))
+- (admin) Lighten login page background and soften card shadow ([3a5bfea](https://github.com/belomaxorka/mantra/commit/3a5bfeaba018f50628c1e53615264814023daf81))
+- Auto-fix code formatting ([e00ec98](https://github.com/belomaxorka/mantra/commit/e00ec98ef29f81f051d8969fd99a653d39e8c100))
+
 ## [v1.1.1] - 2026-04-03
 
 ### ✨ Added
