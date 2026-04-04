@@ -54,6 +54,8 @@ return [
     // Content settings
     'admin-settings.content.format' => 'Content format',
     'admin-settings.content.posts_per_page' => 'Posts per page',
+    'admin-settings.content.compact_json' => 'Compact JSON storage',
+    'admin-settings.content.compact_json.help' => 'Store JSON content files without formatting (reduces file size).',
 
     // Modules settings
     'admin-settings.modules.core_modules' => 'Core Modules',

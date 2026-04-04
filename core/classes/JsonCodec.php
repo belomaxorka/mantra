@@ -20,13 +20,19 @@ class JsonCodec
      * Encode data to JSON string
      *
      * @param mixed $data Data to encode
+     * @param bool $compact If true, omit pretty-print (single-line output)
      * @return string JSON string
      * @throws JsonCodecException If encoding fails
      */
-    public static function encode($data)
+    public static function encode($data, $compact = false)
     {
+        $flags = JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR;
+        if (!$compact) {
+            $flags |= JSON_PRETTY_PRINT;
+        }
+
         try {
-            return json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+            return json_encode($data, $flags);
         } catch (\JsonException $e) {
             throw new JsonCodecException('Failed to encode JSON: ' . $e->getMessage());
         }

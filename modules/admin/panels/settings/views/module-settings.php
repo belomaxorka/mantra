@@ -288,5 +288,17 @@
   window.addEventListener('load', function () {
     activateFromHash();
   });
+
+  // Hide compact_json toggle when content format is markdown
+  var formatSelect = document.getElementById('f-content__format');
+  var compactToggle = document.getElementById('f-content__compact_json');
+  if (formatSelect && compactToggle) {
+    var compactRow = compactToggle.closest('.mb-3');
+    function syncCompactVisibility() {
+      compactRow.style.display = formatSelect.value === 'json' ? '' : 'none';
+    }
+    syncCompactVisibility();
+    formatSelect.addEventListener('change', syncCompactVisibility);
+  }
 })();
 </script>

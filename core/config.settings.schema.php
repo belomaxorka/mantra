@@ -156,6 +156,13 @@ return [
                     'title' => 'admin-settings.content.posts_per_page',
                     'default' => 10,
                 ],
+                [
+                    'path' => 'content.compact_json',
+                    'type' => 'toggle',
+                    'title' => 'admin-settings.content.compact_json',
+                    'default' => false,
+                    'help' => 'admin-settings.content.compact_json.help',
+                ],
             ],
         ],
         [

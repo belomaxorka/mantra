@@ -54,6 +54,8 @@ return [
     // Content settings
     'admin-settings.content.format' => 'Формат контента',
     'admin-settings.content.posts_per_page' => 'Постов на странице',
+    'admin-settings.content.compact_json' => 'Компактное хранение JSON',
+    'admin-settings.content.compact_json.help' => 'Хранить JSON-файлы контента без форматирования (уменьшает размер файлов).',
 
     // Modules settings
     'admin-settings.modules.core_modules' => 'Основные модули',

@@ -49,7 +49,8 @@ class JsonStorageDriver implements StorageDriverInterface
         $path = $this->getPath($collection, $id);
 
         try {
-            $content = JsonCodec::encode($data);
+            $compact = !empty($GLOBALS['MANTRA_CONFIG']['content']['compact_json']);
+            $content = JsonCodec::encode($data, $compact);
         } catch (JsonCodecException $e) {
             logger()->error('Failed to encode JSON document', [
                 'collection' => $collection,

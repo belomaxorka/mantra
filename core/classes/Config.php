@@ -112,6 +112,7 @@ class Config
             'content' => [
                 'format' => 'json',
                 'posts_per_page' => 10,
+                'compact_json' => false,
             ],
             'modules' => [
                 'enabled' => ['admin'],
