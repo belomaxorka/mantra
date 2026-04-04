@@ -132,7 +132,6 @@ class AjaxDispatcherTest extends MantraTestCase
         $this->dispatcher->register('test.any', fn() => 'yes', [
             'method' => 'ANY',
             'auth' => false,
-            'csrf' => false,
         ]);
 
         $this->setRequest('GET', 'test.any');
@@ -179,7 +178,6 @@ class AjaxDispatcherTest extends MantraTestCase
     {
         $this->dispatcher->register('test.post_only', fn() => null, [
             'auth' => false,
-            'csrf' => false,
         ]);
 
         $this->setRequest('GET', 'test.post_only');
@@ -195,7 +193,6 @@ class AjaxDispatcherTest extends MantraTestCase
     {
         $this->dispatcher->register('test.auth', fn() => null, [
             'auth' => true,
-            'csrf' => false,
         ]);
 
         $this->setRequest('POST', 'test.auth');
@@ -209,7 +206,6 @@ class AjaxDispatcherTest extends MantraTestCase
     {
         $this->dispatcher->register('test.public', fn() => 'public_data', [
             'auth' => false,
-            'csrf' => false,
         ]);
 
         $this->setRequest('POST', 'test.public');
@@ -218,59 +214,6 @@ class AjaxDispatcherTest extends MantraTestCase
         $this->assertSame(200, $response->getCode());
         $this->assertTrue($response->data['ok']);
         $this->assertSame('public_data', $response->data['data']);
-    }
-
-    // ========== Dispatch: CSRF Check ==========
-
-    public function testDispatchInvalidCsrfReturns403(): void
-    {
-        $this->dispatcher->register('test.csrf', fn() => null, [
-            'auth' => false,
-            'csrf' => true,
-        ]);
-
-        $this->setRequest('POST', 'test.csrf');
-        // No CSRF token header
-        $response = $this->captureDispatch();
-
-        $this->assertSame(403, $response->getCode());
-        $this->assertSame('Invalid CSRF token', $response->data['error']);
-    }
-
-    public function testDispatchValidCsrfPasses(): void
-    {
-        // Generate a real CSRF token in the session
-        $token = app()->auth()->generateCsrfToken();
-
-        $this->dispatcher->register('test.csrf_ok', fn() => 'passed', [
-            'auth' => false,
-            'csrf' => true,
-        ]);
-
-        $this->setRequest('POST', 'test.csrf_ok');
-        $_SERVER['HTTP_X_CSRF_TOKEN'] = $token;
-        // Force re-creation of Request so it picks up new headers
-        app()->provide('request', fn() => new \Http\Request());
-
-        $response = $this->captureDispatch();
-
-        $this->assertSame(200, $response->getCode());
-        $this->assertTrue($response->data['ok']);
-    }
-
-    public function testDispatchCsrfDisabledSkipsCheck(): void
-    {
-        $this->dispatcher->register('test.no_csrf', fn() => 'ok', [
-            'auth' => false,
-            'csrf' => false,
-        ]);
-
-        $this->setRequest('POST', 'test.no_csrf');
-        // No token, but csrf is disabled
-        $response = $this->captureDispatch();
-
-        $this->assertSame(200, $response->getCode());
-        $this->assertTrue($response->data['ok']);
     }
 
     // ========== Dispatch: Handler Execution ==========
@@ -284,7 +227,7 @@ class AjaxDispatcherTest extends MantraTestCase
             $called = true;
             $receivedRequest = $request;
             return ['result' => 42];
-        }, ['auth' => false, 'csrf' => false]);
+        }, ['auth' => false]);
 
         $this->setRequest('POST', 'test.handler');
         $response = $this->captureDispatch();
@@ -303,7 +246,7 @@ class AjaxDispatcherTest extends MantraTestCase
         $this->dispatcher->register('test.access', function ($request, $access) use (&$receivedAccess) {
             $receivedAccess = $access;
             return null;
-        }, ['auth' => false, 'csrf' => false]);
+        }, ['auth' => false]);
 
         $this->setRequest('POST', 'test.access');
         $this->captureDispatch();
@@ -315,7 +258,6 @@ class AjaxDispatcherTest extends MantraTestCase
     {
         $this->dispatcher->register('test.null', fn() => null, [
             'auth' => false,
-            'csrf' => false,
         ]);
 
         $this->setRequest('POST', 'test.null');
@@ -330,7 +272,6 @@ class AjaxDispatcherTest extends MantraTestCase
     {
         $this->dispatcher->register('test.string', fn() => 'hello', [
             'auth' => false,
-            'csrf' => false,
         ]);
 
         $this->setRequest('POST', 'test.string');
@@ -343,7 +284,6 @@ class AjaxDispatcherTest extends MantraTestCase
     {
         $this->dispatcher->register('test.array', fn() => ['a' => 1, 'b' => 2], [
             'auth' => false,
-            'csrf' => false,
         ]);
 
         $this->setRequest('POST', 'test.array');
@@ -358,7 +298,7 @@ class AjaxDispatcherTest extends MantraTestCase
     {
         $this->dispatcher->register('test.ajax_err', function (): void {
             throw new \Ajax\AjaxException('File too large', 413);
-        }, ['auth' => false, 'csrf' => false]);
+        }, ['auth' => false]);
 
         $this->setRequest('POST', 'test.ajax_err');
         $response = $this->captureDispatch();
@@ -372,7 +312,7 @@ class AjaxDispatcherTest extends MantraTestCase
     {
         $this->dispatcher->register('test.ajax_err_default', function (): void {
             throw new \Ajax\AjaxException('Bad input');
-        }, ['auth' => false, 'csrf' => false]);
+        }, ['auth' => false]);
 
         $this->setRequest('POST', 'test.ajax_err_default');
         $response = $this->captureDispatch();
@@ -385,7 +325,7 @@ class AjaxDispatcherTest extends MantraTestCase
     {
         $this->dispatcher->register('test.crash', function (): void {
             throw new \RuntimeException('Something broke');
-        }, ['auth' => false, 'csrf' => false]);
+        }, ['auth' => false]);
 
         $this->setRequest('POST', 'test.crash');
         $response = $this->captureDispatch();
@@ -400,7 +340,7 @@ class AjaxDispatcherTest extends MantraTestCase
     {
         $this->dispatcher->register('test.bad_code', function (): void {
             throw new \Ajax\AjaxException('Weird error', 999);
-        }, ['auth' => false, 'csrf' => false]);
+        }, ['auth' => false]);
 
         $this->setRequest('POST', 'test.bad_code');
         $response = $this->captureDispatch();
@@ -415,7 +355,6 @@ class AjaxDispatcherTest extends MantraTestCase
     {
         $this->dispatcher->register('test.halt', fn() => 'should not reach', [
             'auth' => false,
-            'csrf' => false,
         ]);
 
         app()->hooks()->register('ajax.before', function ($context) {
@@ -437,7 +376,6 @@ class AjaxDispatcherTest extends MantraTestCase
     {
         $this->dispatcher->register('test.after', fn() => ['original' => true], [
             'auth' => false,
-            'csrf' => false,
         ]);
 
         app()->hooks()->register('ajax.after', function ($response) {
@@ -468,7 +406,6 @@ class AjaxDispatcherTest extends MantraTestCase
     {
         $this->dispatcher->register('test.order', fn() => null, [
             'auth' => true,
-            'csrf' => false,
         ]);
 
         // Wrong method + not logged in → should be 405, not 401
@@ -482,7 +419,6 @@ class AjaxDispatcherTest extends MantraTestCase
     {
         $this->dispatcher->register('test.order2', fn() => null, [
             'auth' => true,
-            'csrf' => true,
         ]);
 
         // Not logged in + no CSRF → should be 401, not 403
@@ -492,51 +428,15 @@ class AjaxDispatcherTest extends MantraTestCase
         $this->assertSame(401, $response->getCode());
     }
 
-    // ========== CSRF Edge Cases ==========
-
-    public function testDispatchWrongCsrfTokenReturns403(): void
-    {
-        // Generate real token, then send a wrong one
-        app()->auth()->generateCsrfToken();
-
-        $this->dispatcher->register('test.wrong_csrf', fn() => null, [
-            'auth' => false,
-            'csrf' => true,
-        ]);
-
-        $this->setRequest('POST', 'test.wrong_csrf');
-        $_SERVER['HTTP_X_CSRF_TOKEN'] = 'definitely_not_the_right_token';
-        app()->provide('request', fn() => new \Http\Request());
-
-        $response = $this->captureDispatch();
-
-        $this->assertSame(403, $response->getCode());
-    }
-
-    public function testGetWithCsrfForcedOn(): void
-    {
-        $this->dispatcher->register('test.get_csrf', fn() => null, [
-            'method' => 'GET',
-            'auth' => false,
-            'csrf' => true,
-        ]);
-
-        // GET request, but csrf forced on — should fail without token
-        $this->setRequest('GET', 'test.get_csrf');
-        $response = $this->captureDispatch();
-
-        $this->assertSame(403, $response->getCode());
-    }
-
     // ========== Registration: Overwrite Behavior ==========
 
     public function testRegisterOverwriteCallsSecondHandler(): void
     {
         $this->dispatcher->register('test.overwrite', fn() => 'first', [
-            'auth' => false, 'csrf' => false,
+            'auth' => false,
         ]);
         $this->dispatcher->register('test.overwrite', fn() => 'second', [
-            'auth' => false, 'csrf' => false,
+            'auth' => false,
         ]);
 
         $this->setRequest('POST', 'test.overwrite');
@@ -550,7 +450,7 @@ class AjaxDispatcherTest extends MantraTestCase
     public function testActionNameWithWhitespaceIsTrimmed(): void
     {
         $this->dispatcher->register('test.trim', fn() => 'ok', [
-            'auth' => false, 'csrf' => false,
+            'auth' => false,
         ]);
 
         // Query string has spaces around name
@@ -567,7 +467,7 @@ class AjaxDispatcherTest extends MantraTestCase
     public function testActionNameWithDotsAndDashes(): void
     {
         $this->dispatcher->register('my-module.do-thing.v2', fn() => 'ok', [
-            'auth' => false, 'csrf' => false,
+            'auth' => false,
         ]);
 
         $this->setRequest('POST', 'my-module.do-thing.v2');
@@ -581,7 +481,7 @@ class AjaxDispatcherTest extends MantraTestCase
     public function testHandlerReturnsFalse(): void
     {
         $this->dispatcher->register('test.false', fn() => false, [
-            'auth' => false, 'csrf' => false,
+            'auth' => false,
         ]);
 
         $this->setRequest('POST', 'test.false');
@@ -595,7 +495,7 @@ class AjaxDispatcherTest extends MantraTestCase
     public function testHandlerReturnsZero(): void
     {
         $this->dispatcher->register('test.zero', fn() => 0, [
-            'auth' => false, 'csrf' => false,
+            'auth' => false,
         ]);
 
         $this->setRequest('POST', 'test.zero');
@@ -607,7 +507,7 @@ class AjaxDispatcherTest extends MantraTestCase
     public function testHandlerReturnsEmptyString(): void
     {
         $this->dispatcher->register('test.empty_str', fn() => '', [
-            'auth' => false, 'csrf' => false,
+            'auth' => false,
         ]);
 
         $this->setRequest('POST', 'test.empty_str');
@@ -619,7 +519,7 @@ class AjaxDispatcherTest extends MantraTestCase
     public function testHandlerReturnsEmptyArray(): void
     {
         $this->dispatcher->register('test.empty_arr', fn() => [], [
-            'auth' => false, 'csrf' => false,
+            'auth' => false,
         ]);
 
         $this->setRequest('POST', 'test.empty_arr');
@@ -633,7 +533,7 @@ class AjaxDispatcherTest extends MantraTestCase
         $deep = ['a' => ['b' => ['c' => ['d' => 42]]]];
 
         $this->dispatcher->register('test.deep', fn() => $deep, [
-            'auth' => false, 'csrf' => false,
+            'auth' => false,
         ]);
 
         $this->setRequest('POST', 'test.deep');
@@ -646,9 +546,9 @@ class AjaxDispatcherTest extends MantraTestCase
 
     public function testDispatchCorrectActionAmongMany(): void
     {
-        $this->dispatcher->register('first', fn() => 'one', ['auth' => false, 'csrf' => false]);
-        $this->dispatcher->register('second', fn() => 'two', ['auth' => false, 'csrf' => false]);
-        $this->dispatcher->register('third', fn() => 'three', ['auth' => false, 'csrf' => false]);
+        $this->dispatcher->register('first', fn() => 'one', ['auth' => false]);
+        $this->dispatcher->register('second', fn() => 'two', ['auth' => false]);
+        $this->dispatcher->register('third', fn() => 'three', ['auth' => false]);
 
         $this->setRequest('POST', 'second');
         $response = $this->captureDispatch();
@@ -663,7 +563,7 @@ class AjaxDispatcherTest extends MantraTestCase
         $this->dispatcher->register('test.counter', function () use (&$counter) {
             $counter++;
             return $counter;
-        }, ['auth' => false, 'csrf' => false]);
+        }, ['auth' => false]);
 
         $this->setRequest('POST', 'test.counter');
         $r1 = $this->captureDispatch();
@@ -680,7 +580,7 @@ class AjaxDispatcherTest extends MantraTestCase
         $receivedContext = null;
 
         $this->dispatcher->register('test.ctx', fn() => 'ok', [
-            'auth' => false, 'csrf' => false,
+            'auth' => false,
         ]);
 
         app()->hooks()->register('ajax.before', function ($context) use (&$receivedContext) {
@@ -700,7 +600,7 @@ class AjaxDispatcherTest extends MantraTestCase
     public function testAjaxBeforeHookHaltDefaultErrorAndCode(): void
     {
         $this->dispatcher->register('test.halt_defaults', fn() => null, [
-            'auth' => false, 'csrf' => false,
+            'auth' => false,
         ]);
 
         app()->hooks()->register('ajax.before', function ($context) {
@@ -719,7 +619,7 @@ class AjaxDispatcherTest extends MantraTestCase
     public function testAjaxBeforeHookWithoutHaltDoesNotBlock(): void
     {
         $this->dispatcher->register('test.pass', fn() => 'reached', [
-            'auth' => false, 'csrf' => false,
+            'auth' => false,
         ]);
 
         app()->hooks()->register('ajax.before', function ($context) {
@@ -742,7 +642,7 @@ class AjaxDispatcherTest extends MantraTestCase
         $this->dispatcher->register('test.no_call', function () use (&$called) {
             $called = true;
             return 'should not happen';
-        }, ['auth' => false, 'csrf' => false]);
+        }, ['auth' => false]);
 
         app()->hooks()->register('ajax.before', function ($context) {
             $context['halt'] = true;
@@ -760,7 +660,7 @@ class AjaxDispatcherTest extends MantraTestCase
         $receivedContext = null;
 
         $this->dispatcher->register('test.after_ctx', fn() => 'data', [
-            'auth' => false, 'csrf' => false,
+            'auth' => false,
         ]);
 
         app()->hooks()->register('ajax.after', function ($response, $context) use (&$receivedContext) {

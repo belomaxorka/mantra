@@ -267,6 +267,30 @@ class AdminModule extends Module
     {
         $router = $data['router'];
 
+        // Global CSRF middleware for all admin POST requests.
+        $router->addGlobalMiddleware('/admin/*', function () {
+            $request = app()->request();
+
+            if ($request->method() !== 'POST') {
+                return true;
+            }
+
+            $token = $request->post('csrf_token', '')
+                  ?: $request->header('X-CSRF-Token', '');
+
+            if (!app()->auth()->verifyCsrfToken($token)) {
+                if ($request->acceptsJson()) {
+                    app()->response()->json(['ok' => false, 'error' => 'Invalid CSRF token'], 403);
+                } else {
+                    http_response_code(403);
+                    echo 'Invalid CSRF token';
+                }
+                return false;
+            }
+
+            return true;
+        }, 5);
+
         // Auth routes (no middleware — public)
         $router->get('/admin/login', [$this, 'loginForm']);
         $router->post('/admin/login', [$this, 'loginProcess']);
@@ -504,12 +528,6 @@ class AdminModule extends Module
      */
     public function loginProcess(): void
     {
-        $token = (string)app()->request()->post('csrf_token', '');
-        if (!app()->auth()->verifyCsrfToken($token)) {
-            abort(403);
-            return;
-        }
-
         $username = (string)app()->request()->post('username', '');
         $password = (string)app()->request()->post('password', '');
 
@@ -528,12 +546,6 @@ class AdminModule extends Module
      */
     public function logout(): void
     {
-        $token = (string)app()->request()->post('csrf_token', '');
-        if (!app()->auth()->verifyCsrfToken($token)) {
-            abort(403);
-            return;
-        }
-
         app()->auth()->logout();
         app()->response()->redirect(base_url('/admin/login'));
     }

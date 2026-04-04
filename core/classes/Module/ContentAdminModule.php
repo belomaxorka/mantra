@@ -151,10 +151,6 @@ abstract class ContentAdminModule extends BaseAdminModule
      */
     public function createItem(): void
     {
-        if (!$this->verifyCsrf()) {
-            return;
-        }
-
         $data = $this->extractFormData();
         $data = $this->fireHook('admin.' . $this->getCollectionName() . '.form_data', $data);
         $data = $this->ensureSlug($data);
@@ -206,10 +202,6 @@ abstract class ContentAdminModule extends BaseAdminModule
      */
     public function updateItem($params)
     {
-        if (!$this->verifyCsrf()) {
-            return;
-        }
-
         $id = $params['id'] ?? '';
         $item = app()->db()->read($this->getCollectionName(), $id);
 
@@ -241,10 +233,6 @@ abstract class ContentAdminModule extends BaseAdminModule
      */
     public function deleteItem($params): void
     {
-        if (!$this->verifyCsrf()) {
-            return;
-        }
-
         $id = $params['id'] ?? '';
 
         if (app()->db()->exists($this->getCollectionName(), $id)) {

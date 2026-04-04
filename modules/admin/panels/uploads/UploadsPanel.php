@@ -116,7 +116,6 @@ class UploadsPanel extends AdminPanel
     public function uploadFile()
     {
         if (!$this->requirePermission('uploads.upload')) return;
-        if (!$this->verifyCsrf()) return;
 
         $error = $this->processUpload();
 
@@ -253,7 +252,6 @@ class UploadsPanel extends AdminPanel
     public function updateFile($params): void
     {
         if (!$this->requirePermission('uploads.upload')) return;
-        if (!$this->verifyCsrf()) return;
 
         $id = $params['id'] ?? '';
         $file = app()->db()->read('uploads', $id);
@@ -278,7 +276,6 @@ class UploadsPanel extends AdminPanel
     {
         $access = $this->requirePermission('uploads.delete');
         if ($access === false) return;
-        if (!$this->verifyCsrf()) return;
 
         $id = $params['id'] ?? '';
         $file = app()->db()->read('uploads', $id);

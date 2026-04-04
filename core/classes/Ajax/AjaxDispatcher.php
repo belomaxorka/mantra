@@ -5,7 +5,7 @@ namespace Ajax;
 /**
  * AjaxDispatcher — unified AJAX action handler for Mantra CMS.
  *
- * Modules register named actions with options (auth, permission, csrf).
+ * Modules register named actions with options (auth, permission).
  * Two endpoints dispatch to registered handlers:
  *   POST|GET /ajax         — public actions
  *   POST|GET /admin/ajax   — admin actions (requireAuth middleware)
@@ -18,7 +18,7 @@ namespace Ajax;
  */
 class AjaxDispatcher
 {
-    /** @var array<string, array{handler: callable, method: string, auth: bool, permission: ?string, csrf: bool}> */
+    /** @var array<string, array{handler: callable, method: string, auth: bool, permission: ?string}> */
     private array $actions = [];
 
     public function __construct()
@@ -67,24 +67,17 @@ class AjaxDispatcher
      *     method:     'POST'|'GET'|'ANY'  (default 'POST'),
      *     auth:       bool                (default true),
      *     permission: string|null         (default null — auth only, no permission check),
-     *     csrf:       bool|null           (default null — true for POST, false for GET),
      * }
      */
     public function register(string $name, callable $handler, array $options = []): void
     {
         $method = strtoupper($options['method'] ?? 'POST');
 
-        $csrf = $options['csrf'] ?? null;
-        if ($csrf === null) {
-            $csrf = ($method !== 'GET');
-        }
-
         $this->actions[$name] = [
             'handler' => $handler,
             'method' => $method,
             'auth' => (bool)($options['auth'] ?? true),
             'permission' => $options['permission'] ?? null,
-            'csrf' => (bool)$csrf,
         ];
     }
 
@@ -112,14 +105,6 @@ class AjaxDispatcher
         // Auth check
         if ($def['auth'] && !app()->auth()->check()) {
             $response->json(['ok' => false, 'error' => 'Authentication required'], 401);
-        }
-
-        // CSRF check (via X-CSRF-Token header)
-        if ($def['csrf']) {
-            $token = (string)$request->header('X-CSRF-Token', '');
-            if ($token === '' || !app()->auth()->verifyCsrfToken($token)) {
-                $response->json(['ok' => false, 'error' => 'Invalid CSRF token'], 403);
-            }
         }
 
         // Permission check

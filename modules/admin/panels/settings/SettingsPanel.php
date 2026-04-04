@@ -170,112 +170,107 @@ class SettingsPanel extends AdminPanel
         }
 
         if (app()->request()->method() === 'POST') {
-            $token = (string)app()->request()->post('csrf_token', '');
-            if (!$this->auth()->verifyCsrfToken($token)) {
-                $error = 'Invalid CSRF token';
-            } else {
-                $handledAction = false;
-                if (is_array($context) && !empty($context['on_post']) && is_callable($context['on_post'])) {
-                    $args = [&$notice, &$error];
-                    $handledAction = (bool)($context['on_post'])(...$args);
+            $handledAction = false;
+            if (is_array($context) && !empty($context['on_post']) && is_callable($context['on_post'])) {
+                $args = [&$notice, &$error];
+                $handledAction = (bool)($context['on_post'])(...$args);
+            }
+
+            if (empty($error) && !$handledAction) {
+                $updates = [];
+                $schemaTabs = $schema['tabs'] ?? [];
+
+                foreach ($schemaTabs as $tab) {
+                    $tabFields = $tab['fields'] ?? [];
+                    foreach ($tabFields as $field) {
+                        if (!is_array($field) || empty($field['path']) || empty($field['type'])) {
+                            continue;
+                        }
+
+                        $path = (string)$field['path'];
+                        $type = (string)$field['type'];
+
+                        if ($type === 'module_cards') {
+                            $posted = app()->request()->post($path, null);
+                            if (is_array($posted)) {
+                                $items = [];
+                                foreach ($posted as $item) {
+                                    $item = trim((string)$item);
+                                    if ($item !== '') {
+                                        $items[] = $item;
+                                    }
+                                }
+                                $updates[$path] = array_values(array_unique($items));
+                            }
+                            continue;
+                        }
+
+                        $name = str_replace('.', '__', $path);
+
+                        if ($type === 'toggle') {
+                            $updates[$path] = app()->request()->post($name) ? true : false;
+                            continue;
+                        }
+
+                        $raw = app()->request()->post($name, null);
+                        if ($raw === null) {
+                            continue;
+                        }
+
+                        if ($type === 'number') {
+                            $updates[$path] = (int)$raw;
+                        } elseif ($type === 'select') {
+                            $val = (string)$raw;
+                            $options = isset($field['options']) && is_array($field['options']) ? $field['options'] : [];
+                            if (array_key_exists($val, $options)) {
+                                $updates[$path] = $val;
+                            }
+                        } elseif ($type === 'textarea') {
+                            $updates[$path] = (string)$raw;
+                        } else {
+                            $updates[$path] = (string)$raw;
+                        }
+                    }
                 }
 
-                if (empty($error) && !$handledAction) {
-                    $updates = [];
-                    $schemaTabs = $schema['tabs'] ?? [];
-
+                if (!empty($updates)) {
+                    // Textarea fields that represent lists
                     foreach ($schemaTabs as $tab) {
-                        $tabFields = $tab['fields'] ?? [];
-                        foreach ($tabFields as $field) {
+                        $tabFields2 = $tab['fields'] ?? [];
+                        foreach ($tabFields2 as $field) {
                             if (!is_array($field) || empty($field['path']) || empty($field['type'])) {
                                 continue;
                             }
-
                             $path = (string)$field['path'];
-                            $type = (string)$field['type'];
-
-                            if ($type === 'module_cards') {
-                                $posted = app()->request()->post($path, null);
-                                if (is_array($posted)) {
-                                    $items = [];
-                                    foreach ($posted as $item) {
-                                        $item = trim((string)$item);
-                                        if ($item !== '') {
-                                            $items[] = $item;
-                                        }
+                            if ((string)$field['type'] === 'textarea' && array_key_exists($path, $updates) && array_key_exists('default', $field) && is_array($field['default'])) {
+                                $raw = (string)$updates[$path];
+                                $lines = preg_split('/\r\n|\r|\n/', $raw);
+                                $lines = is_array($lines) ? $lines : [];
+                                $items = [];
+                                foreach ($lines as $line) {
+                                    $line = trim((string)$line);
+                                    if ($line !== '') {
+                                        $items[] = $line;
                                     }
-                                    $updates[$path] = array_values(array_unique($items));
                                 }
-                                continue;
-                            }
-
-                            $name = str_replace('.', '__', $path);
-
-                            if ($type === 'toggle') {
-                                $updates[$path] = app()->request()->post($name) ? true : false;
-                                continue;
-                            }
-
-                            $raw = app()->request()->post($name, null);
-                            if ($raw === null) {
-                                continue;
-                            }
-
-                            if ($type === 'number') {
-                                $updates[$path] = (int)$raw;
-                            } elseif ($type === 'select') {
-                                $val = (string)$raw;
-                                $options = isset($field['options']) && is_array($field['options']) ? $field['options'] : [];
-                                if (array_key_exists($val, $options)) {
-                                    $updates[$path] = $val;
-                                }
-                            } elseif ($type === 'textarea') {
-                                $updates[$path] = (string)$raw;
-                            } else {
-                                $updates[$path] = (string)$raw;
+                                $updates[$path] = $items;
                             }
                         }
                     }
 
+                    // Validate modules.enabled changes
+                    if (array_key_exists('modules.enabled', $updates)) {
+                        $validationError = $this->validateModulesEnabledUpdate($updates['modules.enabled']);
+                        if ($validationError !== null) {
+                            $error = $validationError;
+                            unset($updates['modules.enabled']);
+                        }
+                    }
+
                     if (!empty($updates)) {
-                        // Textarea fields that represent lists
-                        foreach ($schemaTabs as $tab) {
-                            $tabFields2 = $tab['fields'] ?? [];
-                            foreach ($tabFields2 as $field) {
-                                if (!is_array($field) || empty($field['path']) || empty($field['type'])) {
-                                    continue;
-                                }
-                                $path = (string)$field['path'];
-                                if ((string)$field['type'] === 'textarea' && array_key_exists($path, $updates) && array_key_exists('default', $field) && is_array($field['default'])) {
-                                    $raw = (string)$updates[$path];
-                                    $lines = preg_split('/\r\n|\r|\n/', $raw);
-                                    $lines = is_array($lines) ? $lines : [];
-                                    $items = [];
-                                    foreach ($lines as $line) {
-                                        $line = trim((string)$line);
-                                        if ($line !== '') {
-                                            $items[] = $line;
-                                        }
-                                    }
-                                    $updates[$path] = $items;
-                                }
-                            }
-                        }
-
-                        // Validate modules.enabled changes
-                        if (array_key_exists('modules.enabled', $updates)) {
-                            $validationError = $this->validateModulesEnabledUpdate($updates['modules.enabled']);
-                            if ($validationError !== null) {
-                                $error = $validationError;
-                                unset($updates['modules.enabled']);
-                            }
-                        }
-
-                        if (!empty($updates)) {
-                            $store->setMultiple($updates);
-                            $store->save();
-                            $notice = 'Settings saved';
-                        }
+                        $store->setMultiple($updates);
+                        $store->save();
+                        $notice = 'Settings saved';
                     }
                 }
             }

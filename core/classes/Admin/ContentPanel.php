@@ -307,9 +307,6 @@ abstract class ContentPanel extends AdminPanel
     {
         $prefix = $this->getPermissionPrefix();
         if (!$this->requirePermission($prefix . '.create')) return;
-        if (!$this->verifyCsrf()) {
-            return;
-        }
 
         $data = $this->extractFormData();
         $data = $this->fireHook('admin.' . $this->getCollectionName() . '.form_data', $data);
@@ -378,9 +375,6 @@ abstract class ContentPanel extends AdminPanel
         $prefix = $this->getPermissionPrefix();
         $access = $this->requirePermission($prefix . '.edit');
         if ($access === false) return;
-        if (!$this->verifyCsrf()) {
-            return;
-        }
 
         $id = $params['id'] ?? '';
         $item = app()->db()->read($this->getCollectionName(), $id);
@@ -432,9 +426,6 @@ abstract class ContentPanel extends AdminPanel
         $prefix = $this->getPermissionPrefix();
         $access = $this->requirePermission($prefix . '.delete');
         if ($access === false) return;
-        if (!$this->verifyCsrf()) {
-            return;
-        }
 
         $id = $params['id'] ?? '';
         $item = app()->db()->read($this->getCollectionName(), $id);
@@ -466,7 +457,6 @@ abstract class ContentPanel extends AdminPanel
     {
         $prefix = $this->getPermissionPrefix();
         if (!$this->requirePermission($prefix . '.view')) return;
-        if (!$this->verifyCsrf()) return;
 
         $data = $this->extractFormData();
         $data = $this->fireHook('admin.' . $this->getCollectionName() . '.form_data', $data);

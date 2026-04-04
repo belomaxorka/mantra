@@ -119,7 +119,6 @@ class UsersPanel extends ContentPanel
     public function createItem(): void
     {
         if (!$this->requirePermission('users.create')) return;
-        if (!$this->verifyCsrf()) return;
 
         $data = $this->extractFormData();
         $data['username'] = app()->request()->postTrimmed('username');
@@ -154,7 +153,6 @@ class UsersPanel extends ContentPanel
     public function updateItem($params): void
     {
         if (!$this->requirePermission('users.edit')) return;
-        if (!$this->verifyCsrf()) return;
 
         $id = $params['id'] ?? '';
         $user = $this->getUserManager()->find($id);
@@ -187,7 +185,6 @@ class UsersPanel extends ContentPanel
     public function deleteItem($params): void
     {
         if (!$this->requirePermission('users.delete')) return;
-        if (!$this->verifyCsrf()) return;
 
         $id = $params['id'] ?? '';
         $currentUser = $this->getUser();

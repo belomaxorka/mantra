@@ -12,6 +12,7 @@ use Application;
 
 abstract class AdminPanel implements AdminPanelInterface
 {
+    use \CsrfTrait;
 
     /** @var \AdminModule */
     protected $admin;
@@ -193,26 +194,6 @@ abstract class AdminPanel implements AdminPanelInterface
     protected function auth()
     {
         return app()->auth();
-    }
-
-    protected function verifyCsrf()
-    {
-        if (app()->request()->method() !== 'POST') {
-            return true;
-        }
-
-        $token = app()->request()->post('csrf_token', '')
-              ?: app()->request()->header('X-CSRF-Token', '');
-
-        if (!app()->auth()->verifyCsrfToken($token)) {
-            if (app()->request()->acceptsJson()) {
-                app()->response()->json(['ok' => false, 'error' => 'Invalid CSRF token'], 403);
-            }
-            http_response_code(403);
-            echo 'Invalid CSRF token';
-            return false;
-        }
-        return true;
     }
 
     protected function getUser()

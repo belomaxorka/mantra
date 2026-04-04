@@ -14,6 +14,7 @@ namespace Module;
 
 abstract class BaseAdminModule extends Module
 {
+    use \CsrfTrait;
 
     /**
      * Initialize admin module.
@@ -125,24 +126,6 @@ abstract class BaseAdminModule extends Module
         }
         http_response_code(500);
         echo 'Admin module not loaded';
-    }
-
-    /**
-     * Verify CSRF token (shorthand)
-     * @return bool
-     */
-    protected function verifyCsrf()
-    {
-        if (app()->request()->method() !== 'POST') {
-            return true;
-        }
-        $token = app()->request()->post('csrf_token', '');
-        if (!app()->auth()->verifyCsrfToken($token)) {
-            http_response_code(403);
-            echo 'Invalid CSRF token';
-            return false;
-        }
-        return true;
     }
 
     /**

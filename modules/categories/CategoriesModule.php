@@ -117,8 +117,6 @@ class CategoriesModule extends BaseAdminModule
 
     public function createCategory(): void
     {
-        if (!$this->verifyCsrf()) return;
-
         $data = [
             'title' => app()->request()->postTrimmed('title'),
             'slug' => app()->request()->postTrimmed('slug'),
@@ -175,8 +173,6 @@ class CategoriesModule extends BaseAdminModule
 
     public function updateCategory($params): void
     {
-        if (!$this->verifyCsrf()) return;
-
         $id = $params['id'] ?? '';
         $existing = app()->db()->read('categories', $id);
 
@@ -208,8 +204,6 @@ class CategoriesModule extends BaseAdminModule
 
     public function deleteCategory($params): void
     {
-        if (!$this->verifyCsrf()) return;
-
         $id = $params['id'] ?? '';
         app()->db()->delete('categories', $id);
 

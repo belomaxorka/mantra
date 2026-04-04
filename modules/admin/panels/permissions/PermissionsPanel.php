@@ -45,7 +45,6 @@ class PermissionsPanel extends AdminPanel
     public function save()
     {
         if (!$this->requireAdmin()) return;
-        if (!$this->verifyCsrf()) return;
 
         $registry = app()->service('permissions');
         if (!$registry) {
