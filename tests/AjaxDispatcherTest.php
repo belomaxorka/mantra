@@ -453,6 +453,327 @@ class AjaxDispatcherTest extends MantraTestCase
         $this->assertTrue($response->data['data']['injected']);
     }
 
+    // ========== Pipeline Order ==========
+
+    public function testCheckOrderUnknownActionBeforeMethodCheck(): void
+    {
+        // Unknown action + wrong method → should be 404, not 405
+        $this->setRequest('GET', 'nonexistent');
+        $response = $this->captureDispatch();
+
+        $this->assertSame(404, $response->getCode());
+    }
+
+    public function testCheckOrderMethodBeforeAuth(): void
+    {
+        $this->dispatcher->register('test.order', fn() => null, [
+            'auth' => true,
+            'csrf' => false,
+        ]);
+
+        // Wrong method + not logged in → should be 405, not 401
+        $this->setRequest('GET', 'test.order');
+        $response = $this->captureDispatch();
+
+        $this->assertSame(405, $response->getCode());
+    }
+
+    public function testCheckOrderAuthBeforeCsrf(): void
+    {
+        $this->dispatcher->register('test.order2', fn() => null, [
+            'auth' => true,
+            'csrf' => true,
+        ]);
+
+        // Not logged in + no CSRF → should be 401, not 403
+        $this->setRequest('POST', 'test.order2');
+        $response = $this->captureDispatch();
+
+        $this->assertSame(401, $response->getCode());
+    }
+
+    // ========== CSRF Edge Cases ==========
+
+    public function testDispatchWrongCsrfTokenReturns403(): void
+    {
+        // Generate real token, then send a wrong one
+        app()->auth()->generateCsrfToken();
+
+        $this->dispatcher->register('test.wrong_csrf', fn() => null, [
+            'auth' => false,
+            'csrf' => true,
+        ]);
+
+        $this->setRequest('POST', 'test.wrong_csrf');
+        $_SERVER['HTTP_X_CSRF_TOKEN'] = 'definitely_not_the_right_token';
+        app()->provide('request', fn() => new \Http\Request());
+
+        $response = $this->captureDispatch();
+
+        $this->assertSame(403, $response->getCode());
+    }
+
+    public function testGetWithCsrfForcedOn(): void
+    {
+        $this->dispatcher->register('test.get_csrf', fn() => null, [
+            'method' => 'GET',
+            'auth' => false,
+            'csrf' => true,
+        ]);
+
+        // GET request, but csrf forced on — should fail without token
+        $this->setRequest('GET', 'test.get_csrf');
+        $response = $this->captureDispatch();
+
+        $this->assertSame(403, $response->getCode());
+    }
+
+    // ========== Registration: Overwrite Behavior ==========
+
+    public function testRegisterOverwriteCallsSecondHandler(): void
+    {
+        $this->dispatcher->register('test.overwrite', fn() => 'first', [
+            'auth' => false, 'csrf' => false,
+        ]);
+        $this->dispatcher->register('test.overwrite', fn() => 'second', [
+            'auth' => false, 'csrf' => false,
+        ]);
+
+        $this->setRequest('POST', 'test.overwrite');
+        $response = $this->captureDispatch();
+
+        $this->assertSame('second', $response->data['data']);
+    }
+
+    // ========== Action Name Edge Cases ==========
+
+    public function testActionNameWithWhitespaceIsTrimmed(): void
+    {
+        $this->dispatcher->register('test.trim', fn() => 'ok', [
+            'auth' => false, 'csrf' => false,
+        ]);
+
+        // Query string has spaces around name
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $_GET['action'] = '  test.trim  ';
+        app()->provide('request', fn() => new \Http\Request());
+
+        $response = $this->captureDispatch();
+
+        $this->assertSame(200, $response->getCode());
+        $this->assertSame('ok', $response->data['data']);
+    }
+
+    public function testActionNameWithDotsAndDashes(): void
+    {
+        $this->dispatcher->register('my-module.do-thing.v2', fn() => 'ok', [
+            'auth' => false, 'csrf' => false,
+        ]);
+
+        $this->setRequest('POST', 'my-module.do-thing.v2');
+        $response = $this->captureDispatch();
+
+        $this->assertSame(200, $response->getCode());
+    }
+
+    // ========== Handler Return Edge Cases ==========
+
+    public function testHandlerReturnsFalse(): void
+    {
+        $this->dispatcher->register('test.false', fn() => false, [
+            'auth' => false, 'csrf' => false,
+        ]);
+
+        $this->setRequest('POST', 'test.false');
+        $response = $this->captureDispatch();
+
+        $this->assertSame(200, $response->getCode());
+        $this->assertTrue($response->data['ok']);
+        $this->assertFalse($response->data['data']);
+    }
+
+    public function testHandlerReturnsZero(): void
+    {
+        $this->dispatcher->register('test.zero', fn() => 0, [
+            'auth' => false, 'csrf' => false,
+        ]);
+
+        $this->setRequest('POST', 'test.zero');
+        $response = $this->captureDispatch();
+
+        $this->assertSame(0, $response->data['data']);
+    }
+
+    public function testHandlerReturnsEmptyString(): void
+    {
+        $this->dispatcher->register('test.empty_str', fn() => '', [
+            'auth' => false, 'csrf' => false,
+        ]);
+
+        $this->setRequest('POST', 'test.empty_str');
+        $response = $this->captureDispatch();
+
+        $this->assertSame('', $response->data['data']);
+    }
+
+    public function testHandlerReturnsEmptyArray(): void
+    {
+        $this->dispatcher->register('test.empty_arr', fn() => [], [
+            'auth' => false, 'csrf' => false,
+        ]);
+
+        $this->setRequest('POST', 'test.empty_arr');
+        $response = $this->captureDispatch();
+
+        $this->assertSame([], $response->data['data']);
+    }
+
+    public function testHandlerReturnsDeepNestedArray(): void
+    {
+        $deep = ['a' => ['b' => ['c' => ['d' => 42]]]];
+
+        $this->dispatcher->register('test.deep', fn() => $deep, [
+            'auth' => false, 'csrf' => false,
+        ]);
+
+        $this->setRequest('POST', 'test.deep');
+        $response = $this->captureDispatch();
+
+        $this->assertSame(42, $response->data['data']['a']['b']['c']['d']);
+    }
+
+    // ========== Multiple Actions ==========
+
+    public function testDispatchCorrectActionAmongMany(): void
+    {
+        $this->dispatcher->register('first', fn() => 'one', ['auth' => false, 'csrf' => false]);
+        $this->dispatcher->register('second', fn() => 'two', ['auth' => false, 'csrf' => false]);
+        $this->dispatcher->register('third', fn() => 'three', ['auth' => false, 'csrf' => false]);
+
+        $this->setRequest('POST', 'second');
+        $response = $this->captureDispatch();
+
+        $this->assertSame('two', $response->data['data']);
+    }
+
+    public function testMultipleDispatchesWorkIndependently(): void
+    {
+        $counter = 0;
+
+        $this->dispatcher->register('test.counter', function () use (&$counter) {
+            $counter++;
+            return $counter;
+        }, ['auth' => false, 'csrf' => false]);
+
+        $this->setRequest('POST', 'test.counter');
+        $r1 = $this->captureDispatch();
+        $r2 = $this->captureDispatch();
+
+        $this->assertSame(1, $r1->data['data']);
+        $this->assertSame(2, $r2->data['data']);
+    }
+
+    // ========== Hooks: Context & Defaults ==========
+
+    public function testAjaxBeforeHookReceivesContext(): void
+    {
+        $receivedContext = null;
+
+        $this->dispatcher->register('test.ctx', fn() => 'ok', [
+            'auth' => false, 'csrf' => false,
+        ]);
+
+        app()->hooks()->register('ajax.before', function ($context) use (&$receivedContext) {
+            $receivedContext = $context;
+            return $context;
+        });
+
+        $this->setRequest('POST', 'test.ctx');
+        $this->captureDispatch();
+
+        $this->assertSame('test.ctx', $receivedContext['action']);
+        $this->assertTrue($receivedContext['access']);
+        $this->assertArrayHasKey('definition', $receivedContext);
+        $this->assertSame('POST', $receivedContext['definition']['method']);
+    }
+
+    public function testAjaxBeforeHookHaltDefaultErrorAndCode(): void
+    {
+        $this->dispatcher->register('test.halt_defaults', fn() => null, [
+            'auth' => false, 'csrf' => false,
+        ]);
+
+        app()->hooks()->register('ajax.before', function ($context) {
+            $context['halt'] = true;
+            // No 'error' or 'code' set — should use defaults
+            return $context;
+        });
+
+        $this->setRequest('POST', 'test.halt_defaults');
+        $response = $this->captureDispatch();
+
+        $this->assertSame(403, $response->getCode());
+        $this->assertSame('Blocked', $response->data['error']);
+    }
+
+    public function testAjaxBeforeHookWithoutHaltDoesNotBlock(): void
+    {
+        $this->dispatcher->register('test.pass', fn() => 'reached', [
+            'auth' => false, 'csrf' => false,
+        ]);
+
+        app()->hooks()->register('ajax.before', function ($context) {
+            // Modify context but do NOT set halt
+            $context['custom'] = true;
+            return $context;
+        });
+
+        $this->setRequest('POST', 'test.pass');
+        $response = $this->captureDispatch();
+
+        $this->assertSame(200, $response->getCode());
+        $this->assertSame('reached', $response->data['data']);
+    }
+
+    public function testAjaxBeforeHookHandlerNotCalledOnHalt(): void
+    {
+        $called = false;
+
+        $this->dispatcher->register('test.no_call', function () use (&$called) {
+            $called = true;
+            return 'should not happen';
+        }, ['auth' => false, 'csrf' => false]);
+
+        app()->hooks()->register('ajax.before', function ($context) {
+            $context['halt'] = true;
+            return $context;
+        });
+
+        $this->setRequest('POST', 'test.no_call');
+        $this->captureDispatch();
+
+        $this->assertFalse($called);
+    }
+
+    public function testAjaxAfterHookReceivesActionInContext(): void
+    {
+        $receivedContext = null;
+
+        $this->dispatcher->register('test.after_ctx', fn() => 'data', [
+            'auth' => false, 'csrf' => false,
+        ]);
+
+        app()->hooks()->register('ajax.after', function ($response, $context) use (&$receivedContext) {
+            $receivedContext = $context;
+            return $response;
+        });
+
+        $this->setRequest('POST', 'test.after_ctx');
+        $this->captureDispatch();
+
+        $this->assertSame('test.after_ctx', $receivedContext['action']);
+    }
+
     // ========== Helpers ==========
 
     /**
