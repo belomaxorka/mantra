@@ -14,6 +14,8 @@
 composer.json export-ignore
 composer.lock export-ignore
 phpunit.xml export-ignore
+phpstan.neon export-ignore
+phpstan-bootstrap.php export-ignore
 .php-cs-fixer.php export-ignore
 .php-cs-fixer.cache export-ignore
 .editorconfig export-ignore

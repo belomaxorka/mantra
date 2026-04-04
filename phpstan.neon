@@ -1,0 +1,32 @@
+parameters:
+    phpVersion: 80100
+    level: 0
+
+    paths:
+        - core
+        - modules
+        - index.php
+        - install.php
+
+    excludePaths:
+        analyseAndScan:
+            # Language files (pure translation arrays)
+            - core/lang
+            - **/lang/*.php
+
+            # Schema / settings files (pure data arrays)
+            - core/config.settings.schema.php
+            - **/schema.php
+            - **/settings.schema.php
+
+            # View templates (extracted variables → false positives)
+            - **/views/*.php
+            - **/views/**/*.php
+
+            # Data preset files (pure arrays)
+            - modules/admin/appearance-presets.php
+            - modules/admin/font-presets.php
+            - modules/admin/sidebar-presets.php
+
+    bootstrapFiles:
+        - phpstan-bootstrap.php

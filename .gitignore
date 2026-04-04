@@ -7,8 +7,6 @@
 /content/settings/*
 !/content/languages/
 
-/core/schemas/test_*.php
-
 /storage/logs/*
 /storage/sessions/*
 
@@ -28,6 +26,7 @@ desktop.ini
 /vendor/
 /.phpunit.cache/
 .php-cs-fixer.cache
+/.phpstan-cache/
 composer.phar
 
 *.tmp.*

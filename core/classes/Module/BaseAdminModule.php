@@ -122,7 +122,7 @@ abstract class BaseAdminModule extends Module
             return $admin->render($title, $content, $extra);
         }
         http_response_code(500);
-        echo 'Admin module not loaded';
+        return 'Admin module not loaded';
     }
 
     /**

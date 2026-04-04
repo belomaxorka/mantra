@@ -33,10 +33,11 @@ php -S 127.0.0.1:8000 index.php
 ### Tests / lint
 
 ```bash
-composer install              # install dev dependencies (phpunit, php-cs-fixer)
+composer install              # install dev dependencies (phpunit, php-cs-fixer, phpstan)
 composer test                 # run PHPUnit (phpunit.xml)
 composer lint                 # check code style (php-cs-fixer, dry-run)
 composer fix                  # auto-fix code style
+composer analyse              # run PHPStan static analysis (phpstan.neon)
 ```
 
 **Test matrix (CI):** PHP 8.1, 8.2, 8.3, 8.4, 8.5 — see `.github/workflows/ci.yml`.
@@ -472,7 +473,7 @@ $db->registerSchema($collection, $schemaPath);  // register schema for collectio
 
 #### Document schemas & migrations
 
-Schemas are defined **per-panel or per-module** (not in `core/schemas/` — that directory is for core collections if needed):
+Schemas are defined **per-panel or per-module**:
 - `modules/admin/panels/pages/schema.php`
 - `modules/admin/panels/posts/schema.php`
 - `modules/admin/panels/users/schema.php`
