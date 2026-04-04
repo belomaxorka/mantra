@@ -183,7 +183,6 @@
 
             <script>
             (function() {
-                var uploadUrl = '<?php echo base_url('/admin/uploads/api/upload'); ?>';
                 var elDropZone  = document.getElementById('imageDropZone');
                 var elFileInput = document.getElementById('imageFile');
                 var elUploading = document.getElementById('imageUploading');
@@ -201,29 +200,16 @@
                     elDropZone.classList.add('d-none');
                     elUploading.classList.remove('d-none');
 
-                    var xhr = new XMLHttpRequest();
-                    xhr.open('POST', uploadUrl, true);
-                    xhr.withCredentials = true;
-                    xhr.setRequestHeader('X-CSRF-Token', Mantra.csrfToken());
-                    xhr.onload = function() {
-                        elUploading.classList.add('d-none');
-                        if (xhr.status === 200) {
-                            try {
-                                var data = JSON.parse(xhr.responseText);
-                                if (data.url) { setImage(data.url); return; }
-                            } catch(e) {}
-                        }
-                        var errMsg = 'Upload failed';
-                        try { errMsg = JSON.parse(xhr.responseText).error.message; } catch(e) {}
-                        adminToast(errMsg, 'danger');
-                        elDropZone.classList.remove('d-none');
-                    };
-                    xhr.onerror = function() {
-                        elUploading.classList.add('d-none');
-                        elDropZone.classList.remove('d-none');
-                        adminToast('Network error', 'danger');
-                    };
-                    xhr.send(form);
+                    Mantra.ajax('uploads.upload', form, { toast: false })
+                        .done(function(data) {
+                            elUploading.classList.add('d-none');
+                            setImage(data.url);
+                        })
+                        .fail(function(errMsg) {
+                            elUploading.classList.add('d-none');
+                            elDropZone.classList.remove('d-none');
+                            adminToast(errMsg, 'danger');
+                        });
                 }
 
                 function setImage(url) {
@@ -271,8 +257,6 @@
 <script src="https://cdn.ckeditor.com/ckeditor5/41.2.1/classic/ckeditor.js"></script>
 <script>
 (function() {
-    var UPLOAD_URL = '<?php echo base_url('/admin/uploads/api/upload'); ?>';
-
     // Custom upload adapter for CKEditor 5 (CDN build lacks SimpleUploadAdapter)
     function MantraUploadAdapter(loader) { this.loader = loader; }
     MantraUploadAdapter.prototype.upload = function() {
@@ -283,18 +267,13 @@
                 form.append('file', file);
                 var xhr = new XMLHttpRequest();
                 loader._xhr = xhr;
-                xhr.open('POST', UPLOAD_URL, true);
-                xhr.withCredentials = true;
+                xhr.open('POST', Mantra.baseUrl() + '/admin/ajax?action=uploads.upload', true);
                 xhr.setRequestHeader('X-CSRF-Token', Mantra.csrfToken());
                 xhr.onload = function() {
-                    if (xhr.status < 200 || xhr.status >= 300) {
-                        var msg = 'Upload failed';
-                        try { msg = JSON.parse(xhr.responseText).error.message; } catch(e) {}
-                        return reject(msg);
-                    }
-                    var data = JSON.parse(xhr.responseText);
-                    if (!data.url) return reject('No URL in response');
-                    resolve({ default: data.url });
+                    try { var resp = JSON.parse(xhr.responseText); } catch(e) { return reject('Invalid server response'); }
+                    if (!resp.ok) return reject(resp.error || 'Upload failed');
+                    if (!resp.data || !resp.data.url) return reject('No URL in response');
+                    resolve({ default: resp.data.url });
                 };
                 xhr.onerror = function() { reject('Network error'); };
                 xhr.upload.onprogress = function(e) {

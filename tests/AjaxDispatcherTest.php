@@ -99,7 +99,7 @@ class AjaxDispatcherTest extends MantraTestCase
 
     // ========== Option Defaults Tests ==========
 
-    public function testDefaultOptionsPostMethodAuthCsrf(): void
+    public function testDefaultOptionsPostMethodRejectsGet(): void
     {
         $this->dispatcher->register('test.post', fn() => null);
 
@@ -111,7 +111,7 @@ class AjaxDispatcherTest extends MantraTestCase
         $this->assertFalse($response->data['ok']);
     }
 
-    public function testGetMethodDisablesCsrfByDefault(): void
+    public function testGetMethodWithNoAuthSucceeds(): void
     {
         $this->dispatcher->register('test.get', fn() => 'ok', [
             'method' => 'GET',
@@ -415,13 +415,13 @@ class AjaxDispatcherTest extends MantraTestCase
         $this->assertSame(405, $response->getCode());
     }
 
-    public function testCheckOrderAuthBeforeCsrf(): void
+    public function testCheckOrderAuthBeforePermission(): void
     {
         $this->dispatcher->register('test.order2', fn() => null, [
             'auth' => true,
         ]);
 
-        // Not logged in + no CSRF → should be 401, not 403
+        // Not logged in → should be 401 (auth checked before permission)
         $this->setRequest('POST', 'test.order2');
         $response = $this->captureDispatch();
 

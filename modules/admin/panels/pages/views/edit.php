@@ -139,8 +139,6 @@
 <script src="https://cdn.ckeditor.com/ckeditor5/41.2.1/classic/ckeditor.js"></script>
 <script>
 (function() {
-    var UPLOAD_URL = '<?php echo base_url('/admin/uploads/api/upload'); ?>';
-
     function MantraUploadAdapter(loader) { this.loader = loader; }
     MantraUploadAdapter.prototype.upload = function() {
         var loader = this;
@@ -150,18 +148,13 @@
                 form.append('file', file);
                 var xhr = new XMLHttpRequest();
                 loader._xhr = xhr;
-                xhr.open('POST', UPLOAD_URL, true);
-                xhr.withCredentials = true;
+                xhr.open('POST', Mantra.baseUrl() + '/admin/ajax?action=uploads.upload', true);
                 xhr.setRequestHeader('X-CSRF-Token', Mantra.csrfToken());
                 xhr.onload = function() {
-                    if (xhr.status < 200 || xhr.status >= 300) {
-                        var msg = 'Upload failed';
-                        try { msg = JSON.parse(xhr.responseText).error.message; } catch(e) {}
-                        return reject(msg);
-                    }
-                    var data = JSON.parse(xhr.responseText);
-                    if (!data.url) return reject('No URL in response');
-                    resolve({ default: data.url });
+                    try { var resp = JSON.parse(xhr.responseText); } catch(e) { return reject('Invalid server response'); }
+                    if (!resp.ok) return reject(resp.error || 'Upload failed');
+                    if (!resp.data || !resp.data.url) return reject('No URL in response');
+                    resolve({ default: resp.data.url });
                 };
                 xhr.onerror = function() { reject('Network error'); };
                 xhr.upload.onprogress = function(e) {

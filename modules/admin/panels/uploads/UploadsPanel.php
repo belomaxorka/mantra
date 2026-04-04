@@ -73,7 +73,6 @@ class UploadsPanel extends AdminPanel
         $admin->adminRoute('GET', 'uploads/edit/{id}', [$this, 'editFile']);
         $admin->adminRoute('POST', 'uploads/edit/{id}', [$this, 'updateFile']);
         $admin->adminRoute('POST', 'uploads/delete/{id}', [$this, 'deleteFile']);
-        $admin->adminRoute('POST', 'uploads/api/upload', [$this, 'apiUpload']);
     }
 
     // ========== Actions ==========
@@ -145,45 +144,6 @@ class UploadsPanel extends AdminPanel
         }
 
         $this->redirectAdmin('uploads');
-    }
-
-    /**
-     * API endpoint for CKEditor / AJAX uploads.
-     * Returns JSON response.
-     */
-    public function apiUpload(): void
-    {
-        header('Content-Type: application/json; charset=utf-8');
-
-        $userManager = new \User();
-        $user = $this->getUser();
-        if (!$user || !$userManager->hasPermission($user, 'uploads.upload')) {
-            http_response_code(403);
-            echo json_encode(['error' => ['message' => 'Permission denied']]);
-            return;
-        }
-
-        $error = $this->processUpload();
-        if ($error !== null) {
-            http_response_code(400);
-            echo json_encode(['error' => ['message' => $error]]);
-            return;
-        }
-
-        // Return the URL of the last uploaded file
-        $files = app()->db()->query('uploads', [], [
-            'sort' => 'created_at',
-            'order' => 'desc',
-            'limit' => 1,
-        ]);
-
-        if (!empty($files)) {
-            $url = $this->getUploadsBaseUrl() . '/' . $files[0]['path'];
-            echo json_encode(['url' => $url]);
-        } else {
-            http_response_code(500);
-            echo json_encode(['error' => ['message' => 'Upload failed']]);
-        }
     }
 
     /**
