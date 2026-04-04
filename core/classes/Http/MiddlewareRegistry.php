@@ -26,7 +26,7 @@ class MiddlewareRegistry
      * @param string $name Unique name (e.g. 'auth', 'csrf')
      * @param MiddlewareInterface|callable $middleware Instance or callable
      */
-    public function register($name, $middleware)
+    public function register($name, $middleware): void
     {
         $this->middleware[$name] = $middleware;
     }
@@ -37,7 +37,7 @@ class MiddlewareRegistry
      * @param string $name Group name (e.g. 'admin')
      * @param array $middlewareNames Ordered list of middleware names
      */
-    public function group($name, $middlewareNames)
+    public function group($name, $middlewareNames): void
     {
         $this->groups[$name] = $middlewareNames;
     }

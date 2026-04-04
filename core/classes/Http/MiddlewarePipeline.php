@@ -62,9 +62,7 @@ class MiddlewarePipeline
     private function wrapLayer($layer, $next)
     {
         if ($layer instanceof MiddlewareInterface) {
-            return static function () use ($layer, $next) {
-                return $layer->handle($next);
-            };
+            return static fn () => $layer->handle($next);
         }
 
         // Backward-compatible callable (guard pattern):
