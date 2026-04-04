@@ -22,7 +22,7 @@ class MiddlewareTest extends MantraTestCase
         $pipeline = new \Http\MiddlewarePipeline();
         $called = false;
 
-        $result = $pipeline->run(function () use (&$called) {
+        $result = $pipeline->run(function () use (&$called): void {
             $called = true;
         });
 
@@ -34,7 +34,7 @@ class MiddlewareTest extends MantraTestCase
     {
         $pipeline = new \Http\MiddlewarePipeline();
 
-        $result = $pipeline->run(function () {});
+        $result = $pipeline->run(function (): void {});
 
         $this->assertTrue($result);
     }
@@ -47,7 +47,7 @@ class MiddlewareTest extends MantraTestCase
         $pipeline->pipe(new PassthroughMiddleware());
 
         $called = false;
-        $result = $pipeline->run(function () use (&$called) {
+        $result = $pipeline->run(function () use (&$called): void {
             $called = true;
         });
 
@@ -61,7 +61,7 @@ class MiddlewareTest extends MantraTestCase
         $pipeline->pipe(new HaltingMiddleware());
 
         $called = false;
-        $result = $pipeline->run(function () use (&$called) {
+        $result = $pipeline->run(function () use (&$called): void {
             $called = true;
         });
 
@@ -78,7 +78,7 @@ class MiddlewareTest extends MantraTestCase
         $pipeline->pipe(new LoggingMiddleware($log, 'B'));
         $pipeline->pipe(new LoggingMiddleware($log, 'C'));
 
-        $pipeline->run(function () use (&$log) {
+        $pipeline->run(function () use (&$log): void {
             $log[] = 'core';
         });
 
@@ -92,7 +92,7 @@ class MiddlewareTest extends MantraTestCase
 
         $pipeline->pipe(new LoggingMiddleware($log, 'wrap'));
 
-        $pipeline->run(function () use (&$log) {
+        $pipeline->run(function () use (&$log): void {
             $log[] = 'handler';
         });
 
@@ -109,7 +109,7 @@ class MiddlewareTest extends MantraTestCase
         $pipeline->pipe(new LoggingMiddleware($log, 'third'));
 
         $called = false;
-        $result = $pipeline->run(function () use (&$called) {
+        $result = $pipeline->run(function () use (&$called): void {
             $called = true;
         });
 
@@ -125,12 +125,10 @@ class MiddlewareTest extends MantraTestCase
     public function testCallableThatReturnsTrueContinues(): void
     {
         $pipeline = new \Http\MiddlewarePipeline();
-        $pipeline->pipe(function () {
-            return true;
-        });
+        $pipeline->pipe(fn () => true);
 
         $called = false;
-        $result = $pipeline->run(function () use (&$called) {
+        $result = $pipeline->run(function () use (&$called): void {
             $called = true;
         });
 
@@ -141,12 +139,10 @@ class MiddlewareTest extends MantraTestCase
     public function testCallableThatReturnsFalseHalts(): void
     {
         $pipeline = new \Http\MiddlewarePipeline();
-        $pipeline->pipe(function () {
-            return false;
-        });
+        $pipeline->pipe(fn () => false);
 
         $called = false;
-        $result = $pipeline->run(function () use (&$called) {
+        $result = $pipeline->run(function () use (&$called): void {
             $called = true;
         });
 
@@ -157,12 +153,12 @@ class MiddlewareTest extends MantraTestCase
     public function testCallableThatReturnsNullContinues(): void
     {
         $pipeline = new \Http\MiddlewarePipeline();
-        $pipeline->pipe(function () {
+        $pipeline->pipe(function (): void {
             // no return = null
         });
 
         $called = false;
-        $result = $pipeline->run(function () use (&$called) {
+        $result = $pipeline->run(function () use (&$called): void {
             $called = true;
         });
 
@@ -180,7 +176,7 @@ class MiddlewareTest extends MantraTestCase
             return true;
         });
 
-        $pipeline->run(function () {});
+        $pipeline->run(function (): void {});
 
         $this->assertSame(0, $argCount, 'Legacy callable should receive no arguments');
     }
@@ -198,7 +194,7 @@ class MiddlewareTest extends MantraTestCase
             return true;
         });
 
-        $pipeline->run(function () use (&$log) {
+        $pipeline->run(function () use (&$log): void {
             $log[] = 'core';
         });
 
@@ -211,12 +207,10 @@ class MiddlewareTest extends MantraTestCase
         $log = [];
 
         $pipeline->pipe(new LoggingMiddleware($log, 'outer'));
-        $pipeline->pipe(function () {
-            return false;
-        });
+        $pipeline->pipe(fn () => false);
         $pipeline->pipe(new LoggingMiddleware($log, 'inner'));
 
-        $result = $pipeline->run(function () use (&$log) {
+        $result = $pipeline->run(function () use (&$log): void {
             $log[] = 'core';
         });
 
@@ -256,7 +250,7 @@ class MiddlewareTest extends MantraTestCase
             return true;
         });
 
-        $pipeline->run(function () use (&$log) {
+        $pipeline->run(function () use (&$log): void {
             $log[] = 'core';
         });
 
@@ -281,7 +275,7 @@ class MiddlewareTest extends MantraTestCase
             return true;
         });
 
-        $result = $pipeline->run(function () use (&$log) {
+        $result = $pipeline->run(function () use (&$log): void {
             $log[] = 'core';
         });
 
@@ -305,7 +299,7 @@ class MiddlewareTest extends MantraTestCase
             }
         });
 
-        $pipeline->run(function () {});
+        $pipeline->run(function (): void {});
 
         $this->assertTrue($capturedResult);
     }
@@ -324,7 +318,7 @@ class MiddlewareTest extends MantraTestCase
         $pipeline->pipe(new HaltingMiddleware());
 
         $coreRan = false;
-        $result = $pipeline->run(function () use (&$coreRan) {
+        $result = $pipeline->run(function () use (&$coreRan): void {
             $coreRan = true;
         });
 
@@ -483,7 +477,7 @@ class MiddlewareTest extends MantraTestCase
     public function testResolveAllWithCallables(): void
     {
         $registry = new \Http\MiddlewareRegistry();
-        $fn = function () { return true; };
+        $fn = fn () => true;
 
         $resolved = $registry->resolveAll([$fn]);
         $this->assertCount(1, $resolved);
@@ -495,7 +489,7 @@ class MiddlewareTest extends MantraTestCase
         $registry = new \Http\MiddlewareRegistry();
         $named = new PassthroughMiddleware();
         $instance = new HaltingMiddleware();
-        $callable = function () { return true; };
+        $callable = fn () => true;
 
         $registry->register('named', $named);
 
@@ -534,7 +528,7 @@ class MiddlewareTest extends MantraTestCase
     public function testRegisterCallableMiddleware(): void
     {
         $registry = new \Http\MiddlewareRegistry();
-        $fn = function () { return true; };
+        $fn = fn () => true;
 
         $registry->register('guard', $fn);
 
@@ -560,7 +554,7 @@ class MiddlewareTest extends MantraTestCase
             $pipeline->pipe($mw);
         }
 
-        $pipeline->run(function () use (&$log) {
+        $pipeline->run(function () use (&$log): void {
             $log[] = 'handler';
         });
 
@@ -581,7 +575,7 @@ class MiddlewareTest extends MantraTestCase
             $pipeline->pipe($mw);
         }
 
-        $pipeline->run(function () use (&$log) {
+        $pipeline->run(function () use (&$log): void {
             $log[] = 'core';
         });
 
@@ -607,7 +601,7 @@ class MiddlewareTest extends MantraTestCase
             $pipeline->pipe($mw);
         }
 
-        $pipeline->run(function () use (&$log) {
+        $pipeline->run(function () use (&$log): void {
             $log[] = 'core';
         });
 
@@ -629,7 +623,7 @@ class MiddlewareTest extends MantraTestCase
         }
 
         $coreRan = false;
-        $result = $pipeline->run(function () use (&$coreRan) {
+        $result = $pipeline->run(function () use (&$coreRan): void {
             $coreRan = true;
         });
 
