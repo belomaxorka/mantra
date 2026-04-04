@@ -1,1 +1,1 @@
-<script src="<?php echo $this->moduleAsset('bootstrap/bootstrap.min.js'); ?>"></script>
+<script src="<?php echo $this->moduleAsset('libs/bootstrap/bootstrap.min.js'); ?>"></script>
