@@ -202,7 +202,7 @@ class MarkdownStorageDriverTest extends MantraTestCase
     public function testMarkdownFieldRoundtrip(): void
     {
         $col = 'md-roundtrip-' . time();
-        $markdown = "Simple paragraph with **bold** text.";
+        $markdown = 'Simple paragraph with **bold** text.';
         $data = [
             'title' => 'Roundtrip',
             'content' => $markdown,

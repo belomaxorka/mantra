@@ -12,7 +12,6 @@ use Exception;
 
 class MarkdownStorageDriver implements StorageDriverInterface
 {
-
     private $basePath;
 
     public function __construct($basePath = null)

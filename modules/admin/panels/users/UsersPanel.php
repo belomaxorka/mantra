@@ -4,7 +4,6 @@ namespace Admin;
 
 class UsersPanel extends ContentPanel
 {
-
     private $userManager = null;
 
     public function id()

@@ -139,7 +139,7 @@
 <script src="https://cdn.ckeditor.com/ckeditor5/41.2.1/classic/ckeditor.js"></script>
 <script>
 (function() {
-    var UPLOAD_URL = '<?php echo base_url("/admin/uploads/api/upload"); ?>';
+    var UPLOAD_URL = '<?php echo base_url('/admin/uploads/api/upload'); ?>';
 
     function MantraUploadAdapter(loader) { this.loader = loader; }
     MantraUploadAdapter.prototype.upload = function() {
@@ -246,7 +246,7 @@
 </script>
 <script>
 (function() {
-    var previewUrl = '<?php echo base_url("/admin/pages/preview"); ?>';
+    var previewUrl = '<?php echo base_url('/admin/pages/preview'); ?>';
     document.getElementById('btnPreview').addEventListener('click', function() {
         if (window.editor) {
             window.editor.updateSourceElement();

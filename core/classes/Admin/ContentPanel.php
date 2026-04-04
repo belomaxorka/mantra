@@ -10,7 +10,6 @@ namespace Admin;
 
 abstract class ContentPanel extends AdminPanel
 {
-
     /**
      * Singular content type name (e.g. 'Page', 'Post')
      * @return string

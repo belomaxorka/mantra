@@ -401,7 +401,6 @@ class Database
             return $data;
         }
 
-
         $currentVersion = (int)($schema['version'] ?? 0);
         $docVersion = (int)($data['schema_version'] ?? 0);
 

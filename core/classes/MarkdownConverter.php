@@ -5,7 +5,6 @@
  */
 class MarkdownConverter
 {
-
     /**
      * Convert Markdown to HTML
      *

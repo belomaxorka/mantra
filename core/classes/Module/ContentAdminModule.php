@@ -10,7 +10,6 @@ namespace Module;
 
 abstract class ContentAdminModule extends BaseAdminModule
 {
-
     /**
      * Get content type name (singular)
      * @return string

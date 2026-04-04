@@ -4,7 +4,6 @@ namespace Admin;
 
 class HooksPanel extends AdminPanel
 {
-
     public function id()
     {
         return 'hooks';

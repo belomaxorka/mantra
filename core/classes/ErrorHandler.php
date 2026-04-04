@@ -82,7 +82,7 @@ class ErrorHandler
 
         if (self::isCli()) {
             // CLI-friendly output
-            self::writeCli("Uncaught exception: " . $exception->getMessage() . "\n");
+            self::writeCli('Uncaught exception: ' . $exception->getMessage() . "\n");
             if (MANTRA_DEBUG) {
                 self::writeCli($exception->getTraceAsString() . "\n");
             }

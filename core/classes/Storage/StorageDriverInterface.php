@@ -9,7 +9,6 @@ namespace Storage;
 
 interface StorageDriverInterface
 {
-
     /**
      * Read a single document from storage
      *

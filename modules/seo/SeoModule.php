@@ -15,7 +15,6 @@ use Module\Module;
 
 class SeoModule extends Module
 {
-
     public function init(): void
     {
         // Hook into theme head to add meta tags

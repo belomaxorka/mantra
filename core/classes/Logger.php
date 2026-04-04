@@ -126,7 +126,7 @@ class Logger implements \Psr\Log\LoggerInterface
         $message = $this->interpolate($message, $context);
 
         $entry = sprintf(
-            "[%s] %s.%s: %s",
+            '[%s] %s.%s: %s',
             date($this->dateFormat),
             $this->channel,
             strtoupper($level),

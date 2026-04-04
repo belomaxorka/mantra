@@ -2,7 +2,6 @@
 
 class MarkdownConverterTest extends MantraTestCase
 {
-
     // ──────────────────────────────────────────────
     //  Helpers
     // ──────────────────────────────────────────────

@@ -38,7 +38,7 @@ class ModuleManager
                 'context' => $context,
             ]);
 
-            $message = "Invalid module name";
+            $message = 'Invalid module name';
             if (is_string($context) && $context !== '') {
                 $message .= " ({$context})";
             }
@@ -109,7 +109,7 @@ class ModuleManager
 
             // Validate required fields
             if (!isset($manifest['id']) || !isset($manifest['version'])) {
-                throw new Exception("Module manifest missing required fields: id, version");
+                throw new Exception('Module manifest missing required fields: id, version');
             }
 
             // Load dependencies.

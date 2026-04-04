@@ -4,7 +4,6 @@ namespace Admin;
 
 class PagesPanel extends ContentPanel
 {
-
     public function id()
     {
         return 'pages';

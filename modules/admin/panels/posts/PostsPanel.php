@@ -4,7 +4,6 @@ namespace Admin;
 
 class PostsPanel extends ContentPanel
 {
-
     public function id()
     {
         return 'posts';

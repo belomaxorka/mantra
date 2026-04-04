@@ -9,7 +9,6 @@
  */
 class HookRegistry
 {
-
     /**
      * Standard hook definitions.
      * Each entry: 'hook.name' => array(description, data_type, return_type)

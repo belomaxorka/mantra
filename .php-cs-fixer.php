@@ -45,6 +45,44 @@ return (new PhpCsFixer\Config())
         'binary_operator_spaces' => ['default' => 'single_space'],
         'concat_space' => ['spacing' => 'one'],
 
+        // Lock in existing conventions (zero-diff)
+        'single_quote' => true,
+        'no_extra_blank_lines' => true,
+        'yoda_style' => false,
+        'magic_constant_casing' => true,
+        'magic_method_casing' => true,
+        'native_function_casing' => true,
+        'no_empty_statement' => true,
+        'standardize_not_equals' => true,
+        'normalize_index_brace' => true,
+        'elseif' => true,
+        'is_null' => true,
+
+        // Minor cleanups (minimal diff)
+        'no_spaces_around_offset' => true,
+        'trim_array_spaces' => true,
+        'object_operator_without_whitespace' => true,
+        'no_singleline_whitespace_before_semicolons' => true,
+        'no_whitespace_before_comma_in_array' => true,
+        'whitespace_after_comma_in_array' => true,
+        'return_type_declaration' => true,
+        'compact_nullable_type_declaration' => true,
+        'no_unneeded_control_parentheses' => true,
+        'declare_equal_normalize' => true,
+        'ternary_operator_spaces' => true,
+        'clean_namespace' => true,
+        'lambda_not_used_import' => true,
+        'no_unneeded_import_alias' => true,
+        'include' => true,
+        'type_declaration_spaces' => true,
+        'no_blank_lines_after_class_opening' => true,
+        'single_line_after_imports' => true,
+        'assign_null_coalescing_to_coalesce_equal' => true,
+
+        // Modernization (noticeable but safe diff)
+        'ternary_to_null_coalescing' => true,
+        'strict_comparison' => true,
+
         // Braces / structure — don't enforce, project has its own style
         'braces_position' => false,
         'curly_braces_position' => false,

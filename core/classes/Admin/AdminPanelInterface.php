@@ -10,7 +10,6 @@ namespace Admin;
 
 interface AdminPanelInterface
 {
-
     /**
      * Unique panel identifier (e.g. 'pages', 'dashboard')
      * @return string

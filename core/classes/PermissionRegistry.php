@@ -9,7 +9,6 @@
  */
 class PermissionRegistry
 {
-
     /** @var array All registered permissions: array of permission strings */
     private $permissions = [];
 

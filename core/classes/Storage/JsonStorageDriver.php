@@ -14,7 +14,6 @@ use Exception;
 
 class JsonStorageDriver implements StorageDriverInterface
 {
-
     private $basePath;
 
     public function __construct($basePath = null)

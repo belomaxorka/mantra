@@ -13,7 +13,6 @@ use Module\ModuleType;
 
 class SettingsPanel extends AdminPanel
 {
-
     public function id()
     {
         return 'settings';

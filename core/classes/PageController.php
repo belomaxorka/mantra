@@ -6,7 +6,6 @@
  */
 class PageController
 {
-
     /**
      * Render home page
      */

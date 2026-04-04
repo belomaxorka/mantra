@@ -11,7 +11,6 @@ namespace Admin;
 
 class UploadsPanel extends AdminPanel
 {
-
     /** @var int Maximum upload size in bytes (10 MB) */
     public const MAX_UPLOAD_SIZE = 10485760;
 

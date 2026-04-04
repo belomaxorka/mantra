@@ -11,7 +11,6 @@ namespace Admin;
 
 class PermissionsPanel extends AdminPanel
 {
-
     public function id()
     {
         return 'permissions';

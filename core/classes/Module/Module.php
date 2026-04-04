@@ -391,7 +391,7 @@ abstract class Module implements ModuleInterface
     protected function enqueueAdminStyle($path, $priority = 10): void
     {
         $url = $this->asset($path);
-        $this->hook('admin.head', fn($content) => $content . "\n    <link rel=\"stylesheet\" href=\"" . e($url) . "\">", $priority);
+        $this->hook('admin.head', fn($content) => $content . "\n    <link rel=\"stylesheet\" href=\"" . e($url) . '">', $priority);
     }
 
     /**
@@ -402,7 +402,7 @@ abstract class Module implements ModuleInterface
     protected function enqueueAdminScript($path, $priority = 10): void
     {
         $url = $this->asset($path);
-        $this->hook('admin.footer', fn($content) => $content . "\n    <script src=\"" . e($url) . "\"></script>", $priority);
+        $this->hook('admin.footer', fn($content) => $content . "\n    <script src=\"" . e($url) . '"></script>', $priority);
     }
 
     /**
@@ -433,7 +433,7 @@ abstract class Module implements ModuleInterface
     protected function enqueueStyle($path, $priority = 10): void
     {
         $url = $this->asset($path);
-        $this->hook('theme.head', fn($content) => $content . "\n    <link rel=\"stylesheet\" href=\"" . e($url) . "\">", $priority);
+        $this->hook('theme.head', fn($content) => $content . "\n    <link rel=\"stylesheet\" href=\"" . e($url) . '">', $priority);
     }
 
     /**
@@ -444,7 +444,7 @@ abstract class Module implements ModuleInterface
     protected function enqueueScript($path, $priority = 10): void
     {
         $url = $this->asset($path);
-        $this->hook('theme.footer', fn($content) => $content . "\n    <script src=\"" . e($url) . "\"></script>", $priority);
+        $this->hook('theme.footer', fn($content) => $content . "\n    <script src=\"" . e($url) . '"></script>', $priority);
     }
 
     /**

@@ -229,7 +229,6 @@ class ModuleSettings
         return $dirty;
     }
 
-
     /**
      * Diff current settings against defaults and return overrides-only structure,
      * preserving unknown keys present in the current document.

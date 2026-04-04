@@ -183,7 +183,7 @@
 
             <script>
             (function() {
-                var uploadUrl = '<?php echo base_url("/admin/uploads/api/upload"); ?>';
+                var uploadUrl = '<?php echo base_url('/admin/uploads/api/upload'); ?>';
                 var elDropZone  = document.getElementById('imageDropZone');
                 var elFileInput = document.getElementById('imageFile');
                 var elUploading = document.getElementById('imageUploading');
@@ -270,7 +270,7 @@
 <script src="https://cdn.ckeditor.com/ckeditor5/41.2.1/classic/ckeditor.js"></script>
 <script>
 (function() {
-    var UPLOAD_URL = '<?php echo base_url("/admin/uploads/api/upload"); ?>';
+    var UPLOAD_URL = '<?php echo base_url('/admin/uploads/api/upload'); ?>';
 
     // Custom upload adapter for CKEditor 5 (CDN build lacks SimpleUploadAdapter)
     function MantraUploadAdapter(loader) { this.loader = loader; }
@@ -378,7 +378,7 @@
 </script>
 <script>
 (function() {
-    var previewUrl = '<?php echo base_url("/admin/posts/preview"); ?>';
+    var previewUrl = '<?php echo base_url('/admin/posts/preview'); ?>';
     document.getElementById('btnPreview').addEventListener('click', function() {
         if (window.editor) {
             window.editor.updateSourceElement();

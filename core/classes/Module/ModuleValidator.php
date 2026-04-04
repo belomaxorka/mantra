@@ -11,7 +11,6 @@ use Exception;
 
 class ModuleValidator
 {
-
     /**
      * Check if module ID is valid
      * @param string $id

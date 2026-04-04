@@ -95,9 +95,9 @@ function base_url($path = '')
     $siteUrl = config('site.url', '');
 
     if ($siteUrl === '') {
-        return '/' . ltrim($path, "/\\");
+        return '/' . ltrim($path, '/\\');
     }
-    return rtrim($siteUrl, "/\\") . '/' . ltrim($path, "/\\");
+    return rtrim($siteUrl, '/\\') . '/' . ltrim($path, '/\\');
 }
 
 /**

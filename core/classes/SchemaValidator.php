@@ -21,7 +21,6 @@ class SchemaValidationException extends Exception
 
 class SchemaValidator
 {
-
     /**
      * Validate data against schema
      *
@@ -105,7 +104,6 @@ class SchemaValidator
 
         return $errors;
     }
-
 
     /**
      * Validate field type

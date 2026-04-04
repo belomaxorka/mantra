@@ -4,7 +4,6 @@ namespace Admin;
 
 class DashboardPanel extends AdminPanel
 {
-
     public function id()
     {
         return 'dashboard';

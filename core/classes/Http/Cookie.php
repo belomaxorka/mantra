@@ -4,7 +4,6 @@ namespace Http;
 
 class Cookie
 {
-
     public function get($name, $default = null)
     {
         return $_COOKIE[$name] ?? $default;
