@@ -356,7 +356,7 @@ class AjaxDispatcherTest extends MantraTestCase
 
     public function testDispatchAjaxExceptionReturnsErrorWithCode(): void
     {
-        $this->dispatcher->register('test.ajax_err', function () {
+        $this->dispatcher->register('test.ajax_err', function (): void {
             throw new \Ajax\AjaxException('File too large', 413);
         }, ['auth' => false, 'csrf' => false]);
 
@@ -370,7 +370,7 @@ class AjaxDispatcherTest extends MantraTestCase
 
     public function testDispatchAjaxExceptionDefaultCode400(): void
     {
-        $this->dispatcher->register('test.ajax_err_default', function () {
+        $this->dispatcher->register('test.ajax_err_default', function (): void {
             throw new \Ajax\AjaxException('Bad input');
         }, ['auth' => false, 'csrf' => false]);
 
@@ -383,7 +383,7 @@ class AjaxDispatcherTest extends MantraTestCase
 
     public function testDispatchUnhandledExceptionReturns500(): void
     {
-        $this->dispatcher->register('test.crash', function () {
+        $this->dispatcher->register('test.crash', function (): void {
             throw new \RuntimeException('Something broke');
         }, ['auth' => false, 'csrf' => false]);
 
@@ -398,7 +398,7 @@ class AjaxDispatcherTest extends MantraTestCase
 
     public function testDispatchAjaxExceptionInvalidCodeFallsTo400(): void
     {
-        $this->dispatcher->register('test.bad_code', function () {
+        $this->dispatcher->register('test.bad_code', function (): void {
             throw new \Ajax\AjaxException('Weird error', 999);
         }, ['auth' => false, 'csrf' => false]);
 
