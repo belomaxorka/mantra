@@ -9,7 +9,7 @@ namespace Ajax;
  */
 class AjaxException extends \Exception
 {
-    public function __construct(string $message, int $httpCode = 400, \Throwable $previous = null)
+    public function __construct(string $message, int $httpCode = 400, ?\Throwable $previous = null)
     {
         parent::__construct($message, $httpCode, $previous);
     }
