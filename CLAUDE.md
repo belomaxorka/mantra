@@ -299,7 +299,7 @@ Admin panels are auto-discovered from `modules/admin/panels/<name>/`. Each panel
 | Class | Purpose |
 |---|---|
 | `AdminPanelInterface` | Contract: `init()`, `registerRoutes()`, `getSidebarItem()`, `getQuickActions()` |
-| `AdminPanel` | Abstract base — `renderView()`, `renderAdmin()`, `requirePermission()`, `requireAdmin()`, `verifyCsrf()`, `getUser()`, `auth()`, `db()`, `redirectAdmin()`, `hook()`, `fireHook()`, `asset()` |
+| `AdminPanel` | Abstract base — `renderView()`, `renderAdmin()`, `requirePermission()`, `requireAdmin()`, `getUser()`, `auth()`, `db()`, `redirectAdmin()`, `hook()`, `fireHook()`, `asset()` |
 | `ContentPanel` | CRUD scaffolding — extends `AdminPanel`, provides `listItems()`, `newItem()`, `createItem()`, `editItem()`, `updateItem()`, `deleteItem()`, automatic pagination (25/page), ownership checks, schema registration |
 
 **ContentPanel abstract methods** (must implement):
@@ -312,6 +312,26 @@ abstract public function extractFormData($request); // Request → data array
 
 **ContentPanel optional overrides:** `getAdminPath()`, `getListTemplate()`, `getEditTemplate()`, `getDomain()`, `getPermissionPrefix()`, `getPermissionFlags()`, `ensureSlug()`, `checkOwnership()`.
 
+### Middleware
+
+See `docs/MIDDLEWARE.md` for the complete middleware reference.
+
+`core/classes/Http/`:
+- `MiddlewareInterface` — contract: `handle($next)`, return `$next()` to continue or `false` to halt
+- `MiddlewarePipeline` — chains middleware layers around a core handler (inside-out execution)
+- `MiddlewareRegistry` — named middleware storage + groups, registered as `app()->middleware()`
+
+**Module middleware:** declared in `module.json`, class files in `modules/{id}/middleware/`:
+```json
+{ "middleware": { "rate-limit": "RateLimitMiddleware" } }
+```
+Loaded via `$this->registerMiddleware()` in the module's `init()`.
+
+**Built-in middleware** (registered by the admin module):
+- `auth` — redirects unauthenticated users to `/admin/login`
+- `csrf` — verifies CSRF token on POST requests (global on `/admin/*`)
+- `admin` — group combining `['csrf', 'auth']`
+
 ### Routing
 
 `core/classes/Router.php`:
@@ -321,13 +341,13 @@ $router->get($pattern, $callback);    // GET route
 $router->post($pattern, $callback);   // POST route
 $router->any($pattern, $callback);    // Any method
 
-// Per-route middleware (chained after last added route)
-$router->get('/admin/settings', $handler)->middleware($authCheck);
+// Per-route middleware (name, instance, callable, or array)
+$router->get('/admin/settings', $handler)->middleware('auth');
+$router->get('/api/data', $handler)->middleware(['api-key', 'rate-limit']);
 
 // Global middleware (pattern-based, priority-sorted)
-$router->addGlobalMiddleware('/admin/*', $authCheck, $priority);
+$router->addGlobalMiddleware('/admin/*', 'csrf', 5);
 // Patterns: '*' (all), '/admin/*' (prefix), '/login' (exact)
-// Return false from callback to halt the request.
 ```
 
 Route callbacks: callables or `"ModuleName:method"` strings.
@@ -554,6 +574,7 @@ $this->hook('permissions.register', function($registry) {
 | Document | Description |
 |---|---|
 | [docs/AJAX.md](docs/AJAX.md) | Unified AJAX dispatcher, JS helper, and module integration |
+| [docs/MIDDLEWARE.md](docs/MIDDLEWARE.md) | Middleware pipeline, registry, groups, and module integration |
 | [docs/HOOKS.md](docs/HOOKS.md) | Hook system architecture and API reference |
 | [docs/ADMIN_PANELS.md](docs/ADMIN_PANELS.md) | Admin panel creation guide and ContentPanel API |
 | [docs/VIEWS.md](docs/VIEWS.md) | Template rendering, partials, and theme override system |

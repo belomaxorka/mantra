@@ -220,7 +220,6 @@ Override when you need custom behavior (e.g., UsersPanel overrides `createItem` 
 ```php
 public function createItem() {
     if (!$this->requirePermission($this->getPermissionPrefix() . '.create')) return;
-    if (!$this->verifyCsrf()) return;
 
     // Your custom logic here
 
@@ -228,7 +227,7 @@ public function createItem() {
 }
 ```
 
-Always call `requirePermission()` and `verifyCsrf()` first.
+Always call `requirePermission()` first. CSRF verification is handled automatically by the global `csrf` middleware on all `/admin/*` POST requests (see [MIDDLEWARE.md](MIDDLEWARE.md)).
 
 ---
 
@@ -265,7 +264,6 @@ return $this->renderAdmin($title, $html, array(
 $this->db()                              // Database instance
 $this->auth()                            // Auth instance
 $this->getUser()                         // Current user array
-$this->verifyCsrf()                      // Verify CSRF token
 $this->redirectAdmin('bookmarks')        // Redirect to /admin/bookmarks
 $this->hook('system.init', $callback)    // Register hook
 $this->fireHook('my.hook', $data)        // Fire hook
