@@ -1,6 +1,5 @@
 # Changelog
 
-
 ## [v1.1.1] - 2026-04-03
 
 ### ✨ Added
@@ -32,6 +31,7 @@
 
 - (docker) Rewrite installation guide with reverse proxy section ([e1117fe](https://github.com/belomaxorka/mantra/commit/e1117fed2e083435b4839264e26c28fe0616f1e0))
 - (install) Add manual installation guide ([640c9f7](https://github.com/belomaxorka/mantra/commit/640c9f7fc1d0bec5f739a87780778fc54415f4a7))
+
 ## [v1.1.0] - 2026-04-03
 
 ### ✨ Added

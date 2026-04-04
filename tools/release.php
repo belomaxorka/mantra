@@ -412,7 +412,7 @@ if (file_exists($changelogFile)) {
     // Insert new entry after the "# Changelog\n" header (first two lines)
     $lines = explode("\n", $existing);
     $header = array_splice($lines, 0, 2);
-    $content = implode("\n", $header) . "\n\n" . $changelog . implode("\n", $lines);
+    $content = implode("\n", $header) . "\n" . $changelog . "\n" . implode("\n", $lines);
 } else {
     $content = "# Changelog\n\n" . $changelog;
 }
