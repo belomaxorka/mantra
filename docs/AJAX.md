@@ -350,7 +350,7 @@ class CategoriesModule extends Module
 }
 ```
 
-### Public action (no auth, no CSRF)
+### Public GET action (read-only, no auth)
 
 ```php
 class SearchModule extends Module
@@ -387,6 +387,84 @@ class SearchModule extends Module
         }
 
         return ['results' => array_slice($results, 0, 5)];
+    }
+}
+```
+
+```javascript
+// Theme JS — public endpoint, GET, no CSRF
+Mantra.ajax('search.suggest', { q: query }, { admin: false, method: 'GET' })
+    .done(function(data) { renderSuggestions(data.results); });
+```
+
+### Public POST action (CSRF-protected, no auth)
+
+```php
+class ContactModule extends Module
+{
+    public function init(): void
+    {
+        parent::init();
+
+        $this->ajaxAction('contact.send', [$this, 'handleSend'], [
+            'auth' => false,
+            // csrf: null → auto true for POST — token verified automatically
+        ]);
+    }
+
+    public function handleSend($request, $access)
+    {
+        $name    = trim((string)$request->input('name'));
+        $email   = trim((string)$request->input('email'));
+        $message = trim((string)$request->input('message'));
+
+        if ($name === '' || $message === '') {
+            throw new \Ajax\AjaxException('Name and message are required', 400);
+        }
+
+        app()->db()->write('messages', app()->db()->generateId(), [
+            'name'    => $name,
+            'email'   => $email,
+            'message' => $message,
+        ]);
+
+        return ['sent' => true];
+    }
+}
+```
+
+```javascript
+// Theme JS — public endpoint, POST, CSRF token sent automatically
+Mantra.ajax('contact.send', {
+    name: nameField.value,
+    email: emailField.value,
+    message: msgField.value
+}, { admin: false })
+    .done(function() { showThankYou(); })
+    .fail(function(err) { showError(err); });
+```
+
+### Webhook action (external caller, no CSRF)
+
+```php
+class PaymentModule extends Module
+{
+    public function init(): void
+    {
+        parent::init();
+
+        $this->ajaxAction('payment.webhook', [$this, 'handleWebhook'], [
+            'method' => 'POST',
+            'auth'   => false,
+            'csrf'   => false,   // external service — no browser session
+        ]);
+    }
+
+    public function handleWebhook($request, $access)
+    {
+        $payload = $request->jsonBody();
+        // validate signature, process event...
+        return ['received' => true];
     }
 }
 ```
@@ -433,31 +511,166 @@ class CommentsPanel extends AdminPanel
 
 ## CSRF Protection
 
-CSRF tokens are session-scoped (one token per session, not per request). This is intentional — per-request tokens would break parallel AJAX calls.
+Tokens are session-scoped (one token per session, not per request). This is intentional — per-request tokens would break parallel AJAX calls.
+
+### Two layers of protection
+
+CSRF is enforced at two independent levels:
+
+| Layer | Scope | Protects |
+|-------|-------|----------|
+| **AjaxDispatcher** | All AJAX (`/admin/ajax` and `/ajax`) | AJAX actions registered via `ajaxAction()` |
+| **CsrfMiddleware** | All POST on `/admin/*` | Traditional admin form submissions |
+
+For admin AJAX, both layers fire (harmless redundancy). For public AJAX, only the dispatcher layer applies.
 
 ### How it works
 
 1. PHP generates a token via `app()->auth()->generateCsrfToken()` and stores it in the session
-2. The token is embedded in `<meta name="csrf-token">` in both admin and public themes
+2. The token is embedded in `<meta name="csrf-token">` in both admin and public layouts
 3. `Mantra.ajax()` reads the meta tag and sends the token as `X-CSRF-Token` header
 4. `AjaxDispatcher` verifies the header via `Auth::verifyCsrfToken()` (timing-safe `hash_equals`)
 
 ### When CSRF is checked
 
-| Method | Default | Override |
-|--------|---------|----------|
-| POST | Checked | `'csrf' => false` to skip |
-| GET | Not checked | `'csrf' => true` to enforce |
+| Scenario | `csrf` option | Checked? |
+|----------|---------------|----------|
+| Admin POST AJAX | `null` (auto) | Yes — dispatcher + middleware |
+| Admin GET AJAX | `null` (auto) | No |
+| Public POST AJAX | `null` (auto) | Yes — dispatcher |
+| Public GET AJAX | `null` (auto) | No |
+| Any POST + `'csrf' => false` | `false` | No — for webhooks |
+| Any GET + `'csrf' => true` | `true` | Yes — for state-changing GETs |
 
-GET requests skip CSRF by default because they should be read-only (no state changes).
+### CSRF in admin modules
 
-### Admin forms (non-AJAX)
+#### AJAX actions
 
-Traditional form POSTs still use the hidden field `csrf_token`. The global `csrf` middleware (see [MIDDLEWARE.md](MIDDLEWARE.md)) checks both sources:
+Nothing to configure — `Mantra.ajax()` handles the JS side, the dispatcher handles the PHP side:
+
+```php
+// In a Module or AdminPanel subclass
+$this->ajaxAction('settings.save', [$this, 'handleSave']);
+// csrf: null → auto true for POST
+```
+
+```javascript
+// Admin JS — token and endpoint handled automatically
+Mantra.ajax('settings.save', { site_title: 'My Blog' })
+    .done(function() { adminToast('Saved', 'success'); });
+```
+
+#### Traditional forms (non-AJAX)
+
+Add a hidden field — the global `csrf` middleware on `/admin/*` verifies it:
+
+```php
+<form method="post" action="<?php echo base_url('/admin/settings'); ?>">
+    <input type="hidden" name="csrf_token"
+           value="<?php echo e(app()->auth()->generateCsrfToken()); ?>">
+    <!-- form fields -->
+    <button type="submit">Save</button>
+</form>
+```
+
+The middleware checks both sources in order:
 1. POST body field `csrf_token`
 2. Header `X-CSRF-Token`
 
-If the request accepts JSON (`Accept: application/json`), the error response is JSON instead of plain text.
+See [MIDDLEWARE.md](MIDDLEWARE.md) for details.
+
+### CSRF in public modules (site)
+
+#### Meta tags and JS helper — lazy injection
+
+When any module registers an AJAX action (via `ajaxAction()`), the `AjaxDispatcher` constructor hooks into the public theme to inject the required meta tags and JS:
+
+- `theme.head` hook → `<meta name="csrf-token">` and `<meta name="base-url">`
+- `theme.footer` hook → `<script src="admin-ajax.js">`
+
+**This is lazy:** if no module uses AJAX, nothing is injected. Your theme only needs to fire the standard `theme.head` and `theme.footer` hooks (which all well-formed themes do).
+
+#### POST actions — CSRF automatic
+
+Public POST actions are CSRF-protected by default. The module just registers the action:
+
+```php
+$this->ajaxAction('contact.send', [$this, 'handleSend'], [
+    'auth' => false,
+    // csrf: null → auto true for POST
+]);
+```
+
+The theme JS uses `Mantra.ajax()` with `admin: false` to hit the public `/ajax` endpoint:
+
+```javascript
+Mantra.ajax('contact.send', formData, { admin: false })
+    .done(function(data) { showSuccess(); });
+```
+
+The token flow is identical to admin: meta tag → JS header → dispatcher verification.
+
+#### GET actions — no CSRF needed
+
+```php
+$this->ajaxAction('search.suggest', [$this, 'handleSuggest'], [
+    'method' => 'GET',
+    'auth'   => false,
+]);
+// csrf defaults to false for GET — read-only, no token needed
+```
+
+#### Skipping CSRF for webhooks
+
+External services (payment gateways, CI hooks) cannot provide a browser session token. Disable CSRF explicitly:
+
+```php
+$this->ajaxAction('stripe.webhook', [$this, 'handleWebhook'], [
+    'auth' => false,
+    'csrf' => false,
+]);
+// Validate the request with the service's own signature instead
+```
+
+#### Raw requests without jQuery
+
+If your theme does not load jQuery, send the token manually:
+
+```javascript
+var csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+
+fetch('/ajax?action=contact.send', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': csrfToken
+    },
+    body: JSON.stringify({ name: 'John', message: 'Hello' })
+})
+.then(function(r) { return r.json(); })
+.then(function(resp) {
+    if (resp.ok) { /* success: resp.data */ }
+    else         { /* error:   resp.error */ }
+});
+```
+
+For GET requests (no CSRF), a simple fetch is enough:
+
+```javascript
+fetch('/ajax?action=search.suggest&q=' + encodeURIComponent(query))
+    .then(function(r) { return r.json(); })
+    .then(function(resp) {
+        if (resp.ok) renderResults(resp.data.results);
+    });
+```
+
+### Token lifecycle
+
+- **Generated** on first call to `app()->auth()->generateCsrfToken()`
+- **Stored** in PHP session (`$_SESSION['csrf_token']`) — survives page reloads
+- **Reused** within the session — parallel AJAX calls share the same token
+- **Verified** with timing-safe `hash_equals` — immune to timing attacks
+- **Embedded** in `<meta name="csrf-token">` — available to any JS on the page
 
 ---
 
@@ -507,37 +720,6 @@ $this->hook('ajax.after', function ($response, $context) {
     ]);
     return $response;
 });
-```
-
----
-
-## Public Theme Integration
-
-When any module registers an AJAX action, the dispatcher automatically injects into public themes via hooks:
-
-- `theme.head` — `<meta name="csrf-token">` and `<meta name="base-url">`
-- `theme.footer` — `<script src="admin-ajax.js">`
-
-This is lazy: if no module uses AJAX, nothing is injected.
-
-In your theme's JavaScript:
-
-```javascript
-// Calls the public endpoint /ajax
-Mantra.ajax('search.suggest', { q: query }, { admin: false, method: 'GET' })
-    .done(function(data) { /* ... */ });
-```
-
-If your theme does not load jQuery, you can make raw requests:
-
-```javascript
-fetch('/ajax?action=search.suggest&q=' + encodeURIComponent(query))
-    .then(function(r) { return r.json(); })
-    .then(function(response) {
-        if (response.ok) {
-            renderResults(response.data.results);
-        }
-    });
 ```
 
 ---
