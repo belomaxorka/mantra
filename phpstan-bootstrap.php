@@ -7,13 +7,13 @@
  * This minimal stub provides only what PHPStan needs to resolve symbols.
  */
 
-define('MANTRA_ROOT', '');
-define('MANTRA_CORE', '');
-define('MANTRA_MODULES', '');
-define('MANTRA_CONTENT', '');
-define('MANTRA_STORAGE', '');
-define('MANTRA_THEMES', '');
-define('MANTRA_UPLOADS', '');
+define('MANTRA_ROOT', __DIR__);
+define('MANTRA_CORE', __DIR__ . '/core');
+define('MANTRA_MODULES', __DIR__ . '/modules');
+define('MANTRA_CONTENT', __DIR__ . '/content');
+define('MANTRA_STORAGE', __DIR__ . '/storage');
+define('MANTRA_THEMES', __DIR__ . '/themes');
+define('MANTRA_UPLOADS', __DIR__ . '/uploads');
 define('MANTRA_DEBUG', false);
 define('MANTRA_CLI', false);
 define('MANTRA_PROJECT_INFO', [
