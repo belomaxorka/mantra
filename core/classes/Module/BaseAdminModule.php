@@ -7,15 +7,12 @@
  * - Sidebar item registration
  * - Quick action registration
  * - Admin rendering
- * - CSRF protection
  */
 
 namespace Module;
 
 abstract class BaseAdminModule extends Module
 {
-    use \CsrfTrait;
-
     /**
      * Initialize admin module.
      *

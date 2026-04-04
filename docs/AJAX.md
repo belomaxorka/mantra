@@ -35,7 +35,7 @@ Two endpoints serve all AJAX requests:
 
 | Endpoint | Middleware | Use case |
 |----------|-----------|----------|
-| `POST\|GET /admin/ajax` | `requireAuth` (AdminModule) | Admin panel actions |
+| `POST\|GET /admin/ajax` | `auth` middleware | Admin panel actions |
 | `POST\|GET /ajax` | None (auth per-action) | Public site actions |
 
 The action name is always in the query string: `?action=module.action`.
@@ -453,7 +453,7 @@ GET requests skip CSRF by default because they should be read-only (no state cha
 
 ### Admin forms (non-AJAX)
 
-Traditional form POSTs still use the hidden field `csrf_token`. The `AdminPanel::verifyCsrf()` method checks both sources:
+Traditional form POSTs still use the hidden field `csrf_token`. The global `csrf` middleware (see [MIDDLEWARE.md](MIDDLEWARE.md)) checks both sources:
 1. POST body field `csrf_token`
 2. Header `X-CSRF-Token`
 

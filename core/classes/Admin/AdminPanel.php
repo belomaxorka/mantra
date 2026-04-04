@@ -12,8 +12,6 @@ use Application;
 
 abstract class AdminPanel implements AdminPanelInterface
 {
-    use \CsrfTrait;
-
     /** @var \AdminModule */
     protected $admin;
 

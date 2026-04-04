@@ -479,20 +479,6 @@ class AdminModule extends Module
     }
 
     /**
-     * Auth middleware (legacy method).
-     *
-     * @deprecated Use the named 'auth' middleware instead.
-     */
-    public function requireAuth()
-    {
-        if (!app()->auth()->check()) {
-            app()->response()->redirect(base_url('/admin/login'));
-            return false;
-        }
-        return true;
-    }
-
-    /**
      * Login form
      */
     public function loginForm(): void

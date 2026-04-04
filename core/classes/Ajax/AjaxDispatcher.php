@@ -8,7 +8,7 @@ namespace Ajax;
  * Modules register named actions with options (auth, permission).
  * Two endpoints dispatch to registered handlers:
  *   POST|GET /ajax         — public actions
- *   POST|GET /admin/ajax   — admin actions (requireAuth middleware)
+ *   POST|GET /admin/ajax   — admin actions (auth middleware)
  *
  * Action name is read from the query string: ?action=module.action
  *
