@@ -92,12 +92,6 @@ class AdminModule extends Module
             }
         }
 
-        // Dark theme
-        $theme = preg_replace('/[^a-z0-9_-]/', '', strtolower($config->get('admin.theme', 'light')));
-        if ($theme === 'dark') {
-            $extra .= '<link href="' . base_url('/modules/admin/assets/css/admin-dark.css') . '" rel="stylesheet">' . "\n";
-        }
-
         if (empty($lines) && $extra === '') {
             return $html;
         }

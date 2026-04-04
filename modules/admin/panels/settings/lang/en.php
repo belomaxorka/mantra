@@ -120,9 +120,6 @@ return [
     'admin-settings.appearance.font.nunito' => 'Nunito',
     'admin-settings.appearance.font.source-sans' => 'Source Sans',
     'admin-settings.appearance.font.jetbrains-mono' => 'JetBrains Mono',
-    'admin-settings.appearance.theme' => 'Theme',
-    'admin-settings.appearance.theme.light' => 'Light',
-    'admin-settings.appearance.theme.dark' => 'Dark',
 
     // Debug settings
     'admin-settings.debug.enabled' => 'Enable debug mode',

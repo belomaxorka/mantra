@@ -134,16 +134,6 @@ return [
                     'help' => 'admin-settings.appearance.font.help',
                     'options' => [],
                 ],
-                [
-                    'path' => 'admin.theme',
-                    'type' => 'select',
-                    'title' => 'admin-settings.appearance.theme',
-                    'default' => 'light',
-                    'options' => [
-                        'light' => 'admin-settings.appearance.theme.light',
-                        'dark' => 'admin-settings.appearance.theme.dark',
-                    ],
-                ],
             ],
         ],
         [
