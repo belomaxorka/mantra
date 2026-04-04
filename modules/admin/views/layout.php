@@ -1,14 +1,8 @@
 <!doctype html>
 <html lang="<?php echo e(config('locale.default_language', 'en')); ?>">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <?php include __DIR__ . '/partials/admin-head.php'; ?>
   <title><?php echo isset($title) ? e($title) : 'Admin'; ?></title>
-
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link href="<?php echo $this->moduleAsset('bootstrap/bootstrap.min.css'); ?>" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-  <link href="<?php echo $this->moduleAsset('css/admin.css'); ?>" rel="stylesheet">
 
   <?php
     $adminHead = app()->hooks()->fire('admin.head', '');
@@ -208,7 +202,7 @@
 
 <div class="toast-container position-fixed top-0 end-0 p-3" id="adminToastContainer" style="z-index: 1090;"></div>
 
-<script src="<?php echo $this->moduleAsset('bootstrap/bootstrap.min.js'); ?>"></script>
+<?php include __DIR__ . '/partials/admin-scripts.php'; ?>
 <?php $flashes = app()->session()->getFlashes(); ?>
 <?php if (!empty($flashes)): ?>
 <script type="application/json" id="adminFlashData"><?php echo json_encode($flashes, JSON_HEX_TAG | JSON_UNESCAPED_UNICODE); ?></script>
