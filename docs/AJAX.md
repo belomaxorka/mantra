@@ -206,8 +206,17 @@ Mantra.ajax(action, data, options)
 | `method` | `'POST'` | HTTP method |
 | `admin` | `true` | `true` = `/admin/ajax`, `false` = `/ajax` |
 | `toast` | `true` | Auto-show error toast via `adminToast()` |
+| `progress` | `undefined` | Upload progress callback: `function(loaded, total)` |
 
 The CSRF token is read from `<meta name="csrf-token">` and sent as `X-CSRF-Token` header automatically.
+
+The returned promise has an `.abort()` method to cancel the in-flight request:
+
+```javascript
+var req = Mantra.ajax('uploads.upload', formData);
+// later...
+req.abort();
+```
 
 ### Mantra.csrfToken()
 
@@ -262,13 +271,24 @@ Mantra.ajax('uploads.upload', fd)
     });
 ```
 
-Sends:
-```
-POST /admin/ajax?action=uploads.upload
-Content-Type: multipart/form-data
-X-CSRF-Token: abc123
+### File upload with progress and abort
 
-[binary data]
+```javascript
+var fd = new FormData();
+fd.append('file', fileInput.files[0]);
+
+var request = Mantra.ajax('uploads.upload', fd, {
+    progress: function(loaded, total) {
+        var pct = Math.round(loaded / total * 100);
+        $('progress').val(pct);
+    }
+})
+.done(function(data) {
+    $('img.preview').attr('src', data.url);
+});
+
+// Cancel the upload if needed
+$('#cancel').on('click', function() { request.abort(); });
 ```
 
 ### GET request (read-only, no CSRF)

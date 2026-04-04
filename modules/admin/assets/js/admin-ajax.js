@@ -55,6 +55,17 @@
             dataType: 'json'
         };
 
+        // Upload progress support
+        if (typeof options.progress === 'function') {
+            ajaxOpts.xhr = function() {
+                var xhr = new XMLHttpRequest();
+                xhr.upload.addEventListener('progress', function(e) {
+                    if (e.lengthComputable) options.progress(e.loaded, e.total);
+                });
+                return xhr;
+            };
+        }
+
         if (data instanceof FormData) {
             ajaxOpts.data = data;
             ajaxOpts.processData = false;
@@ -66,7 +77,7 @@
             ajaxOpts.data = data;
         }
 
-        $.ajax(ajaxOpts)
+        var jqXhr = $.ajax(ajaxOpts)
             .done(function(response) {
                 if (response && response.ok) {
                     deferred.resolve(response.data);
@@ -95,7 +106,9 @@
                 deferred.reject(msg);
             });
 
-        return deferred.promise();
+        var promise = deferred.promise();
+        promise.abort = function() { jqXhr.abort(); return this; };
+        return promise;
     };
 
     window.Mantra = Mantra;

@@ -260,30 +260,27 @@
     // Custom upload adapter for CKEditor 5 (CDN build lacks SimpleUploadAdapter)
     function MantraUploadAdapter(loader) { this.loader = loader; }
     MantraUploadAdapter.prototype.upload = function() {
-        var loader = this;
+        var adapter = this;
         return this.loader.file.then(function(file) {
+            var form = new FormData();
+            form.append('file', file);
             return new Promise(function(resolve, reject) {
-                var form = new FormData();
-                form.append('file', file);
-                var xhr = new XMLHttpRequest();
-                loader._xhr = xhr;
-                xhr.open('POST', Mantra.baseUrl() + '/admin/ajax?action=uploads.upload', true);
-                xhr.setRequestHeader('X-CSRF-Token', Mantra.csrfToken());
-                xhr.onload = function() {
-                    try { var resp = JSON.parse(xhr.responseText); } catch(e) { return reject('Invalid server response'); }
-                    if (!resp.ok) return reject(resp.error || 'Upload failed');
-                    if (!resp.data || !resp.data.url) return reject('No URL in response');
-                    resolve({ default: resp.data.url });
-                };
-                xhr.onerror = function() { reject('Network error'); };
-                xhr.upload.onprogress = function(e) {
-                    if (e.lengthComputable) loader.loader.uploadTotal = e.total, loader.loader.uploaded = e.loaded;
-                };
-                xhr.send(form);
+                adapter._request = Mantra.ajax('uploads.upload', form, {
+                    toast: false,
+                    progress: function(loaded, total) {
+                        adapter.loader.uploadTotal = total;
+                        adapter.loader.uploaded = loaded;
+                    }
+                })
+                .done(function(data) {
+                    if (!data || !data.url) return reject('No URL in response');
+                    resolve({ default: data.url });
+                })
+                .fail(reject);
             });
         });
     };
-    MantraUploadAdapter.prototype.abort = function() { if (this._xhr) this._xhr.abort(); };
+    MantraUploadAdapter.prototype.abort = function() { if (this._request) this._request.abort(); };
 
     function MantraUploadPlugin(editor) {
         editor.plugins.get('FileRepository').createUploadAdapter = function(loader) {
