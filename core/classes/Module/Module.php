@@ -225,6 +225,56 @@ abstract class Module implements ModuleInterface
         }, 5);
     }
 
+    /**
+     * Load and register middleware classes declared in module.json.
+     *
+     * Reads the 'middleware' key from the manifest. Each entry maps a
+     * registry name to a class name whose file lives in the module's
+     * middleware/ directory:
+     *
+     *   "middleware": { "auth": "AuthMiddleware" }
+     *   → requires modules/{id}/middleware/AuthMiddleware.php
+     *   → registers the instance as 'auth' in the MiddlewareRegistry
+     */
+    protected function registerMiddleware(): void
+    {
+        $definitions = isset($this->manifest['middleware']) && is_array($this->manifest['middleware'])
+            ? $this->manifest['middleware']
+            : [];
+
+        if (empty($definitions)) {
+            return;
+        }
+
+        $middlewarePath = $this->getPath() . '/middleware';
+
+        foreach ($definitions as $name => $className) {
+            $file = $middlewarePath . '/' . $className . '.php';
+            if (!file_exists($file)) {
+                $this->log('warning', 'Middleware class file not found', [
+                    'name' => $name, 'file' => $file,
+                ]);
+                continue;
+            }
+
+            require_once $file;
+
+            if (!class_exists($className)) {
+                $this->log('warning', 'Middleware class not found', [
+                    'name' => $name, 'class' => $className,
+                ]);
+                continue;
+            }
+
+            $instance = new $className();
+            $this->app->middleware()->register($name, $instance);
+
+            $this->log('debug', 'Middleware registered', [
+                'name' => $name, 'class' => $className,
+            ]);
+        }
+    }
+
     protected function route($method, $pattern, $callback)
     {
         $router = $this->app->router();

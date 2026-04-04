@@ -51,13 +51,25 @@ class Router
     }
 
     /**
-     * Add middleware to last route
+     * Add middleware to last route.
+     *
+     * Accepts a callable, a MiddlewareInterface instance, a string
+     * (middleware name from the registry), or an array of any of these.
+     *
+     * @param string|callable|\Http\MiddlewareInterface|array $middleware
+     * @return self
      */
     public function middleware($middleware)
     {
         if (!empty($this->routes)) {
             $lastIndex = count($this->routes) - 1;
-            $this->routes[$lastIndex]['middleware'][] = $middleware;
+            if (is_array($middleware) && !is_callable($middleware)) {
+                foreach ($middleware as $mw) {
+                    $this->routes[$lastIndex]['middleware'][] = $mw;
+                }
+            } else {
+                $this->routes[$lastIndex]['middleware'][] = $middleware;
+            }
         }
         return $this;
     }
@@ -72,7 +84,7 @@ class Router
      *   '/login'     — exact match
      *
      * @param string $pattern URI pattern (* suffix for prefix match)
-     * @param callable $callback Middleware callable; return false to halt
+     * @param string|callable|\Http\MiddlewareInterface $callback Middleware
      * @param int $priority Lower = runs first (default 10)
      */
     public function addGlobalMiddleware($pattern, $callback, $priority = 10): void
@@ -109,42 +121,56 @@ class Router
             // Route matched
             $this->currentRoute = $route;
 
-            // Run global middleware that matches this URI
+            // Build the middleware pipeline
+            $pipeline = new \Http\MiddlewarePipeline();
+            $registry = app()->middleware();
+
+            // Collect matching global middleware
             foreach ($this->globalMiddleware as $mw) {
-                if ($this->middlewareMatches($mw['pattern'], $uri) && is_callable($mw['callback'])) {
-                    if (($mw['callback'])() === false) {
-                        return;
+                if ($this->middlewareMatches($mw['pattern'], $uri)) {
+                    $resolved = $registry->resolveAll([$mw['callback']]);
+                    foreach ($resolved as $layer) {
+                        $pipeline->pipe($layer);
                     }
                 }
             }
 
-            // Run route-specific middleware
-            foreach ($route['middleware'] as $mw) {
-                if (is_callable($mw)) {
-                    $result = $mw();
-                    if ($result === false) {
-                        return; // Middleware stopped execution
-                    }
-                }
+            // Collect route-specific middleware
+            $resolved = $registry->resolveAll($route['middleware']);
+            foreach ($resolved as $layer) {
+                $pipeline->pipe($layer);
             }
 
-            // Execute callback
-            if (is_callable($route['callback'])) {
-                if (empty($params)) {
-                    ($route['callback'])();
-                } else {
-                    ($route['callback'])($params);
-                }
-            } elseif (is_string($route['callback'])) {
-                // Format: "ModuleName:method"
-                $this->executeControllerAction($route['callback'], $params);
-            }
+            // Run the pipeline with the route handler as the core
+            $pipeline->run($this->buildRouteHandler($route['callback'], $params));
 
             return;
         }
 
         // No route found - 404
         $this->notFound();
+    }
+
+    /**
+     * Build a callable that executes the route handler.
+     *
+     * @param callable|string $callback Route callback or "Module:method" string
+     * @param array $params Matched route parameters
+     * @return callable
+     */
+    private function buildRouteHandler($callback, $params)
+    {
+        return function () use ($callback, $params): void {
+            if (is_callable($callback)) {
+                if (empty($params)) {
+                    $callback();
+                } else {
+                    $callback($params);
+                }
+            } elseif (is_string($callback)) {
+                $this->executeControllerAction($callback, $params);
+            }
+        };
     }
 
     /**

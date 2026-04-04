@@ -15,6 +15,10 @@
         "middleware",
         "templates"
     ],
+    "middleware": {
+        "auth": "AuthMiddleware",
+        "csrf": "CsrfMiddleware"
+    },
     "dependencies": [],
     "tags": [
         "admin",

@@ -16,6 +16,9 @@ class AdminModule extends Module
 
     public function init(): void
     {
+        $this->registerMiddleware();
+        $this->app->middleware()->group('admin', ['csrf', 'auth']);
+
         $this->registerAdminHooks();
         $this->registerPermissionService();
         $this->registerAppearanceOverrides();
@@ -252,12 +255,12 @@ class AdminModule extends Module
         $pattern = '/admin' . ($pattern === '' ? '' : ('/' . ltrim($pattern, '/')));
 
         if ($method === 'GET') {
-            return $router->get($pattern, $callback)->middleware([$this, 'requireAuth']);
+            return $router->get($pattern, $callback)->middleware('auth');
         }
         if ($method === 'POST') {
-            return $router->post($pattern, $callback)->middleware([$this, 'requireAuth']);
+            return $router->post($pattern, $callback)->middleware('auth');
         }
-        return $router->any($pattern, $callback)->middleware([$this, 'requireAuth']);
+        return $router->any($pattern, $callback)->middleware('auth');
     }
 
     /**
@@ -268,28 +271,7 @@ class AdminModule extends Module
         $router = $data['router'];
 
         // Global CSRF middleware for all admin POST requests.
-        $router->addGlobalMiddleware('/admin/*', function () {
-            $request = app()->request();
-
-            if ($request->method() !== 'POST') {
-                return true;
-            }
-
-            $token = $request->post('csrf_token', '')
-                  ?: $request->header('X-CSRF-Token', '');
-
-            if (!app()->auth()->verifyCsrfToken($token)) {
-                if ($request->acceptsJson()) {
-                    app()->response()->json(['ok' => false, 'error' => 'Invalid CSRF token'], 403);
-                } else {
-                    http_response_code(403);
-                    echo 'Invalid CSRF token';
-                }
-                return false;
-            }
-
-            return true;
-        }, 5);
+        $router->addGlobalMiddleware('/admin/*', 'csrf', 5);
 
         // Auth routes (no middleware — public)
         $router->get('/admin/login', [$this, 'loginForm']);
@@ -497,7 +479,9 @@ class AdminModule extends Module
     }
 
     /**
-     * Auth middleware
+     * Auth middleware (legacy method).
+     *
+     * @deprecated Use the named 'auth' middleware instead.
      */
     public function requireAuth()
     {

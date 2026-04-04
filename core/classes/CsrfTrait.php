@@ -4,6 +4,9 @@
  *
  * Reads the token from POST field (csrf_token) or the X-CSRF-Token header
  * and verifies it against the session. Returns JSON or plain-text 403 on failure.
+ *
+ * @deprecated Use the global 'csrf' middleware (CsrfMiddleware) instead.
+ *             This trait is kept for backward compatibility only.
  */
 
 trait CsrfTrait

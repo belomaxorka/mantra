@@ -83,6 +83,7 @@ class Application
             config('locale.time_format', 'H:i'),
             ));
         $this->provide('ajax', fn() => new \Ajax\AjaxDispatcher());
+        $this->provide('middleware', fn() => new \Http\MiddlewareRegistry());
     }
 
     /** @return \Http\Request */
@@ -131,6 +132,12 @@ class Application
     public function ajax()
     {
         return $this->service('ajax');
+    }
+
+    /** @return \Http\MiddlewareRegistry */
+    public function middleware()
+    {
+        return $this->service('middleware');
     }
 
     /**
