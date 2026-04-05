@@ -81,9 +81,7 @@ class MiddlewarePipeline
     {
         // Build the chain inside-out: start with the core handler,
         // then wrap each layer around it in reverse order.
-        $chain = static function () use ($core) {
-            return $core() !== false;
-        };
+        $chain = static fn () => $core() !== false;
 
         foreach (array_reverse($this->layers) as $layer) {
             $chain = $this->wrapLayer($layer, $chain);

@@ -303,9 +303,7 @@ class MiddlewareTest extends MantraTestCase
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Callable middleware must take no parameters');
 
-        $pipeline->pipe(function ($next) {
-            return $next();
-        });
+        $pipeline->pipe(fn ($next) => $next());
     }
 
     public function testPipeRejectsCallableWithOptionalParameter(): void
@@ -316,9 +314,7 @@ class MiddlewareTest extends MantraTestCase
 
         $this->expectException(\InvalidArgumentException::class);
 
-        $pipeline->pipe(function ($next = null) {
-            return true;
-        });
+        $pipeline->pipe(fn ($next = null) => true);
     }
 
     public function testPipeAcceptsZeroArgClosure(): void
