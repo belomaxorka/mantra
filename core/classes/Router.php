@@ -121,34 +121,54 @@ class Router
             // Route matched
             $this->currentRoute = $route;
 
-            // Build the middleware pipeline
-            $pipeline = new \Http\MiddlewarePipeline();
-            $registry = app()->middleware();
-
-            // Collect matching global middleware
-            foreach ($this->globalMiddleware as $mw) {
-                if ($this->middlewareMatches($mw['pattern'], $uri)) {
-                    $resolved = $registry->resolveAll([$mw['callback']]);
-                    foreach ($resolved as $layer) {
-                        $pipeline->pipe($layer);
-                    }
-                }
-            }
-
-            // Collect route-specific middleware
-            $resolved = $registry->resolveAll($route['middleware']);
-            foreach ($resolved as $layer) {
-                $pipeline->pipe($layer);
-            }
-
-            // Run the pipeline with the route handler as the core
+            $pipeline = $this->buildPipeline($uri, $route['middleware']);
             $pipeline->run($this->buildRouteHandler($route['callback'], $params));
 
             return;
         }
 
-        // No route found - 404
-        $this->notFound();
+        // No route matched — still run matching global middleware so that
+        // cross-cutting concerns (rate limiting, IP blocking, audit logging,
+        // security headers) apply to 404 responses too. Without this, an
+        // attacker flooding non-existent URLs would bypass rate-limit
+        // middleware entirely.
+        $pipeline = $this->buildPipeline($uri, []);
+        $pipeline->run(fn () => $this->notFound());
+    }
+
+    /**
+     * Build a MiddlewarePipeline for the given URI.
+     *
+     * Collects all global middleware whose pattern matches $uri, then
+     * appends any route-specific middleware. Order matters: global layers
+     * are outermost, route layers are closest to the core handler.
+     *
+     * @param string $uri The normalized request URI
+     * @param array  $routeMiddleware Route-specific middleware references
+     * @return \Http\MiddlewarePipeline
+     */
+    private function buildPipeline(string $uri, array $routeMiddleware): \Http\MiddlewarePipeline
+    {
+        $pipeline = new \Http\MiddlewarePipeline();
+        $registry = app()->middleware();
+
+        // Collect matching global middleware
+        foreach ($this->globalMiddleware as $mw) {
+            if ($this->middlewareMatches($mw['pattern'], $uri)) {
+                $resolved = $registry->resolveAll([$mw['callback']]);
+                foreach ($resolved as $layer) {
+                    $pipeline->pipe($layer);
+                }
+            }
+        }
+
+        // Collect route-specific middleware
+        $resolved = $registry->resolveAll($routeMiddleware);
+        foreach ($resolved as $layer) {
+            $pipeline->pipe($layer);
+        }
+
+        return $pipeline;
     }
 
     /**

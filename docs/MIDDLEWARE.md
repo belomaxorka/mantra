@@ -343,6 +343,10 @@ $router->addGlobalMiddleware('*', function () {
 $router->addGlobalMiddleware('/api/*', new RateLimitMiddleware(), 1);
 ```
 
+**Global middleware runs on 404 requests too.** When no route matches the request URI, the router still builds a pipeline with every global middleware whose pattern matches and runs it around the 404 handler. This ensures cross-cutting concerns — rate limiting, IP blocking, audit logging, security headers — apply to non-existent URLs as well. Without this, an attacker flooding `/admin/xxxxx?r=random` would bypass rate-limit middleware entirely.
+
+Pattern scoping is still respected: `/admin/*` global middleware does not fire for a 404 on `/blog/nonexistent`.
+
 ### Per-route middleware
 
 Attached to a specific route. Runs after global middleware, in the order attached.

@@ -68,16 +68,21 @@ class MiddlewarePipeline
     /**
      * Execute the pipeline, then run $core if all middleware pass.
      *
+     * Propagates the core handler's return value: an explicit false halts
+     * the surrounding middleware the same way a halting middleware would.
+     * Any other return (including null from void handlers) is treated as
+     * success — so existing void-returning handlers keep working unchanged.
+     *
      * @param callable $core The final handler (route callback)
-     * @return bool true if $core was reached, false if halted
+     * @return bool true if $core was reached and did not return false,
+     *              false if halted by middleware or by $core itself
      */
     public function run($core)
     {
         // Build the chain inside-out: start with the core handler,
         // then wrap each layer around it in reverse order.
         $chain = static function () use ($core) {
-            $core();
-            return true;
+            return $core() !== false;
         };
 
         foreach (array_reverse($this->layers) as $layer) {

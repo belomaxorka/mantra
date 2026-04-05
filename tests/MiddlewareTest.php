@@ -39,6 +39,57 @@ class MiddlewareTest extends MantraTestCase
         $this->assertTrue($result);
     }
 
+    public function testPipelinePropagatesFalseFromCoreHandler(): void
+    {
+        // Core handler can signal "halt" by returning false — pipeline
+        // must propagate that, so outer middleware sees the same result
+        // as if an inner middleware had halted.
+        $pipeline = new \Http\MiddlewarePipeline();
+
+        $result = $pipeline->run(fn () => false);
+
+        $this->assertFalse($result);
+    }
+
+    public function testPipelineTreatsNonFalseCoreReturnAsSuccess(): void
+    {
+        // Any non-false return (including null from void handlers, arrays,
+        // strings, 0) is success — legacy void handlers keep working.
+        $pipeline = new \Http\MiddlewarePipeline();
+
+        $this->assertTrue($pipeline->run(fn () => null));
+        $this->assertTrue($pipeline->run(fn () => 0));
+        $this->assertTrue($pipeline->run(fn () => ''));
+        $this->assertTrue($pipeline->run(fn () => []));
+    }
+
+    public function testOuterMiddlewareSeesFalseFromCore(): void
+    {
+        // When an outer middleware inspects $next() result, it must see
+        // false if the core handler returned false.
+        $pipeline = new \Http\MiddlewarePipeline();
+        $seenResult = null;
+
+        $pipeline->pipe(new class ($seenResult) implements \Http\MiddlewareInterface {
+            private mixed $ref;
+            public function __construct(&$ref)
+            {
+                $this->ref = &$ref;
+            }
+            public function handle(callable $next): bool
+            {
+                $result = $next();
+                $this->ref = $result;
+                return $result;
+            }
+        });
+
+        $pipelineResult = $pipeline->run(fn () => false);
+
+        $this->assertFalse($seenResult);
+        $this->assertFalse($pipelineResult);
+    }
+
     // ---------- Class-based middleware (MiddlewareInterface) ----------
 
     public function testMiddlewareThatCallsNext(): void
