@@ -223,14 +223,16 @@ $halted = !$pipeline->run(function () {
 
 **Execution order:** layers are piped in order, first-piped runs first. The pipeline is built inside-out: the core handler is the innermost callable, each `pipe()` wraps around it.
 
-**Backward compatibility:** plain callables (closures, method arrays) are supported alongside class-based middleware. A callable is invoked without arguments; if it returns `false`, the pipeline halts. If it returns `true` or `null`, the next layer runs.
+**Backward compatibility:** plain callables (closures, method arrays, invokable objects) are supported alongside class-based middleware as lightweight guards. A guard is invoked **without arguments** — if it returns `false`, the pipeline halts; `true` or `null` continues to the next layer. Guards cannot run code *after* `$next` — use `MiddlewareInterface` when wrap semantics are needed.
 
 ```php
-$pipeline->pipe(new AuthMiddleware());       // class-based
-$pipeline->pipe(function () {                // legacy callable
+$pipeline->pipe(new AuthMiddleware());       // class-based (wrap semantics)
+$pipeline->pipe(function () {                // legacy guard
     return someCheck() ? true : false;
 });
 ```
+
+> **Guard contract enforcement.** `pipe()` validates callable layers at registration time. A callable that declares any parameters (e.g. `function ($next) { ... }`) throws `InvalidArgumentException` immediately — this catches contract mismatches where a developer expects PSR-15-style `$next` but the pipeline calls the callable with no arguments. Implement `MiddlewareInterface` in that case.
 
 ---
 

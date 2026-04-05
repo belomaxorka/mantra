@@ -13,11 +13,7 @@ class CsrfMiddleware implements \Http\MiddlewareInterface
 {
     private const SAFE_METHODS = ['GET', 'HEAD', 'OPTIONS'];
 
-    /**
-     * @param callable $next
-     * @return bool
-     */
-    public function handle($next)
+    public function handle(callable $next): bool
     {
         $request = app()->request();
 

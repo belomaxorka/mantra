@@ -3,9 +3,11 @@
  * MiddlewarePipeline - Chains middleware layers around a core handler
  *
  * Supports two kinds of layers:
- *   - MiddlewareInterface instances — receive a $next callable
- *   - Plain callables (backward compat) — called without arguments;
- *     return false to halt, true/null to continue
+ *   - MiddlewareInterface instances — receive a callable $next and can
+ *     wrap logic around it (PSR-15-style: before/$next/after).
+ *   - Plain callable guards (backward compat) — invoked WITHOUT arguments;
+ *     return false to halt, true/null to continue. Guards cannot run code
+ *     after $next — use MiddlewareInterface when wrap semantics are needed.
  *
  * The pipeline is built inside-out: the last-piped layer runs closest
  * to the core handler, the first-piped layer runs first overall.
@@ -21,13 +23,46 @@ class MiddlewarePipeline
     /**
      * Add a middleware layer to the pipeline.
      *
+     * Callable layers are validated at pipe time: they must not declare any
+     * parameters, because the pipeline invokes them without arguments.
+     * Writing `function ($next) { ... }` expecting PSR-15-style semantics
+     * is a contract mismatch — implement MiddlewareInterface instead.
+     *
      * @param MiddlewareInterface|callable $middleware
      * @return self
+     * @throws \InvalidArgumentException If $middleware is neither a
+     *   MiddlewareInterface nor a zero-argument callable.
      */
     public function pipe($middleware)
     {
+        if (!$middleware instanceof MiddlewareInterface) {
+            if (!is_callable($middleware)) {
+                throw new \InvalidArgumentException(
+                    'Middleware must implement ' . MiddlewareInterface::class
+                    . ' or be a callable guard',
+                );
+            }
+            $this->assertGuardCallable($middleware);
+        }
+
         $this->layers[] = $middleware;
         return $this;
+    }
+
+    /**
+     * Assert that a legacy callable layer matches the guard contract:
+     * it must be invokable with zero arguments.
+     */
+    private function assertGuardCallable(callable $callable): void
+    {
+        $reflection = new \ReflectionFunction(\Closure::fromCallable($callable));
+        if ($reflection->getNumberOfParameters() > 0) {
+            throw new \InvalidArgumentException(
+                'Callable middleware must take no parameters — the pipeline '
+                . 'invokes legacy callables without arguments. To wrap logic '
+                . 'around $next, implement ' . MiddlewareInterface::class . '.',
+            );
+        }
     }
 
     /**

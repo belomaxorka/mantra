@@ -230,6 +230,70 @@ class MiddlewareTest extends MantraTestCase
         $this->assertSame($pipeline, $returned);
     }
 
+    // ---------- Contract enforcement at pipe() ----------
+
+    public function testPipeRejectsNonCallableNonInterfaceValue(): void
+    {
+        $pipeline = new \Http\MiddlewarePipeline();
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('MiddlewareInterface');
+
+        $pipeline->pipe('this is not a middleware');
+    }
+
+    public function testPipeRejectsCallableExpectingNext(): void
+    {
+        $pipeline = new \Http\MiddlewarePipeline();
+
+        // Looks like PSR-15 style, but the pipeline invokes legacy callables
+        // without arguments — this would silently produce a TypeError at run
+        // time. Reject at pipe time with a clear message instead.
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Callable middleware must take no parameters');
+
+        $pipeline->pipe(function ($next) {
+            return $next();
+        });
+    }
+
+    public function testPipeRejectsCallableWithOptionalParameter(): void
+    {
+        // Optional parameters still indicate wrong intent — guard contract
+        // is "zero parameters", full stop.
+        $pipeline = new \Http\MiddlewarePipeline();
+
+        $this->expectException(\InvalidArgumentException::class);
+
+        $pipeline->pipe(function ($next = null) {
+            return true;
+        });
+    }
+
+    public function testPipeAcceptsZeroArgClosure(): void
+    {
+        $pipeline = new \Http\MiddlewarePipeline();
+        $returned = $pipeline->pipe(fn () => true);
+
+        $this->assertSame($pipeline, $returned);
+    }
+
+    public function testPipeAcceptsInvokableObject(): void
+    {
+        // __invoke() takes no parameters — valid guard callable.
+        $invokable = new class () {
+            public function __invoke(): bool
+            {
+                return true;
+            }
+        };
+
+        $pipeline = new \Http\MiddlewarePipeline();
+        $returned = $pipeline->pipe($invokable);
+
+        $this->assertSame($pipeline, $returned);
+    }
+
     // ---------- Edge cases ----------
 
     public function testMultipleCallablesInSequence(): void
@@ -291,7 +355,7 @@ class MiddlewareTest extends MantraTestCase
         $pipeline->pipe(new class($capturedResult) implements \Http\MiddlewareInterface {
             private mixed $ref;
             public function __construct(&$ref) { $this->ref = &$ref; }
-            public function handle($next)
+            public function handle(callable $next): bool
             {
                 $result = $next();
                 $this->ref = $result;
@@ -309,7 +373,7 @@ class MiddlewareTest extends MantraTestCase
         $pipeline = new \Http\MiddlewarePipeline();
 
         $pipeline->pipe(new class() implements \Http\MiddlewareInterface {
-            public function handle($next)
+            public function handle(callable $next): bool
             {
                 $next(); // inner halts, but we ignore and return true
                 return true;
@@ -736,7 +800,7 @@ class MiddlewareTest extends MantraTestCase
  */
 class PassthroughMiddleware implements \Http\MiddlewareInterface
 {
-    public function handle($next)
+    public function handle(callable $next): bool
     {
         return $next();
     }
@@ -747,7 +811,7 @@ class PassthroughMiddleware implements \Http\MiddlewareInterface
  */
 class HaltingMiddleware implements \Http\MiddlewareInterface
 {
-    public function handle($next)
+    public function handle(callable $next): bool
     {
         return false;
     }
@@ -771,7 +835,7 @@ class LoggingMiddleware implements \Http\MiddlewareInterface
         $this->label = $label;
     }
 
-    public function handle($next)
+    public function handle(callable $next): bool
     {
         $this->log[] = $this->label . ':before';
         $result = $next();

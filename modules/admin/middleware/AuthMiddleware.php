@@ -7,11 +7,7 @@
 
 class AuthMiddleware implements \Http\MiddlewareInterface
 {
-    /**
-     * @param callable $next
-     * @return bool
-     */
-    public function handle($next)
+    public function handle(callable $next): bool
     {
         if (!app()->auth()->check()) {
             app()->response()->redirect(base_url('/admin/login'));
