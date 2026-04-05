@@ -49,16 +49,40 @@ class MiddlewareRegistry
      * recursively. Otherwise the individually registered middleware
      * is returned in a single-element array.
      *
+     * Fails closed: an unknown name throws UnknownMiddlewareException rather
+     * than silently returning an empty list, so a typo in a route's
+     * middleware reference cannot drop authentication or CSRF protection.
+     * Circular group references throw CircularMiddlewareGroupException.
+     *
      * @param string $name Middleware or group name
      * @return array Flat array of MiddlewareInterface|callable
+     * @throws UnknownMiddlewareException When the name is not registered
+     * @throws CircularMiddlewareGroupException When group references form a cycle
      */
     public function resolve($name)
     {
+        return $this->resolveWithChain($name, []);
+    }
+
+    /**
+     * Internal resolver that tracks the group chain for cycle detection.
+     *
+     * @param string   $name  Middleware or group name to resolve
+     * @param string[] $chain Ordered list of group names already being resolved
+     * @return array Flat array of MiddlewareInterface|callable
+     */
+    private function resolveWithChain(string $name, array $chain): array
+    {
         // Check groups first (a group can reference other groups)
         if (isset($this->groups[$name])) {
+            if (in_array($name, $chain, true)) {
+                throw new CircularMiddlewareGroupException([...$chain, $name]);
+            }
+
+            $chain[] = $name;
             $result = [];
             foreach ($this->groups[$name] as $entry) {
-                $result = array_merge($result, $this->resolve($entry));
+                $result = array_merge($result, $this->resolveWithChain($entry, $chain));
             }
             return $result;
         }
@@ -67,8 +91,7 @@ class MiddlewareRegistry
             return [$this->middleware[$name]];
         }
 
-        logger()->warning('Middleware not found in registry', ['name' => $name]);
-        return [];
+        throw new UnknownMiddlewareException($name);
     }
 
     /**

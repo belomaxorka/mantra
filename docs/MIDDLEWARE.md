@@ -252,9 +252,16 @@ $registry = app()->middleware();
 |--------|-------------|
 | `register($name, $middleware)` | Register a named middleware (instance or callable) |
 | `group($name, $middlewareNames)` | Register a named group (array of middleware names) |
-| `resolve($name)` | Resolve a name to array of middleware. Groups are expanded recursively. |
+| `resolve($name)` | Resolve a name to array of middleware. Groups are expanded recursively. Throws on unknown names or group cycles. |
 | `resolveAll($items)` | Resolve a mixed list (strings, instances, callables) to a flat array |
 | `has($name)` | Check if a middleware or group is registered |
+
+**Fail-closed resolution.** `resolve()` and `resolveAll()` throw exceptions rather than silently skipping unresolvable names — this prevents fail-open security bugs where a typo in a middleware reference would drop authentication or CSRF protection from a route:
+
+- `\Http\UnknownMiddlewareException` — name is not registered
+- `\Http\CircularMiddlewareGroupException` — group references form a cycle (direct `a → a`, indirect `a → b → a`, or deeper)
+
+Use `has($name)` first if you need to check existence without catching exceptions.
 
 ### Named middleware
 
@@ -772,6 +779,10 @@ app()->middleware()->has('unknown');    // false
 app()->middleware()->resolve('admin');
 // [CsrfMiddleware instance, AuthMiddleware instance]
 
-// Unresolvable names log a warning to the 'app' channel:
-// "Middleware not found in registry" {name: "typo"}
+// Unknown names throw UnknownMiddlewareException (fail-closed):
+try {
+    app()->middleware()->resolve('typo');
+} catch (\Http\UnknownMiddlewareException $e) {
+    // Message: 'Middleware "typo" is not registered'
+}
 ```

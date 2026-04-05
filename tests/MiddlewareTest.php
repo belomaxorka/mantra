@@ -378,13 +378,29 @@ class MiddlewareTest extends MantraTestCase
         $this->assertSame($mw, $resolved[0]);
     }
 
-    public function testResolveUnknownReturnsEmptyArray(): void
+    public function testResolveUnknownThrowsException(): void
     {
         $registry = new \Http\MiddlewareRegistry();
 
-        $resolved = $registry->resolve('unknown');
+        // Fail-closed: unknown middleware must throw, not silently return [].
+        // This prevents fail-open bugs where a typo drops auth/CSRF from a
+        // protected route.
+        $this->expectException(\Http\UnknownMiddlewareException::class);
+        $this->expectExceptionMessage('Middleware "unknown" is not registered');
 
-        $this->assertSame([], $resolved);
+        $registry->resolve('unknown');
+    }
+
+    public function testResolveAllPropagatesUnknownException(): void
+    {
+        $registry = new \Http\MiddlewareRegistry();
+        $registry->register('known', new PassthroughMiddleware());
+
+        // resolveAll hits 'missing' in the middle of the list — must throw,
+        // not skip the entry silently.
+        $this->expectException(\Http\UnknownMiddlewareException::class);
+
+        $registry->resolveAll(['known', 'missing']);
     }
 
     // ---------- Groups ----------
@@ -434,7 +450,7 @@ class MiddlewareTest extends MantraTestCase
         $this->assertSame($c, $resolved[2]);
     }
 
-    public function testGroupWithUnknownEntrySkipsMissing(): void
+    public function testGroupWithUnknownEntryThrows(): void
     {
         $registry = new \Http\MiddlewareRegistry();
         $known = new PassthroughMiddleware();
@@ -442,9 +458,86 @@ class MiddlewareTest extends MantraTestCase
         $registry->register('known', $known);
         $registry->group('mixed', ['known', 'missing']);
 
-        $resolved = $registry->resolve('mixed');
+        // Group referencing an unknown entry must fail closed.
+        $this->expectException(\Http\UnknownMiddlewareException::class);
+        $this->expectExceptionMessage('Middleware "missing" is not registered');
+
+        $registry->resolve('mixed');
+    }
+
+    // ---------- Cycle detection ----------
+
+    public function testSelfReferencingGroupThrows(): void
+    {
+        $registry = new \Http\MiddlewareRegistry();
+        $registry->group('loop', ['loop']);
+
+        $this->expectException(\Http\CircularMiddlewareGroupException::class);
+        $this->expectExceptionMessage('loop -> loop');
+
+        $registry->resolve('loop');
+    }
+
+    public function testDirectCircularGroupsThrow(): void
+    {
+        // a -> b -> a
+        $registry = new \Http\MiddlewareRegistry();
+        $registry->group('a', ['b']);
+        $registry->group('b', ['a']);
+
+        $this->expectException(\Http\CircularMiddlewareGroupException::class);
+        $this->expectExceptionMessage('a -> b -> a');
+
+        $registry->resolve('a');
+    }
+
+    public function testIndirectCircularGroupsThrow(): void
+    {
+        // a -> b -> c -> a (three hops)
+        $registry = new \Http\MiddlewareRegistry();
+        $registry->group('a', ['b']);
+        $registry->group('b', ['c']);
+        $registry->group('c', ['a']);
+
+        $this->expectException(\Http\CircularMiddlewareGroupException::class);
+        $this->expectExceptionMessage('a -> b -> c -> a');
+
+        $registry->resolve('a');
+    }
+
+    public function testMiddlewareAndGroupWithSameNameNoFalseCycle(): void
+    {
+        // Regression guard: a middleware with the same name as an ancestor
+        // group must not trigger a false cycle detection. Only groups are
+        // tracked in the chain.
+        $registry = new \Http\MiddlewareRegistry();
+        $mw = new PassthroughMiddleware();
+
+        $registry->register('shared', $mw);
+        $registry->group('outer', ['shared']);
+
+        $resolved = $registry->resolve('outer');
         $this->assertCount(1, $resolved);
-        $this->assertSame($known, $resolved[0]);
+        $this->assertSame($mw, $resolved[0]);
+    }
+
+    public function testSiblingGroupReferencedTwiceIsNotCycle(): void
+    {
+        // Diamond pattern: a group references the same leaf group twice.
+        // This is not a cycle — each branch is a separate resolution chain.
+        $registry = new \Http\MiddlewareRegistry();
+        $a = new PassthroughMiddleware();
+        $b = new PassthroughMiddleware();
+
+        $registry->register('a', $a);
+        $registry->register('b', $b);
+        $registry->group('leaf', ['a', 'b']);
+        $registry->group('root', ['leaf', 'leaf']); // same leaf twice
+
+        // Must not throw — each resolution of 'leaf' starts a fresh chain.
+        $resolved = $registry->resolve('root');
+        $this->assertCount(4, $resolved);
+        $this->assertSame([$a, $b, $a, $b], $resolved);
     }
 
     // ---------- resolveAll ----------
