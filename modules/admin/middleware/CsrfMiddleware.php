@@ -25,7 +25,7 @@ class CsrfMiddleware implements \Http\MiddlewareInterface
             return $next();
         }
 
-        $auth  = app()->auth();
+        $auth = app()->auth();
         $token = $auth->extractCsrfTokenFromRequest($request);
 
         if (!$auth->verifyCsrfToken($token)) {

@@ -117,7 +117,7 @@ class AjaxDispatcher
         // CSRF check (auto: true for POST, false for GET; explicit override via option)
         $needsCsrf = $def['csrf'] ?? ($request->method() === 'POST');
         if ($needsCsrf) {
-            $auth  = app()->auth();
+            $auth = app()->auth();
             $token = $auth->extractCsrfTokenFromRequest($request);
             if (!$auth->verifyCsrfToken($token)) {
                 $response->json(['ok' => false, 'error' => 'Invalid CSRF token'], 403);
