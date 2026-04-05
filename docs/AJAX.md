@@ -540,7 +540,7 @@ CSRF is enforced at two independent levels:
 | Layer | Scope | Protects |
 |-------|-------|----------|
 | **AjaxDispatcher** | All AJAX (`/admin/ajax` and `/ajax`) | AJAX actions registered via `ajaxAction()` |
-| **CsrfMiddleware** | All POST on `/admin/*` | Traditional admin form submissions |
+| **CsrfMiddleware** | All unsafe methods (POST/PUT/PATCH/DELETE) on `/admin/*` | Traditional admin form submissions |
 
 For admin AJAX, both layers fire (harmless redundancy). For public AJAX, only the dispatcher layer applies.
 
@@ -549,18 +549,24 @@ For admin AJAX, both layers fire (harmless redundancy). For public AJAX, only th
 1. PHP generates a token via `app()->auth()->generateCsrfToken()` and stores it in the session
 2. The token is embedded in `<meta name="csrf-token">` in both admin and public layouts
 3. `Mantra.ajax()` reads the meta tag and sends the token as `X-CSRF-Token` header
-4. `AjaxDispatcher` verifies the header via `Auth::verifyCsrfToken()` (timing-safe `hash_equals`)
+4. Both layers call `Auth::extractCsrfTokenFromRequest()`, which reads the token from (in order):
+   - JSON body field `csrf_token` (for `application/json` requests)
+   - `$_POST['csrf_token']` (for form-encoded / multipart requests)
+   - `X-CSRF-Token` header (fallback)
+5. Verification uses `Auth::verifyCsrfToken()` with timing-safe `hash_equals`. The method defensively rejects non-string or empty tokens (e.g. `csrf_token[]=foo` attacks) without raising errors.
 
 ### When CSRF is checked
 
 | Scenario | `csrf` option | Checked? |
 |----------|---------------|----------|
 | Admin POST AJAX | `null` (auto) | Yes — dispatcher + middleware |
-| Admin GET AJAX | `null` (auto) | No |
+| Admin GET AJAX | `null` (auto) | No (middleware) — dispatcher also skips GET by default |
 | Public POST AJAX | `null` (auto) | Yes — dispatcher |
 | Public GET AJAX | `null` (auto) | No |
-| Any POST + `'csrf' => false` | `false` | No — for webhooks |
+| Any POST + `'csrf' => false` | `false` | No — for webhooks (note: `/admin/*` still enforced by middleware) |
 | Any GET + `'csrf' => true` | `true` | Yes — for state-changing GETs |
+
+Safe HTTP methods (`GET`, `HEAD`, `OPTIONS`) always bypass `CsrfMiddleware` per RFC 7231. All other methods (`POST`, `PUT`, `PATCH`, `DELETE`) require a valid token.
 
 ### CSRF in admin modules
 

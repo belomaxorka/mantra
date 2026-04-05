@@ -141,9 +141,145 @@ class CsrfTest extends MantraTestCase
     public function testVerifyNearMatchReturnsFalse(): void
     {
         $token = app()->auth()->generateCsrfToken();
-        $tampered = substr($token, 0, -1) . '0';
+        // Flip the last character to a guaranteed different hex digit
+        // (avoids flakiness when the token happens to end in '0')
+        $lastChar = substr($token, -1);
+        $differentChar = $lastChar === '0' ? '1' : '0';
+        $tampered = substr($token, 0, -1) . $differentChar;
 
         $this->assertFalse(app()->auth()->verifyCsrfToken($tampered));
+    }
+
+    public function testVerifyRejectsArrayToken(): void
+    {
+        app()->auth()->generateCsrfToken();
+
+        // Simulates csrf_token[]=foo attack — must not raise TypeError
+        $this->assertFalse(app()->auth()->verifyCsrfToken(['foo']));
+    }
+
+    public function testVerifyRejectsNullToken(): void
+    {
+        app()->auth()->generateCsrfToken();
+
+        $this->assertFalse(app()->auth()->verifyCsrfToken(null));
+    }
+
+    public function testVerifyRejectsIntegerToken(): void
+    {
+        app()->auth()->generateCsrfToken();
+
+        $this->assertFalse(app()->auth()->verifyCsrfToken(12345));
+    }
+
+    public function testVerifyRejectsEmptySessionToken(): void
+    {
+        // Session contains an empty-string token (corrupted state);
+        // verifying an empty string must NOT pass.
+        $_SESSION['csrf_token'] = '';
+
+        $this->assertFalse(app()->auth()->verifyCsrfToken(''));
+    }
+
+    public function testVerifyRejectsNonStringSessionToken(): void
+    {
+        // Corrupted session: non-string value must not cause TypeError
+        $_SESSION['csrf_token'] = 12345;
+
+        $this->assertFalse(app()->auth()->verifyCsrfToken('anything'));
+    }
+
+    public function testVerifyRejectsObjectToken(): void
+    {
+        app()->auth()->generateCsrfToken();
+
+        $this->assertFalse(app()->auth()->verifyCsrfToken(new \stdClass()));
+    }
+
+    public function testVerifyRejectsBooleanToken(): void
+    {
+        app()->auth()->generateCsrfToken();
+
+        $this->assertFalse(app()->auth()->verifyCsrfToken(true));
+        $this->assertFalse(app()->auth()->verifyCsrfToken(false));
+    }
+
+    // ==========================================================
+    //  Auth::extractCsrfTokenFromRequest()
+    // ==========================================================
+
+    public function testExtractTokenFromPostBody(): void
+    {
+        $token = app()->auth()->generateCsrfToken();
+        $_POST['csrf_token'] = $token;
+        $this->refreshRequest();
+
+        $extracted = app()->auth()->extractCsrfTokenFromRequest(app()->request());
+        $this->assertSame($token, $extracted);
+    }
+
+    public function testExtractTokenFallsBackToHeader(): void
+    {
+        $token = app()->auth()->generateCsrfToken();
+        // No body token
+        $_SERVER['HTTP_X_CSRF_TOKEN'] = $token;
+        $this->refreshRequest();
+
+        $extracted = app()->auth()->extractCsrfTokenFromRequest(app()->request());
+        $this->assertSame($token, $extracted);
+    }
+
+    public function testExtractTokenPrefersBodyOverHeader(): void
+    {
+        $bodyToken = 'body_token_value';
+        $_POST['csrf_token'] = $bodyToken;
+        $_SERVER['HTTP_X_CSRF_TOKEN'] = 'header_token_value';
+        $this->refreshRequest();
+
+        $extracted = app()->auth()->extractCsrfTokenFromRequest(app()->request());
+        $this->assertSame($bodyToken, $extracted);
+    }
+
+    public function testExtractTokenIgnoresArrayInBody(): void
+    {
+        // Attacker sends csrf_token[]=foo — must degrade gracefully
+        $_POST['csrf_token'] = ['foo'];
+        $_SERVER['HTTP_X_CSRF_TOKEN'] = 'fallback_header_token';
+        $this->refreshRequest();
+
+        $extracted = app()->auth()->extractCsrfTokenFromRequest(app()->request());
+        $this->assertSame('fallback_header_token', $extracted);
+    }
+
+    public function testExtractTokenReturnsEmptyWhenNothingProvided(): void
+    {
+        $this->refreshRequest();
+
+        $extracted = app()->auth()->extractCsrfTokenFromRequest(app()->request());
+        $this->assertSame('', $extracted);
+    }
+
+    public function testExtractTokenFromJsonBody(): void
+    {
+        $token = app()->auth()->generateCsrfToken();
+
+        // Simulate a JSON request without touching php://input
+        $jsonRequest = new class ($token) extends \Http\Request {
+            public function __construct(private string $jsonToken)
+            {
+            }
+            public function isJson(): bool
+            {
+                return true;
+            }
+            public function jsonBody()
+            {
+                return ['csrf_token' => $this->jsonToken];
+            }
+        };
+
+        $extracted = app()->auth()->extractCsrfTokenFromRequest($jsonRequest);
+        $this->assertSame($token, $extracted);
     }
 
     // ==========================================================
@@ -201,6 +337,227 @@ class CsrfTest extends MantraTestCase
         });
 
         $this->assertTrue($called);
+    }
+
+    public function testOptionsRequestPassesThrough(): void
+    {
+        $this->setRequestMethod('OPTIONS');
+
+        $middleware = new CsrfMiddleware();
+        $called = false;
+
+        $middleware->handle(function () use (&$called) {
+            $called = true;
+            return true;
+        });
+
+        $this->assertTrue($called);
+    }
+
+    // ==========================================================
+    //  CsrfMiddleware — unsafe methods (PUT, PATCH, DELETE)
+    // ==========================================================
+
+    public function testPutRequestBlockedWithoutToken(): void
+    {
+        app()->auth()->generateCsrfToken();
+        $this->setRequestMethod('PUT');
+        $this->refreshRequest();
+
+        $middleware = new CsrfMiddleware();
+        $called = false;
+
+        ob_start();
+        $result = $middleware->handle(function () use (&$called) {
+            $called = true;
+            return true;
+        });
+        ob_end_clean();
+
+        $this->assertFalse($called);
+        $this->assertFalse($result);
+    }
+
+    public function testPutRequestPassesWithValidHeaderToken(): void
+    {
+        $token = app()->auth()->generateCsrfToken();
+        $this->setRequestMethod('PUT');
+        $_SERVER['HTTP_X_CSRF_TOKEN'] = $token;
+        $this->refreshRequest();
+
+        $middleware = new CsrfMiddleware();
+        $called = false;
+
+        $result = $middleware->handle(function () use (&$called) {
+            $called = true;
+            return true;
+        });
+
+        $this->assertTrue($called);
+        $this->assertTrue($result);
+    }
+
+    public function testPutRequestPassesWithValidBodyToken(): void
+    {
+        // Symmetry check: token in $_POST must be accepted for PUT, not just GET/POST.
+        // PHP parses form-encoded bodies into $_POST regardless of HTTP method.
+        $token = app()->auth()->generateCsrfToken();
+        $this->setRequestMethod('PUT');
+        $_POST['csrf_token'] = $token;
+        $this->refreshRequest();
+
+        $middleware = new CsrfMiddleware();
+        $called = false;
+
+        $result = $middleware->handle(function () use (&$called) {
+            $called = true;
+            return true;
+        });
+
+        $this->assertTrue($called);
+        $this->assertTrue($result);
+    }
+
+    public function testDeleteRequestBlockedWithoutToken(): void
+    {
+        app()->auth()->generateCsrfToken();
+        $this->setRequestMethod('DELETE');
+        $this->refreshRequest();
+
+        $middleware = new CsrfMiddleware();
+        $called = false;
+
+        ob_start();
+        $result = $middleware->handle(function () use (&$called) {
+            $called = true;
+            return true;
+        });
+        ob_end_clean();
+
+        $this->assertFalse($called);
+        $this->assertFalse($result);
+    }
+
+    public function testPatchRequestBlockedWithoutToken(): void
+    {
+        app()->auth()->generateCsrfToken();
+        $this->setRequestMethod('PATCH');
+        $this->refreshRequest();
+
+        $middleware = new CsrfMiddleware();
+        $called = false;
+
+        ob_start();
+        $result = $middleware->handle(function () use (&$called) {
+            $called = true;
+            return true;
+        });
+        ob_end_clean();
+
+        $this->assertFalse($called);
+        $this->assertFalse($result);
+    }
+
+    public function testPostWithArrayTokenBlocks(): void
+    {
+        // csrf_token[]=foo attack — must be rejected, not raise TypeError
+        app()->auth()->generateCsrfToken();
+        $this->setRequestMethod('POST');
+        $_POST['csrf_token'] = ['foo'];
+        $this->refreshRequest();
+
+        $middleware = new CsrfMiddleware();
+        $called = false;
+
+        ob_start();
+        $result = $middleware->handle(function () use (&$called) {
+            $called = true;
+            return true;
+        });
+        ob_end_clean();
+
+        $this->assertFalse($called);
+        $this->assertFalse($result);
+    }
+
+    public function testMiddlewareAcceptsTokenFromJsonBody(): void
+    {
+        // Full-stack integration: JSON request body → middleware → extractor → verify.
+        // Bypasses php://input by stubbing Request::isJson() and jsonBody().
+        $token = app()->auth()->generateCsrfToken();
+        $this->setRequestMethod('POST');
+
+        app()->provide('request', function () use ($token) {
+            return new class ($token) extends \Http\Request {
+                public function __construct(private string $jsonToken)
+                {
+                }
+                public function method(): string
+                {
+                    return 'POST';
+                }
+                public function isJson(): bool
+                {
+                    return true;
+                }
+                public function jsonBody()
+                {
+                    return ['csrf_token' => $this->jsonToken];
+                }
+            };
+        });
+
+        $middleware = new CsrfMiddleware();
+        $called = false;
+
+        $result = $middleware->handle(function () use (&$called) {
+            $called = true;
+            return true;
+        });
+
+        $this->assertTrue($called);
+        $this->assertTrue($result);
+    }
+
+    public function testMiddlewareBlocksInvalidJsonBodyToken(): void
+    {
+        // Negative counterpart: JSON body contains wrong token → middleware blocks.
+        app()->auth()->generateCsrfToken();
+        $this->setRequestMethod('POST');
+
+        app()->provide('request', function () {
+            return new class () extends \Http\Request {
+                public function method(): string
+                {
+                    return 'POST';
+                }
+                public function isJson(): bool
+                {
+                    return true;
+                }
+                public function jsonBody()
+                {
+                    return ['csrf_token' => 'forged-token'];
+                }
+                public function acceptsJson(): bool
+                {
+                    return true;
+                }
+            };
+        });
+
+        $middleware = new CsrfMiddleware();
+        $called = false;
+
+        ob_start();
+        $result = $middleware->handle(function () use (&$called) {
+            $called = true;
+            return true;
+        });
+        ob_end_clean();
+
+        $this->assertFalse($called);
+        $this->assertFalse($result);
     }
 
     // ==========================================================

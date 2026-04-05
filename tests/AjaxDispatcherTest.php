@@ -304,6 +304,53 @@ class AjaxDispatcherTest extends MantraTestCase
         $this->assertSame('Invalid CSRF token', $response->data['error']);
     }
 
+    public function testCsrfAcceptsTokenInPostBody(): void
+    {
+        // Since the switch to Auth::extractCsrfTokenFromRequest(), the dispatcher
+        // also reads $_POST['csrf_token'] — not only the X-CSRF-Token header.
+        $this->dispatcher->register('test.csrf_body', fn() => 'ok', [
+            'auth' => false,
+        ]);
+
+        // Header omitted, token only in body
+        $this->setRequest('POST', 'test.csrf_body', null, 'test-csrf-token-valid');
+        $response = $this->captureDispatch();
+
+        $this->assertSame(200, $response->getCode());
+        $this->assertTrue($response->data['ok']);
+        $this->assertSame('ok', $response->data['data']);
+    }
+
+    public function testCsrfBodyTokenTakesPriorityOverHeader(): void
+    {
+        // Mirror of CsrfMiddleware behavior: body wins when both are present.
+        $this->dispatcher->register('test.csrf_priority', fn() => 'ok', [
+            'auth' => false,
+        ]);
+
+        $this->setRequest('POST', 'test.csrf_priority', 'wrong-header-token', 'test-csrf-token-valid');
+        $response = $this->captureDispatch();
+
+        $this->assertSame(200, $response->getCode());
+        $this->assertTrue($response->data['ok']);
+    }
+
+    public function testCsrfArrayBodyTokenBlocked(): void
+    {
+        // Regression: csrf_token[]=foo must be rejected without TypeError.
+        $this->dispatcher->register('test.csrf_array', fn() => 'ok', [
+            'auth' => false,
+        ]);
+
+        // Array in body, no header — extractor falls through to empty string,
+        // verification returns false, dispatcher returns 403.
+        $this->setRequest('POST', 'test.csrf_array', null, ['foo']);
+        $response = $this->captureDispatch();
+
+        $this->assertSame(403, $response->getCode());
+        $this->assertSame('Invalid CSRF token', $response->data['error']);
+    }
+
     // ========== Dispatch: Handler Execution ==========
 
     public function testDispatchCallsHandlerWithRequest(): void
@@ -767,12 +814,20 @@ class AjaxDispatcherTest extends MantraTestCase
     /**
      * Set up superglobals to simulate an AJAX request.
      *
-     * @param string      $method    HTTP method
-     * @param string      $action    Action name for ?action= query
-     * @param string|null $csrfToken CSRF token header value (null = omit header)
+     * @param string               $method    HTTP method
+     * @param string               $action    Action name for ?action= query
+     * @param string|null          $csrfToken CSRF token header value (null = omit header)
+     * @param mixed                $bodyToken Value to place in $_POST['csrf_token']
+     *                                        (null = leave $_POST untouched, any other
+     *                                        value is assigned as-is to cover attacks
+     *                                        such as array submission)
      */
-    private function setRequest(string $method, string $action, ?string $csrfToken = 'test-csrf-token-valid'): void
-    {
+    private function setRequest(
+        string $method,
+        string $action,
+        ?string $csrfToken = 'test-csrf-token-valid',
+        mixed $bodyToken = null,
+    ): void {
         $_SERVER['REQUEST_METHOD'] = $method;
         $_GET['action'] = $action;
 
@@ -780,6 +835,10 @@ class AjaxDispatcherTest extends MantraTestCase
             $_SERVER['HTTP_X_CSRF_TOKEN'] = $csrfToken;
         } else {
             unset($_SERVER['HTTP_X_CSRF_TOKEN']);
+        }
+
+        if ($bodyToken !== null) {
+            $_POST['csrf_token'] = $bodyToken;
         }
 
         // Force fresh Request instance so it reads updated superglobals

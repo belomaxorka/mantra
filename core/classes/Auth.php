@@ -231,14 +231,53 @@ class Auth
     }
 
     /**
-     * Verify CSRF token
+     * Verify CSRF token.
+     *
+     * Accepts any value for $token and defensively rejects non-string or empty
+     * input — this prevents TypeError when a client submits csrf_token[]=foo
+     * (array) or when the session contains a corrupted/non-string value.
      */
-    public function verifyCsrfToken($token)
+    public function verifyCsrfToken($token): bool
     {
-        if (!app()->session()->has('csrf_token')) {
+        if (!is_string($token) || $token === '') {
             return false;
         }
-        // Use hash_equals to prevent timing attacks
-        return hash_equals(app()->session()->get('csrf_token'), $token);
+
+        $session = app()->session();
+        if (!$session->has('csrf_token')) {
+            return false;
+        }
+
+        $stored = $session->get('csrf_token');
+        if (!is_string($stored) || $stored === '') {
+            return false;
+        }
+
+        // hash_equals prevents timing attacks
+        return hash_equals($stored, $token);
+    }
+
+    /**
+     * Extract a CSRF token from an HTTP request.
+     *
+     * Reads from (in order):
+     *   1. Request body — JSON field `csrf_token` for application/json,
+     *      or $_POST['csrf_token'] for form-encoded / multipart requests.
+     *      (Request::input() picks the right source automatically.)
+     *   2. X-CSRF-Token header.
+     *
+     * Non-string values ($_POST['csrf_token'][]=x attacks, missing values)
+     * are normalized to '' so the caller can pass the result straight to
+     * verifyCsrfToken() without TypeError risk.
+     */
+    public function extractCsrfTokenFromRequest(\Http\Request $request): string
+    {
+        $token = $request->input('csrf_token', '');
+        if (is_string($token) && $token !== '') {
+            return $token;
+        }
+
+        $header = $request->header('X-CSRF-Token', '');
+        return is_string($header) ? $header : '';
     }
 }

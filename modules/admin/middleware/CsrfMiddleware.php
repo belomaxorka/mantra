@@ -1,13 +1,18 @@
 <?php declare(strict_types=1);
 /**
- * CsrfMiddleware - Verify CSRF token on POST requests
+ * CsrfMiddleware - Verify CSRF token on state-changing requests.
  *
- * Checks both the POST field (csrf_token) and the X-CSRF-Token header.
- * Non-POST requests pass through unconditionally.
+ * Safe methods per RFC 7231 (GET, HEAD, OPTIONS) pass through unconditionally.
+ * All other methods (POST, PUT, PATCH, DELETE, ...) require a valid token.
+ *
+ * Token is read from the request body (JSON or form-encoded) or the
+ * X-CSRF-Token header — see Auth::extractCsrfTokenFromRequest().
  */
 
 class CsrfMiddleware implements \Http\MiddlewareInterface
 {
+    private const SAFE_METHODS = ['GET', 'HEAD', 'OPTIONS'];
+
     /**
      * @param callable $next
      * @return bool
@@ -16,20 +21,19 @@ class CsrfMiddleware implements \Http\MiddlewareInterface
     {
         $request = app()->request();
 
-        if ($request->method() !== 'POST') {
+        if (in_array($request->method(), self::SAFE_METHODS, true)) {
             return $next();
         }
 
-        $token = $request->post('csrf_token', '')
-              ?: $request->header('X-CSRF-Token', '');
+        $auth  = app()->auth();
+        $token = $auth->extractCsrfTokenFromRequest($request);
 
-        if (!app()->auth()->verifyCsrfToken($token)) {
+        if (!$auth->verifyCsrfToken($token)) {
+            http_response_code(403);
             if ($request->acceptsJson()) {
-                http_response_code(403);
                 header('Content-Type: application/json');
                 echo json_encode(['ok' => false, 'error' => 'Invalid CSRF token']);
             } else {
-                http_response_code(403);
                 echo 'Invalid CSRF token';
             }
             return false;
