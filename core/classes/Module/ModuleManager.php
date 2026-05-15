@@ -21,6 +21,11 @@ class ModuleManager
     private $loading = [];
     private $loadingStack = [];
 
+    // Modules whose construction/init() threw — never retried, so a broken
+    // module's partial hook/route registration is not repeated on every
+    // dependent's dependency resolution.
+    private $failed = [];
+
     public function __construct($config)
     {
         $this->config = $config;
@@ -59,7 +64,18 @@ class ModuleManager
         }
 
         foreach ($enabledModules as $moduleName) {
-            $this->loadModule($moduleName);
+            // Contain per-module failures (cyclic/missing/version-mismatch
+            // dependencies, invalid manifest, init() errors) so one broken
+            // enabled module cannot abort loading of the rest — the public
+            // front-end and the admin panel must stay reachable.
+            try {
+                $this->loadModule($moduleName);
+            } catch (\Throwable $e) {
+                logger()->error('Module load failed; skipping module', [
+                    'module' => $moduleName,
+                    'exception' => $e,
+                ]);
+            }
         }
     }
 
@@ -72,6 +88,12 @@ class ModuleManager
 
         if (isset($this->loadedModules[$moduleName])) {
             return true;
+        }
+
+        // Already failed earlier this request — don't re-run a throwing
+        // init() (it may have partially registered hooks before throwing).
+        if (isset($this->failed[$moduleName])) {
+            return false;
         }
 
         if (isset($this->loading[$moduleName])) {
@@ -148,8 +170,21 @@ class ModuleManager
                 throw new Exception("Module class '{$className}' not found");
             }
 
-            $module = new $className($manifest, $moduleName, $modulePath);
-            $module->init();
+            // A broken module must not take down the whole site: the public
+            // front-end AND the admin panel needed to disable it have to keep
+            // working. Contain construction/init() failures, mark the module
+            // failed (so dependents and retries skip it), and continue.
+            try {
+                $module = new $className($manifest, $moduleName, $modulePath);
+                $module->init();
+            } catch (\Throwable $e) {
+                $this->failed[$moduleName] = true;
+                logger()->error('Module init failed; skipping module', [
+                    'module' => $moduleName,
+                    'exception' => $e,
+                ]);
+                return false;
+            }
 
             $this->modules[$moduleName] = [
                 'instance' => $module,
