@@ -263,4 +263,22 @@ class FileIOTest extends MantraTestCase
         $this->assertSame(0, $cleaned, 'cleanOrphanedLocks() does not clean fresh locks');
         $this->assertFileExists($freshLock, 'Fresh lock file preserved');
     }
+
+    public function testResolveWithinRejectsTraversalAndPrefixSiblings(): void
+    {
+        $root = $this->testDir . '/modules';
+        $inside = $root . '/safe/file.txt';
+        $prefixSibling = $this->testDir . '/modules-escape/file.txt';
+        mkdir(dirname($inside), 0o755, true);
+        mkdir(dirname($prefixSibling), 0o755, true);
+        file_put_contents($inside, 'safe');
+        file_put_contents($prefixSibling, 'unsafe');
+
+        $this->assertSame(realpath($inside), FileIO::resolveWithin($root, 'safe/file.txt'));
+        $this->assertTrue(FileIO::isWithin(dirname($inside), $root));
+        $this->assertFalse(FileIO::isWithin(dirname($prefixSibling), $root));
+
+        $this->expectException(FileIOException::class);
+        FileIO::resolveWithin($root, '../modules-escape/file.txt');
+    }
 }

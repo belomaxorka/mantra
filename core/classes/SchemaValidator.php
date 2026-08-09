@@ -199,6 +199,25 @@ class SchemaValidator
         return $data;
     }
 
+    /** Apply field-specific sanitizers declared by a collection schema. */
+    public static function sanitizeBySchema($data, $schema)
+    {
+        if (!is_array($data) || !is_array($schema) || !isset($schema['fields'])) {
+            return $data;
+        }
+
+        foreach ($schema['fields'] as $field => $rules) {
+            if (!isset($data[$field]) || !is_string($data[$field]) || !is_array($rules)) {
+                continue;
+            }
+            if (($rules['sanitize'] ?? null) === 'html') {
+                $data[$field] = HtmlSanitizer::sanitize($data[$field]);
+            }
+        }
+
+        return $data;
+    }
+
     /**
      * Validate and throw exception if invalid
      */

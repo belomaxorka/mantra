@@ -1,12 +1,14 @@
 parameters:
     phpVersion: 80100
     level: 0
+    tmpDir: .phpstan-cache
 
     paths:
         - core
         - modules
         - index.php
         - install.php
+        - router.php
 
     excludePaths:
         analyseAndScan:

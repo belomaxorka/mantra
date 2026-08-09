@@ -6,15 +6,13 @@
 
 require_once __DIR__ . '/core/bootstrap.php';
 
-// Check if system is installed
-$isInstalled = file_exists(MANTRA_CONTENT . '/users') &&
-    count(glob(MANTRA_CONTENT . '/users/*.json')) > 0;
+\Http\SecurityHeadersMiddleware::apply((string)parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH));
 
 // Redirect to installer if not installed
-if (!$isInstalled) {
+if (!InstallationState::isInstalled()) {
     $currentUri = $_SERVER['REQUEST_URI'] ?? '/';
     if (!str_contains($currentUri, 'install.php')) {
-        header('Location: ' . Config::detectBaseUrl() . '/install.php', true, 302);
+        header('Location: ' . base_url('/install.php'), true, 302);
         exit;
     }
 }

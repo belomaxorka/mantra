@@ -95,7 +95,8 @@ function base_url($path = '')
     $siteUrl = config('site.url', '');
 
     if ($siteUrl === '') {
-        return '/' . ltrim($path, '/\\');
+        $basePath = Config::detectBasePath();
+        return $basePath . '/' . ltrim($path, '/\\');
     }
     return rtrim($siteUrl, '/\\') . '/' . ltrim($path, '/\\');
 }

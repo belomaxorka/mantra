@@ -9,6 +9,9 @@
  */
 class PermissionRegistry
 {
+    /** @var object Config repository implementing get/has/set/delete/save */
+    private $config;
+
     /** @var array All registered permissions: array of permission strings */
     private $permissions = [];
 
@@ -28,9 +31,11 @@ class PermissionRegistry
      * Constructor. The registry starts empty.
      * Panels and modules register their permissions via the 'permissions.register' hook.
      */
-    public function __construct()
+    public function __construct($config = null)
     {
         // No hardcoded permissions — everything is registered by panels/modules.
+        // Injection keeps authorization deterministic and independently testable.
+        $this->config = $config ?? config();
     }
 
     // ========== Registration API ==========
@@ -183,8 +188,9 @@ class PermissionRegistry
         }
 
         // Check config overrides
-        $overrides = config('permissions.roles.' . $role);
-        if (is_array($overrides) && !empty($overrides)) {
+        $path = 'permissions.roles.' . $role;
+        $overrides = $this->config->get($path);
+        if ($this->config->has($path) && is_array($overrides)) {
             // Filter to only valid permissions
             $valid = array_values(array_intersect($overrides, $this->permissions));
             $this->resolved[$role] = $valid;
@@ -243,8 +249,8 @@ class PermissionRegistry
      */
     public function hasOverride($role)
     {
-        $overrides = config('permissions.roles.' . $role);
-        return is_array($overrides) && !empty($overrides);
+        $path = 'permissions.roles.' . $role;
+        return $this->config->has($path) && is_array($this->config->get($path));
     }
 
     // ========== Persistence ==========
@@ -264,8 +270,8 @@ class PermissionRegistry
         // Filter to only valid registered permissions
         $valid = array_values(array_intersect($permissions, $this->permissions));
 
-        config()->set('permissions.roles.' . $role, $valid);
-        config()->save();
+        $this->config->set('permissions.roles.' . $role, $valid);
+        $this->config->save();
 
         // Clear cache
         unset($this->resolved[$role]);
@@ -282,8 +288,7 @@ class PermissionRegistry
             return;
         }
 
-        config()->set('permissions.roles.' . $role, []);
-        config()->save();
+        $this->config->delete('permissions.roles.' . $role);
 
         unset($this->resolved[$role]);
     }

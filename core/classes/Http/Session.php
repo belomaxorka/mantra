@@ -66,11 +66,11 @@ class Session
 
         @ini_set('session.gc_maxlifetime', (string)$lifetime);
 
-        if (!empty($options)) {
-            @session_start($options);
-        } else {
-            @session_start();
-        }
+        $options = array_merge([
+            'use_strict_mode' => 1,
+            'use_only_cookies' => 1,
+        ], is_array($options) ? $options : []);
+        @session_start($options);
     }
 
     public function get($key, $default = null)

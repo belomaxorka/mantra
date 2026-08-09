@@ -42,6 +42,10 @@ return [
             'maxLength' => 255,
             'pattern' => '/^[a-z0-9-]+$/',
         ],
+        'content' => [
+            'type' => 'string',
+            'sanitize' => 'html',
+        ],
         'status' => [
             'type' => 'enum',
             'values' => ['draft', 'published', 'archived'],

@@ -36,6 +36,62 @@ class FileIO
     public const LOCK_EXTENSION = '.lock';
 
     /**
+     * Resolve an untrusted relative path inside a trusted root.
+     *
+     * @throws FileIOException when the path is absolute, traverses, is a
+     * symlink escape, or cannot be resolved as requested.
+     */
+    public static function resolveWithin($root, $relativePath, $mustExist = true)
+    {
+        $rootReal = realpath($root);
+        if ($rootReal === false || !is_dir($rootReal)) {
+            throw new FileIOException('Trusted root does not exist', $root);
+        }
+
+        $relative = str_replace('\\', '/', str_replace("\0", '', (string)$relativePath));
+        if ($relative === '' || str_starts_with($relative, '/')
+            || preg_match('/^[a-zA-Z]:\//', $relative) === 1) {
+            throw new FileIOException('Path must be relative', $relativePath);
+        }
+
+        $segments = explode('/', $relative);
+        foreach ($segments as $segment) {
+            if ($segment === '' || $segment === '.' || $segment === '..') {
+                throw new FileIOException('Invalid relative path segment', $relativePath);
+            }
+        }
+
+        $candidate = $rootReal . DIRECTORY_SEPARATOR . implode(DIRECTORY_SEPARATOR, $segments);
+        $resolved = $mustExist ? realpath($candidate) : realpath(dirname($candidate));
+        if ($resolved === false) {
+            throw new FileIOException('Path cannot be resolved', $candidate);
+        }
+        if (!$mustExist) {
+            $resolved .= DIRECTORY_SEPARATOR . basename($candidate);
+        }
+
+        $prefix = rtrim($rootReal, '/\\') . DIRECTORY_SEPARATOR;
+        if (!str_starts_with($resolved, $prefix)) {
+            throw new FileIOException('Path escapes trusted root', $candidate);
+        }
+
+        return $resolved;
+    }
+
+    public static function isWithin($path, $root): bool
+    {
+        $pathReal = realpath($path);
+        $rootReal = realpath($root);
+        if ($pathReal === false || $rootReal === false || $pathReal === $rootReal) {
+            return false;
+        }
+        return str_starts_with(
+            $pathReal,
+            rtrim($rootReal, '/\\') . DIRECTORY_SEPARATOR,
+        );
+    }
+
+    /**
      * Read file contents with shared lock.
      *
      * @param string $path Absolute file path

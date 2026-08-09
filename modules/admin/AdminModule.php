@@ -52,6 +52,7 @@ class AdminModule extends Module
             $module->fireHook('permissions.register', $registry);
             return $registry;
         });
+        $this->provide('authorization', fn() => new Authorization($this->app->service('permissions')));
     }
 
     /**
@@ -249,18 +250,33 @@ class AdminModule extends Module
         return $this->panels[$id] ?? null;
     }
 
-    public function adminRoute($method, $pattern, $callback)
+    public function adminRoute($method, $pattern, $callback, $permission = null)
     {
         $router = $this->app->router();
         $pattern = '/admin' . ($pattern === '' ? '' : ('/' . ltrim($pattern, '/')));
 
         if ($method === 'GET') {
-            return $router->get($pattern, $callback)->middleware('auth');
+            $route = $router->get($pattern, $callback)->middleware('auth');
+        } elseif ($method === 'POST') {
+            $route = $router->post($pattern, $callback)->middleware('auth');
+        } else {
+            $route = $router->any($pattern, $callback)->middleware('auth');
         }
-        if ($method === 'POST') {
-            return $router->post($pattern, $callback)->middleware('auth');
+
+        if (is_string($permission) && $permission !== '') {
+            $route->middleware(new \Http\PermissionMiddleware(
+                $permission,
+                function (): void {
+                    echo $this->render(
+                        t('admin.common.access_denied'),
+                        '<div class="alert alert-danger alert-permanent">'
+                        . e(t('admin.common.access_denied')) . '</div>',
+                    );
+                },
+            ));
         }
-        return $router->any($pattern, $callback)->middleware('auth');
+
+        return $route;
     }
 
     /**

@@ -7,16 +7,16 @@
   <a href="https://github.com/belomaxorka/mantra/actions"><img src="https://github.com/belomaxorka/mantra/workflows/CI/badge.svg" alt="CI"></a>
   <a href="https://github.com/belomaxorka/mantra/blob/main/LICENSE"><img src="https://img.shields.io/github/license/belomaxorka/mantra" alt="License"></a>
   <img src="https://img.shields.io/badge/php-%3E%3D8.1-8892BF" alt="PHP 8.1+">
-  <img src="https://img.shields.io/badge/dependencies-zero-success" alt="Zero Dependencies">
+  <img src="https://img.shields.io/badge/PHP_runtime_dependencies-zero-success" alt="Zero PHP runtime dependencies">
 </p>
 
 ---
 
-Mantra is a modern flat-file CMS that requires no database, no Composer, and no external dependencies. All content is stored as JSON or Markdown files. Just upload the files to your server and you're ready to go.
+Mantra is a modern flat-file CMS that requires no database and no Composer packages at runtime. All content is stored as JSON or Markdown files. The bundled UI still uses CDN-hosted frontend assets; removing those is tracked as the next step toward strict zero-dependency operation.
 
 ## Features
 
-- **Zero dependencies** -- no Composer, no database, no external libraries needed in production
+- **Zero PHP runtime dependencies** -- no Composer packages or database needed in production
 - **Flat-file storage** -- content stored as JSON/Markdown in `content/`, easy to backup and version control
 - **Modular architecture** -- extend functionality through self-contained modules with dependency resolution
 - **Hook/event system** -- priority-based pub/sub bus for decoupled module communication
@@ -35,7 +35,7 @@ Mantra is a modern flat-file CMS that requires no database, no Composer, and no 
 | Requirement | Details |
 |---|---|
 | PHP | >= 8.1 |
-| Extensions | `json`, `session`, `openssl` |
+| Extensions | `json`, `session`, `openssl`, `fileinfo`, `dom` |
 | Web server | Apache with `mod_rewrite` or Nginx |
 | File system | Write access to `content/`, `storage/`, `uploads/` |
 
@@ -51,7 +51,7 @@ cd mantra
 ### 2. Start a dev server
 
 ```bash
-php -S 127.0.0.1:8000 index.php
+php -S 127.0.0.1:8000 router.php
 ```
 
 ### 3. Install
@@ -96,7 +96,8 @@ mantra/
 ├── uploads/                # User-uploaded files
 ├── docs/                   # Developer documentation
 ├── index.php               # Main entry point
-└── install.php             # Installer
+├── install.php             # Installer
+└── router.php              # Safe router for PHP's development server
 ```
 
 ## Modules

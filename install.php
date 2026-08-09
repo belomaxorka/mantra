@@ -6,15 +6,14 @@
 
 require_once __DIR__ . '/core/bootstrap.php';
 
+\Http\SecurityHeadersMiddleware::apply((string)parse_url($_SERVER['REQUEST_URI'] ?? '/install.php', PHP_URL_PATH));
+
 use Storage\FileIO;
 
 // Check if already installed — redirect away instead of die()
-if (file_exists(MANTRA_CONTENT . '/users')) {
-    $users = glob(MANTRA_CONTENT . '/users/*.json');
-    if (!empty($users)) {
-        header('Location: ' . Config::detectBaseUrl() . '/', true, 302);
-        exit;
-    }
+if (InstallationState::isInstalled()) {
+    header('Location: ' . base_url('/'), true, 302);
+    exit;
 }
 
 // System requirements checks
@@ -29,7 +28,7 @@ $requirements[] = [
 ];
 
 // Required extensions
-$requiredExtensions = ['json', 'session', 'openssl'];
+$requiredExtensions = ['json', 'session', 'openssl', 'fileinfo', 'dom'];
 foreach ($requiredExtensions as $ext) {
     $requirements[] = [
         'name' => $ext . ' extension',
@@ -67,9 +66,11 @@ foreach ($requirements as $req) {
 $allowedLanguages = ['en', 'ru'];
 
 // CSRF: generate token for the form
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+$installSession = new \Http\Session();
+$installSession->start([
+    'use_strict_mode' => 1,
+    'use_only_cookies' => 1,
+]);
 if (empty($_SESSION['install_csrf'])) {
     $_SESSION['install_csrf'] = bin2hex(random_bytes(32));
 }
@@ -77,12 +78,31 @@ $csrfToken = $_SESSION['install_csrf'];
 
 // Handle form submission
 $selectedLanguage = 'en';
+$username = '';
+$password = '';
+$siteName = MANTRA_PROJECT_INFO['name'];
+$language = 'en';
+$adminUrl = '';
+$siteUrl = '';
 if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $installLock = null;
+    try {
+        $installLock = InstallationState::acquireLock();
+        if (InstallationState::isInstalled()) {
+            header('Location: ' . base_url('/'), true, 302);
+            exit;
+        }
+    } catch (Throwable $e) {
+        $error = 'error_install_busy';
+    }
+
     // Verify CSRF
     $postedToken = isset($_POST['csrf_token']) ? (string)$_POST['csrf_token'] : '';
-    if (!hash_equals($csrfToken, $postedToken)) {
+    if (!$allRequirementsMet) {
+        $error = 'error_requirements';
+    } elseif (!isset($error) && !hash_equals($csrfToken, $postedToken)) {
         $error = 'error_csrf';
-    } else {
+    } elseif (!isset($error)) {
         $username = isset($_POST['username']) ? trim((string)$_POST['username']) : '';
         $password = isset($_POST['password']) ? (string)$_POST['password'] : '';
         $siteName = isset($_POST['site_name']) && trim($_POST['site_name']) !== '' ? trim((string)$_POST['site_name']) : MANTRA_PROJECT_INFO['name'];
@@ -94,7 +114,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
             $error = 'error_required_fields';
         } elseif (!preg_match('/^[a-zA-Z0-9_-]{3,32}$/', $username)) {
             $error = 'error_invalid_username';
-        } elseif (strlen($password) < 6) {
+        } elseif (strlen($password) < 12) {
             $error = 'error_password_too_short';
         }
     }
@@ -123,8 +143,9 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
 
     if (!isset($error)) {
         // Create configuration
-        $baseUrl = Config::detectBaseUrl();
-        $config = Config::buildInstallConfig($siteName, $language, $baseUrl);
+        // Keep site.url relative until an administrator explicitly configures
+        // the canonical public URL. Never persist the request Host header.
+        $config = Config::buildInstallConfig($siteName, $language);
         $defaults = Config::defaults();
         $overrides = Config::diffOverrides($defaults, $config);
 
@@ -155,16 +176,19 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
             'updated_at' => $now,
         ];
 
-        if ($db->write('users', $db->generateId(), $userData)) {
+        if ($db->create('users', $userData)) {
+            InstallationState::markInstalled();
             // Regenerate CSRF token after success
             unset($_SESSION['install_csrf']);
             $success = true;
-            $adminUrl = $baseUrl . '/admin';
-            $siteUrl = $baseUrl . '/';
+            $adminUrl = base_url('/admin');
+            $siteUrl = base_url('/');
         } else {
             $error = 'error_create_user';
         }
     }
+
+    InstallationState::releaseLock($installLock);
 }
 ?>
 <!DOCTYPE html>
@@ -258,7 +282,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
                         <div class="form-group">
                             <label for="password" class="form-label" data-i18n="label_password">Admin Password</label>
                             <div class="password-wrap">
-                                <input type="password" class="form-control" id="password" name="password" minlength="6" required>
+                                <input type="password" class="form-control" id="password" name="password" minlength="12" required>
                                 <button type="button" class="password-toggle" id="pw-toggle" aria-label="Toggle password visibility">
                                     <svg id="pw-icon-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                                     <svg id="pw-icon-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
@@ -301,7 +325,9 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
                 req_blocked: 'Please fix the issues above and reload the page.',
                 error_required_fields: 'Username and password are required.',
                 error_invalid_username: 'Username must be 3-32 characters: letters, numbers, hyphens, underscores.',
-                error_password_too_short: 'Password must be at least 6 characters.',
+                error_password_too_short: 'Password must be at least 12 characters.',
+                error_requirements: 'System requirements are not met.',
+                error_install_busy: 'Another installation is already in progress. Please try again.',
                 error_create_dirs: 'Failed to create required directories. Check file permissions.',
                 error_csrf: 'Security token expired. Please try again.',
                 error_create_user: 'Failed to create user.'
@@ -324,7 +350,9 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
                 req_blocked: 'Исправьте проблемы выше и перезагрузите страницу.',
                 error_required_fields: 'Имя пользователя и пароль обязательны.',
                 error_invalid_username: 'Имя пользователя: 3-32 символа (буквы, цифры, дефис, подчёркивание).',
-                error_password_too_short: 'Пароль должен быть не менее 6 символов.',
+                error_password_too_short: 'Пароль должен быть не менее 12 символов.',
+                error_requirements: 'Системные требования не выполнены.',
+                error_install_busy: 'Установка уже выполняется другим запросом. Повторите позже.',
                 error_create_dirs: 'Не удалось создать директории. Проверьте права доступа.',
                 error_csrf: 'Токен безопасности истёк. Попробуйте ещё раз.',
                 error_create_user: 'Не удалось создать пользователя.'

@@ -54,6 +54,30 @@ class DatabaseTest extends MantraTestCase
         $this->assertSame($id, $read['_id'], 'Read data includes _id');
     }
 
+    public function testCreateUsesImmutableIdIndependentFromSlug(): void
+    {
+        $firstId = $this->db->create('identity_items', [
+            'title' => 'First',
+            'slug' => 'first',
+        ]);
+
+        $this->assertNotSame('first', $firstId);
+        $first = $this->db->read('identity_items', $firstId);
+        $first['slug'] = 'renamed';
+        $this->db->write('identity_items', $firstId, $first);
+
+        $secondId = $this->db->create('identity_items', [
+            'title' => 'Second',
+            'slug' => 'first',
+        ]);
+
+        $this->assertNotSame($firstId, $secondId);
+        $this->assertSame('renamed', $this->db->read('identity_items', $firstId)['slug']);
+        $this->assertSame('first', $this->db->read('identity_items', $secondId)['slug']);
+        $this->assertFalse($this->db->isUnique('identity_items', 'slug', 'first'));
+        $this->assertTrue($this->db->isUnique('identity_items', 'slug', 'first', $secondId));
+    }
+
     public function testDefaultsApplied(): void
     {
         $this->createTestSchema('test_defaults', [

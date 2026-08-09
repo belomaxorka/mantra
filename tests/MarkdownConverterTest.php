@@ -555,6 +555,16 @@ class MarkdownConverterTest extends MantraTestCase
         $this->assertStringContainsString('src="/local/img.jpg"', $result, 'Relative image allowed');
     }
 
+    public function testToHtmlEscapesRawHtml(): void
+    {
+        $result = $this->html('<script>alert(1)</script>\n\n<strong onclick="alert(2)">text</strong>');
+
+        $this->assertStringNotContainsString('<script>', $result);
+        $this->assertStringNotContainsString('<strong', $result);
+        $this->assertStringContainsString('&lt;script&gt;', $result);
+        $this->assertStringContainsString('&lt;strong onclick="alert(2)"&gt;', $result);
+    }
+
     // ═══════════════════════════════════════════════
     //  toMarkdown: Nested HTML
     // ═══════════════════════════════════════════════

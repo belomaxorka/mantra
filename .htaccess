@@ -13,6 +13,9 @@ AddDefaultCharset UTF-8
     RewriteRule ^core/ - [R=404,L]
 
     # Block module internals — allow only assets subdirectories
+    RewriteCond %{REQUEST_URI} ^/modules/(?:[^/]+/assets|admin/panels/[^/]+/assets)/ [NC]
+    RewriteCond %{REQUEST_URI} !\.(css|js|map|ico|gif|jpe?g|png|webp|woff2?|ttf|eot)$ [NC]
+    RewriteRule ^modules/ - [R=404,L]
     RewriteCond %{REQUEST_URI} !^/modules/[^/]+/assets/
     RewriteCond %{REQUEST_URI} !^/modules/admin/panels/[^/]+/assets/
     RewriteRule ^modules/ - [R=404,L]

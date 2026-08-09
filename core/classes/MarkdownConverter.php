@@ -23,7 +23,7 @@ class MarkdownConverter
 
         // Step 1: Extract fenced code blocks (protect from parsing)
         $html = preg_replace_callback('/```([a-zA-Z0-9_+#.-]*)\n(.*?)```/s', function ($matches) use (&$codeBlocks, &$codeIndex) {
-            $placeholder = '<!--CODEBLOCK:' . $codeIndex . '-->';
+            $placeholder = '@@MN_BLOCK_' . $codeIndex . '@@';
             $lang = $matches[1];
             $code = htmlspecialchars($matches[2], ENT_QUOTES, 'UTF-8');
             if ($lang !== '') {
@@ -37,11 +37,20 @@ class MarkdownConverter
 
         // Step 2: Extract inline code (protect from parsing)
         $html = preg_replace_callback('/`([^`]+)`/', function ($matches) use (&$codeBlocks, &$codeIndex) {
-            $placeholder = '<!--CODEINLINE:' . $codeIndex . '-->';
+            $placeholder = '@@MN_INLINE_' . $codeIndex . '@@';
             $codeBlocks[$placeholder] = '<code>' . htmlspecialchars($matches[1], ENT_QUOTES, 'UTF-8') . '</code>';
             $codeIndex++;
             return $placeholder;
         }, $html);
+
+        // Markdown is a text format. Escape raw HTML before generating the
+        // small, controlled set of tags below. Code was extracted first so it
+        // is escaped exactly once when its placeholder is restored.
+        $html = preg_replace_callback(
+            '/<[^>\n]*>/',
+            static fn ($matches) => str_replace(['<', '>'], ['&lt;', '&gt;'], $matches[0]),
+            $html,
+        );
 
         // Step 3: Block-level elements
 
@@ -119,7 +128,7 @@ class MarkdownConverter
             }
             $title = $matches[3] ?? '';
             if ($title !== '') {
-                $title = htmlspecialchars($title, ENT_QUOTES, 'UTF-8');
+                $title = htmlspecialchars($title, ENT_QUOTES, 'UTF-8', false);
                 return '<a href="' . $url . '" title="' . $title . '">' . $text . '</a>';
             }
             return '<a href="' . $url . '">' . $text . '</a>';
@@ -135,7 +144,7 @@ class MarkdownConverter
             }
             // Don't wrap block-level elements or code placeholders
             if (preg_match('/^<(h[1-6]|ul|ol|pre|blockquote|div|hr|table)/', $block) ||
-                str_contains($block, '<!--CODEBLOCK:')) {
+                str_contains($block, '@@MN_BLOCK_')) {
                 $paragraphs[] = $block;
             } else {
                 $paragraphs[] = '<p>' . $block . '</p>';

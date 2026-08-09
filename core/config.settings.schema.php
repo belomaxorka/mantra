@@ -304,7 +304,7 @@ return [
                     'path' => 'debug.enabled',
                     'type' => 'toggle',
                     'title' => 'admin-settings.debug.enabled',
-                    'default' => true,
+                    'default' => false,
                 ],
             ],
         ],

@@ -75,8 +75,7 @@ class User
             $data['status'] = 'active';
         }
 
-        $id = $this->db->generateId();
-        return $this->db->write('users', $id, $data) ? $id : false;
+        return $this->db->create('users', $data);
     }
 
     /**
@@ -126,22 +125,10 @@ class User
      */
     public function hasPermission($user, $permission)
     {
-        if (!is_array($user) || !isset($user['role'])) {
-            return false;
-        }
-
-        $role = $user['role'];
-
-        if ($role === 'admin') {
-            return true;
-        }
-
-        $registry = app()->service('permissions');
-        if (!$registry) {
-            return false;
-        }
-
-        return $registry->hasPermission($role, $permission);
+        $authorization = app()->service('authorization');
+        return $authorization instanceof Authorization
+            ? $authorization->check($user, $permission)
+            : false;
     }
 
     /**
@@ -157,27 +144,10 @@ class User
      */
     public function canEdit($user, $content)
     {
-        if (!is_array($user) || !is_array($content)) {
-            return false;
-        }
-
-        // Admin bypasses ownership checks
-        if (isset($user['role']) && $user['role'] === 'admin') {
-            return true;
-        }
-
-        // Primary: compare by author_id (stable identifier)
-        $authorId = $content['author_id'] ?? '';
-        $userId = $user['_id'] ?? '';
-        if ($authorId !== '' && $userId !== '') {
-            return $authorId === $userId;
-        }
-
-        // Fallback: compare by username (pre-migration content)
-        $contentAuthor = $content['author'] ?? '';
-        $username = $user['username'] ?? '';
-
-        return $contentAuthor !== '' && $contentAuthor === $username;
+        $authorization = app()->service('authorization');
+        return $authorization instanceof Authorization
+            ? $authorization->owns($user, $content)
+            : false;
     }
 
     /**

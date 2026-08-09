@@ -979,16 +979,22 @@ class SettingsPanel extends AdminPanel
             }
         }
 
-        $settingsPath = MANTRA_CONTENT . '/settings/' . $deleteId . '.json';
-        if (file_exists($settingsPath)) {
-            @unlink($settingsPath);
+        $moduleDir = MANTRA_MODULES . '/' . $deleteId;
+        if (is_link($moduleDir) || !\Storage\FileIO::isWithin($moduleDir, MANTRA_MODULES)) {
+            $error = 'Unsafe module directory';
+            return true;
+        }
+        if (!$this->rrmdirSafe(realpath($moduleDir))) {
+            $error = 'Failed to delete module directory';
+            return true;
         }
 
-        $moduleDir = MANTRA_MODULES . '/' . $deleteId;
-        $realModules = realpath(MANTRA_MODULES);
-        $realModuleDir = realpath($moduleDir);
-        if ($realModules && $realModuleDir && str_starts_with($realModuleDir, $realModules)) {
-            $this->rrmdirSafe($realModuleDir);
+        $settingsPath = MANTRA_CONTENT . '/settings/' . $deleteId . '.json';
+        if (file_exists($settingsPath) && !@unlink($settingsPath)) {
+            logger()->warning('Module deleted but settings file could not be removed', [
+                'module' => $deleteId,
+                'path' => $settingsPath,
+            ]);
         }
 
         $newEnabled = array_values(array_diff($enabled, [$deleteId]));
@@ -999,22 +1005,23 @@ class SettingsPanel extends AdminPanel
         return true;
     }
 
-    private function rrmdirSafe($dirPath): void
+    private function rrmdirSafe($dirPath): bool
     {
         $dirPath = (string)$dirPath;
         if ($dirPath === '' || !is_dir($dirPath)) {
-            return;
+            return false;
         }
 
+        $success = true;
         $it = new \RecursiveDirectoryIterator($dirPath, \FilesystemIterator::SKIP_DOTS);
         $ri = new \RecursiveIteratorIterator($it, \RecursiveIteratorIterator::CHILD_FIRST);
         foreach ($ri as $file) {
-            if ($file->isDir()) {
-                @rmdir($file->getPathname());
+            if ($file->isLink() || !$file->isDir()) {
+                $success = @unlink($file->getPathname()) && $success;
             } else {
-                @unlink($file->getPathname());
+                $success = @rmdir($file->getPathname()) && $success;
             }
         }
-        @rmdir($dirPath);
+        return @rmdir($dirPath) && $success;
     }
 }

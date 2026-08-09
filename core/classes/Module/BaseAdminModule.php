@@ -66,13 +66,14 @@ abstract class BaseAdminModule extends Module
      * @param string $method HTTP method (GET, POST, ANY)
      * @param string $pattern Route pattern (without /admin prefix)
      * @param callable $callback Route handler
+     * @param string|null $permission Optional route-level permission
      */
-    protected function registerAdminRoute($method, $pattern, $callback): void
+    protected function registerAdminRoute($method, $pattern, $callback, $permission = null): void
     {
-        app()->hooks()->register('routes.register', function ($data) use ($method, $pattern, $callback) {
+        app()->hooks()->register('routes.register', function ($data) use ($method, $pattern, $callback, $permission) {
             $admin = app()->modules()->getModule('admin');
             if ($admin && method_exists($admin, 'adminRoute')) {
-                $admin->adminRoute($method, $pattern, $callback);
+                $admin->adminRoute($method, $pattern, $callback, $permission);
             }
             return $data;
         });

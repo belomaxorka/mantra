@@ -170,6 +170,7 @@ class Application
 
             // Initialize router
             $this->router = new Router();
+            $this->router->addGlobalMiddleware('*', new \Http\SecurityHeadersMiddleware(), 0);
 
             // Let modules register routes (specific routes like /admin/*)
             $this->hookManager->fire('routes.register', ['router' => $this->router]);

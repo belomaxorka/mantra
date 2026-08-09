@@ -16,6 +16,8 @@ php tools/release.php 2.0.0-beta.1
 
 The script is interactive — it asks for confirmation at each step and can be aborted at any point.
 
+`CHANGELOG.md` does not use a manually maintained `Unreleased` section. Write descriptive Conventional Commit subjects; the release script generates and prepends the versioned changelog section automatically.
+
 ## What Happens
 
 ### 1. Local: `tools/release.php`

@@ -34,8 +34,7 @@ example.com {
 	# Module internals — block everything except assets
 	@moduleInternal {
 		path /modules/*
-		not path_regexp ^/modules/[^/]+/assets/
-		not path_regexp ^/modules/admin/panels/[^/]+/assets/
+		not path_regexp ^/modules/(?:[^/]+/assets|admin/panels/[^/]+/assets)/.*\.(?:css|js|map|ico|gif|jpe?g|png|webp|woff2?|ttf|eot)$
 	}
 	respond @moduleInternal 404
 
@@ -48,9 +47,17 @@ example.com {
 	@sensitive path_regexp \.(json|md|lock|bak|sql|tmp|dist|log)$
 	respond @sensitive 404
 
-	# Block PHP in uploads
-	@uploadPhp path_regexp ^/uploads/.*\.php
+	# Block PHP-like files in uploads
+	@uploadPhp path_regexp ^/uploads/.*\.ph(?:p[0-9]?|tml|ar)$
 	respond @uploadPhp 404
+	header /uploads/* X-Content-Type-Options nosniff
+
+	# PHP execution is restricted to the two application entry points.
+	@nonEntryPhp {
+		path_regexp \.ph(?:p[0-9]?|tml|ar)$
+		not path /index.php /install.php
+	}
+	respond @nonEntryPhp 404
 
 	# --- PHP & static files ---
 

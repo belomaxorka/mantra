@@ -24,7 +24,7 @@
     </header>
 
     <div class="article-content">
-        <?php echo $post['content']; ?>
+        <?php echo HtmlSanitizer::sanitize($post['content']); ?>
     </div>
 </article>
 

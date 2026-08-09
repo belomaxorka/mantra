@@ -126,6 +126,15 @@ abstract class ContentPanel extends AdminPanel
         return $data;
     }
 
+    /** Extract, extend and sanitize form input through one shared path. */
+    protected function prepareFormData()
+    {
+        $data = $this->extractFormData();
+        $data = $this->fireHook('admin.' . $this->getCollectionName() . '.form_data', $data);
+        $data = $this->ensureSlug($data);
+        return app()->db()->sanitizeForCollection($this->getCollectionName(), $data);
+    }
+
     /**
      * Check whether the given slug is unique within the collection.
      *
@@ -135,16 +144,7 @@ abstract class ContentPanel extends AdminPanel
      */
     protected function isSlugUnique($slug, $excludeId = null)
     {
-        $existing = app()->db()->query($this->getCollectionName(), ['slug' => $slug]);
-
-        foreach ($existing as $item) {
-            if ($excludeId !== null && ($item['_id'] ?? '') === $excludeId) {
-                continue;
-            }
-            return false;
-        }
-
-        return true;
+        return app()->db()->isUnique($this->getCollectionName(), 'slug', $slug, $excludeId);
     }
 
     /**
@@ -214,8 +214,8 @@ abstract class ContentPanel extends AdminPanel
      */
     protected function checkOwnership($item)
     {
-        $userManager = new \User();
-        if ($userManager->canEdit($this->getUser(), $item)) {
+        $authorization = app()->service('authorization');
+        if ($authorization instanceof \Authorization && $authorization->owns($this->getUser(), $item)) {
             return true;
         }
         $this->renderErrorPage(t('admin.common.access_denied'));
@@ -237,13 +237,13 @@ abstract class ContentPanel extends AdminPanel
      */
     protected function getPermissionFlags()
     {
-        $userManager = new \User();
+        $authorization = app()->service('authorization');
         $user = $this->getUser();
         $prefix = $this->getPermissionPrefix();
         return [
-            'canCreate' => $userManager->hasPermission($user, $prefix . '.create'),
-            'canEdit' => $userManager->hasPermission($user, $prefix . '.edit'),
-            'canDelete' => $userManager->hasPermission($user, $prefix . '.delete'),
+            'canCreate' => $authorization instanceof \Authorization ? $authorization->check($user, $prefix . '.create') : false,
+            'canEdit' => $authorization instanceof \Authorization ? $authorization->check($user, $prefix . '.edit') : false,
+            'canDelete' => $authorization instanceof \Authorization ? $authorization->check($user, $prefix . '.delete') : false,
         ];
     }
 
@@ -307,9 +307,7 @@ abstract class ContentPanel extends AdminPanel
         $prefix = $this->getPermissionPrefix();
         if (!$this->requirePermission($prefix . '.create')) return;
 
-        $data = $this->extractFormData();
-        $data = $this->fireHook('admin.' . $this->getCollectionName() . '.form_data', $data);
-        $data = $this->ensureSlug($data);
+        $data = $this->prepareFormData();
 
         if (!empty($data['slug']) && !$this->isSlugUnique($data['slug'])) {
             $this->renderFormWithError($data, t('admin.common.slug_exists'), true);
@@ -322,11 +320,11 @@ abstract class ContentPanel extends AdminPanel
         $data['created_at'] = clock()->timestamp();
         $data['updated_at'] = clock()->timestamp();
 
-        app()->db()->write($this->getCollectionName(), $data['slug'], $data);
+        $id = app()->db()->create($this->getCollectionName(), $data);
 
         app()->hooks()->fire('content.saved', [
             'collection' => $this->getCollectionName(),
-            'id' => $data['slug'],
+            'id' => $id,
             'action' => 'create',
         ]);
 
@@ -388,9 +386,7 @@ abstract class ContentPanel extends AdminPanel
             return;
         }
 
-        $data = $this->extractFormData();
-        $data = $this->fireHook('admin.' . $this->getCollectionName() . '.form_data', $data);
-        $data = $this->ensureSlug($data);
+        $data = $this->prepareFormData();
 
         if (!empty($data['slug']) && !$this->isSlugUnique($data['slug'], $id)) {
             $data['_id'] = $id;
@@ -457,9 +453,7 @@ abstract class ContentPanel extends AdminPanel
         $prefix = $this->getPermissionPrefix();
         if (!$this->requirePermission($prefix . '.view')) return;
 
-        $data = $this->extractFormData();
-        $data = $this->fireHook('admin.' . $this->getCollectionName() . '.form_data', $data);
-        $data = $this->ensureSlug($data);
+        $data = $this->prepareFormData();
 
         // Merge with existing item data when editing (for author, timestamps, etc.)
         $previewId = app()->request()->post('_preview_id', '');

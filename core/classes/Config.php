@@ -6,7 +6,6 @@
  * Single source of truth: content/settings/config.json
  *
  * - Provides defaults
- * - Auto-detects base URL (used as default site.url)
  * - Merges JSON over defaults
  */
 
@@ -92,12 +91,13 @@ class Config
      */
     public static function defaults()
     {
-        $baseUrl = self::detectBaseUrl();
-
         return [
             'site' => [
                 'name' => 'Mantra CMS',
-                'url' => $baseUrl,
+                // Relative URLs are the safe default. An absolute public URL may
+                // be configured explicitly, but must never be persisted from an
+                // untrusted Host header during installation.
+                'url' => '',
             ],
             'locale' => [
                 'timezone' => 'UTC',
@@ -144,7 +144,7 @@ class Config
                 'roles' => [],
             ],
             'debug' => [
-                'enabled' => true,
+                'enabled' => false,
             ],
             'admin' => [
                 'accent_color' => 'indigo',
@@ -162,13 +162,12 @@ class Config
     /**
      * Create install-time config (full defaults with specific overrides).
      */
-    public static function buildInstallConfig($siteName, $language, $siteUrl)
+    public static function buildInstallConfig($siteName, $language)
     {
         $config = self::defaults();
         self::setNested($config, 'site.name', $siteName);
         self::setNested($config, 'locale.default_language', $language);
         self::setNested($config, 'locale.fallback_locale', 'en');
-        self::setNested($config, 'site.url', $siteUrl);
         return $config;
     }
 
@@ -196,16 +195,19 @@ class Config
         return is_string($first) ? $first : '';
     }
 
-    public static function detectBaseUrl()
+    /**
+     * Detect the application path without trusting the HTTP Host header.
+     * Used for same-origin redirects and relative URL generation.
+     */
+    public static function detectBasePath()
     {
-        // Note: Config::bootstrap() is called from core/bootstrap.php before helpers.php is loaded,
-        // so this method must not depend on global helpers like is_https() or request().
-        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-        $scriptPath = isset($_SERVER['SCRIPT_NAME']) ? dirname($_SERVER['SCRIPT_NAME']) : '';
-        $scriptPath = self::normalizeScriptPath($scriptPath);
-        $baseUrl = $protocol . '://' . $host . (($scriptPath && $scriptPath !== '/') ? $scriptPath : '');
-        return $baseUrl;
+        $scriptName = isset($_SERVER['SCRIPT_NAME']) ? (string)$_SERVER['SCRIPT_NAME'] : '';
+        $path = self::normalizeScriptPath(dirname($scriptName));
+        if ($path === '' || $path === '.' || $path === '/') {
+            return '';
+        }
+
+        return '/' . trim($path, '/');
     }
 
     public function __construct()

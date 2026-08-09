@@ -88,6 +88,34 @@ class Database
     }
 
     /**
+     * Create a document with an immutable opaque identifier.
+     *
+     * Callers must not derive storage identifiers from mutable fields such as
+     * slugs. Public URLs resolve by indexed document fields instead.
+     *
+     * @return string Created document ID
+     */
+    public function create($collection, $data)
+    {
+        do {
+            $id = $this->generateId();
+        } while ($this->exists($collection, $id));
+
+        if (!$this->write($collection, $id, $data)) {
+            throw new Exception('Failed to create document');
+        }
+
+        return $id;
+    }
+
+    /** Sanitize input according to the collection's registered schema. */
+    public function sanitizeForCollection($collection, $data)
+    {
+        $data = SchemaValidator::sanitize($data);
+        return SchemaValidator::sanitizeBySchema($data, $this->getCollectionSchema($collection));
+    }
+
+    /**
      * Write data to file
      */
     public function write($collection, $id, $data)
@@ -110,8 +138,8 @@ class Database
         // Clone data to avoid modifying original
         $data = array_merge([], $data);
 
-        // Sanitize input data
-        $data = SchemaValidator::sanitize($data);
+        // Sanitize input data through the collection contract
+        $data = $this->sanitizeForCollection($collection, $data);
 
         // Get schema and apply defaults BEFORE validation
         $schema = $this->getCollectionSchema($collection);
@@ -225,6 +253,21 @@ class Database
     {
         $driver = $this->getDriver($collection);
         return $driver->exists($collection, $id);
+    }
+
+    /**
+     * Check that a field value is unique in a collection.
+     */
+    public function isUnique($collection, $field, $value, $excludeId = null)
+    {
+        $items = $this->query($collection, [(string)$field => $value]);
+        foreach ($items as $item) {
+            if ($excludeId !== null && ($item['_id'] ?? null) === $excludeId) {
+                continue;
+            }
+            return false;
+        }
+        return true;
     }
 
     /**

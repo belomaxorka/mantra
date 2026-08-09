@@ -73,7 +73,7 @@ jobs:
                 uses: shivammathur/setup-php@v2
                 with:
                     php-version: ${{ matrix.php }}
-                    extensions: json, session, openssl, mbstring
+                    extensions: json, session, openssl, fileinfo, dom, mbstring
                     coverage: none
 
             -   name: Install dependencies

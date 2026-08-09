@@ -106,7 +106,7 @@ class ConfigSettingsTest extends MantraTestCase
             $cs->get('session.lifetime'),
             'session.lifetime default applied from schema tab',
         );
-        $this->assertTrue(
+        $this->assertFalse(
             $cs->get('debug.enabled'),
             'debug.enabled default applied from schema tab',
         );

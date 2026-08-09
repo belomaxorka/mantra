@@ -12,6 +12,9 @@
 
     <div class="row">
         <div class="col">
+            <?php if (!empty($error)): ?>
+                <div class="alert alert-danger alert-permanent"><?php echo e($error); ?></div>
+            <?php endif; ?>
             <form method="POST" action="<?php echo $isNew ? base_url('/admin/categories/new') : base_url('/admin/categories/edit/' . $category['_id']); ?>">
                 <input type="hidden" name="csrf_token" value="<?php echo e($csrf_token); ?>">
 

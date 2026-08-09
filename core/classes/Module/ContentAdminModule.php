@@ -159,7 +159,7 @@ abstract class ContentAdminModule extends BaseAdminModule
         $data['created_at'] = clock()->timestamp();
         $data['updated_at'] = clock()->timestamp();
 
-        app()->db()->write($this->getCollectionName(), $data['slug'], $data);
+        app()->db()->create($this->getCollectionName(), $data);
 
         $this->redirectAdmin($this->getAdminPath());
     }

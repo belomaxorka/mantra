@@ -2,3 +2,7 @@
 <FilesMatch "\.ph(p[0-9]?|tml|ar)$">
     Deny from all
 </FilesMatch>
+
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+</IfModule>

@@ -10,6 +10,6 @@
     </header>
 
     <div class="article-content">
-        <?php echo $page['content']; ?>
+        <?php echo HtmlSanitizer::sanitize($page['content']); ?>
     </div>
 </article>

@@ -20,7 +20,6 @@ class UploadsPanel extends AdminPanel
         'image/png',
         'image/gif',
         'image/webp',
-        'image/svg+xml',
         'application/pdf',
         'text/plain',
         'application/zip',
@@ -115,9 +114,9 @@ class UploadsPanel extends AdminPanel
     {
         if (!$this->requirePermission('uploads.upload')) return;
 
-        $error = $this->processUpload();
+        $result = $this->processUpload();
 
-        if ($error !== null) {
+        if (is_string($result)) {
             $files = app()->db()->query('uploads', [], [
                 'sort' => 'created_at',
                 'order' => 'desc',
@@ -132,7 +131,7 @@ class UploadsPanel extends AdminPanel
                 'canDelete' => $userManager->hasPermission($user, 'uploads.delete'),
                 'csrf_token' => $this->auth()->generateCsrfToken(),
                 'uploadsUrl' => $this->getUploadsBaseUrl(),
-                'error' => $error,
+                'error' => $result,
             ]);
 
             return $this->renderAdmin(t('admin-uploads.title'), $content, [
@@ -152,22 +151,16 @@ class UploadsPanel extends AdminPanel
      */
     public function handleAjaxUpload($request, $access)
     {
-        $error = $this->processUpload();
-        if ($error !== null) {
-            throw new \Ajax\AjaxException($error, 400);
+        $result = $this->processUpload();
+        if (is_string($result)) {
+            throw new \Ajax\AjaxException($result, 400);
         }
 
-        $files = app()->db()->query('uploads', [], [
-            'sort' => 'created_at',
-            'order' => 'desc',
-            'limit' => 1,
-        ]);
-
-        if (empty($files)) {
+        if (empty($result['path'])) {
             throw new \Ajax\AjaxException('Upload failed', 500);
         }
 
-        return ['url' => $this->getUploadsBaseUrl() . '/' . $files[0]['path']];
+        return ['url' => $this->getUploadsBaseUrl() . '/' . $result['path']];
     }
 
     /**
@@ -254,9 +247,16 @@ class UploadsPanel extends AdminPanel
         }
 
         // Delete physical file
-        $filePath = MANTRA_UPLOADS . '/' . $file['path'];
-        if (file_exists($filePath)) {
-            @unlink($filePath);
+        try {
+            $filePath = \Storage\FileIO::resolveWithin(MANTRA_UPLOADS, $file['path']);
+            if (is_file($filePath)) {
+                @unlink($filePath);
+            }
+        } catch (\Storage\FileIOException $e) {
+            logger()->warning('Rejected unsafe upload metadata path', [
+                'upload_id' => $id,
+                'path' => $file['path'] ?? null,
+            ]);
         }
 
         // Delete metadata
@@ -268,9 +268,9 @@ class UploadsPanel extends AdminPanel
     // ========== Upload Processing ==========
 
     /**
-     * Process file upload. Returns error message or null on success.
+     * Process file upload. Returns metadata or an error message.
      *
-     * @return string|null Error message, or null on success
+     * @return array|string Metadata on success, localized error on failure
      */
     private function processUpload()
     {
@@ -287,13 +287,13 @@ class UploadsPanel extends AdminPanel
         }
 
         // Validate MIME type
-        $mime = $this->detectMimeType($fileData['tmp_name'], $fileData['name']);
+        $mime = $this->detectMimeType($fileData['tmp_name']);
         if (!in_array($mime, self::$allowedMimes, true)) {
             return t('admin-uploads.error_type_not_allowed');
         }
 
         // Sanitize filename
-        $filename = $this->sanitizeFilename($fileData['name']);
+        $filename = $this->sanitizeFilename($fileData['name'], $mime);
         if ($filename === '') {
             return t('admin-uploads.error_invalid_filename');
         }
@@ -317,7 +317,6 @@ class UploadsPanel extends AdminPanel
 
         // Save metadata
         $user = $this->getUser();
-        $id = app()->db()->generateId();
         $metadata = [
             'filename' => $filename,
             'original_name' => $fileData['name'],
@@ -329,44 +328,37 @@ class UploadsPanel extends AdminPanel
             'created_at' => clock()->timestamp(),
         ];
 
-        app()->db()->write('uploads', $id, $metadata);
+        try {
+            $metadata['_id'] = app()->db()->create('uploads', $metadata);
+        } catch (\Throwable $e) {
+            @unlink($targetPath);
+            throw $e;
+        }
 
-        return null;
+        return $metadata;
     }
 
     /**
-     * Detect MIME type using finfo, with extension fallback.
+     * Detect MIME type from file contents. Never trust the client extension.
      */
-    private function detectMimeType($tmpPath, $originalName)
+    private function detectMimeType($tmpPath)
     {
         $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        if ($finfo === false) {
+            return 'application/octet-stream';
+        }
         $mime = finfo_file($finfo, $tmpPath);
         finfo_close($finfo);
-        if ($mime && $mime !== 'application/octet-stream') {
-            return $mime;
-        }
-
-        // Fallback to extension-based detection
-        $ext = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
-        $map = [
-            'jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg',
-            'png' => 'image/png', 'gif' => 'image/gif',
-            'webp' => 'image/webp', 'svg' => 'image/svg+xml',
-            'pdf' => 'application/pdf', 'txt' => 'text/plain',
-            'zip' => 'application/zip',
-        ];
-
-        return $map[$ext] ?? 'application/octet-stream';
+        return is_string($mime) ? $mime : 'application/octet-stream';
     }
 
     /**
      * Sanitize a filename: ASCII-safe, no special chars.
      */
-    private function sanitizeFilename($name)
+    private function sanitizeFilename($name, $mime)
     {
         $info = pathinfo($name);
-        $ext = isset($info['extension']) ? strtolower($info['extension']) : '';
-        $base = $info['filename'] ?? '';
+        $base = $info['filename'];
 
         // Transliterate common chars, strip anything non-alphanumeric
         $base = preg_replace('/[^a-zA-Z0-9_-]/', '-', $base);
@@ -382,7 +374,18 @@ class UploadsPanel extends AdminPanel
             $base = substr($base, 0, 100);
         }
 
-        return $ext !== '' ? $base . '.' . $ext : $base;
+        $extensions = [
+            'image/jpeg' => 'jpg',
+            'image/png' => 'png',
+            'image/gif' => 'gif',
+            'image/webp' => 'webp',
+            'application/pdf' => 'pdf',
+            'text/plain' => 'txt',
+            'application/zip' => 'zip',
+            'application/x-zip-compressed' => 'zip',
+        ];
+        $ext = $extensions[$mime] ?? '';
+        return $ext !== '' ? $base . '.' . $ext : '';
     }
 
     /**

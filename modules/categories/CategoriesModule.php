@@ -15,12 +15,12 @@ class CategoriesModule extends BaseAdminModule
         app()->translator()->registerDomain('categories', $this->getPath() . '/lang');
 
         // Admin CRUD routes
-        $this->registerAdminRoute('GET', 'categories', [$this, 'listCategories']);
-        $this->registerAdminRoute('GET', 'categories/new', [$this, 'newCategory']);
-        $this->registerAdminRoute('POST', 'categories/new', [$this, 'createCategory']);
-        $this->registerAdminRoute('GET', 'categories/edit/{id}', [$this, 'editCategory']);
-        $this->registerAdminRoute('POST', 'categories/edit/{id}', [$this, 'updateCategory']);
-        $this->registerAdminRoute('POST', 'categories/delete/{id}', [$this, 'deleteCategory']);
+        $this->registerAdminRoute('GET', 'categories', [$this, 'listCategories'], 'categories.view');
+        $this->registerAdminRoute('GET', 'categories/new', [$this, 'newCategory'], 'categories.create');
+        $this->registerAdminRoute('POST', 'categories/new', [$this, 'createCategory'], 'categories.create');
+        $this->registerAdminRoute('GET', 'categories/edit/{id}', [$this, 'editCategory'], 'categories.edit');
+        $this->registerAdminRoute('POST', 'categories/edit/{id}', [$this, 'updateCategory'], 'categories.edit');
+        $this->registerAdminRoute('POST', 'categories/delete/{id}', [$this, 'deleteCategory'], 'categories.delete');
 
         // Permissions
         $this->hook('permissions.register', [$this, 'registerPermissions']);
@@ -93,26 +93,14 @@ class CategoriesModule extends BaseAdminModule
         ]);
     }
 
-    public function newCategory()
+    public function newCategory(): void
     {
-        $content = $this->renderView('categories:admin-edit', [
-            'category' => [
-                'title' => '',
-                'slug' => '',
-                'description' => '',
-                'order' => 0,
-            ],
-            'isNew' => true,
-            'csrf_token' => app()->auth()->generateCsrfToken(),
-        ]);
-
-        return $this->renderAdmin(t('categories.new_category'), $content, [
-            'breadcrumbs' => [
-                ['title' => t('admin-dashboard.title'), 'url' => base_url('/admin')],
-                ['title' => t('categories.title'), 'url' => base_url('/admin/categories')],
-                ['title' => t('categories.new_category')],
-            ],
-        ]);
+        $this->renderCategoryEditor([
+            'title' => '',
+            'slug' => '',
+            'description' => '',
+            'order' => 0,
+        ], true);
     }
 
     public function createCategory(): void
@@ -133,12 +121,12 @@ class CategoriesModule extends BaseAdminModule
         $data['created_at'] = clock()->timestamp();
         $data['updated_at'] = clock()->timestamp();
 
-        $id = $data['slug'];
-        if (app()->db()->exists('categories', $id)) {
-            $id = $data['slug'] . '-' . uniqid();
+        if (!app()->db()->isUnique('categories', 'slug', $data['slug'])) {
+            $this->renderCategoryEditor($data, true, t('admin.common.slug_exists'));
+            return;
         }
 
-        app()->db()->write('categories', $id, $data);
+        app()->db()->create('categories', $data);
 
         $this->redirectAdmin('categories');
     }
@@ -156,19 +144,7 @@ class CategoriesModule extends BaseAdminModule
             );
         }
 
-        $content = $this->renderView('categories:admin-edit', [
-            'category' => $category,
-            'isNew' => false,
-            'csrf_token' => app()->auth()->generateCsrfToken(),
-        ]);
-
-        return $this->renderAdmin(t('categories.edit_category'), $content, [
-            'breadcrumbs' => [
-                ['title' => t('admin-dashboard.title'), 'url' => base_url('/admin')],
-                ['title' => t('categories.title'), 'url' => base_url('/admin/categories')],
-                ['title' => t('categories.edit_category')],
-            ],
-        ]);
+        $this->renderCategoryEditor($category, false);
     }
 
     public function updateCategory($params): void
@@ -197,6 +173,12 @@ class CategoriesModule extends BaseAdminModule
         $data['created_at'] = $existing['created_at'];
         $data['updated_at'] = clock()->timestamp();
 
+        if (!app()->db()->isUnique('categories', 'slug', $data['slug'], $id)) {
+            $data['_id'] = $id;
+            $this->renderCategoryEditor($data, false, t('admin.common.slug_exists'));
+            return;
+        }
+
         app()->db()->write('categories', $id, $data);
 
         $this->redirectAdmin('categories');
@@ -208,6 +190,24 @@ class CategoriesModule extends BaseAdminModule
         app()->db()->delete('categories', $id);
 
         $this->redirectAdmin('categories');
+    }
+
+    private function renderCategoryEditor($category, $isNew, $error = null): void
+    {
+        $content = $this->renderView('categories:admin-edit', [
+            'category' => $category,
+            'isNew' => $isNew,
+            'csrf_token' => app()->auth()->generateCsrfToken(),
+            'error' => $error,
+        ]);
+        $title = $isNew ? t('categories.new_category') : t('categories.edit_category');
+        echo $this->renderAdmin($title, $content, [
+            'breadcrumbs' => [
+                ['title' => t('admin-dashboard.title'), 'url' => base_url('/admin')],
+                ['title' => t('categories.title'), 'url' => base_url('/admin/categories')],
+                ['title' => $title],
+            ],
+        ]);
     }
 
     // ========== Post Edit Integration ==========

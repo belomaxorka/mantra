@@ -75,7 +75,7 @@ Open **http://localhost:8080/install.php** in your browser and fill in the form:
 - **Site Name** — displayed in the header and page title
 - **Language** — English or Russian
 - **Admin Username** — 3-32 characters (letters, numbers, hyphens, underscores)
-- **Admin Password** — 6 characters minimum
+- **Admin Password** — 12 characters minimum
 
 ### 5. Open the site
 

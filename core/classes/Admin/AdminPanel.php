@@ -145,8 +145,10 @@ abstract class AdminPanel implements AdminPanelInterface
      */
     protected function requirePermission($permission)
     {
-        $userManager = new \User();
-        $result = $userManager->hasPermission($this->getUser(), $permission);
+        $authorization = app()->service('authorization');
+        $result = $authorization instanceof \Authorization
+            ? $authorization->check($this->getUser(), $permission)
+            : false;
 
         if ($result === false) {
             $this->renderErrorPage(t('admin.common.access_denied'));

@@ -18,6 +18,7 @@
 | Extension | Purpose |
 |---|---|
 | `fileinfo` | MIME type validation for uploads |
+| `dom` | Rich HTML allowlist sanitization |
 | `iconv` | Slug generation from non-Latin characters |
 | `zlib` | Gzip output compression |
 
@@ -116,7 +117,7 @@ Fill in the form:
 - **Site Name** — displayed in the header and page title
 - **Language** — English or Russian
 - **Admin Username** — 3-32 characters (letters, numbers, hyphens, underscores)
-- **Admin Password** — 6 characters minimum
+- **Admin Password** — 12 characters minimum
 
 After submitting, the installer creates all necessary directories, writes the configuration to `content/settings/config.json`, and creates the admin user.
 
@@ -132,7 +133,7 @@ The `install.php` file can remain in place — it automatically redirects to the
 For local development without Apache or Nginx:
 
 ```bash
-php -S 127.0.0.1:8000 index.php
+php -S 127.0.0.1:8000 router.php
 ```
 
 Then open `http://127.0.0.1:8000/install.php`.
