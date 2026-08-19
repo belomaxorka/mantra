@@ -1,10 +1,7 @@
 <?php declare(strict_types=1);
 
-// Collection schema for: users
-// - version: current document schema version
-// - defaults: applied when missing
-// - fields: validation rules
-// - migrations: optional destination-version => callable map
+// Core collection schema for users. Authentication and installation depend on
+// these invariants before the optional administration UI has been loaded.
 
 return [
     'version' => 1,
@@ -18,36 +15,34 @@ return [
         'password' => '',
         'role' => 'editor',
         'status' => 'active',
-        'created_at' => '',
-        'updated_at' => '',
     ],
     'fields' => [
         'username' => [
             'type' => 'string',
             'required' => true,
-            'minLength' => 3,
-            'maxLength' => 50,
-            'pattern' => '/^[a-zA-Z0-9_-]+$/',
+            'minLength' => User::MIN_USERNAME_LENGTH,
+            'maxLength' => User::MAX_USERNAME_LENGTH,
+            'pattern' => User::USERNAME_PATTERN,
         ],
         'email' => [
             'type' => 'email',
             'required' => false,
-            'maxLength' => 255,
+            'maxLength' => User::MAX_EMAIL_LENGTH,
         ],
         'password' => [
             'type' => 'string',
             'required' => true,
-            'minLength' => 60, // bcrypt hash length
+            'minLength' => 60,
             'maxLength' => 255,
         ],
         'role' => [
             'type' => 'enum',
-            'values' => ['admin', 'editor', 'viewer'],
+            'values' => User::ROLES,
             'required' => true,
         ],
         'status' => [
             'type' => 'enum',
-            'values' => ['active', 'inactive', 'banned'],
+            'values' => User::STATUSES,
             'required' => true,
         ],
     ],

@@ -453,7 +453,8 @@ $db->listIds($collection);                      // IDs without reading contents
 $db->generateId();                               // crypto-secure unique ID
 
 // Schemas
-$db->registerSchema($collection, $schemaPath);  // register schema for collection
+$db->registerSchema($collection, $schemaPath);  // register a shared module schema
+$db->collections();                             // CollectionRegistry in use
 ```
 
 **Automatic behaviors on `write()`:**
@@ -484,14 +485,21 @@ See `docs/STORAGE.md` for the complete persistence contract.
 
 #### Document schemas & migrations
 
-Schemas are defined **per-panel or per-module**:
+Schemas are resolved by the shared `CollectionRegistry`. Core invariants are
+available before modules load, while panels and modules can add collection
+definitions at runtime:
+- `core/schemas/users.php`
 - `modules/admin/panels/pages/schema.php`
 - `modules/admin/panels/posts/schema.php`
-- `modules/admin/panels/users/schema.php`
 - `modules/admin/panels/uploads/schema.php`
 - `modules/categories/schema.php`
 
-Panels register schemas in their constructors via `app()->db()->registerSchema($collection, $path)`.
+Modules register schemas via `app()->db()->registerSchema($collection, $path)`.
+The registration is immediately visible to every production `Database`
+instance. Databases with a custom storage root use an isolated registry unless
+one is injected explicitly.
+Core collection contracts are sealed, and conflicting module registrations
+fail explicitly instead of replacing a schema implicitly.
 
 Each schema file returns an array:
 

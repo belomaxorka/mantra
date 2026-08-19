@@ -34,6 +34,8 @@ class FileIO
 {
     public const MAX_FILE_SIZE = 10485760; // 10MB
     public const LOCK_EXTENSION = '.lock';
+    private const REPLACE_MAX_ATTEMPTS = 6;
+    private const REPLACE_RETRY_DELAY_US = 2000;
 
     /**
      * Resolve an untrusted relative path inside a trusted root.
@@ -386,7 +388,7 @@ class FileIO
             if ($bytes === false) {
                 throw new FileIOException('Failed to write temp file', $path);
             }
-            if (!@rename($tmp, $path)) {
+            if (!self::replaceFile($tmp, $path)) {
                 throw new FileIOException('Failed to replace file', $path);
             }
             return true;
@@ -395,5 +397,62 @@ class FileIO
                 @unlink($tmp);
             }
         }
+    }
+
+    /**
+     * Rename the prepared file without removing the last known-good target.
+     *
+     * Windows can briefly reject an atomic replacement while antivirus,
+     * indexing, or another reader holds a handle. Retry only errors that
+     * indicate this kind of contention; structural failures fail immediately.
+     */
+    private static function replaceFile($tmp, $path): bool
+    {
+        for ($attempt = 0; $attempt < self::REPLACE_MAX_ATTEMPTS; $attempt++) {
+            error_clear_last();
+            if (@rename($tmp, $path)) {
+                return true;
+            }
+
+            $error = error_get_last();
+            if ($attempt + 1 >= self::REPLACE_MAX_ATTEMPTS
+                || !self::isTransientReplaceError($error)) {
+                return false;
+            }
+
+            usleep(self::REPLACE_RETRY_DELAY_US * (2 ** $attempt));
+        }
+
+        return false;
+    }
+
+    /** @param array{message?: string}|null $error */
+    private static function isTransientReplaceError($error): bool
+    {
+        if (!is_array($error) || !isset($error['message'])) {
+            return false;
+        }
+
+        $message = strtolower((string)$error['message']);
+        // PHP appends the native Windows error code to localized warnings.
+        // 5 = access denied, 32 = sharing violation, 33 = lock violation.
+        if (preg_match('/\(code:\s*(?:5|32|33)\)/', $message) === 1) {
+            return true;
+        }
+
+        foreach ([
+            'access is denied',
+            'being used by another process',
+            'permission denied',
+            'resource busy',
+            'resource temporarily unavailable',
+            'sharing violation',
+        ] as $fragment) {
+            if (str_contains($message, $fragment)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

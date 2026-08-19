@@ -63,7 +63,8 @@
                                    class="form-control"
                                    id="password"
                                    name="password"
-                                   <?php echo $isNew ? 'required minlength="6"' : ''; ?>>
+                                   minlength="<?php echo \User::MIN_PASSWORD_LENGTH; ?>"
+                                   <?php echo $isNew ? 'required' : ''; ?>>
                             <div class="form-text">
                                 <?php echo $isNew ? t('admin-users.password_required') : t('admin-users.password_help'); ?>
                             </div>
@@ -80,7 +81,7 @@
                     <div class="card-body">
                         <div class="btn-group w-100" role="group">
                             <?php
-                                $roles = ['admin', 'editor', 'viewer'];
+                                $roles = \User::ROLES;
                                 $roleColors = ['admin' => 'primary', 'editor' => 'success', 'viewer' => 'secondary'];
                                 $currentRole = $user['role'] ?? 'editor';
                             ?>
@@ -106,7 +107,7 @@
                     <div class="card-body">
                         <div class="btn-group w-100" role="group">
                             <?php
-                                $statuses = ['active', 'inactive', 'banned'];
+                                $statuses = \User::STATUSES;
                                 $statusColors = ['active' => 'success', 'inactive' => 'secondary', 'banned' => 'danger'];
                                 $currentStatus = $user['status'] ?? 'active';
                             ?>

@@ -5,11 +5,19 @@
  */
 class User
 {
+    public const MIN_USERNAME_LENGTH = 3;
+    public const MAX_USERNAME_LENGTH = 50;
+    public const MAX_EMAIL_LENGTH = 255;
+    public const MIN_PASSWORD_LENGTH = 12;
+    public const USERNAME_PATTERN = '/^[a-zA-Z0-9_-]+$/';
+    public const ROLES = ['admin', 'editor', 'viewer'];
+    public const STATUSES = ['active', 'inactive', 'banned'];
+
     private $db = null;
 
-    public function __construct()
+    public function __construct(?Database $db = null)
     {
-        $this->db = new Database();
+        $this->db = $db ?? app()->db();
     }
 
     /**
@@ -25,8 +33,7 @@ class User
      */
     public function findByUsername($username)
     {
-        $users = $this->db->query('users', ['username' => $username]);
-        return !empty($users) ? $users[0] : null;
+        return $this->findByFieldCaseInsensitive('username', $username);
     }
 
     /**
@@ -34,8 +41,7 @@ class User
      */
     public function findByEmail($email)
     {
-        $users = $this->db->query('users', ['email' => $email]);
-        return !empty($users) ? $users[0] : null;
+        return $this->findByFieldCaseInsensitive('email', $email);
     }
 
     /**
@@ -54,30 +60,25 @@ class User
      */
     public function create($data)
     {
-        if (empty($data['username']) || empty($data['password'])) {
+        if (!is_array($data)) {
             return false;
         }
 
-        // Check if username already exists
-        if ($this->findByUsername($data['username'])) {
+        $data = $this->normalizeCoreFields(array_merge([
+            'email' => '',
+            'role' => 'editor',
+            'status' => 'active',
+        ], $data));
+
+        if (!empty(self::validationErrors($data, true))) {
             return false;
         }
 
-        // Hash password
-        $auth = new Auth();
-        $data['password'] = $auth->hashPassword($data['password']);
-
-        // Set defaults
-        if (!isset($data['role'])) {
-            $data['role'] = 'editor';
-        }
-        if (!isset($data['status'])) {
-            $data['status'] = 'active';
-        }
+        $data['password'] = Auth::hashPasswordStatic($data['password']);
 
         try {
             return $this->db->create('users', $data);
-        } catch (UniqueConstraintViolationException $e) {
+        } catch (UniqueConstraintViolationException | SchemaValidationException | ValueError $e) {
             return false;
         }
     }
@@ -87,6 +88,10 @@ class User
      */
     public function update($id, $data)
     {
+        if (!is_array($data)) {
+            return false;
+        }
+
         $user = $this->find($id);
         if (!$user) {
             return false;
@@ -95,18 +100,33 @@ class User
         // Don't allow changing username
         unset($data['username']);
 
-        // Hash password if provided
-        if (!empty($data['password'])) {
-            $auth = new Auth();
-            $data['password'] = $auth->hashPassword($data['password']);
-        } else {
+        $data = $this->normalizeCoreFields($data);
+        $hasNewPassword = array_key_exists('password', $data) && $data['password'] !== '';
+        if (!$hasNewPassword) {
             unset($data['password']);
         }
 
         $updated = array_merge($user, $data);
+        if (!empty(self::validationErrors($updated, false))) {
+            return false;
+        }
+
+        if ($hasNewPassword) {
+            $updated['password'] = Auth::hashPasswordStatic($data['password']);
+        }
+
         try {
-            return $this->db->write('users', $id, $updated);
-        } catch (UniqueConstraintViolationException $e) {
+            return $this->db->writeIf(
+                'users',
+                $id,
+                $updated,
+                fn($current, $users) => $this->preservesActiveAdministrator(
+                    $current,
+                    $updated,
+                    $users,
+                ),
+            );
+        } catch (UniqueConstraintViolationException | SchemaValidationException | ValueError $e) {
             return false;
         }
     }
@@ -117,18 +137,114 @@ class User
     public function delete($id)
     {
         return $this->db->deleteIf('users', $id, function ($target, $users) {
-            if (($target['role'] ?? '') !== 'admin') {
+            if (!$this->isActiveAdmin($target)) {
                 return true;
             }
 
-            $adminCount = 0;
+            $activeAdminCount = 0;
             foreach ($users as $user) {
-                if (($user['role'] ?? '') === 'admin') {
-                    $adminCount++;
+                if ($this->isActiveAdmin($user)) {
+                    $activeAdminCount++;
                 }
             }
-            return $adminCount > 1;
+            return $activeAdminCount > 1;
         });
+    }
+
+    /**
+     * Validate the public user contract before hashing or persistence.
+     *
+     * @return array<string, string> Errors keyed by field name
+     */
+    public static function validationErrors($data, $passwordRequired = true)
+    {
+        $errors = [];
+        if (!is_array($data)) {
+            return ['user' => 'User data must be an array'];
+        }
+
+        $username = $data['username'] ?? null;
+        if (!is_string($username)
+            || strlen($username) < self::MIN_USERNAME_LENGTH
+            || strlen($username) > self::MAX_USERNAME_LENGTH
+            || preg_match(self::USERNAME_PATTERN, $username) !== 1) {
+            $errors['username'] = 'Username is invalid';
+        }
+
+        $email = $data['email'] ?? '';
+        if (!is_string($email)
+            || strlen($email) > self::MAX_EMAIL_LENGTH
+            || ($email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL) === false)) {
+            $errors['email'] = 'Email is invalid';
+        }
+
+        $role = $data['role'] ?? 'editor';
+        if (!is_string($role) || !in_array($role, self::ROLES, true)) {
+            $errors['role'] = 'Role is invalid';
+        }
+
+        $status = $data['status'] ?? 'active';
+        if (!is_string($status) || !in_array($status, self::STATUSES, true)) {
+            $errors['status'] = 'Status is invalid';
+        }
+
+        $password = $data['password'] ?? null;
+        if ($passwordRequired || ($password !== null && $password !== '')) {
+            if (!is_string($password)
+                || strlen($password) < self::MIN_PASSWORD_LENGTH
+                || str_contains($password, "\0")) {
+                $errors['password'] = 'Password is invalid';
+            }
+        }
+
+        return $errors;
+    }
+
+    private function normalizeCoreFields($data)
+    {
+        foreach (['username', 'email', 'role', 'status'] as $field) {
+            if (isset($data[$field]) && is_string($data[$field])) {
+                $data[$field] = trim($data[$field]);
+            }
+        }
+        return $data;
+    }
+
+    private function findByFieldCaseInsensitive($field, $value)
+    {
+        if (!is_string($value) || $value === '') {
+            return null;
+        }
+
+        foreach ($this->db->read('users') as $user) {
+            $candidate = $user[$field] ?? null;
+            if (is_string($candidate) && strcasecmp($candidate, $value) === 0) {
+                return $user;
+            }
+        }
+        return null;
+    }
+
+    private function preservesActiveAdministrator($current, $updated, $users)
+    {
+        if (!$this->isActiveAdmin($current) || $this->isActiveAdmin($updated)) {
+            return true;
+        }
+
+        $activeAdminCount = 0;
+        foreach ($users as $user) {
+            if ($this->isActiveAdmin($user)) {
+                $activeAdminCount++;
+            }
+        }
+        return $activeAdminCount > 1;
+    }
+
+    private function isActiveAdmin($user)
+    {
+        return is_array($user)
+            && ($user['role'] ?? '') === 'admin'
+            && ($user['status'] ?? '') === 'active';
     }
 
     /**

@@ -36,7 +36,7 @@ return [
 
     // Form
     'admin-users.password_help' => 'Оставьте пустым, чтобы сохранить текущий пароль.',
-    'admin-users.password_required' => 'Пароль обязателен для новых пользователей.',
+    'admin-users.password_required' => 'Пароль обязателен и должен содержать не менее 12 символов.',
     'admin-users.username_help' => 'Нельзя изменить после создания.',
 
     // Errors

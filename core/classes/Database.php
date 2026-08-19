@@ -34,19 +34,18 @@ class Database
     private $markdownDriver = null;
     private $revisionStore = null;
     private $transactionRoot = null;
-
-    // Schema cache: collection => schema array
-    private $collectionSchemas = [];
-
-    // Module-registered schemas: collection => file path
-    private $registeredSchemas = [];
+    private $collectionRegistry = null;
 
     // In-request collection cache: collection => items array
     private $collectionCache = [];
 
-    public function __construct($basePath = null, $revisionStore = null)
+    public function __construct($basePath = null, $revisionStore = null, $collectionRegistry = null)
     {
         $this->basePath = $basePath ? $basePath : MANTRA_CONTENT;
+        $this->collectionRegistry = $collectionRegistry
+            ?? ($basePath === null || $basePath === MANTRA_CONTENT
+                ? CollectionRegistry::shared()
+                : new CollectionRegistry());
         $this->jsonDriver = new JsonStorageDriver($this->basePath);
         $this->markdownDriver = new MarkdownStorageDriver($this->basePath);
         $revisionRoot = $this->basePath === MANTRA_CONTENT
@@ -171,6 +170,40 @@ class Database
         );
     }
 
+    /**
+     * Update an existing document only when a collection-wide invariant holds.
+     *
+     * The predicate receives the latest target document and all collection
+     * documents while the collection lock is held. It must not call back into
+     * this Database instance.
+     */
+    public function writeIf($collection, $id, $data, $predicate)
+    {
+        if (!is_callable($predicate)) {
+            throw new InvalidArgumentException('Write predicate must be callable');
+        }
+
+        unset($this->collectionCache[$collection]);
+        $this->assertValidCollectionName($collection);
+        $this->assertValidId($id);
+
+        return FileIO::withExclusiveLock(
+            $this->basePath . '/' . $collection . '/.collection',
+            function () use ($collection, $id, $data, $predicate) {
+                $driver = $this->getDriver($collection);
+                $current = $driver->read($collection, $id);
+                if ($current === null) {
+                    return false;
+                }
+                if (!$predicate($current, $driver->readCollection($collection))) {
+                    return false;
+                }
+
+                return $this->writeLocked($collection, $id, $data);
+            },
+        );
+    }
+
     /** Validate and persist while the collection-level lock is held. */
     private function writeLocked($collection, $id, $data)
     {
@@ -210,12 +243,14 @@ class Database
         $existing = null;
         if ($driver->exists($collection, $id)) {
             $existing = $driver->read($collection, $id);
-            if ($existing && isset($existing['created_at'])) {
+            if ($existing
+                && isset($existing['created_at'])
+                && $existing['created_at'] !== '') {
                 $data['created_at'] = $existing['created_at'];
             } else {
                 $data['created_at'] = clock()->timestamp();
             }
-        } elseif (!isset($data['created_at'])) {
+        } elseif (!isset($data['created_at']) || $data['created_at'] === '') {
             $data['created_at'] = clock()->timestamp();
         }
         $data['updated_at'] = clock()->timestamp();
@@ -514,8 +549,13 @@ class Database
     public function registerSchema($collection, $schemaPath): void
     {
         $this->assertValidCollectionName($collection);
-        $this->registeredSchemas[$collection] = $schemaPath;
-        unset($this->collectionSchemas[$collection]);
+        $this->collectionRegistry->register($collection, $schemaPath);
+    }
+
+    /** Return the collection contract used by this database instance. */
+    public function collections()
+    {
+        return $this->collectionRegistry;
     }
 
     public function revisions($collection, $id)
@@ -538,29 +578,7 @@ class Database
 
     private function getCollectionSchema($collection)
     {
-        if (isset($this->collectionSchemas[$collection])) {
-            return $this->collectionSchemas[$collection];
-        }
-
-        // Check module-registered schemas first, then core fallback
-        if (isset($this->registeredSchemas[$collection])) {
-            $schemaPath = $this->registeredSchemas[$collection];
-        } else {
-            $schemaPath = MANTRA_CORE . '/schemas/' . $collection . '.php';
-        }
-        if (!file_exists($schemaPath)) {
-            $this->collectionSchemas[$collection] = null;
-            return null;
-        }
-
-        $schema = require $schemaPath;
-        if (!is_array($schema)) {
-            $this->collectionSchemas[$collection] = null;
-            return null;
-        }
-
-        $this->collectionSchemas[$collection] = $schema;
-        return $schema;
+        return $this->collectionRegistry->schema($collection);
     }
 
     /**

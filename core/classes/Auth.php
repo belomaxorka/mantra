@@ -8,9 +8,9 @@ class Auth
     private $db = null;
     private $currentUser = null;
 
-    public function __construct()
+    public function __construct(?Database $db = null)
     {
-        $this->db = new Database();
+        $this->db = $db ?? app()->db();
         $this->loadCurrentUser();
     }
 
@@ -19,28 +19,32 @@ class Auth
      */
     public function login($username, $password)
     {
+        if (!is_string($username) || !is_string($password)) {
+            return false;
+        }
+
+        $username = trim($username);
         logger()->info('Login attempt', ['username' => $username]);
 
-        $users = $this->db->query('users', ['username' => $username]);
-
-        if (empty($users)) {
+        $user = (new User($this->db))->findByUsername($username);
+        if (!$user) {
             logger()->warning('Login failed: user not found', ['username' => $username]);
             return false;
         }
 
-        $user = $users[0];
-
         // Verify password
-        if (!$this->verifyPassword($password, $user['password'])) {
+        if (!isset($user['password'])
+            || !is_string($user['password'])
+            || !$this->verifyPassword($password, $user['password'])) {
             logger()->warning('Login failed: invalid password', ['username' => $username]);
             return false;
         }
 
         // Check user status (block inactive/banned accounts)
-        if ($user['status'] !== 'active') {
+        if (($user['status'] ?? '') !== 'active') {
             logger()->warning('Login failed: account not active', [
                 'username' => $username,
-                'status' => $user['status'],
+                'status' => $user['status'] ?? 'unknown',
             ]);
             return false;
         }
@@ -119,9 +123,37 @@ class Auth
      */
     private function loadCurrentUser(): void
     {
-        if (app()->session()->has('user_id')) {
-            $this->currentUser = $this->db->read('users', app()->session()->get('user_id'));
+        $session = app()->session();
+        if (!$session->has('user_id')) {
+            return;
         }
+
+        $userId = $session->get('user_id');
+        if (!is_string($userId) || $userId === '') {
+            $this->clearAuthenticationState();
+            return;
+        }
+
+        try {
+            $user = $this->db->read('users', $userId);
+        } catch (InvalidArgumentException $e) {
+            $this->clearAuthenticationState();
+            return;
+        }
+
+        if (!is_array($user) || ($user['status'] ?? '') !== 'active') {
+            $this->clearAuthenticationState();
+            return;
+        }
+
+        $this->currentUser = $user;
+    }
+
+    private function clearAuthenticationState(): void
+    {
+        app()->session()->delete('user_id');
+        app()->session()->delete('csrf_token');
+        $this->currentUser = null;
     }
 
     /**
@@ -141,19 +173,7 @@ class Auth
      */
     public function hashPassword($password)
     {
-        $algo = config('security.password_hash_algo', 'PASSWORD_DEFAULT');
-
-        switch ($algo) {
-            case 'PASSWORD_BCRYPT':
-                return password_hash($password, PASSWORD_BCRYPT);
-            case 'PASSWORD_ARGON2I':
-                return defined('PASSWORD_ARGON2I') ? password_hash($password, PASSWORD_ARGON2I) : password_hash($password, PASSWORD_DEFAULT);
-            case 'PASSWORD_ARGON2ID':
-                return defined('PASSWORD_ARGON2ID') ? password_hash($password, PASSWORD_ARGON2ID) : password_hash($password, PASSWORD_DEFAULT);
-            case 'PASSWORD_DEFAULT':
-            default:
-                return password_hash($password, PASSWORD_DEFAULT);
-        }
+        return self::hashPasswordStatic($password);
     }
 
     /**

@@ -73,7 +73,8 @@ class Application
         $this->provide('request', fn() => new \Http\Request());
         $this->provide('session', fn() => new \Http\Session());
         $this->provide('response', fn() => new \Http\Response());
-        $this->provide('db', fn() => new \Database());
+        $this->provide('collections', fn() => \CollectionRegistry::shared());
+        $this->provide('db', fn() => new \Database(null, null, $this->collections()));
         $this->provide('view', fn() => new \View());
         $this->provide('translator', fn() => new \TranslationManager());
         $this->provide('auth', fn() => new \Auth());
@@ -108,6 +109,12 @@ class Application
     public function db()
     {
         return $this->service('db');
+    }
+
+    /** @return \CollectionRegistry */
+    public function collections()
+    {
+        return $this->service('collections');
     }
 
     /** @return \View */

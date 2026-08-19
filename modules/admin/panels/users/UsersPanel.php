@@ -15,7 +15,6 @@ class UsersPanel extends ContentPanel
     {
         parent::init($admin);
 
-        app()->db()->registerSchema('users', $this->getPath() . '/schema.php');
         $this->registerPanelHooks();
         $this->hook('permissions.register', [$this, 'registerPermissions']);
     }
@@ -188,16 +187,6 @@ class UsersPanel extends ContentPanel
         if (isset($currentUser['_id']) && $id === $currentUser['_id']) {
             $this->redirectAdmin($this->getAdminPath());
             return;
-        }
-
-        // Prevent deleting last admin
-        $target = $this->getUserManager()->find($id);
-        if ($target && isset($target['role']) && $target['role'] === 'admin') {
-            $admins = $this->getUserManager()->all(['role' => 'admin']);
-            if (count($admins) <= 1) {
-                $this->redirectAdmin($this->getAdminPath());
-                return;
-            }
         }
 
         $this->getUserManager()->delete($id);

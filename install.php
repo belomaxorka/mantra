@@ -107,13 +107,10 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
         $language = isset($_POST['language']) ? (string)$_POST['language'] : 'en';
         $selectedLanguage = in_array($language, $allowedLanguages) ? $language : 'en';
 
-        // Validate input
-        if (empty($username) || empty($password)) {
-            $error = 'error_required_fields';
-        } elseif (!preg_match('/^[a-zA-Z0-9_-]{3,32}$/', $username)) {
-            $error = 'error_invalid_username';
-        } elseif (strlen($password) < 12) {
-            $error = 'error_password_too_short';
+        // Validate through the same domain contract used by user management.
+        $credentialError = InstallationService::validateAdminCredentials($username, $password);
+        if ($credentialError !== null) {
+            $error = $credentialError;
         }
     }
 
@@ -144,22 +141,17 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
             // Keep site.url relative until an administrator explicitly configures
             // the canonical public URL. Never persist the request Host header.
             $config = Config::buildInstallConfig($siteName, $language);
-            (new ConfigRepository())->replace($config)->save();
+            $configRepository = (new ConfigRepository())->replace($config);
+            $configRepository->save();
+            $installedConfig = $configRepository->all();
+            $GLOBALS['MANTRA_CONFIG'] = $installedConfig;
+            config()->replace($installedConfig);
 
-            // Create admin user (use Clock format for timestamp consistency)
-            $db = new Database();
-            $now = date(Clock::STORAGE_FORMAT);
-            $userData = [
-                'username' => $username,
-                'password' => Auth::hashPasswordStatic($password),
-                'email' => '',
-                'role' => 'admin',
-                'status' => 'active',
-                'author_id' => '',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ];
-            $db->create('users', $userData);
+            // Database owns schema validation and both timestamps.
+            $adminId = (new InstallationService())->createInitialAdmin($username, $password);
+            if ($adminId === false) {
+                throw new RuntimeException('Initial administrator could not be created');
+            }
 
             // The user record is also the compatibility installation marker.
             // A marker write failure must not invite creation of a second admin.
@@ -272,13 +264,13 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
 
                         <div class="form-group">
                             <label for="username" class="form-label" data-i18n="label_username">Admin Username</label>
-                            <input type="text" class="form-control" id="username" name="username" pattern="[a-zA-Z0-9_\-]{3,32}" minlength="3" maxlength="32" required>
+                            <input type="text" class="form-control" id="username" name="username" pattern="[a-zA-Z0-9_\-]+" minlength="<?php echo User::MIN_USERNAME_LENGTH; ?>" maxlength="<?php echo User::MAX_USERNAME_LENGTH; ?>" required>
                         </div>
 
                         <div class="form-group">
                             <label for="password" class="form-label" data-i18n="label_password">Admin Password</label>
                             <div class="password-wrap">
-                                <input type="password" class="form-control" id="password" name="password" minlength="12" required>
+                                <input type="password" class="form-control" id="password" name="password" minlength="<?php echo User::MIN_PASSWORD_LENGTH; ?>" required>
                                 <button type="button" class="password-toggle" id="pw-toggle" aria-label="Toggle password visibility">
                                     <svg id="pw-icon-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                                     <svg id="pw-icon-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
@@ -320,7 +312,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
                 req_heading: 'System requirements',
                 req_blocked: 'Please fix the issues above and reload the page.',
                 error_required_fields: 'Username and password are required.',
-                error_invalid_username: 'Username must be 3-32 characters: letters, numbers, hyphens, underscores.',
+                error_invalid_username: 'Username must be 3-50 characters: letters, numbers, hyphens, underscores.',
                 error_password_too_short: 'Password must be at least 12 characters.',
                 error_requirements: 'System requirements are not met.',
                 error_install_busy: 'Another installation is already in progress. Please try again.',
@@ -345,7 +337,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
                 req_heading: 'Системные требования',
                 req_blocked: 'Исправьте проблемы выше и перезагрузите страницу.',
                 error_required_fields: 'Имя пользователя и пароль обязательны.',
-                error_invalid_username: 'Имя пользователя: 3-32 символа (буквы, цифры, дефис, подчёркивание).',
+                error_invalid_username: 'Имя пользователя: 3-50 символов (буквы, цифры, дефис, подчёркивание).',
                 error_password_too_short: 'Пароль должен быть не менее 12 символов.',
                 error_requirements: 'Системные требования не выполнены.',
                 error_install_busy: 'Установка уже выполняется другим запросом. Повторите позже.',

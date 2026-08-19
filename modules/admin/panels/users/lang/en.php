@@ -36,7 +36,7 @@ return [
 
     // Form
     'admin-users.password_help' => 'Leave empty to keep current password.',
-    'admin-users.password_required' => 'Password is required for new users.',
+    'admin-users.password_required' => 'Password is required for new users and must contain at least 12 characters.',
     'admin-users.username_help' => 'Cannot be changed after creation.',
 
     // Errors

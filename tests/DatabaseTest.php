@@ -770,6 +770,28 @@ class DatabaseTest extends MantraTestCase
         $this->assertTrue($db->exists('guarded', $second));
     }
 
+    public function testConditionalWriteEvaluatesInvariantInsideCollectionBoundary(): void
+    {
+        $db = new Database($this->testDir);
+        $first = $db->create('guarded_updates', ['role' => 'admin', 'status' => 'active']);
+        $second = $db->create('guarded_updates', ['role' => 'admin', 'status' => 'active']);
+
+        $guard = function ($target, $documents) {
+            $activeAdmins = array_filter(
+                $documents,
+                fn($document) => ($document['role'] ?? '') === 'admin'
+                    && ($document['status'] ?? '') === 'active',
+            );
+            return ($target['role'] ?? '') !== 'admin'
+                || ($target['status'] ?? '') !== 'active'
+                || count($activeAdmins) > 1;
+        };
+
+        $this->assertTrue($db->writeIf('guarded_updates', $first, ['role' => 'editor', 'status' => 'active'], $guard));
+        $this->assertFalse($db->writeIf('guarded_updates', $second, ['role' => 'editor', 'status' => 'active'], $guard));
+        $this->assertSame('admin', $db->read('guarded_updates', $second)['role']);
+    }
+
     public function testExists(): void
     {
         $this->createTestSchema('test_exists', [
@@ -925,6 +947,29 @@ class DatabaseTest extends MantraTestCase
         $this->assertSame($createdAt, $readUpdated['created_at'], 'created_at unchanged on update');
         $this->assertNotSame($updatedAt, $readUpdated['updated_at'], 'updated_at changed on update');
         $this->assertGreaterThan($createdAt, $readUpdated['updated_at'], 'updated_at is after created_at');
+    }
+
+    public function testEmptySchemaTimestampDefaultsDoNotSuppressDatabaseMetadata(): void
+    {
+        $this->createTestSchema('test_empty_metadata_defaults', [
+            'version' => 1,
+            'defaults' => [
+                'name' => '',
+                'created_at' => '',
+                'updated_at' => '',
+            ],
+            'fields' => [
+                'name' => ['type' => 'string', 'required' => true],
+            ],
+        ]);
+
+        $db = new Database($this->testDir);
+        $id = $db->create('test_empty_metadata_defaults', ['name' => 'Timestamped']);
+        $document = $db->read('test_empty_metadata_defaults', $id);
+
+        $this->assertNotEmpty($document['created_at']);
+        $this->assertNotEmpty($document['updated_at']);
+        $this->assertSame($document['created_at'], $document['updated_at']);
     }
 
     public function testSecurity(): void
