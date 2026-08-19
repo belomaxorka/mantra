@@ -155,8 +155,7 @@ class SchemaMigrationTest extends MantraTestCase
 
     public function testMigrationCallbackReturnsNonArray(): void
     {
-        // normalizeDocument guards against non-array return from migrate
-        // by resetting $data to empty array (same as ConfigSettings).
+        // A broken migrator must fail without replacing the original document.
         $collection = 'tmig_nonarray';
         $this->writeSchemaFile($collection, <<<'PHP'
             <?php
@@ -177,11 +176,17 @@ class SchemaMigrationTest extends MantraTestCase
         ]);
 
         $db = new Database($this->testDir);
-        $doc = $db->read($collection, $id);
+        $this->expectException(SchemaMigrationException::class);
 
-        $this->assertIsArray($doc, 'Result is array despite broken migrate callback');
-        $this->assertSame(2, $doc['schema_version'], 'schema_version still set after non-array guard');
-        $this->assertSame('fallback', $doc['name'], 'Defaults fill empty document after non-array guard reset');
+        try {
+            $db->read($collection, $id);
+        } finally {
+            $raw = json_decode(file_get_contents(
+                $this->testDir . '/' . $collection . '/' . $id . '.json',
+            ), true);
+            $this->assertSame('Test', $raw['name'], 'Original data remains intact');
+            $this->assertSame(1, $raw['schema_version'], 'Version remains unchanged');
+        }
     }
 
     // ---------------------------------------------------------------

@@ -133,16 +133,7 @@ class UsersPanel extends ContentPanel
 
         if ($result === false) {
             $data['password'] = '';
-            $title = t($this->getDomain() . '.new');
-            $content = $this->renderView($this->getEditTemplate(), [
-                'user' => $data,
-                'isNew' => true,
-                'csrf_token' => $this->auth()->generateCsrfToken(),
-                'error' => t('admin-users.create_error'),
-            ]);
-            $this->renderAdmin($title, $content, [
-                'breadcrumbs' => $this->getItemBreadcrumbs($title),
-            ]);
+            $this->renderFormWithError($data, t('admin-users.create_error'), true);
             return;
         }
 
@@ -177,7 +168,12 @@ class UsersPanel extends ContentPanel
             return;
         }
 
-        $this->getUserManager()->update($id, $data);
+        if (!$this->getUserManager()->update($id, $data)) {
+            $data = array_merge($user, $data);
+            $data['password'] = '';
+            $this->renderFormWithError($data, t('admin-users.update_error'), false);
+            return;
+        }
         $this->redirectAdmin($this->getAdminPath());
     }
 

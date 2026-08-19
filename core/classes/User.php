@@ -75,7 +75,11 @@ class User
             $data['status'] = 'active';
         }
 
-        return $this->db->create('users', $data);
+        try {
+            return $this->db->create('users', $data);
+        } catch (UniqueConstraintViolationException $e) {
+            return false;
+        }
     }
 
     /**
@@ -100,7 +104,11 @@ class User
         }
 
         $updated = array_merge($user, $data);
-        return $this->db->write('users', $id, $updated);
+        try {
+            return $this->db->write('users', $id, $updated);
+        } catch (UniqueConstraintViolationException $e) {
+            return false;
+        }
     }
 
     /**
@@ -108,7 +116,19 @@ class User
      */
     public function delete($id)
     {
-        return $this->db->delete('users', $id);
+        return $this->db->deleteIf('users', $id, function ($target, $users) {
+            if (($target['role'] ?? '') !== 'admin') {
+                return true;
+            }
+
+            $adminCount = 0;
+            foreach ($users as $user) {
+                if (($user['role'] ?? '') === 'admin') {
+                    $adminCount++;
+                }
+            }
+            return $adminCount > 1;
+        });
     }
 
     /**

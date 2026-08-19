@@ -105,7 +105,7 @@ Four directories are mounted as volumes so that data survives container restarts
 |---|---|
 | `content/` | Pages, posts, users, settings (flat-file database) |
 | `modules/` | CMS modules (supports live updates) |
-| `storage/` | Logs, sessions |
+| `storage/` | Logs, revisions, transaction journals, recoverable trash |
 | `uploads/` | User-uploaded files |
 
 All data is stored on the host filesystem — no separate database is needed.

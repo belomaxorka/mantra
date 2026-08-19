@@ -4,10 +4,14 @@
 // - version: current document schema version
 // - defaults: applied when missing
 // - fields: validation rules
-// - migrate: optional callable($doc, $fromVersion, $toVersion)
+// - migrations: optional destination-version => callable map
 
 return [
     'version' => 1,
+    'unique' => [
+        'username' => ['case_insensitive' => true],
+        'email' => ['case_insensitive' => true],
+    ],
     'defaults' => [
         'username' => '',
         'email' => '',

@@ -8,6 +8,7 @@ namespace Module;
 use JsonCodec;
 use InvalidArgumentException;
 use Exception;
+use Storage\FileIO;
 
 class ModuleValidator
 {
@@ -124,7 +125,7 @@ class ModuleValidator
             $errors[] = 'Missing module.json';
         } else {
             try {
-                $manifest = JsonCodec::decode(file_get_contents($manifestPath));
+                $manifest = JsonCodec::decode(FileIO::readImmutable($manifestPath));
                 $manifestErrors = self::validateManifest($manifest);
                 $errors = array_merge($errors, $manifestErrors);
             } catch (Exception $e) {

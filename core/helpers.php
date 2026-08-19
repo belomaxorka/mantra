@@ -17,14 +17,14 @@ function app()
 }
 
 /**
- * Get config instance or value.
- * Works before Application exists (creates its own Config instance).
+ * Get the shared config repository or a value.
+ * Works before Application exists and uses explicit save() semantics.
  */
 function config($key = null, $default = null)
 {
     static $config = null;
     if ($config === null) {
-        $config = new Config();
+        $config = new ConfigRepository();
     }
 
     if ($key === null) {

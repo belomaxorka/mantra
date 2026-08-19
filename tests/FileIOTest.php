@@ -39,6 +39,15 @@ class FileIOTest extends MantraTestCase
         $this->assertSame($content, $read, 'readLocked() returns correct content');
     }
 
+    public function testReadImmutableDoesNotCreateSidecarLock(): void
+    {
+        $path = $this->testDir . '/manifest.json';
+        file_put_contents($path, '{"name":"demo"}');
+
+        $this->assertSame('{"name":"demo"}', FileIO::readImmutable($path));
+        $this->assertFileDoesNotExist($path . FileIO::LOCK_EXTENSION);
+    }
+
     public function testReadNonExistent(): void
     {
         $path = $this->testDir . '/non-existent.txt';
@@ -91,7 +100,7 @@ class FileIOTest extends MantraTestCase
         $this->assertFalse($result, 'deleteLocked() returns false for non-existent file');
     }
 
-    public function testDeleteCleansLockFile(): void
+    public function testDeletePreservesStableLockIdentity(): void
     {
         $path = $this->testDir . '/delete-lock-cleanup.txt';
         FileIO::writeAtomic($path, 'data');
@@ -100,7 +109,7 @@ class FileIOTest extends MantraTestCase
 
         FileIO::deleteLocked($path);
         $this->assertFileDoesNotExist($path, 'Data file removed');
-        $this->assertFileDoesNotExist($lockPath, 'Lock file cleaned up after delete');
+        $this->assertFileExists($lockPath, 'Lock file remains as the stable mutex identity');
     }
 
     public function testLockFileCreation(): void
@@ -236,6 +245,7 @@ class FileIOTest extends MantraTestCase
 
     public function testCleanOrphanedLocks(): void
     {
+        // Maintenance-only API: no worker may run concurrently with this test.
         $lockDir = $this->testDir . '/locks-orphaned';
         mkdir($lockDir, 0o755, true);
 

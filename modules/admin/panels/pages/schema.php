@@ -4,6 +4,7 @@
 
 return [
     'version' => 2,
+    'unique' => ['slug'],
     'defaults' => [
         'title' => '',
         'slug' => '',
@@ -16,15 +17,14 @@ return [
         'created_at' => '',
         'updated_at' => '',
     ],
-    'migrate' => function ($doc, $from, $to) {
-        if ($from < 2) {
+    'migrations' => [
+        2 => function ($doc, $from, $to) {
             if (!isset($doc['author_id'])) {
                 $doc['author_id'] = '';
             }
-            $doc['schema_version'] = 2;
-        }
-        return $doc;
-    },
+            return $doc;
+        },
+    ],
     'fields' => [
         'title' => [
             'type' => 'string',

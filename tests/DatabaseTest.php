@@ -78,6 +78,57 @@ class DatabaseTest extends MantraTestCase
         $this->assertTrue($this->db->isUnique('identity_items', 'slug', 'first', $secondId));
     }
 
+    public function testSchemaUniqueConstraintIsEnforcedInsideWrite(): void
+    {
+        $this->createTestSchema('test_unique', [
+            'version' => 1,
+            'unique' => ['slug'],
+            'defaults' => ['slug' => ''],
+            'fields' => [
+                'slug' => ['type' => 'string', 'required' => true],
+            ],
+        ]);
+
+        $this->db->create('test_unique', ['slug' => 'same']);
+
+        $this->expectException(UniqueConstraintViolationException::class);
+        $this->db->create('test_unique', ['slug' => 'same']);
+    }
+
+    public function testCaseInsensitiveUniqueConstraint(): void
+    {
+        $this->createTestSchema('test_unique_case', [
+            'version' => 1,
+            'unique' => ['name' => ['case_insensitive' => true]],
+            'defaults' => ['name' => ''],
+            'fields' => [
+                'name' => ['type' => 'string', 'required' => true],
+            ],
+        ]);
+
+        $this->db->create('test_unique_case', ['name' => 'Admin']);
+
+        $this->expectException(UniqueConstraintViolationException::class);
+        $this->db->create('test_unique_case', ['name' => 'admin']);
+    }
+
+    public function testAllReadAndDeleteEntryPointsRejectTraversal(): void
+    {
+        foreach ([
+            fn() => $this->db->read('../users', 'item'),
+            fn() => $this->db->read('users', '../item'),
+            fn() => $this->db->delete('../users', 'item'),
+            fn() => $this->db->listIds('../users'),
+        ] as $operation) {
+            try {
+                $operation();
+                $this->fail('Expected invalid path exception');
+            } catch (InvalidArgumentException $e) {
+                $this->assertNotSame('', $e->getMessage());
+            }
+        }
+    }
+
     public function testDefaultsApplied(): void
     {
         $this->createTestSchema('test_defaults', [
@@ -698,6 +749,25 @@ class DatabaseTest extends MantraTestCase
 
         $read = $db->read('test_delete', $id);
         $this->assertNull($read, 'Read returns null for deleted document');
+    }
+
+    public function testConditionalDeleteEvaluatesInvariantInsideCollectionBoundary(): void
+    {
+        $db = new Database($this->testDir);
+        $first = $db->create('guarded', ['role' => 'admin']);
+        $second = $db->create('guarded', ['role' => 'admin']);
+
+        $guard = function ($target, $documents) {
+            $admins = array_filter(
+                $documents,
+                fn($document) => ($document['role'] ?? '') === 'admin',
+            );
+            return ($target['role'] ?? '') !== 'admin' || count($admins) > 1;
+        };
+
+        $this->assertTrue($db->deleteIf('guarded', $first, $guard));
+        $this->assertFalse($db->deleteIf('guarded', $second, $guard));
+        $this->assertTrue($db->exists('guarded', $second));
     }
 
     public function testExists(): void

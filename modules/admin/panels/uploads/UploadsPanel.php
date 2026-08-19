@@ -246,11 +246,13 @@ class UploadsPanel extends AdminPanel
             }
         }
 
-        // Delete physical file
+        $relatedPaths = [];
+
+        // Delete physical file and metadata as one recoverable operation.
         try {
             $filePath = \Storage\FileIO::resolveWithin(MANTRA_UPLOADS, $file['path']);
             if (is_file($filePath)) {
-                @unlink($filePath);
+                $relatedPaths[] = $filePath;
             }
         } catch (\Storage\FileIOException $e) {
             logger()->warning('Rejected unsafe upload metadata path', [
@@ -259,8 +261,18 @@ class UploadsPanel extends AdminPanel
             ]);
         }
 
-        // Delete metadata
-        app()->db()->delete('uploads', $id);
+        try {
+            if (!app()->db()->deleteWithRelatedFiles('uploads', $id, $relatedPaths)) {
+                throw new \RuntimeException('Upload metadata disappeared before deletion');
+            }
+        } catch (\Throwable $e) {
+            logger()->error('Failed to delete upload transactionally', [
+                'upload_id' => $id,
+                'error' => $e->getMessage(),
+            ]);
+            $this->renderErrorPage(t('admin-uploads.error_delete_failed'), 500);
+            return;
+        }
 
         $this->redirectAdmin('uploads');
     }
@@ -331,7 +343,7 @@ class UploadsPanel extends AdminPanel
         try {
             $metadata['_id'] = app()->db()->create('uploads', $metadata);
         } catch (\Throwable $e) {
-            @unlink($targetPath);
+            \Storage\FileIO::deleteLocked($targetPath);
             throw $e;
         }
 

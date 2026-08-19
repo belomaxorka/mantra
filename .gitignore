@@ -9,6 +9,10 @@
 
 /storage/logs/*
 /storage/sessions/*
+/storage/cache/*
+/storage/revisions/*
+/storage/transactions/*
+/storage/trash/*
 
 !.gitkeep
 

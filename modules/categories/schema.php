@@ -4,6 +4,7 @@
 
 return [
     'version' => 1,
+    'unique' => ['slug'],
     'defaults' => [
         'title' => '',
         'slug' => '',

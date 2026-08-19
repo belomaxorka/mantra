@@ -41,7 +41,8 @@ return [
 
     // Errors
     'admin-users.not_found' => 'User not found.',
-    'admin-users.create_error' => 'Failed to create user. Username may already exist or password is missing.',
+    'admin-users.create_error' => 'Failed to create user. Username or email may already exist, or the password is missing.',
+    'admin-users.update_error' => 'Failed to update user. The email may already belong to another account.',
     'admin-users.access_denied' => 'Access denied. Administrator privileges required.',
     'admin-users.is_you' => 'You',
 ];

@@ -143,7 +143,7 @@ Then open `http://127.0.0.1:8000/install.php`.
 | Directory | Writable | Purpose |
 |---|---|---|
 | `content/` | Yes | Pages, posts, users, settings (flat-file database) |
-| `storage/` | Yes | Logs, sessions |
+| `storage/` | Yes | Logs, revisions, transaction journals, recoverable trash |
 | `uploads/` | Yes | User-uploaded files |
 | `core/` | No | CMS engine |
 | `modules/` | No* | Modules (writable if using OTA updates) |

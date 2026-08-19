@@ -38,4 +38,20 @@ class PermissionRegistryTest extends MantraTestCase
         $this->assertFalse($registry->hasOverride('viewer'));
         $this->assertSame(['pages.view'], $registry->getPermissionsForRole('viewer'));
     }
+
+    public function testSeveralRoleOverridesUseOneConfigWrite(): void
+    {
+        $config = new InMemoryConfig();
+        $registry = new PermissionRegistry($config);
+        $registry->registerPermissions(['pages.view', 'pages.edit'], 'Pages');
+
+        $registry->setRolesPermissions([
+            'editor' => ['pages.view', 'pages.edit'],
+            'viewer' => ['pages.view'],
+        ]);
+
+        $this->assertSame(1, $config->getSaveCount());
+        $this->assertSame(['pages.view', 'pages.edit'], $registry->getPermissionsForRole('editor'));
+        $this->assertSame(['pages.view'], $registry->getPermissionsForRole('viewer'));
+    }
 }

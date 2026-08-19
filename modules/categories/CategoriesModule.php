@@ -126,7 +126,12 @@ class CategoriesModule extends BaseAdminModule
             return;
         }
 
-        app()->db()->create('categories', $data);
+        try {
+            app()->db()->create('categories', $data);
+        } catch (UniqueConstraintViolationException $e) {
+            $this->renderCategoryEditor($data, true, t('admin.common.slug_exists'));
+            return;
+        }
 
         $this->redirectAdmin('categories');
     }
@@ -179,7 +184,13 @@ class CategoriesModule extends BaseAdminModule
             return;
         }
 
-        app()->db()->write('categories', $id, $data);
+        try {
+            app()->db()->write('categories', $id, $data);
+        } catch (UniqueConstraintViolationException $e) {
+            $data['_id'] = $id;
+            $this->renderCategoryEditor($data, false, t('admin.common.slug_exists'));
+            return;
+        }
 
         $this->redirectAdmin('categories');
     }

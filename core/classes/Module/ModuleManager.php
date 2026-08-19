@@ -6,10 +6,10 @@
 
 namespace Module;
 
-use Storage\FileIO;
 use Config;
 use JsonCodec;
 use Exception;
+use Storage\FileIO;
 
 class ModuleManager
 {
@@ -127,7 +127,7 @@ class ModuleManager
                 return false;
             }
 
-            $manifest = JsonCodec::decode(file_get_contents($manifestPath));
+            $manifest = JsonCodec::decode(FileIO::readImmutable($manifestPath));
 
             // Validate required fields
             if (!isset($manifest['id']) || !isset($manifest['version'])) {
@@ -320,25 +320,16 @@ class ModuleManager
         // Add to enabled modules in config
         $enabledModules[] = $moduleName;
 
-        // Update config file
-        $configPath = MANTRA_CONTENT . '/settings/config.json';
-        try {
-            $configData = JsonCodec::decode(FileIO::readLocked($configPath));
-            if (!isset($configData['modules'])) {
-                $configData['modules'] = [];
-            }
-            $configData['modules']['enabled'] = $enabledModules;
-            FileIO::writeAtomic($configPath, JsonCodec::encode($configData));
-
+        if ($this->persistEnabledModules($enabledModules)) {
             logger()->info('Module enabled', ['module' => $moduleName]);
             return true;
-        } catch (Exception $e) {
-            logger()->error('Failed to update config', [
-                'module' => $moduleName,
-                'error' => $e->getMessage(),
-            ]);
-            return false;
         }
+
+        // Compensate lifecycle effects if persistence failed.
+        if (!$module->onDisable()) {
+            logger()->critical('Module enable rollback hook failed', ['module' => $moduleName]);
+        }
+        return false;
     }
 
     /**
@@ -371,25 +362,16 @@ class ModuleManager
         $enabledModules = Config::getNested($this->config, 'modules.enabled', []);
         $enabledModules = array_values(array_filter($enabledModules, fn($name) => $name !== $moduleName));
 
-        // Update config file
-        $configPath = MANTRA_CONTENT . '/settings/config.json';
-        try {
-            $configData = JsonCodec::decode(FileIO::readLocked($configPath));
-            if (!isset($configData['modules'])) {
-                $configData['modules'] = [];
-            }
-            $configData['modules']['enabled'] = $enabledModules;
-            FileIO::writeAtomic($configPath, JsonCodec::encode($configData));
-
+        if ($this->persistEnabledModules($enabledModules)) {
             logger()->info('Module disabled', ['module' => $moduleName]);
             return true;
-        } catch (Exception $e) {
-            logger()->error('Failed to update config', [
-                'module' => $moduleName,
-                'error' => $e->getMessage(),
-            ]);
-            return false;
         }
+
+        // Compensate lifecycle effects if persistence failed.
+        if (!$module->onEnable()) {
+            logger()->critical('Module disable rollback hook failed', ['module' => $moduleName]);
+        }
+        return false;
     }
 
     /**
@@ -414,7 +396,9 @@ class ModuleManager
 
         // Disable first
         if ($this->isLoaded($moduleName)) {
-            $this->disableModule($moduleName);
+            if (!$this->disableModule($moduleName)) {
+                return false;
+            }
         }
 
         // Call onUninstall hook
@@ -425,6 +409,31 @@ class ModuleManager
 
         logger()->info('Module uninstalled', ['module' => $moduleName]);
         return true;
+    }
+
+    /** Persist module state through the single global config repository. */
+    private function persistEnabledModules($enabledModules): bool
+    {
+        $repository = \config();
+        try {
+            $enabledModules = array_values(array_unique($enabledModules));
+            $repository->set('modules.enabled', $enabledModules)->save();
+            $this->config = $repository->all();
+            return true;
+        } catch (\Throwable $e) {
+            try {
+                $repository->reload();
+                $this->config = $repository->all();
+            } catch (\Throwable $reloadError) {
+                logger()->critical('Failed to reload config after module persistence failure', [
+                    'error' => $reloadError->getMessage(),
+                ]);
+            }
+            logger()->error('Failed to persist enabled modules', [
+                'error' => $e->getMessage(),
+            ]);
+            return false;
+        }
     }
 
     /**
@@ -456,7 +465,7 @@ class ModuleManager
             }
 
             try {
-                $manifest = JsonCodec::decode(file_get_contents($manifestPath));
+                $manifest = JsonCodec::decode(FileIO::readImmutable($manifestPath));
 
                 // Determine module ID
                 $moduleId = $manifest['id'] ??

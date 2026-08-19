@@ -6,23 +6,25 @@
  * IMPORTANT: This is NOT the actual config file!
  * - This file defines the UI form structure (fields, tabs, types, defaults)
  * - Actual config values are stored in: content/settings/config.json
- * - Config is edited through the admin panel or programmatically via ConfigSettings class
+ * - Config is edited through the admin panel or ConfigRepository
  *
  * Options for dynamic selects (themes/modules list) are injected at runtime by AdminModule.
  */
 
 return [
     'version' => 3,
-    'migrate' => function ($data, $from, $to) {
-        // v2: admin sub-modules replaced by panels — strip from modules.enabled
-        if ($from < 2 && isset($data['modules']['enabled']) && is_array($data['modules']['enabled'])) {
-            $panelIds = ['admin-dashboard', 'admin-pages', 'admin-posts', 'admin-settings'];
-            $data['modules']['enabled'] = array_values(array_diff($data['modules']['enabled'], $panelIds));
-        }
-        // v3: admin.accent_color — no data migration needed, gets default automatically
-        $data['schema_version'] = $to;
-        return $data;
-    },
+    'migrations' => [
+        2 => function ($data, $from, $to) {
+            // Admin sub-modules were replaced by panels.
+            if (isset($data['modules']['enabled']) && is_array($data['modules']['enabled'])) {
+                $panelIds = ['admin-dashboard', 'admin-pages', 'admin-posts', 'admin-settings'];
+                $data['modules']['enabled'] = array_values(array_diff($data['modules']['enabled'], $panelIds));
+            }
+            return $data;
+        },
+        // v3 adds admin.accent_color through defaults; no transform required.
+        3 => fn($data, $from, $to) => $data,
+    ],
     'tabs' => [
         [
             'id' => 'site',
@@ -162,6 +164,13 @@ return [
                     'title' => 'admin-settings.content.compact_json',
                     'default' => false,
                     'help' => 'admin-settings.content.compact_json.help',
+                ],
+                [
+                    'path' => 'content.revision_limit',
+                    'type' => 'number',
+                    'title' => 'admin-settings.content.revision_limit',
+                    'default' => 20,
+                    'help' => 'admin-settings.content.revision_limit.help',
                 ],
             ],
         ],

@@ -268,7 +268,7 @@ class Logger implements \Psr\Log\LoggerInterface
         foreach ($files as $file) {
             if (is_file($file)) {
                 if ($now - filemtime($file) >= 60 * 60 * 24 * $days) {
-                    if (unlink($file)) {
+                    if (\Storage\FileIO::deleteLocked($file)) {
                         $deleted++;
                     }
                 }

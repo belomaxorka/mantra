@@ -1,18 +1,39 @@
 <?php declare(strict_types=1);
 
 /** Minimal config repository test double shared by authorization tests. */
-final class InMemoryConfig
+final class InMemoryConfig implements SettingsStoreInterface
 {
     private array $data;
+    private int $saveCount = 0;
 
     public function __construct(array $data = [])
     {
         $this->data = $data;
     }
 
+    public function schema()
+    {
+        return null;
+    }
+
     public function get($path, $default = null)
     {
         return Config::getNested($this->data, (string)$path, $default);
+    }
+
+    public function load(): self
+    {
+        return $this;
+    }
+
+    public function reload(): self
+    {
+        return $this;
+    }
+
+    public function all(): array
+    {
+        return $this->data;
     }
 
     public function has($path): bool
@@ -23,6 +44,22 @@ final class InMemoryConfig
     public function set($path, $value): self
     {
         Config::setNested($this->data, (string)$path, $value);
+        return $this;
+    }
+
+    public function setMultiple($values): self
+    {
+        if (is_array($values)) {
+            foreach ($values as $path => $value) {
+                $this->set($path, $value);
+            }
+        }
+        return $this;
+    }
+
+    public function replace($data): self
+    {
+        $this->data = is_array($data) ? $data : [];
         return $this;
     }
 
@@ -46,6 +83,17 @@ final class InMemoryConfig
 
     public function save(): bool
     {
+        $this->saveCount++;
         return true;
+    }
+
+    public function getSaveCount(): int
+    {
+        return $this->saveCount;
+    }
+
+    public function path()
+    {
+        return null;
     }
 }

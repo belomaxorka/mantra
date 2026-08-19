@@ -146,6 +146,12 @@ class Application
     public function run(): void
     {
         try {
+            $recoveredTransactions = \Storage\FileTransaction::recoverPending();
+            if ($recoveredTransactions > 0) {
+                logger()->warning('Recovered incomplete file transactions', [
+                    'count' => $recoveredTransactions,
+                ]);
+            }
             logger()->info('Application started');
 
             // Clean old logs periodically (once per day)
@@ -224,7 +230,7 @@ class Application
 
         // Check if cleanup was done today
         if (file_exists($markerFile)) {
-            $lastCleanup = (int)file_get_contents($markerFile);
+            $lastCleanup = (int)\Storage\FileIO::readLocked($markerFile);
             if ($now - $lastCleanup < 86400) { // 24 hours
                 return;
             }
@@ -239,7 +245,7 @@ class Application
         }
 
         // Update marker
-        file_put_contents($markerFile, $now);
+        \Storage\FileIO::writeAtomic($markerFile, (string)$now);
     }
 
     /**
@@ -308,7 +314,7 @@ class Application
      */
     public function config($path, $default = null)
     {
-        return Config::getNested($this->config, (string)$path, $default);
+        return config($path, $default);
     }
 
     /**

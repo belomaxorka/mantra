@@ -1,7 +1,7 @@
 <?php declare(strict_types=1);
 
 /**
- * ConfigSettings Tests (PHPUnit 10.x)
+ * ConfigRepository Tests (PHPUnit 10.x)
  *
  * Tests for schema-driven config.json management:
  * - Real v2 migration (admin sub-modules removal)
@@ -10,16 +10,18 @@
  * - get/set/has methods
  * - schema_version handling
  */
-class ConfigSettingsTest extends MantraTestCase
+class ConfigRepositoryTest extends MantraTestCase
 {
     private $configPath;
     private $originalConfig = null;
+    private $originalGlobalConfig = [];
 
     protected function setUp(): void
     {
         parent::setUp();
 
         $this->configPath = MANTRA_CONTENT . '/settings/config.json';
+        $this->originalGlobalConfig = $GLOBALS['MANTRA_CONFIG'] ?? [];
 
         // Backup original config.json
         if (file_exists($this->configPath)) {
@@ -36,6 +38,7 @@ class ConfigSettingsTest extends MantraTestCase
             // Config didn't exist before; remove the test one
             @unlink($this->configPath);
         }
+        $GLOBALS['MANTRA_CONFIG'] = $this->originalGlobalConfig;
 
         parent::tearDown();
     }
@@ -54,7 +57,7 @@ class ConfigSettingsTest extends MantraTestCase
             ],
         ]);
 
-        $cs = new ConfigSettings();
+        $cs = new ConfigRepository();
         $cs->load();
 
         $enabled = $cs->get('modules.enabled');
@@ -87,7 +90,7 @@ class ConfigSettingsTest extends MantraTestCase
             'site' => ['name' => 'Test Site'],
         ]);
 
-        $cs = new ConfigSettings();
+        $cs = new ConfigRepository();
         $cs->load();
 
         // These should come from tab field defaults
@@ -130,7 +133,7 @@ class ConfigSettingsTest extends MantraTestCase
             'site' => ['name' => 'Custom Name'],
         ]);
 
-        $cs = new ConfigSettings();
+        $cs = new ConfigRepository();
         $cs->load();
         $cs->save();
 
@@ -152,7 +155,7 @@ class ConfigSettingsTest extends MantraTestCase
     {
         $this->writeConfig([]);
 
-        $cs = new ConfigSettings();
+        $cs = new ConfigRepository();
 
         $this->assertTrue($cs->has('site.name'), 'has() returns true for default key');
         $this->assertFalse($cs->has('nonexistent.path'), 'has() returns false for missing key');
@@ -180,7 +183,7 @@ class ConfigSettingsTest extends MantraTestCase
     {
         $this->writeConfig([]);
 
-        $cs = new ConfigSettings();
+        $cs = new ConfigRepository();
         $cs->setMultiple([
             'site.name' => 'Bulk Name',
             'locale.timezone' => 'Europe/Moscow',
@@ -198,6 +201,20 @@ class ConfigSettingsTest extends MantraTestCase
         $this->assertSame('Europe/Moscow', $raw['locale']['timezone'], 'Second value persisted');
     }
 
+    public function testMutationIsNotPersistedUntilExplicitSave(): void
+    {
+        $this->writeConfig(['site' => ['name' => 'Before'], 'schema_version' => 3]);
+        $repository = new ConfigRepository();
+
+        $repository->set('site.name', 'After');
+        $rawBeforeSave = json_decode(file_get_contents($this->configPath), true);
+        $this->assertSame('Before', $rawBeforeSave['site']['name']);
+
+        $repository->save();
+        $rawAfterSave = json_decode(file_get_contents($this->configPath), true);
+        $this->assertSame('After', $rawAfterSave['site']['name']);
+    }
+
     // ---------------------------------------------------------------
     // schema_version persistence
     // ---------------------------------------------------------------
@@ -206,7 +223,7 @@ class ConfigSettingsTest extends MantraTestCase
     {
         $this->writeConfig(['site' => ['name' => 'SV Test']]);
 
-        $cs = new ConfigSettings();
+        $cs = new ConfigRepository();
         $cs->load();
         $cs->set('site.name', 'SV Test Updated');
         $cs->save();
@@ -235,12 +252,12 @@ class ConfigSettingsTest extends MantraTestCase
         ]);
 
         // First load: migration runs
-        $cs1 = new ConfigSettings();
+        $cs1 = new ConfigRepository();
         $cs1->load();
         $enabled1 = $cs1->get('modules.enabled');
 
         // Second load (new instance): migration should not re-run
-        $cs2 = new ConfigSettings();
+        $cs2 = new ConfigRepository();
         $cs2->load();
         $enabled2 = $cs2->get('modules.enabled');
 
@@ -267,7 +284,7 @@ class ConfigSettingsTest extends MantraTestCase
             unlink($this->configPath);
         }
 
-        $cs = new ConfigSettings();
+        $cs = new ConfigRepository();
         $cs->load();
 
         $this->assertSame(
@@ -280,6 +297,59 @@ class ConfigSettingsTest extends MantraTestCase
             $cs->get('locale.timezone'),
             'Default timezone used when config.json missing',
         );
+    }
+
+    public function testUnreadableConfigCannotBeSilentlyOverwritten(): void
+    {
+        $original = '{broken json';
+        file_put_contents($this->configPath, $original);
+        $repository = new ConfigRepository();
+
+        $this->assertSame('Mantra CMS', $repository->get('site.name'));
+        $repository->set('site.name', 'Replacement');
+
+        try {
+            $repository->save();
+            $this->fail('Expected read-only protection');
+        } catch (RuntimeException $e) {
+            $this->assertSame($original, file_get_contents($this->configPath));
+        }
+    }
+
+    public function testNewerSchemaRemainsReadableButReadOnly(): void
+    {
+        $this->writeConfig([
+            'schema_version' => 999,
+            'site' => ['name' => 'Future Site'],
+        ]);
+        $repository = new ConfigRepository();
+
+        $this->assertSame('Future Site', $repository->get('site.name'));
+        $this->expectException(RuntimeException::class);
+        $repository->save();
+    }
+
+    public function testStaleRepositoryCannotOverwriteConcurrentSave(): void
+    {
+        $this->writeConfig([
+            'schema_version' => 3,
+            'site' => ['name' => 'Initial'],
+        ]);
+        $first = new ConfigRepository();
+        $second = new ConfigRepository();
+        $first->load();
+        $second->load();
+
+        $first->set('site.name', 'First')->save();
+        $second->set('site.name', 'Second');
+
+        try {
+            $second->save();
+            $this->fail('Expected optimistic concurrency failure');
+        } catch (ConcurrentSettingsModificationException $e) {
+            $raw = json_decode(file_get_contents($this->configPath), true);
+            $this->assertSame('First', $raw['site']['name']);
+        }
     }
 
     // ---------------------------------------------------------------

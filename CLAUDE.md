@@ -46,7 +46,7 @@ composer analyse              # run PHPStan static analysis (phpstan.neon)
 - `MantraTestCase.php` — base test class
 - `DatabaseTest.php`, `DatabaseSchemaTest.php`, `SchemaMigrationTest.php`
 - `FileIOTest.php`, `JsonCodecTest.php`, `JsonStorageDriverTest.php`, `MarkdownStorageDriverTest.php`
-- `ConfigSettingsTest.php`, `ModuleSettingsTest.php`, `ViewTest.php`
+- `ConfigRepositoryTest.php`, `ModuleSettingsTest.php`, `ViewTest.php`
 
 ### Seed test data
 
@@ -90,14 +90,16 @@ Prevents "//admin" and "\\admin" when site_url is misconfigured.
 2. Define `MANTRA_PROJECT_INFO` (name, version, github, release_date)
 3. Define `MANTRA_CLI` (bool)
 4. Define path constants: `MANTRA_ROOT`, `MANTRA_CORE`, `MANTRA_MODULES`, `MANTRA_CONTENT`, `MANTRA_STORAGE`, `MANTRA_THEMES`, `MANTRA_UPLOADS`
-5. Pre-load PSR LoggerInterface, FileIO, JsonCodec, Config (before autoloader)
+5. Pre-load PSR LoggerInterface, FileIO, JsonCodec, Config, and the settings repository stack (before autoloader)
 6. `Config::bootstrap()` → merged config into `$GLOBALS['MANTRA_CONFIG']`
 7. Define `MANTRA_DEBUG` (from config)
 8. Register PSR-4 autoloader (`core/classes/` → class name)
 9. Load `core/helpers.php` (global functions)
 10. Register `ErrorHandler` (logs to `php` channel)
 
-**Single source of truth** for settings is `content/settings/config.json` (see `core/classes/Config.php`).
+**Single source of truth** for settings is `content/settings/config.json` through `core/classes/ConfigRepository.php`; `Config.php` contains defaults and array helpers.
+
+Settings mutations are explicit: `set()`, `setMultiple()`, and `delete()` only change repository memory; call `save()` once after the complete logical update. Global and module settings share `SettingsRepository` and `SchemaMigrator`.
 
 ### Application lifecycle
 
@@ -456,20 +458,29 @@ $db->registerSchema($collection, $schemaPath);  // register schema for collectio
 
 **Automatic behaviors on `write()`:**
 - Sanitizes input via `SchemaValidator::sanitize()`
+- Runs sequential migrations through `SchemaMigrator`
 - Applies schema defaults for missing fields
 - Validates against schema fields (if defined) — throws `SchemaValidationException`
+- Enforces schema `unique` constraints while holding the collection lock
 - Preserves `created_at` on updates (immutable); sets on creates
 - Sets `updated_at` to current timestamp
 - Sets `schema_version`
+- Captures the previous document in the bounded revision store on update, delete, or lazy migration
 
 **Storage drivers:**
 - `Storage\JsonStorageDriver` — JSON files
 - `Storage\MarkdownStorageDriver` — Markdown with frontmatter (pages/posts only, when `content.format` = `'markdown'`)
+- Both inherit common traversal and collection behavior from `Storage\AbstractFileStorageDriver`
 - Both use `Storage\FileIO` for atomic writes: exclusive locking + temp-file + rename
 
 **JSON storage safety:**
 - `JsonCodec` (`core/classes/JsonCodec.php`) — encoding/decoding with `JsonCodecException`
-- `FileIO` (`core/classes/Storage/FileIO.php`) — `readLocked()` (shared lock), `writeAtomic()` (exclusive lock), per-document `.lock` files
+- `FileIO` (`core/classes/Storage/FileIO.php`) — locked reads, atomic writes and compare/update critical sections
+- `FileTransaction` — journaled multi-file writes/deletes, recovered during application startup
+- `RevisionStore` — append-only snapshots under `storage/revisions/`, retained by `content.revision_limit`
+- `TrashManager` — recoverable moves under `storage/trash/`
+
+See `docs/STORAGE.md` for the complete persistence contract.
 
 #### Document schemas & migrations
 
@@ -485,18 +496,24 @@ Panels register schemas in their constructors via `app()->db()->registerSchema($
 Each schema file returns an array:
 
 ```php
-return array(
-    'version' => 1,                          // schema version
-    'defaults' => array('status' => 'draft'), // missing keys added on read
-    'fields' => array(                       // validation rules (optional)
-        'title' => array('type' => 'string', 'required' => true),
-    ),
-    'migrate' => function($doc, $from, $to) { ... },  // optional
-);
+return [
+    'version' => 2,
+    'defaults' => ['status' => 'draft'],
+    'unique' => ['slug'],
+    'fields' => [
+        'title' => ['type' => 'string', 'required' => true],
+    ],
+    'migrations' => [
+        2 => function ($doc, $from, $to) {
+            // Transform v1 into v2 and return the complete document array.
+            return $doc;
+        },
+    ],
+];
 ```
 
 **Lazy migration on read:** when `Database` reads a document, it:
-1. Runs `migrate()` if `schema_version` < current `version`
+1. Runs each `migrations[target_version]` callback in order if `schema_version` is behind
 2. Applies `defaults` for any still-missing fields
 3. Writes back if changes were made (atomic + locked)
 
@@ -504,7 +521,10 @@ return array(
 - Prefer **additive changes** (add `defaults`) over breaking migrations.
 - Only bump `version` when you need to transform existing documents.
 - Migrations must be **idempotent** and never delete unknown keys.
-- Use `defaults` for simple new fields; use `migrate` for renames, type changes, field moves.
+- Use `defaults` for simple new fields; use a numbered `migrations` callback for renames, type changes, and field moves.
+- Every migration must return an array. Invalid results abort without overwriting the original document.
+- A document with a newer `schema_version` is never downgraded or automatically overwritten.
+- The legacy one-shot `migrate` callback remains supported for third-party module compatibility.
 
 ### Auth & Permissions
 
@@ -567,7 +587,7 @@ $this->hook('permissions.register', function($registry) {
 | `ContentTypeRegistry` | `core/classes/ContentTypeRegistry.php` | Registry for custom content types |
 | `Language` | `core/classes/Language.php` | Language metadata |
 | `User` | `core/classes/User.php` | User model with `canEdit()` ownership check |
-| `ConfigSettings` | `core/classes/ConfigSettings.php` | Settings UI management (uses `core/config.settings.schema.php`) |
+| `ConfigRepository` | `core/classes/ConfigRepository.php` | Single global settings store (uses `core/config.settings.schema.php`) |
 | `Psr\Log\LoggerInterface` | `core/classes/Psr/Log/` | PSR-3 logger interface (bundled, no Composer) |
 
 ## Documentation index

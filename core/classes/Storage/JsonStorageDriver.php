@@ -12,15 +12,8 @@ use JsonCodec;
 use JsonCodecException;
 use Exception;
 
-class JsonStorageDriver implements StorageDriverInterface
+class JsonStorageDriver extends AbstractFileStorageDriver
 {
-    private $basePath;
-
-    public function __construct($basePath = null)
-    {
-        $this->basePath = $basePath ? $basePath : MANTRA_CONTENT;
-    }
-
     public function read($collection, $id)
     {
         $path = $this->getPath($collection, $id);
@@ -74,92 +67,9 @@ class JsonStorageDriver implements StorageDriverInterface
         }
     }
 
-    public function delete($collection, $id)
-    {
-        $path = $this->getPath($collection, $id);
-        return FileIO::deleteLocked($path);
-    }
-
-    public function exists($collection, $id)
-    {
-        $path = $this->getPath($collection, $id);
-        return file_exists($path);
-    }
-
-    public function readCollection($collection)
-    {
-        $collectionPath = $this->basePath . '/' . $collection;
-
-        if (!is_dir($collectionPath)) {
-            return [];
-        }
-
-        $items = [];
-        $files = glob($collectionPath . '/*' . $this->getExtension());
-
-        foreach ($files as $file) {
-            $id = basename($file, $this->getExtension());
-
-            try {
-                $raw = file_get_contents($file);
-                if ($raw === false) {
-                    throw new Exception('Failed to read file');
-                }
-
-                $data = JsonCodec::decode($raw);
-            } catch (Exception $e) {
-                logger()->error('Failed to read JSON document in collection', [
-                    'collection' => $collection,
-                    'id' => $id,
-                    'path' => $file,
-                    'error' => $e->getMessage(),
-                ]);
-                continue;
-            }
-
-            $items[$id] = $data;
-        }
-
-        return $items;
-    }
-
-    public function countFiles($collection)
-    {
-        $collectionPath = $this->basePath . '/' . $collection;
-
-        if (!is_dir($collectionPath)) {
-            return 0;
-        }
-
-        return count(glob($collectionPath . '/*' . $this->getExtension()));
-    }
-
-    public function listIds($collection)
-    {
-        $collectionPath = $this->basePath . '/' . $collection;
-
-        if (!is_dir($collectionPath)) {
-            return [];
-        }
-
-        $ext = $this->getExtension();
-        $files = glob($collectionPath . '/*' . $ext);
-        $ids = [];
-
-        foreach ($files as $file) {
-            $ids[] = basename($file, $ext);
-        }
-
-        return $ids;
-    }
-
     public function getExtension()
     {
         return '.json';
     }
 
-    private function getPath($collection, $id)
-    {
-        return $this->basePath . '/' . $collection . '/' . $id . $this->getExtension();
-    }
 }

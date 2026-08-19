@@ -35,4 +35,5 @@ return [
     'admin-uploads.error_move_failed' => 'Не удалось сохранить загруженный файл.',
     'admin-uploads.error_partial' => 'Файл был загружен лишь частично.',
     'admin-uploads.error_upload_failed' => 'Ошибка загрузки. Попробуйте ещё раз.',
+    'admin-uploads.error_delete_failed' => 'Не удалось безопасно удалить файл. Попробуйте ещё раз.',
 ];

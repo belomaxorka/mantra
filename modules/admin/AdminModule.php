@@ -8,6 +8,7 @@
  */
 
 use Module\Module;
+use Storage\FileIO;
 
 class AdminModule extends Module
 {
@@ -68,7 +69,7 @@ class AdminModule extends Module
      */
     public function injectAppearanceStyle($html)
     {
-        $config = \ConfigSettings::instance();
+        $config = config();
         $lines = [];
         $extra = '';
 
@@ -190,7 +191,7 @@ class AdminModule extends Module
             }
 
             try {
-                $metadata = JsonCodec::decode(file_get_contents($metaPath));
+                $metadata = JsonCodec::decode(FileIO::readImmutable($metaPath));
             } catch (Exception $e) {
                 logger()->warning('Failed to read panel.json', ['panel' => $dir, 'error' => $e->getMessage()]);
                 continue;

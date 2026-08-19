@@ -320,7 +320,12 @@ abstract class ContentPanel extends AdminPanel
         $data['created_at'] = clock()->timestamp();
         $data['updated_at'] = clock()->timestamp();
 
-        $id = app()->db()->create($this->getCollectionName(), $data);
+        try {
+            $id = app()->db()->create($this->getCollectionName(), $data);
+        } catch (\UniqueConstraintViolationException $e) {
+            $this->renderFormWithError($data, t('admin.common.slug_exists'), true);
+            return;
+        }
 
         app()->hooks()->fire('content.saved', [
             'collection' => $this->getCollectionName(),
@@ -404,7 +409,13 @@ abstract class ContentPanel extends AdminPanel
         $data['author_id'] = $item['author_id'];
         $data['created_at'] = $item['created_at'];
 
-        app()->db()->write($this->getCollectionName(), $id, $data);
+        try {
+            app()->db()->write($this->getCollectionName(), $id, $data);
+        } catch (\UniqueConstraintViolationException $e) {
+            $data['_id'] = $id;
+            $this->renderFormWithError($data, t('admin.common.slug_exists'), false);
+            return;
+        }
 
         app()->hooks()->fire('content.saved', [
             'collection' => $this->getCollectionName(),

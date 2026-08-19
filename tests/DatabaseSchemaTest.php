@@ -290,14 +290,14 @@ class DatabaseSchemaTest extends MantraTestCase
 
         $result = Config::bootstrap($configPath);
 
-        $this->assertArrayHasKey('schema_version', $result, 'schema_version preserved through pruneToDefaults');
-        $this->assertSame(5, $result['schema_version'], 'schema_version preserved through pruneToDefaults');
+        $this->assertArrayHasKey('schema_version', $result, 'Future schema_version remains visible');
+        $this->assertSame(5, $result['schema_version'], 'Future schema_version is preserved');
         $this->assertSame('Test Site', $result['site']['name'], 'Regular config values still work');
 
         @unlink($configPath);
     }
 
-    public function testConfigPruneWithoutSchemaVersion(): void
+    public function testConfigBootstrapMigratesMissingSchemaVersionInMemory(): void
     {
         $tempDir = $this->testDir . '/settings2';
         if (!is_dir($tempDir)) {
@@ -310,8 +310,11 @@ class DatabaseSchemaTest extends MantraTestCase
 
         $result = Config::bootstrap($configPath);
 
-        $this->assertArrayNotHasKey('schema_version', $result, 'schema_version absent when not in config.json');
+        $this->assertSame(3, $result['schema_version'], 'Missing schema_version migrates in memory');
         $this->assertSame('No Version', $result['site']['name'], 'Config values loaded correctly');
+
+        $raw = json_decode(file_get_contents($configPath), true);
+        $this->assertArrayNotHasKey('schema_version', $raw, 'Bootstrap does not write before install state is checked');
 
         @unlink($configPath);
     }

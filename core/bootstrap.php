@@ -38,6 +38,10 @@ require_once MANTRA_CORE . '/classes/Psr/Log/LogLevel.php';
 require_once MANTRA_CORE . '/classes/Storage/FileIO.php';
 require_once MANTRA_CORE . '/classes/JsonCodec.php';
 require_once MANTRA_CORE . '/classes/Config.php';
+require_once MANTRA_CORE . '/classes/SettingsStoreInterface.php';
+require_once MANTRA_CORE . '/classes/SchemaMigrator.php';
+require_once MANTRA_CORE . '/classes/SettingsRepository.php';
+require_once MANTRA_CORE . '/classes/ConfigRepository.php';
 $config = Config::bootstrap();
 $GLOBALS['MANTRA_CONFIG'] = $config;
 

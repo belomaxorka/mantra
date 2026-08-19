@@ -25,10 +25,13 @@ Mantra is a modern flat-file CMS that requires no database and no Composer packa
 - **Theme engine** -- template hierarchy with smart fallback (theme > module > core), partials, and hook injection points
 - **Multi-language** -- built-in i18n with English and Russian, extensible via language files
 - **Atomic file I/O** -- exclusive locking and temp-file-then-rename writes prevent corruption under concurrency
-- **Schema migrations** -- lazy, automatic JSON document upgrades on read (no manual scripts needed)
+- **Integrity safeguards** -- schema-level uniqueness, optimistic config writes, bounded document revisions, and crash recovery for multi-file operations
+- **Schema migrations** -- one shared, sequential migration engine for documents and settings
 - **PSR-3 logging** -- daily-rotated log files with channel support
 - **CSRF protection** -- built-in token generation and verification
 - **Markdown support** -- write content in Markdown with frontmatter or JSON
+
+Storage invariants, migration rules, revisions, and recovery behavior are documented in [docs/STORAGE.md](docs/STORAGE.md).
 
 ## Requirements
 
@@ -92,7 +95,7 @@ mantra/
 │   ├── posts/              # Post documents (*.json / *.md)
 │   ├── users/              # User accounts (*.json)
 │   └── settings/           # config.json
-├── storage/                # Logs and cache (runtime)
+├── storage/                # Logs, revisions, transactions, trash (runtime)
 ├── uploads/                # User-uploaded files
 ├── docs/                   # Developer documentation
 ├── index.php               # Main entry point

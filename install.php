@@ -8,8 +8,6 @@ require_once __DIR__ . '/core/bootstrap.php';
 
 \Http\SecurityHeadersMiddleware::apply((string)parse_url($_SERVER['REQUEST_URI'] ?? '/install.php', PHP_URL_PATH));
 
-use Storage\FileIO;
-
 // Check if already installed — redirect away instead of die()
 if (InstallationState::isInstalled()) {
     header('Location: ' . base_url('/'), true, 302);
@@ -142,49 +140,47 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
     }
 
     if (!isset($error)) {
-        // Create configuration
-        // Keep site.url relative until an administrator explicitly configures
-        // the canonical public URL. Never persist the request Host header.
-        $config = Config::buildInstallConfig($siteName, $language);
-        $defaults = Config::defaults();
-        $overrides = Config::diffOverrides($defaults, $config);
+        try {
+            // Keep site.url relative until an administrator explicitly configures
+            // the canonical public URL. Never persist the request Host header.
+            $config = Config::buildInstallConfig($siteName, $language);
+            (new ConfigRepository())->replace($config)->save();
 
-        // Add schema version
-        $schemaPath = MANTRA_CORE . '/config.settings.schema.php';
-        if (file_exists($schemaPath)) {
-            $schema = require $schemaPath;
-            if (is_array($schema) && isset($schema['version'])) {
-                $overrides['schema_version'] = (int)$schema['version'];
+            // Create admin user (use Clock format for timestamp consistency)
+            $db = new Database();
+            $now = date(Clock::STORAGE_FORMAT);
+            $userData = [
+                'username' => $username,
+                'password' => Auth::hashPasswordStatic($password),
+                'email' => '',
+                'role' => 'admin',
+                'status' => 'active',
+                'author_id' => '',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+            $db->create('users', $userData);
+
+            // The user record is also the compatibility installation marker.
+            // A marker write failure must not invite creation of a second admin.
+            try {
+                InstallationState::markInstalled();
+            } catch (Throwable $markerError) {
+                logger()->warning('Installation marker could not be written', [
+                    'error' => $markerError->getMessage(),
+                ]);
             }
-        }
 
-        // Save configuration
-        FileIO::writeAtomic(MANTRA_CONTENT . '/settings/config.json', JsonCodec::encode($overrides));
-
-        // Create admin user (use Clock format for timestamp consistency)
-        $db = new Database();
-
-        $now = date(Clock::STORAGE_FORMAT);
-        $userData = [
-            'username' => $username,
-            'password' => Auth::hashPasswordStatic($password),
-            'email' => '',
-            'role' => 'admin',
-            'status' => 'active',
-            'author_id' => '',
-            'created_at' => $now,
-            'updated_at' => $now,
-        ];
-
-        if ($db->create('users', $userData)) {
-            InstallationState::markInstalled();
             // Regenerate CSRF token after success
             unset($_SESSION['install_csrf']);
             $success = true;
             $adminUrl = base_url('/admin');
             $siteUrl = base_url('/');
-        } else {
-            $error = 'error_create_user';
+        } catch (Throwable $installError) {
+            logger()->error('Installation failed', [
+                'error' => $installError->getMessage(),
+            ]);
+            $error = 'error_install_failed';
         }
     }
 
@@ -329,8 +325,8 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
                 error_requirements: 'System requirements are not met.',
                 error_install_busy: 'Another installation is already in progress. Please try again.',
                 error_create_dirs: 'Failed to create required directories. Check file permissions.',
-                error_csrf: 'Security token expired. Please try again.',
-                error_create_user: 'Failed to create user.'
+                error_install_failed: 'Installation failed while saving configuration or the administrator account.',
+                error_csrf: 'Security token expired. Please try again.'
             },
             ru: {
                 page_title: 'Установка <?php echo e(MANTRA_PROJECT_INFO['name']); ?>',
@@ -354,8 +350,8 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
                 error_requirements: 'Системные требования не выполнены.',
                 error_install_busy: 'Установка уже выполняется другим запросом. Повторите позже.',
                 error_create_dirs: 'Не удалось создать директории. Проверьте права доступа.',
-                error_csrf: 'Токен безопасности истёк. Попробуйте ещё раз.',
-                error_create_user: 'Не удалось создать пользователя.'
+                error_install_failed: 'Не удалось сохранить конфигурацию или учётную запись администратора.',
+                error_csrf: 'Токен безопасности истёк. Попробуйте ещё раз.'
             }
         };
 

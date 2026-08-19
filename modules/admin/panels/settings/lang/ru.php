@@ -56,6 +56,8 @@ return [
     'admin-settings.content.posts_per_page' => 'Постов на странице',
     'admin-settings.content.compact_json' => 'Компактное хранение JSON',
     'admin-settings.content.compact_json.help' => 'Хранить JSON-файлы контента без форматирования (уменьшает размер файлов).',
+    'admin-settings.content.revision_limit' => 'Ревизий на документ',
+    'admin-settings.content.revision_limit.help' => 'Число резервных снимков для каждого изменённого или удалённого документа. 0 отключает ревизии.',
 
     // Modules settings
     'admin-settings.modules.core_modules' => 'Основные модули',

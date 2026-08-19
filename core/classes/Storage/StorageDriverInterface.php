@@ -71,6 +71,13 @@ interface StorageDriverInterface
     public function listIds($collection);
 
     /**
+     * Resolve the backing file for a document.
+     *
+     * @return string Absolute file path
+     */
+    public function pathFor($collection, $id);
+
+    /**
      * Get the file extension used by this driver
      *
      * @return string File extension (e.g., 'json', 'md')

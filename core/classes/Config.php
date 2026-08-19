@@ -1,21 +1,13 @@
 <?php declare(strict_types=1);
 
 /**
- * Config - Configuration management
+ * Config - Immutable defaults and nested-array utilities
  *
- * Single source of truth: content/settings/config.json
- *
- * - Provides defaults
- * - Merges JSON over defaults
+ * Persistence and mutable state belong exclusively to ConfigRepository.
  */
-
-use Storage\FileIO;
 
 class Config
 {
-    private $configPath = '';
-    private $config = [];
-
     /**
      * Build full configuration array (defaults + JSON overrides).
      * Intended for early bootstrap (index.php) before Application exists.
@@ -23,55 +15,13 @@ class Config
     public static function bootstrap($configPath = null)
     {
         $path = $configPath ? $configPath : (MANTRA_CONTENT . '/settings/config.json');
-
-        $defaults = self::defaults();
-        $json = [];
-
-        if ($path && file_exists($path)) {
-            try {
-                $raw = FileIO::readLocked($path);
-                $decoded = JsonCodec::decode($raw);
-                if (is_array($decoded)) {
-                    $json = $decoded;
-                }
-            } catch (Exception $e) {
-                // Don't fail bootstrap on config JSON issues; ErrorHandler/logger may not be ready yet.
-                error_log('Failed to read config.json: ' . $e->getMessage());
-            }
+        try {
+            // Bootstrap must not write before installation state is checked.
+            return (new ConfigRepository($path, null, false))->all();
+        } catch (Throwable $e) {
+            error_log('Failed to bootstrap config.json: ' . $e->getMessage());
+            return self::defaults();
         }
-
-        $merged = self::deepMerge($defaults, $json);
-        return self::pruneToDefaults($merged, $defaults);
-    }
-
-    private static function pruneToDefaults($data, $defaults)
-    {
-        if (!is_array($defaults)) {
-            return $data;
-        }
-        if (!is_array($data)) {
-            $data = [];
-        }
-
-        $out = [];
-        foreach ($defaults as $k => $defVal) {
-            if (is_array($defVal) && self::isAssoc($defVal)) {
-                $out[$k] = self::pruneToDefaults($data[$k] ?? [], $defVal);
-            } else {
-                if (array_key_exists($k, $data)) {
-                    $out[$k] = $data[$k];
-                } else {
-                    $out[$k] = $defVal;
-                }
-            }
-        }
-
-        // Preserve schema metadata that is not part of defaults
-        if (isset($data['schema_version'])) {
-            $out['schema_version'] = (int)$data['schema_version'];
-        }
-
-        return $out;
     }
 
     /**
@@ -113,6 +63,7 @@ class Config
                 'format' => 'json',
                 'posts_per_page' => 10,
                 'compact_json' => false,
+                'revision_limit' => 20,
             ],
             'modules' => [
                 'enabled' => ['admin'],
@@ -208,153 +159,6 @@ class Config
         }
 
         return '/' . trim($path, '/');
-    }
-
-    public function __construct()
-    {
-        $this->configPath = MANTRA_CONTENT . '/settings/config.json';
-        $this->load();
-    }
-
-    /**
-     * Load configuration (merged: defaults + JSON overrides).
-     */
-    private function load(): void
-    {
-        $this->config = self::defaults();
-
-        if (file_exists($this->configPath)) {
-            try {
-                $raw = FileIO::readLocked($this->configPath);
-                $decoded = JsonCodec::decode($raw);
-                if (is_array($decoded)) {
-                    $this->config = self::deepMerge($this->config, $decoded);
-                }
-            } catch (Exception $e) {
-                logger('app')->warning('Failed to read config.json, using defaults', [
-                    'path' => $this->configPath,
-                    'error' => $e->getMessage(),
-                ]);
-            }
-        }
-
-        // Normalize: site.url never has a trailing slash
-        if (isset($this->config['site']['url'])) {
-            $this->config['site']['url'] = rtrim($this->config['site']['url'], '/');
-        }
-    }
-
-    /**
-     * Get configuration value by dot-path.
-     */
-    public function get($path, $default = null)
-    {
-        return self::getNested($this->config, (string)$path, $default);
-    }
-
-    /**
-     * Set configuration value by dot-path.
-     */
-    public function set($path, $value)
-    {
-        self::setNested($this->config, (string)$path, $value);
-        return $this->save();
-    }
-
-    /**
-     * Set multiple configuration values by dot-path.
-     */
-    public function setMultiple($values)
-    {
-        if (!is_array($values)) {
-            return false;
-        }
-        foreach ($values as $path => $value) {
-            self::setNested($this->config, (string)$path, $value);
-        }
-        return $this->save();
-    }
-
-    /**
-     * Get all configuration.
-     */
-    public function all()
-    {
-        return $this->config;
-    }
-
-    /**
-     * Save configuration to file.
-     *
-     * config.json is persisted as overrides-only (diff from Config::defaults()).
-     * This matches the admin Settings store (ConfigSettings) and prevents writing
-     * a huge merged config back to disk.
-     */
-    public function save()
-    {
-        $dir = dirname($this->configPath);
-
-        if (!is_dir($dir)) {
-            mkdir($dir, 0o755, true);
-        }
-
-        try {
-            $defaults = self::defaults();
-            $overrides = self::diffOverrides($defaults, $this->config);
-            if (!is_array($overrides)) {
-                $overrides = [];
-            }
-
-            // Preserve schema_version if present in the in-memory config.
-            if (isset($this->config['schema_version'])) {
-                $overrides['schema_version'] = (int)$this->config['schema_version'];
-            }
-
-            return FileIO::writeAtomic($this->configPath, JsonCodec::encode($overrides));
-        } catch (Exception $e) {
-            logger('app')->error('Failed to write config.json', [
-                'path' => $this->configPath,
-                'error' => $e->getMessage(),
-            ]);
-            return false;
-        }
-    }
-
-    /**
-     * Delete configuration key by dot-path.
-     */
-    public function delete($path)
-    {
-        $path = trim((string)$path);
-        if ($path === '') {
-            return false;
-        }
-
-        $parts = explode('.', $path);
-        $cur = &$this->config;
-
-        $last = array_pop($parts);
-        foreach ($parts as $part) {
-            if ($part === '' || !is_array($cur) || !array_key_exists($part, $cur)) {
-                return false;
-            }
-            $cur = &$cur[$part];
-        }
-
-        if ($last === '' || !is_array($cur) || !array_key_exists($last, $cur)) {
-            return false;
-        }
-
-        unset($cur[$last]);
-        return $this->save();
-    }
-
-    /**
-     * Check if dot-path exists.
-     */
-    public function has($path)
-    {
-        return self::hasNested($this->config, (string)$path);
     }
 
     /**
@@ -502,7 +306,7 @@ class Config
      * - For list arrays: treat as atomic.
      * - Only keys present in defaults are considered; unknown keys are ignored.
      */
-    public static function diffOverrides($defaults, $current)
+    public static function diffOverrides($defaults, $current, $preserveUnknown = false)
     {
         if (!is_array($defaults) || !is_array($current)) {
             if ($defaults === $current) {
@@ -530,10 +334,19 @@ class Config
             }
 
             $curVal = $current[$k];
-            $child = self::diffOverrides($defVal, $curVal);
+            $child = self::diffOverrides($defVal, $curVal, $preserveUnknown);
             if ($child !== null) {
                 $out[$k] = $child;
                 $hasAny = true;
+            }
+        }
+
+        if ($preserveUnknown) {
+            foreach ($current as $k => $curVal) {
+                if (!array_key_exists($k, $defaults)) {
+                    $out[$k] = $curVal;
+                    $hasAny = true;
+                }
             }
         }
 

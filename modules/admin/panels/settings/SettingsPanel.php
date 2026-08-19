@@ -10,6 +10,7 @@ namespace Admin;
 
 use Module\ModuleValidator;
 use Module\ModuleType;
+use Storage\FileIO;
 
 class SettingsPanel extends AdminPanel
 {
@@ -124,7 +125,7 @@ class SettingsPanel extends AdminPanel
 
     private function buildConfigSettingsContent($actionUrl, &$notice, &$error)
     {
-        $store = \ConfigSettings::instance();
+        $store = config();
         $schema = $this->applyConfigSchemaRuntimeOptions($store->schema());
         return $this->buildSchemaSettingsContent(
             $store, $schema, $actionUrl, $notice, $error,
@@ -153,7 +154,14 @@ class SettingsPanel extends AdminPanel
 
     // ========== Generic schema-driven form builder ==========
 
-    private function buildSchemaSettingsContent($store, $schema, $actionUrl, &$notice, &$error, $context = [])
+    private function buildSchemaSettingsContent(
+        \SettingsStoreInterface $store,
+        $schema,
+        $actionUrl,
+        &$notice,
+        &$error,
+        $context = [],
+    )
     {
         if (!is_array($schema)) {
             $error = 'This module has no settings';
@@ -164,9 +172,7 @@ class SettingsPanel extends AdminPanel
             $schema = ($context['schema_mutator'])($schema);
         }
 
-        if (method_exists($store, 'load')) {
-            $store->load();
-        }
+        $store->load();
 
         if (app()->request()->method() === 'POST') {
             $handledAction = false;
@@ -267,9 +273,25 @@ class SettingsPanel extends AdminPanel
                     }
 
                     if (!empty($updates)) {
-                        $store->setMultiple($updates);
-                        $store->save();
-                        $notice = 'Settings saved';
+                        $before = $store->all();
+                        try {
+                            $store->setMultiple($updates);
+                            $store->save();
+                            $notice = 'Settings saved';
+                        } catch (\Throwable $e) {
+                            try {
+                                $store->reload();
+                            } catch (\Throwable $reloadError) {
+                                $store->replace($before);
+                                logger()->critical('Failed to reload settings after save failure', [
+                                    'error' => $reloadError->getMessage(),
+                                ]);
+                            }
+                            logger()->error('Failed to save settings', [
+                                'error' => $e->getMessage(),
+                            ]);
+                            $error = 'Settings changed concurrently or could not be saved';
+                        }
                     }
                 }
             }
@@ -497,7 +519,7 @@ class SettingsPanel extends AdminPanel
         foreach (glob($base . '/*/theme.json') as $path) {
             $dir = basename(dirname($path));
             try {
-                $meta = \JsonCodec::decode(file_get_contents($path));
+                $meta = \JsonCodec::decode(FileIO::readImmutable($path));
             } catch (\Exception $e) {
                 continue;
             }
@@ -521,7 +543,7 @@ class SettingsPanel extends AdminPanel
         foreach (glob($base . '/*/theme.json') as $path) {
             $dir = basename(dirname($path));
             try {
-                $meta = \JsonCodec::decode(file_get_contents($path));
+                $meta = \JsonCodec::decode(FileIO::readImmutable($path));
             } catch (\Exception $e) {
                 continue;
             }
@@ -714,7 +736,7 @@ class SettingsPanel extends AdminPanel
 
             $requiredByEnabled = false;
             if ($isEnabled) {
-                $enabled = \ConfigSettings::instance()->get('modules.enabled', ['admin']);
+                $enabled = config('modules.enabled', ['admin']);
                 $graph = $this->collectModuleDependencyGraph();
 
                 foreach ($enabled as $enabledMod) {
@@ -774,7 +796,7 @@ class SettingsPanel extends AdminPanel
             }
 
             try {
-                $meta = \JsonCodec::decode(file_get_contents($path));
+                $meta = \JsonCodec::decode(FileIO::readImmutable($path));
             } catch (\Exception $e) {
                 $meta = [];
             }
@@ -836,7 +858,7 @@ class SettingsPanel extends AdminPanel
             return 'Invalid modules list';
         }
 
-        $current = \ConfigSettings::instance()->get('modules.enabled', ['admin']);
+        $current = config('modules.enabled', ['admin']);
         if (!is_array($current)) {
             $current = ['admin'];
         }
@@ -860,7 +882,7 @@ class SettingsPanel extends AdminPanel
                 $manifestPath = MANTRA_MODULES . '/' . $modId . '/module.json';
                 if (file_exists($manifestPath)) {
                     try {
-                        $manifest = \JsonCodec::decode(file_get_contents($manifestPath));
+                        $manifest = \JsonCodec::decode(FileIO::readImmutable($manifestPath));
                         $type = $manifest['type'] ?? 'custom';
 
                         if ($type === ModuleType::CORE) {
@@ -896,7 +918,7 @@ class SettingsPanel extends AdminPanel
             }
 
             try {
-                $manifest = \JsonCodec::decode(file_get_contents($manifestPath));
+                $manifest = \JsonCodec::decode(FileIO::readImmutable($manifestPath));
             } catch (\Exception $e) {
                 return "Cannot read module manifest: '{$modId}'";
             }
@@ -945,7 +967,7 @@ class SettingsPanel extends AdminPanel
             $manifestPath = MANTRA_MODULES . '/' . $deleteId . '/module.json';
             if (file_exists($manifestPath)) {
                 try {
-                    $manifest = \JsonCodec::decode(file_get_contents($manifestPath));
+                    $manifest = \JsonCodec::decode(FileIO::readImmutable($manifestPath));
                     $type = $manifest['type'] ?? 'custom';
                     $adminConfig = $manifest['admin'] ?? [];
 
@@ -963,7 +985,7 @@ class SettingsPanel extends AdminPanel
             }
         }
 
-        $enabled = \ConfigSettings::instance()->get('modules.enabled', ['admin']);
+        $enabled = config('modules.enabled', ['admin']);
         if (!is_array($enabled)) {
             $enabled = ['admin'];
         }
@@ -980,48 +1002,42 @@ class SettingsPanel extends AdminPanel
         }
 
         $moduleDir = MANTRA_MODULES . '/' . $deleteId;
-        if (is_link($moduleDir) || !\Storage\FileIO::isWithin($moduleDir, MANTRA_MODULES)) {
-            $error = 'Unsafe module directory';
-            return true;
-        }
-        if (!$this->rrmdirSafe(realpath($moduleDir))) {
-            $error = 'Failed to delete module directory';
-            return true;
-        }
-
         $settingsPath = MANTRA_CONTENT . '/settings/' . $deleteId . '.json';
-        if (file_exists($settingsPath) && !@unlink($settingsPath)) {
-            logger()->warning('Module deleted but settings file could not be removed', [
-                'module' => $deleteId,
-                'path' => $settingsPath,
-            ]);
-        }
-
         $newEnabled = array_values(array_diff($enabled, [$deleteId]));
-        \ConfigSettings::instance()->set('modules.enabled', $newEnabled);
-        \ConfigSettings::instance()->save();
+        $trash = new \Storage\TrashManager();
+        $trashedModule = null;
+        $trashedSettings = null;
 
-        $notice = "Module '{$deleteId}' deleted";
-        return true;
-    }
-
-    private function rrmdirSafe($dirPath): bool
-    {
-        $dirPath = (string)$dirPath;
-        if ($dirPath === '' || !is_dir($dirPath)) {
-            return false;
-        }
-
-        $success = true;
-        $it = new \RecursiveDirectoryIterator($dirPath, \FilesystemIterator::SKIP_DOTS);
-        $ri = new \RecursiveIteratorIterator($it, \RecursiveIteratorIterator::CHILD_FIRST);
-        foreach ($ri as $file) {
-            if ($file->isLink() || !$file->isDir()) {
-                $success = @unlink($file->getPathname()) && $success;
-            } else {
-                $success = @rmdir($file->getPathname()) && $success;
+        try {
+            $trashedModule = $trash->move($moduleDir, 'modules', $deleteId);
+            if (is_file($settingsPath)) {
+                $trashedSettings = $trash->move($settingsPath, 'module-settings', $deleteId);
             }
+            config()->set('modules.enabled', $newEnabled)->save();
+        } catch (\Throwable $e) {
+            try {
+                if ($trashedSettings !== null && file_exists($trashedSettings)) {
+                    $trash->restore($trashedSettings, $settingsPath);
+                }
+                if ($trashedModule !== null && file_exists($trashedModule)) {
+                    $trash->restore($trashedModule, $moduleDir);
+                }
+                config()->reload();
+            } catch (\Throwable $rollbackError) {
+                logger()->critical('Module deletion rollback failed', [
+                    'module' => $deleteId,
+                    'error' => $rollbackError->getMessage(),
+                ]);
+            }
+            $error = 'Failed to move module to recoverable trash';
+            logger()->error('Module deletion failed', [
+                'module' => $deleteId,
+                'error' => $e->getMessage(),
+            ]);
+            return true;
         }
-        return @rmdir($dirPath) && $success;
+
+        $notice = "Module '{$deleteId}' moved to recoverable trash";
+        return true;
     }
 }

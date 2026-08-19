@@ -35,4 +35,5 @@ return [
     'admin-uploads.error_move_failed' => 'Failed to save the uploaded file.',
     'admin-uploads.error_partial' => 'The file was only partially uploaded.',
     'admin-uploads.error_upload_failed' => 'Upload failed. Please try again.',
+    'admin-uploads.error_delete_failed' => 'The upload could not be deleted safely. Please try again.',
 ];

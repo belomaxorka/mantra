@@ -68,6 +68,7 @@ class PermissionsPanel extends AdminPanel
         $configurableRoles = $registry->getConfigurableRoles();
         $allPermissions = $registry->getAll();
 
+        $rolePermissions = [];
         foreach ($configurableRoles as $role) {
             $posted = app()->request()->post('role_' . $role, []);
             if (!is_array($posted)) {
@@ -75,9 +76,9 @@ class PermissionsPanel extends AdminPanel
             }
 
             // Filter to only valid registered permissions
-            $valid = array_values(array_intersect($posted, $allPermissions));
-            $registry->setRolePermissions($role, $valid);
+            $rolePermissions[$role] = array_values(array_intersect($posted, $allPermissions));
         }
+        $registry->setRolesPermissions($rolePermissions);
 
         $notice = t('admin-permissions.saved');
 

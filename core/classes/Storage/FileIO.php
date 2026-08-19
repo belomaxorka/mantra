@@ -7,7 +7,7 @@
  * - Exclusive locks for writing/deleting (LOCK_EX)
  * - Atomic writes via temp file + rename
  * - File size validation (10MB limit)
- * - Windows compatibility (unlink before rename)
+ * - Replacement without deleting the last known-good target first
  */
 
 namespace Storage;
@@ -70,8 +70,7 @@ class FileIO
             $resolved .= DIRECTORY_SEPARATOR . basename($candidate);
         }
 
-        $prefix = rtrim($rootReal, '/\\') . DIRECTORY_SEPARATOR;
-        if (!str_starts_with($resolved, $prefix)) {
+        if (!self::pathIsWithin($resolved, $rootReal)) {
             throw new FileIOException('Path escapes trusted root', $candidate);
         }
 
@@ -82,13 +81,25 @@ class FileIO
     {
         $pathReal = realpath($path);
         $rootReal = realpath($root);
-        if ($pathReal === false || $rootReal === false || $pathReal === $rootReal) {
+        if ($pathReal === false || $rootReal === false) {
             return false;
         }
-        return str_starts_with(
-            $pathReal,
-            rtrim($rootReal, '/\\') . DIRECTORY_SEPARATOR,
-        );
+        return self::pathIsWithin($pathReal, $rootReal);
+    }
+
+    /** Compare already resolved paths using platform-appropriate casing. */
+    public static function pathIsWithin($path, $root, $allowRoot = false): bool
+    {
+        $path = rtrim((string)$path, '/\\');
+        $root = rtrim((string)$root, '/\\');
+        if (DIRECTORY_SEPARATOR === '\\') {
+            $path = strtolower($path);
+            $root = strtolower($root);
+        }
+        if ($allowRoot && $path === $root) {
+            return true;
+        }
+        return str_starts_with($path, $root . DIRECTORY_SEPARATOR);
     }
 
     /**
@@ -100,19 +111,18 @@ class FileIO
      */
     public static function readLocked($path)
     {
-        if (!file_exists($path)) {
-            throw new FileIOException('File not found', $path);
-        }
-
-        $size = @filesize($path);
-        if ($size === false) {
-            throw new FileIOException('Failed to get file size', $path);
-        }
-        self::validateFileSize($size);
-
         $lockHandle = self::acquireLock($path, LOCK_SH);
 
         try {
+            if (!is_file($path)) {
+                throw new FileIOException('File not found', $path);
+            }
+            $size = @filesize($path);
+            if ($size === false) {
+                throw new FileIOException('Failed to get file size', $path);
+            }
+            self::validateFileSize($size);
+
             $content = file_get_contents($path);
             if ($content === false) {
                 throw new FileIOException('Failed to read file', $path);
@@ -121,6 +131,31 @@ class FileIO
         } finally {
             self::releaseLock($lockHandle);
         }
+    }
+
+    /**
+     * Read a deployment-owned file that is immutable during a request.
+     *
+     * Unlike readLocked(), this does not create a sidecar lock and therefore
+     * works for read-only module/theme directories. Runtime-mutable data must
+     * always use readLocked() instead.
+     */
+    public static function readImmutable($path)
+    {
+        if (!is_file($path)) {
+            throw new FileIOException('Immutable file not found', $path);
+        }
+        $size = @filesize($path);
+        if ($size === false) {
+            throw new FileIOException('Failed to get immutable file size', $path);
+        }
+        self::validateFileSize($size);
+
+        $content = file_get_contents($path);
+        if ($content === false) {
+            throw new FileIOException('Failed to read immutable file', $path);
+        }
+        return $content;
     }
 
     /**
@@ -135,38 +170,69 @@ class FileIO
      */
     public static function writeAtomic($path, $content)
     {
-        $dir = dirname($path);
-        if (!is_dir($dir)) {
-            if (!mkdir($dir, 0o755, true) && !is_dir($dir)) {
-                throw new FileIOException('Failed to create directory', $path);
-            }
-        }
-
+        self::ensureParentDirectory($path);
         self::validateFileSize(strlen($content));
 
         $lockHandle = self::acquireLock($path, LOCK_EX);
-
         try {
-            $tmp = $path . '.tmp.' . self::randomSuffix();
-            $bytes = file_put_contents($tmp, $content, LOCK_EX);
-            if ($bytes === false) {
-                throw new FileIOException('Failed to write temp file', $path);
-            }
+            return self::replaceUnlocked($path, $content);
+        } finally {
+            self::releaseLock($lockHandle);
+        }
+    }
 
-            // Windows: delete target first (rename cannot overwrite on Windows)
-            if (DIRECTORY_SEPARATOR === '\\' && file_exists($path)) {
-                if (!@unlink($path)) {
-                    @unlink($tmp);
-                    throw new FileIOException('Failed to remove existing file for replacement', $path);
+    /**
+     * Atomically update a file from the latest contents while holding its lock.
+     * The callback receives null when the target does not exist and must return
+     * the complete replacement string.
+     */
+    public static function updateAtomic($path, $callback)
+    {
+        if (!is_callable($callback)) {
+            throw new FileIOException('Update callback is not callable', $path);
+        }
+
+        self::ensureParentDirectory($path);
+        $lockHandle = self::acquireLock($path, LOCK_EX);
+        try {
+            $current = null;
+            if (file_exists($path)) {
+                $current = file_get_contents($path);
+                if ($current === false) {
+                    throw new FileIOException('Failed to read current file for update', $path);
                 }
+                self::validateFileSize(strlen($current));
             }
 
-            if (!@rename($tmp, $path)) {
-                @unlink($tmp);
-                throw new FileIOException('Failed to replace file', $path);
+            $replacement = $callback($current);
+            if (!is_string($replacement)) {
+                throw new FileIOException('Update callback must return a string', $path);
             }
+            self::validateFileSize(strlen($replacement));
+            return self::replaceUnlocked($path, $replacement);
+        } finally {
+            self::releaseLock($lockHandle);
+        }
+    }
 
-            return true;
+    /**
+     * Execute a critical section guarded by an exclusive sidecar lock.
+     * The protected path itself does not need to exist.
+     */
+    public static function withExclusiveLock($path, $callback)
+    {
+        if (!is_callable($callback)) {
+            throw new FileIOException('Lock callback is not callable', $path);
+        }
+
+        $dir = dirname($path);
+        if (!is_dir($dir) && !mkdir($dir, 0o755, true) && !is_dir($dir)) {
+            throw new FileIOException('Failed to create lock directory', $path);
+        }
+
+        $lockHandle = self::acquireLock($path, LOCK_EX);
+        try {
+            return $callback();
         } finally {
             self::releaseLock($lockHandle);
         }
@@ -180,10 +246,6 @@ class FileIO
      */
     public static function deleteLocked($path)
     {
-        if (!file_exists($path)) {
-            return false;
-        }
-
         try {
             $lockHandle = self::acquireLock($path, LOCK_EX);
         } catch (Exception $e) {
@@ -191,12 +253,17 @@ class FileIO
         }
 
         try {
+            if (!file_exists($path)) {
+                return false;
+            }
             $result = @unlink($path);
-            self::releaseLock($lockHandle, $path, true);
             return $result;
-        } catch (Exception $e) {
-            self::releaseLock($lockHandle);
+        } catch (\Throwable $e) {
             return false;
+        } finally {
+            // Sidecar locks are stable mutex identities. Removing one after
+            // unlock creates a race where waiters can lock different inodes.
+            self::releaseLock($lockHandle);
         }
     }
 
@@ -216,7 +283,10 @@ class FileIO
     }
 
     /**
-     * Clean up orphaned lock files older than specified time.
+     * Clean up lock files older than specified time.
+     *
+     * This is a maintenance-only operation. It must run while no application
+     * worker can start, because sidecar lock files are stable mutex identities.
      *
      * @param string $directory Directory to clean
      * @param int $maxAge Maximum age in seconds (default: 1 hour)
@@ -280,18 +350,12 @@ class FileIO
      * Release lock and close file handle.
      *
      * @param resource $lockHandle Lock file handle
-     * @param string|null $path Optional file path for lock cleanup
-     * @param bool $cleanup Whether to delete lock file after release
      */
-    private static function releaseLock($lockHandle, $path = null, $cleanup = false): void
+    private static function releaseLock($lockHandle): void
     {
         if (is_resource($lockHandle)) {
             flock($lockHandle, LOCK_UN);
             fclose($lockHandle);
-        }
-
-        if ($cleanup && $path !== null) {
-            @unlink($path . self::LOCK_EXTENSION);
         }
     }
 
@@ -303,5 +367,33 @@ class FileIO
     private static function randomSuffix()
     {
         return bin2hex(random_bytes(8));
+    }
+
+    private static function ensureParentDirectory($path): void
+    {
+        $dir = dirname($path);
+        if (!is_dir($dir) && !mkdir($dir, 0o755, true) && !is_dir($dir)) {
+            throw new FileIOException('Failed to create directory', $path);
+        }
+    }
+
+    /** Replace a target while its sidecar lock is already held. */
+    private static function replaceUnlocked($path, $content)
+    {
+        $tmp = $path . '.tmp.' . self::randomSuffix();
+        try {
+            $bytes = file_put_contents($tmp, $content, LOCK_EX);
+            if ($bytes === false) {
+                throw new FileIOException('Failed to write temp file', $path);
+            }
+            if (!@rename($tmp, $path)) {
+                throw new FileIOException('Failed to replace file', $path);
+            }
+            return true;
+        } finally {
+            if (file_exists($tmp)) {
+                @unlink($tmp);
+            }
+        }
     }
 }

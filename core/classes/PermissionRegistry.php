@@ -9,8 +9,7 @@
  */
 class PermissionRegistry
 {
-    /** @var object Config repository implementing get/has/set/delete/save */
-    private $config;
+    private SettingsStoreInterface $config;
 
     /** @var array All registered permissions: array of permission strings */
     private $permissions = [];
@@ -31,7 +30,7 @@ class PermissionRegistry
      * Constructor. The registry starts empty.
      * Panels and modules register their permissions via the 'permissions.register' hook.
      */
-    public function __construct($config = null)
+    public function __construct(?SettingsStoreInterface $config = null)
     {
         // No hardcoded permissions — everything is registered by panels/modules.
         // Injection keeps authorization deterministic and independently testable.
@@ -266,15 +265,39 @@ class PermissionRegistry
         if ($role === 'admin') {
             return;
         }
+        $this->setRolesPermissions([$role => $permissions]);
+    }
 
-        // Filter to only valid registered permissions
-        $valid = array_values(array_intersect($permissions, $this->permissions));
+    /** Save several role overrides as one logical config write. */
+    public function setRolesPermissions($roles): void
+    {
+        if (!is_array($roles)) {
+            throw new InvalidArgumentException('Role permission updates must be an array');
+        }
 
-        $this->config->set('permissions.roles.' . $role, $valid);
-        $this->config->save();
+        $roles = array_intersect_key($roles, array_flip($this->getConfigurableRoles()));
+        if (empty($roles)) {
+            return;
+        }
 
-        // Clear cache
-        unset($this->resolved[$role]);
+        $changedRoles = [];
+        $this->persistMutation(function () use ($roles, &$changedRoles): void {
+            foreach ($roles as $role => $permissions) {
+                $role = (string)$role;
+                if ($role === 'admin' || !in_array($role, $this->getConfigurableRoles(), true)) {
+                    continue;
+                }
+
+                $permissions = is_array($permissions) ? $permissions : [];
+                $valid = array_values(array_intersect($permissions, $this->permissions));
+                $this->config->set('permissions.roles.' . $role, $valid);
+                $changedRoles[] = $role;
+            }
+        });
+
+        foreach ($changedRoles as $role) {
+            unset($this->resolved[$role]);
+        }
     }
 
     /**
@@ -288,8 +311,27 @@ class PermissionRegistry
             return;
         }
 
-        $this->config->delete('permissions.roles.' . $role);
+        $this->persistMutation(function () use ($role): void {
+            $this->config->delete('permissions.roles.' . $role);
+        });
 
         unset($this->resolved[$role]);
+    }
+
+    /** Roll back repository memory if persistence fails. */
+    private function persistMutation($mutation): void
+    {
+        $before = $this->config->all();
+        try {
+            $mutation();
+            $this->config->save();
+        } catch (Throwable $error) {
+            try {
+                $this->config->reload();
+            } catch (Throwable $reloadError) {
+                $this->config->replace($before);
+            }
+            throw $error;
+        }
     }
 }
